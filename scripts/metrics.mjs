@@ -24,7 +24,7 @@ const hasCommits = (() => {
 // translations, configuration and generated files are counted but not weighed as programming effort.
 const CATEGORIES = [
   ["generated", (f) => /(^|\/)pnpm-lock\.yaml$/.test(f) || f.startsWith("docs/metrics/snapshots/")],
-  ["excluded", (f) => f === "LICENSE" || /\.(png|jpe?g|gif|ico|woff2?|ttf|otf|pdf|wasm)$/i.test(f)],
+  ["excluded", (f) => /(^|\/)(LICENSE|OFL\.txt)$/.test(f) || /\.(png|jpe?g|gif|ico|woff2?|ttf|otf|pdf|wasm)$/i.test(f)],
   ["tests", (f) => /(^|\/)(test|tests|e2e)\//.test(f) || /\.(test|spec)\.[cm]?[jt]sx?$/.test(f)],
   ["docs", (f) => /\.md$/i.test(f) || f.startsWith("docs/")],
   ["data", (f) => /(^|\/)(locales|data)\//.test(f) || /\.(csv|tsv)$/i.test(f)],

@@ -30,7 +30,10 @@ Defined once in `scripts/metrics.mjs` and not changed without a note here, so th
 - **docs**: Markdown and everything under `docs/` (except the snapshots);
 - **data**: translations (`locales/`), data tables (`data/`), CSV;
 - **config**: package manifests, TypeScript and Vite settings, workflows, dot files;
-- **generated** (lock file, snapshots) and **excluded** (licence, binaries) are not weighed.
+- **generated** (lock file, snapshots) and **excluded** (licence texts, binaries) are not weighed.
+
+Changes to the categories: 28 October 2026 — licence texts of third-party assets (the font's `OFL.txt`) are excluded
+like `LICENSE`; they had counted as code in the snapshot taken with item 1.4 before this change.
 
 ## The owner's time sheet
 
