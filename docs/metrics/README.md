@@ -52,7 +52,7 @@ Example: `2026-10-28,45,requirements,"stack, repository and printer languages"`.
 
 The same rates as the previous report, for reviewed, tested and documented work: code 50–100 lines a day, tests
 150–250, documentation 200–300, plus research into the GS1 standards and printer languages and coordination; days of
-8 hours. Printer testing on physical devices is counted from `hours.csv`, not estimated.
+8 hours. Printer testing on physical devices is counted from the owner's time sheet, not estimated.
 
 ## Usage quota
 
