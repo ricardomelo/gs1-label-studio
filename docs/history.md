@@ -28,3 +28,9 @@ character changed between firmware versions (ADR 0002).
 Item 1.1 followed: the GS1 Barcode Syntax Engine became the input gate. It recognises a GTIN, an element string with or
 without brackets, a GS1 Digital Link URI or a scanner's output, names each AI, and explains errors with the characters
 at fault marked ("(17)27|13|31": no month 13); the data each symbol carries is derived from what it accepted.
+
+The owner then asked why the resolver's label studio — environments from the General Specifications, every AI, EPC,
+data attributes — was not the starting point. It had been used for its knowledge only. Of three ways (port it to
+TypeScript keeping it as the reference; run its Python on a server; run Python in the browser), the owner chose the
+first (ADR 0004). Its Python runs in the sandbox, so a script writes its answers as fixtures; the first module ported,
+the scanning environments, gives the same answer in all 2 970 combinations.

@@ -18,4 +18,7 @@
   title; errors in the engine's words with the characters at fault marked; the data each symbol carries derived from
   it (the GTIN in the symbol's length, UPC-E by zero suppression, the element string, the GS1 Digital Link URI), with
   the reason when a symbol cannot carry it.
+- The resolver's label studio is the starting point, ported to TypeScript (ADR 0004): its scanning environments
+  (General Specifications 26.0 symbol specification tables), sizes and checks first, with the resolver's own answers
+  as test fixtures (`scripts/resolver-reference/golden.py`).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

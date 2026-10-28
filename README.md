@@ -24,11 +24,12 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 | `apps/web` | the web application (React + Vite) |
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
-| `scripts` | project tools |
+| `scripts` | project tools; `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
 
 Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first-architecture.md),
 [ADR 0002 — printer output](docs/adr/0002-printer-output.md),
-[ADR 0003 — product scope and user experience](docs/adr/0003-product-scope-and-ux.md).
+[ADR 0003 — product scope and user experience](docs/adr/0003-product-scope-and-ux.md),
+[ADR 0004 — the resolver's label studio as the starting point](docs/adr/0004-port-of-the-resolver-label-studio.md).
 
 ## Backlog
 
@@ -38,18 +39,25 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 - 0.2 Development indicators from the first day (`docs/metrics`) — *done*
 - 0.3 Walking skeleton: core encoding through bwip-js, read back by ZXing; printer dot grid; SVG; ZPL graphic — *done*
 
-**Phase 1 — one code, right by construction**
+**Phase 1 — one code, right by construction** (ported from the resolver's label studio where it had it: ADR 0004)
 
 - 1.1 Input: GS1 Barcode Syntax Engine; paste an element string, a GS1 Digital Link URI or a scanner's output; AIs
   named and checked; errors explained — *done (a "(" inside a value is refused: the barcode encoder cannot take it)*
 - 1.2 Guided choice: what is identified → symbol specification table → symbols allowed and recommended; scanning
-  environments table carried over from the resolver (General Specifications 26.0, section 5.12.3)
+  environments table carried over from the resolver (General Specifications 26.0, section 5.12.3) — *table, sizes and
+  checks ported (2 970 of the resolver's answers equal); ranges of ITF-14, GS1-128 and GS1 DataBar, and the screen, to do*
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
   GS1 QR Code, QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later
-- 1.4 Human readable text as the General Specifications place it (EAN/UPC digits and guard bars, element strings)
-- 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size), EPS, zip; prepress options (bar width reduction, 100 % K)
+- 1.4 Layout and human readable text as the General Specifications place them: the resolver's 2D symbol with an EAN/UPC
+  beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction
+- 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
+  prepress options (bar width reduction, 100 % K)
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English)
 - 1.7 Offline (PWA)
+- 1.8 EPC for RFID and NFC: every key with a TDS scheme, from the resolver's TDT-derived schemes; the GS1 Company
+  Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser
+- 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
+  1,25 kg); the URI's domain
 
 **Phase 2 — in bulk**
 
