@@ -6,8 +6,9 @@ import { encode, MM_PER_INCH, rasterize, snapToDots, zplLabel, type SymbologyId 
 
 // The ZPL the studio writes, printed by a simulated printer: Labelary (labelary.com) renders it at the printer's
 // resolution as a PNG, and ZXing must read the same symbol back. The owner checks labels with Labelary's viewer, as no
-// physical printer is at hand (ADR 0002). Runs where api.labelary.com is reachable and LABELARY=1 (the CI); the free
-// API allows a few requests a second, hence one request at a time and few cases.
+// physical printer is at hand (ADR 0002). Runs with LABELARY=1 (the CI; in a cloud session also NODE_USE_ENV_PROXY=1,
+// so that fetch() goes through the session's proxy); the free API allows a few requests a second, hence one request at
+// a time and few cases.
 const enabled = process.env.LABELARY === "1";
 const DPMM: Record<number, string> = { 203: "8dpmm", 300: "12dpmm", 600: "24dpmm" };
 
@@ -51,6 +52,9 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     ["gs1-qrcode", "(01)09506000134352(21)12345", 0.495, 203, "]Q3", "(01)09506000134352(21)12345"],
     ["dl-qrcode", "https://id.gs1.org/01/09506000134352/10/ABC123", 0.495, 600, "]Q1",
       "https://id.gs1.org/01/09506000134352/10/ABC123"],
+    // At 600 dpi a 2 mm module is 47 dots: 20 × 20 modules and the quiet zones make 1 222 dots square, 153 bytes a row,
+    // 186 966 bytes in all: two graphic fields.
+    ["gs1-datamatrix", "(01)09506000134352(21)ABCDEFGH12345", 2, 600, "]d2", "(01)09506000134352(21)ABCDEFGH12345"],
   ])("%s %s at %s mm, %i dpi", { timeout: 30000 }, async (symbology, data, xMm, dpi, identifier, text) => {
     const { result } = await printWithLabelary(symbology, data, xMm, dpi);
     expect(result?.symbologyIdentifier).toBe(identifier);

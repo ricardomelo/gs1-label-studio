@@ -48,8 +48,12 @@ Three facts shape the design:
 
 ## References and verification
 
-- ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*
+- ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
   (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
+  Its `^GF` takes byte counts from 1 to 99999: a larger image is sent as horizontal stripes, one graphic field each,
+  at consecutive `^FO` positions (`graphicFields()`). Hexadecimal without compression for now; the guide's ASCII
+  run-length compression and `:Z64:` are candidates for item 3.2, once their support across firmware and emulations
+  is known.
 - No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), a ZPL renderer: the
   owner uses its viewer by hand, and the tests send the studio's ZPL to its API, at the printer's resolution, and read
   the rendered symbol back with ZXing (`packages/core/test/labelary.test.ts`, in CI). Labelary renders what Zebra

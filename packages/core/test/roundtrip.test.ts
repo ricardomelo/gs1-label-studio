@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
-import { bitmapToGraphicField, encode, EncodeError, rasterize, toSvg, type SymbologyId } from "../src/index.ts";
+import { bitmapToGraphicField, encode, graphicFields, EncodeError, rasterize, toSvg, type SymbologyId } from "../src/index.ts";
 
 // Every symbol is read back by an independent decoder (ZXing): the symbology identifier and the data must come out as
 // they went in. This is what proves that the encoder, the geometry and the rasteriser agree.
@@ -60,6 +60,15 @@ describe("exports", () => {
     const svg = toSvg(encode("gs1-datamatrix", "(01)09506000134352"), { xMm: 0.5, quietZone: 1 });
     // 16 × 16 modules (FNC1 and 16 digits) plus one module of quiet zone each side.
     expect(svg).toContain('width="9mm" height="9mm"');
+  });
+
+  it("splits an image larger than a graphic field into stripes", () => {
+    // 1600 dots wide (200 bytes a row) and 1200 rows: 240 000 bytes, so 499 rows a field and three fields.
+    const bitmap = { width: 1600, height: 1200, dark: new Uint8Array(1600 * 1200) };
+    const fields = graphicFields(bitmap, 10, 20);
+    expect(fields.map((field) => field.slice(0, field.indexOf("^GFA")))).toEqual(["^FO10,20", "^FO10,519", "^FO10,1018"]);
+    expect(fields.map((field) => field.split(",")[2])).toEqual(["99800", "99800", "40400"]);
+    expect(() => bitmapToGraphicField(bitmap)).toThrow();
   });
 
   it("packs a graphic field row by row, eight dots a byte", () => {
