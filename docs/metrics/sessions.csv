@@ -1,0 +1,2 @@
+session,date,start_utc,end_utc,kind,claude_minutes,owner_minutes,commits,items,notes
+session_01AV1osrFkvHXfNuXUbGJSg5,2026-10-28,16:19,,cloud,,,,0.1 0.2,"Kick-off: stack, repository, printer languages, walking skeleton, metrics from day one"
