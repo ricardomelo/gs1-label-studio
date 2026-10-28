@@ -18,6 +18,7 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.6.5",
+    "epc-tds": "^1.4.1",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5",
     "zxing-wasm": "^3.1.6"

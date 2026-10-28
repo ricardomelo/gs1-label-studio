@@ -57,6 +57,9 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+      epc-tds:
+        specifier: ^1.4.1
+        version: 1.4.1
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -447,6 +450,9 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
+
+  epc-tds@1.4.1:
+    resolution: {integrity: sha512-1nKTkAAwMUnNIjJsY7PDd54sVWoUKLJ5vRtISbAvDIT0jVgfpKuf7RwyumHNb5v5KP1jkqetETz9+uD3Q31vFg==}
 
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
@@ -952,6 +958,8 @@ snapshots:
   csstype@3.2.3: {}
 
   detect-libc@2.1.2: {}
+
+  epc-tds@1.4.1: {}
 
   es-module-lexer@2.3.2: {}
 

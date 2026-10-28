@@ -109,3 +109,21 @@ export {
   type Identification,
   type Identified,
 } from "./identify.ts";
+export {
+  companyPart,
+  defaultFilter,
+  encodeEpc,
+  EPC_QUALIFIERS,
+  EpcError,
+  epcMissing,
+  epcPathOf,
+  epcSchemes,
+  KEY_SCHEMES,
+  MINIMUM,
+  PARTITION_LENGTHS,
+  urlEscape,
+  urnEscape,
+  type Epc,
+  type EpcScheme,
+} from "./epc.ts";
+export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";

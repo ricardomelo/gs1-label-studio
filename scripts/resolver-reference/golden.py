@@ -193,3 +193,89 @@ write("attributes.json", {
     "dayZero": [[ai, value, outcome(lambda ai=ai, value=value: day_zero(ai, value))] for ai, value in DAY_ZERO],
 })
 print("attributes written")
+
+# ------------------------------------------------------------------------------------------------------------ EPC (1.8)
+import epc  # noqa: E402
+import gcp  # noqa: E402
+
+EPC_CASES = [  # key, value, qualifiers, partition lengths, filters
+    ("01", "09506000134376", {"21": "12345"}, range(6, 13), [1]),
+    ("01", "09506000134376", {"21": "S1001"}, [7, 9, 12], [1, 0]),
+    ("01", "09506000134376", {"21": "012"}, [7], [1]),
+    ("01", "09506000134376", {"21": "274877906943"}, [7], [3]),       # 2^38 - 1: the largest 96-bit serial
+    ("01", "09506000134376", {"21": "274877906944"}, [7], [3]),       # 2^38: SGTIN-198
+    ("01", "09506000134376", {"21": "ABCDEFGHIJKLMNOPQRST"}, [7], [2]),
+    ("01", "09506000134376", {"21": "a/b%c&d"}, [7], [7]),
+    ("01", "09506000134376", {"10": "B42", "22": "V1", "21": "7"}, [7], [1]),
+    ("00", "106141411234567897", {}, range(6, 13), [0, 6]),
+    ("414", "9506000134376", {}, [7, 9], [0]),
+    ("414", "9506000134376", {"254": "123"}, [7], [0]),
+    ("414", "9506000134376", {"254": "A-1"}, [7], [0]),
+    ("8003", "09506000134376123", {}, [7, 12], [0]),
+    ("8003", "09506000134376ABC", {}, [7], [0]),
+    ("8004", "950600012345", {}, [7], [0]),
+    ("8004", "9506000ABC-12", {}, [7, 9], [0]),
+    ("8018", "950600013437612342", {}, [7], [0]),
+    ("8017", "950600013437612342", {}, [7], [0]),
+    ("253", "9506000134376123", {}, [7], [0]),
+    ("253", "9506000134376ABC", {}, [7], [0]),
+    ("255", "9506000134376123", {}, [7], [0]),
+    ("8010", "9506000ABC-1", {"8011": "123"}, [7], [0]),
+    ("8006", "095060001343760102", {"21": "1"}, [7], [1]),
+    ("8006", "095060001343760102", {"21": "XY"}, [7], [1]),
+]
+EPC_REFUSALS = [
+    ("01", "09506000134376", {}, 7, 1),
+    ("01", "09506000134376", {"21": "123456789012345678901"}, 7, 1),
+    ("8003", "09506000134376", {}, 7, 0),
+    ("401", "9506000ABC", {}, 7, 0),
+    ("01", "09506000134376", {"21": "1"}, 5, 1),
+    ("01", "09506000134376", {"21": "1"}, 7, 8),
+    ("253", "9506000134376", {}, 7, 0),
+]
+
+
+def epc_outcome(key, value, qualifiers, length, filter_value):
+    try:
+        e = epc.encode(key, value, qualifiers, length, filter_value)
+        return {"scheme": e.scheme, "filter": e.filter, "bits": e.bits, "hex": e.hex, "base64": e.base64,
+                "tagUri": e.tag_uri, "pureIdentity": e.pure_identity}
+    except epc.EpcError as error:
+        return {"error": error.code, "params": error.params}
+
+
+GCP_XML = ('<?xml version="1.0" encoding="UTF-8"?>\n<GCPPrefixFormatList date="2026-09-17T11:04:36.316Z">'
+           '<entry prefix="950" gcpLength="7"/><entry prefix="9506" gcpLength="9"/><entry prefix="977" gcpLength="0"/>'
+           '<entry prefix="0614141" gcpLength="7"/><entry prefix="5" gcpLength="8"/></GCPPrefixFormatList>')
+GCP_BAD = {
+    "notXml": "hello", "root": '<Other date="2026-01-01T00:00:00Z"/>',
+    "doctype": '<!DOCTYPE x [<!ENTITY a "b">]><GCPPrefixFormatList date="2026-01-01T00:00:00Z"/>',
+    "element": '<GCPPrefixFormatList date="2026-01-01T00:00:00Z"><x/></GCPPrefixFormatList>',
+    "entry": '<GCPPrefixFormatList date="2026-01-01T00:00:00Z"><entry prefix="95" gcpLength="5"/></GCPPrefixFormatList>',
+    "duplicate": ('<GCPPrefixFormatList date="2026-01-01T00:00:00Z"><entry prefix="95" gcpLength="7"/>'
+                  '<entry prefix="95" gcpLength="8"/></GCPPrefixFormatList>'),
+    "empty": '<GCPPrefixFormatList date="2026-01-01T00:00:00Z"></GCPPrefixFormatList>',
+}
+
+
+def gcp_outcome(xml):
+    try:
+        table = gcp.parse(xml.encode("utf-8"))
+        return {"date": table.date, "count": len(table)}
+    except gcp.GcpError as error:
+        return {"error": error.code, "params": error.params}
+
+
+table = gcp.parse(GCP_XML.encode("utf-8"))
+write("epc.json", {
+    "keySchemes": {k: list(v) for k, v in epc.KEY_SCHEMES.items()},
+    "encodings": [[key, value, qualifiers, length, f, epc_outcome(key, value, qualifiers, length, f)]
+                  for key, value, qualifiers, lengths, filters in EPC_CASES for length in lengths for f in filters],
+    "refusals": [[key, value, qualifiers, length, f, epc_outcome(key, value, qualifiers, length, f)]
+                 for key, value, qualifiers, length, f in EPC_REFUSALS],
+    "gcp": {"xml": GCP_XML, "parsed": gcp_outcome(GCP_XML),
+            "lengths": {d: table.length_for(d) for d in ["9506000134376", "9501234567890", "9771234567", "0614141000036",
+                                                         "5012345", "123", "", "95"]},
+            "bad": {name: gcp_outcome(xml) for name, xml in GCP_BAD.items()}},
+})
+print("epc written")
