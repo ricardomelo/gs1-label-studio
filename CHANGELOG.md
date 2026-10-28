@@ -13,4 +13,9 @@
 - ZPL with the printer's own commands instead of images (ADR 0002): `^BE`, `^B8`, `^BU`, `^B9`, `^B2`, `^BC` (mode N,
   FNC1 and code sets written by the studio), `^BX` (GS1 and plain), `^BQ`; GS1 QR Code refused (no FNC1 in `^BQ`).
   ZPL templates with `{{AI}}` placeholders described in `^FX` comments, for systems that fill in the values.
+- Input through the GS1 Barcode Syntax Engine (`gs1encoder` 1.4.1, engine build of 28 May 2026; backlog item 1.1): a
+  GTIN, an element string with or without brackets, a GS1 Digital Link URI or a scanner's output; each AI with its data
+  title; errors in the engine's words with the characters at fault marked; the data each symbol carries derived from
+  it (the GTIN in the symbol's length, UPC-E by zero suppression, the element string, the GS1 Digital Link URI), with
+  the reason when a symbol cannot carry it.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

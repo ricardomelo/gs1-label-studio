@@ -24,3 +24,7 @@ printer's commands always, images only for images such as a logo — for the siz
 a template with placeholders. Testing every command through Labelary found three traps a manual alone would not show:
 GS1-128's mode D joins element strings without FNC1, `^BQ` cannot make a GS1 QR Code, and the Data Matrix escape
 character changed between firmware versions (ADR 0002).
+
+Item 1.1 followed: the GS1 Barcode Syntax Engine became the input gate. It recognises a GTIN, an element string with or
+without brackets, a GS1 Digital Link URI or a scanner's output, names each AI, and explains errors with the characters
+at fault marked ("(17)27|13|31": no month 13); the data each symbol carries is derived from what it accepted.

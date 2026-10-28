@@ -4,8 +4,8 @@ Create GS1 barcodes — and, later, whole labels — in your browser, one at a t
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
 DPL). Nothing you type or upload leaves your computer.
 
-> **Status:** walking skeleton (28 October 2026). One symbol at a time, SVG, and ZPL with the printer's own commands
-> (and as a template). See the backlog.
+> **Status:** early development (28 October 2026). One symbol at a time from data in any GS1 form, checked by the GS1
+> Barcode Syntax Engine; SVG, and ZPL with the printer's own commands (and as a template). See the backlog.
 
 ## Development
 
@@ -41,7 +41,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 **Phase 1 — one code, right by construction**
 
 - 1.1 Input: GS1 Barcode Syntax Engine; paste an element string, a GS1 Digital Link URI or a scanner's output; AIs
-  named and checked; errors explained
+  named and checked; errors explained — *done (a "(" inside a value is refused: the barcode encoder cannot take it)*
 - 1.2 Guided choice: what is identified → symbol specification table → symbols allowed and recommended; scanning
   environments table carried over from the resolver (General Specifications 26.0, section 5.12.3)
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
@@ -81,5 +81,6 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 ## Licence
 
-[Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT) and, for tests,
+[Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT), GS1's
+[Barcode Syntax Engine](https://github.com/gs1/gs1-syntax-engine) (`gs1encoder`, Apache-2.0) and, for tests,
 [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT).
