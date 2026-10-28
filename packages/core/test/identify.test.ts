@@ -37,6 +37,7 @@ describe("the editor's identification", () => {
     expect(checkKeyValue("01", "09506000134377")).toBe("The check digit does not match: it should be 6.");
     expect(checkKeyValue("00", "1234")).toBe("4 digits entered; this identifier has 18.");
     expect(checkKeyValue("01", "0950600013437A")).toBe("Use digits only.");
+    expect(identify(engine, { ...BASE, value: "9506000134376" }).elementString).toBe("(01)09506000134376");
   });
 
   it("writes key, qualifiers in path order and attributes in the order chosen, decimals resolved", () => {

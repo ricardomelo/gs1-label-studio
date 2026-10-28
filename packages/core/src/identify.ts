@@ -85,11 +85,18 @@ export function elementStringOf(id: Identification): { elementString: string; re
   return { elementString, resolved };
 }
 
+/** A GTIN typed in its own length (8, 12 or 13 digits) as the GTIN-14 the element string carries. */
+export function normaliseKeyValue(key: string, value: string): string {
+  const trimmed = value.trim();
+  return (key === "01" || key === "02") && /^([0-9]{8}|[0-9]{12,13})$/.test(trimmed) ? trimmed.padStart(14, "0") : trimmed;
+}
+
 /** The identification checked by the GS1 Barcode Syntax Engine: element string, elements with titles, URI. */
 export function identify(engine: SyntaxEngine, id: Identification, stem: string | null = null): Identified {
-  const keyProblem = checkKeyValue(id.key, id.value.trim());
+  const value = normaliseKeyValue(id.key, id.value);
+  const keyProblem = checkKeyValue(id.key, value);
   if (keyProblem) throw new InputError(keyProblem);
-  const { elementString, resolved } = elementStringOf(id);
+  const { elementString, resolved } = elementStringOf({ ...id, value });
   return { ...engine.parse(elementString, stem), resolvedAttributes: resolved };
 }
 

@@ -100,4 +100,12 @@ export {
   type Offered,
   type Resolved,
 } from "./attributes.ts";
-export { checkKeyValue, elementStringOf, fieldsOf, identify, type Identification, type Identified } from "./identify.ts";
+export {
+  checkKeyValue,
+  elementStringOf,
+  fieldsOf,
+  identify,
+  normaliseKeyValue,
+  type Identification,
+  type Identified,
+} from "./identify.ts";
