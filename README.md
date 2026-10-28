@@ -4,7 +4,8 @@ Create GS1 barcodes — and, later, whole labels — in your browser, one at a t
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
 DPL). Nothing you type or upload leaves your computer.
 
-> **Status:** walking skeleton (28 October 2026). One symbol at a time, SVG and ZPL (as a graphic). See the backlog.
+> **Status:** walking skeleton (28 October 2026). One symbol at a time, SVG, and ZPL with the printer's own commands
+> (and as a template). See the backlog.
 
 ## Development
 
@@ -62,7 +63,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 **Phase 3 — printers** (ADR 0002)
 
 - 3.1 Printer profiles; whole-dot X-dimensions within the table's range; test print
-- 3.2 ZPL II: graphic (checked through Labelary in CI), then native commands where proven
+- 3.2 ZPL II with the printer's commands and templates with placeholders — *EAN/UPC, ITF-14, GS1-128, GS1 DataMatrix,
+  QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); DataBar, bearer bars, layout to do*
 - 3.3 TSPL/TSPL2 · 3.4 PPLB · 3.5 PPLA · 3.6 EPL2 · 3.7 DPL
 - 3.8 Direct printing: WebUSB, Zebra Browser Print; a local agent for network printers
 - 3.9 Compatibility matrix from tests on physical printers

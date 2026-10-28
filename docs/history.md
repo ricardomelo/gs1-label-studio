@@ -17,3 +17,10 @@ it), and decided: every document in English and the tool fixed in English. The r
 only); the reference is Zebra's ZPL II programming guide. With no printer at hand the owner uses Labelary's viewer, so
 the CI sends the studio's ZPL to Labelary and reads the rendered symbol back (the sandbox's network does not reach
 labelary.com or zebra.com).
+
+The owner then gave the environment full internet access and put the ZPL guide in the Drive folder. The guide's
+99 999-byte limit on `^GF` led to stripes. Asked whether ZPL would be an image or commands, the owner decided: the
+printer's commands always, images only for images such as a logo — for the size and so that systems can use the ZPL as
+a template with placeholders. Testing every command through Labelary found three traps a manual alone would not show:
+GS1-128's mode D joins element strings without FNC1, `^BQ` cannot make a GS1 QR Code, and the Data Matrix escape
+character changed between firmware versions (ADR 0002).
