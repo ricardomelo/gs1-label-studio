@@ -4,8 +4,9 @@ Create GS1 barcodes — and, later, whole labels — in your browser, one at a t
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
 DPL). Nothing you type or upload leaves your computer.
 
-> **Status:** early development (28 October 2026). One symbol at a time from data in any GS1 form, checked by the GS1
-> Barcode Syntax Engine; SVG, and ZPL with the printer's own commands (and as a template). See the backlog.
+> **Status:** early development (28 October 2026). The resolver's editor in the browser: key, qualifiers and data
+> attributes, the label beside its options, live; SVG, and ZPL with the printer's own commands (and as a template).
+> See the backlog.
 
 ## Development
 
@@ -53,12 +54,13 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar to do with 1.3*
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
   prepress options (bar width reduction, 100 % K)
-- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English)
+- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *the
+  editor screen done (preview beside the options, live, desktop and phone, light and dark); ruler and scan test to do*
 - 1.7 Offline (PWA)
 - 1.8 EPC for RFID and NFC: every key with a TDS scheme, from the resolver's TDT-derived schemes; the GS1 Company
   Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser
 - 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
-  1,25 kg); the URI's domain
+  1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it*
 
 **Phase 2 — in bulk**
 

@@ -25,4 +25,8 @@
   with guard bars and digits, sizes by scanning environment, QR version and error correction; human readable text as
   glyph outlines identical to the resolver's, or as text; the SVG; an EAN/UPC alone. On the page: scanning environment,
   size, EAN/UPC beside, its own size, QR error correction, text on or off and as outlines or text.
+- The editor (items 1.9, 1.6): what the code identifies on the left — paste anything, the key with its check digit,
+  its qualifiers, data attribute rows with the resolver's decimal families and hints —, the label beside its options
+  on the right, redrawn as anything changes, with the GS1 Digital Link URI coloured by part and its domain; a small
+  live preview fixed at the top on phones; light and dark. Browser tests (Playwright) at desktop and phone widths in CI.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

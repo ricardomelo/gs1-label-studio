@@ -40,3 +40,12 @@ encodings and four text outlines from the resolver are the fixtures; positions a
 character for character, once two details were matched — the point where fontTools starts each glyph contour, and
 Python rounding ties to even (9.3125 → 9.312) where JavaScript rounds up. One deliberate difference appeared: bwip-js
 makes some QR codes a version smaller than segno did, by encoding the GTIN's digits in numeric mode.
+
+The owner then asked for the resolver's editor itself: the key and its qualifiers, the attribute rows, the compact
+panel beside the preview, live — and the EPC formats. Mock-ups (a static page with a real label and EPC values from
+the resolver's code, at desktop and phone widths) were approved with the order proposed: the editor with key,
+qualifiers and attributes first, then EPC (1.8), then PNG, PDF and zip (1.5). The resolver's dictionary file and its
+attribute logic were ported and checked against it; two things it did not need came up — keeping AIs that are not
+Digital Link attributes for element string symbols, and refusing qualifiers of different alternatives (TPX with a
+batch), which its form prevented. The owner added the GS1 General Specifications 2026 and the EPC TDS 2.3, TDT 2.3
+and RFID standards to the Drive folder.

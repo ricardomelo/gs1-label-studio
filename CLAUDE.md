@@ -47,6 +47,11 @@ this public repository.
   (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf; a
   copy in the maintainer's Drive, `references`). For searching: download it and run `pdftotext -layout` in the
   scratchpad.
+- Also in `references`: GS1 General Specifications 2026; EPC Tag Data Standard 2.3 (October 2025), EPC Tag Data
+  Translation 2.3 (February 2025), EPC Radio-Frequency Identity V3 (February 2026). Copyrighted documents: never in the
+  repository.
+- The editor has browser tests: `pnpm --filter @gs1-label-studio/web e2e` after `pnpm build` (Playwright 1.63.0, the
+  version of this sandbox's browser).
 
 ## Working with the maintainer
 

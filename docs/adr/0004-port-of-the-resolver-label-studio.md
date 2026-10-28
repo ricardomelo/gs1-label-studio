@@ -42,8 +42,10 @@ for its code to be the starting point.
 | `label.py`: `render_png` (dpi), `render_pdf` (no library), `render_zip` (README) | `png.ts`, `pdf.ts`, `zip.ts` | 1.5 | to do |
 | `epc.py` + `epc_schemes.json`: EPC for every key (SGTIN, SSCC, SGLN, GRAI, GIAI, GSRN, GDTI, SGCN, CPI, ITIP) | `epc.ts` + the same JSON | 1.8 (new) | to do |
 | `gcp.py`: GCP length table (GS1's restricted XML) | `gcp.ts`: the user loads the file, kept in the browser | 1.8 | to do |
-| `app.js`: label options, data attributes with decimal families, domain (stem) | the one-code screen | 1.2, 1.6 | mock-ups first |
-| `gs1dict.py`, `gs1_dictionary.json`, `syntax.py`, `engine_messages.json` | the Syntax Engine's own dictionary; English only | — | not ported |
+| `app.js`: the editor — key, qualifiers, data attribute rows, the label panel beside the preview, the coloured URI, the domain | `apps/web/src/IdentifyCard.tsx`, `LabelCard.tsx` | 1.2, 1.6, 1.9 | **ported** without records and publishing, after mock-ups approved on 28 October 2026; browser tests at desktop and phone widths |
+| `gs1_dictionary.json`, `gs1dict.py` (keys, qualifiers, formats, titles) | `src/data/gs1_dictionary.json` (the same file), `dictionary.ts` | 1.9 | **ported**: the same release (1.4.1) and path AIs |
+| `syntax.py`: data attributes, decimal families, day 00, refusals | `attributes.ts`, `identify.ts` | 1.9 | **ported**: 216 AIs offered in the same order, 20 decimal and 6 day-zero cases equal |
+| `syntax.py`'s engine calls, `engine_messages.json` | the Syntax Engine in the browser (`syntax.ts`); its English messages | — | not needed |
 | `sheet.py` (spreadsheets of resolver records, i.e. links) | — (bulk labels are a different model) | 2.1 | ideas only |
 
 ## Deliberate differences
@@ -55,6 +57,8 @@ for its code to be the starting point.
 | QR version | segno: one encoding mode for the whole URI | bwip-js splits the data into modes (the GTIN's digits numeric), so at some levels the QR code is a version smaller (at H, "https://id.gs1.org/01/09506000134352" is version 4, not 5): a smaller symbol, equally valid. The tests check that the layout then moves by exactly the modules saved, and that it is never larger. |
 | Modules of 2D symbols | segno and libzint | bwip-js: the same sizes (or smaller, above), not necessarily the same masks or encodation; ZXing reads both |
 | An EAN/UPC alone | not drawn (the resolver always drew a 2D symbol) | laid out the same way in units of its own module, at the environment's linear target times the size |
+| Data attributes that are not GS1 Digital Link attributes | refused (the resolver drew Digital Link QR codes only) | kept: an element string symbol (GS1 DataMatrix, GS1-128) carries them; the URI says why it cannot |
+| Qualifier hints | the resolver's policy for its records (unaccented letters, digits, full stop, hyphen, underscore) | the GS1 format of the AI from the dictionary ("up to 20 characters") |
 | Text outlines | fontTools draws the glyphs | opentype.js reads the font; `hri.ts` draws the contours as fontTools does (start point, implied points after the transform) and `pyFixed()` rounds ties to even as Python does, so the paths are identical |
 
 ## Consequences

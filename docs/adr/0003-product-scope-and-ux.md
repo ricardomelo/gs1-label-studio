@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Proposed** (28 October 2026), for discussion with the owner; the interface language **decided** (below) |
+| Status | **Proposed** (28 October 2026), for discussion with the owner; the interface language and the one-code screen **decided** (below) |
 
 ## Who it is for
 
@@ -32,7 +32,11 @@
 
 ## Screens
 
-1. **One code** — identify, enter data, choose symbol and size, preview, export.
+1. **One code** — the resolver's editor without its records (decided with mock-ups on 28 October 2026, ADR 0004): on the
+   left what the code identifies — a box to paste anything, the key, its qualifiers, data attribute rows —, on the right
+   the label panel, sticky, with the preview beside its options, the GS1 Digital Link URI coloured by part, the element
+   string and the downloads, redrawn as anything changes; RFID and NFC (EPC) below the options. On a phone the fields
+   come first, with a small live preview fixed at the top.
 2. **In bulk** — a wizard: upload CSV or Excel (or paste), map columns to AIs (remembered by header), fixed values for
    the columns that do not change, validation with a report of the rows in error (fix or skip), preview of the first
    labels, generate.
