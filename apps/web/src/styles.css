@@ -26,3 +26,5 @@ input, select, button { font: inherit; padding: 8px; }
 .parsed code, .hint code { overflow-wrap: anywhere; }
 .markup { font-size: 1.1em; }
 .markup mark { background: var(--error); color: var(--bg); padding: 0 2px; }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+.symbol svg { max-width: 100%; height: auto; }

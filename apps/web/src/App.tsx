@@ -3,22 +3,35 @@ import {
   COMMON_DPI,
   dataFor,
   encode,
+  environmentsFor,
+  ENVIRONMENTS,
+  ERROR_LEVELS,
+  HriFont,
   InputError,
+  labelSvg,
+  layoutLabel,
+  linearSizesFor,
+  sizesFor,
   snapToDots,
+  symbolFor,
   SYMBOLOGIES,
   syntaxEngine,
   toSvg,
   widthInModules,
   zplLabel,
   zplTemplate,
+  type ErrorLevel,
+  type LabelOptions,
   type ParsedInput,
   type SyntaxEngine,
   type SymbologyId,
 } from "@gs1-label-studio/core";
+import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 
 // One code at a time: the data in any form GS1 writes it (backlog item 1.1), checked by the GS1 Barcode Syntax Engine;
-// the symbol, its preview at the X-dimension asked, and what a printer of the resolution chosen actually prints. The
-// guided flow, the scanning environments and the label layouts come with the backlog.
+// the label laid out as the resolver's label studio did (item 1.4, ADR 0004) — scanning environment, size, an EAN/UPC
+// beside the 2D symbol, human readable text —, its preview, and what a printer of the resolution chosen prints. The
+// guided choice and the final screen come with items 1.2 and 1.6, mock-ups first.
 const EXAMPLE = "(01)09506000134352(17)271231(10)ABC123";
 
 const KIND_NAMES: Record<ParsedInput["kind"], string> = {
@@ -28,6 +41,11 @@ const KIND_NAMES: Record<ParsedInput["kind"], string> = {
   "digital-link": "GS1 Digital Link URI",
   scan: "Scanner output",
 };
+
+const LAID_OUT: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix", "ean13", "upca", "upce", "ean8"];
+const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
+
+type LinearChoice = "none" | "auto" | "upce";
 
 function download(name: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -45,45 +63,87 @@ function Markup({ text }: { text: string }) {
   );
 }
 
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export function App() {
   const [engine, setEngine] = useState<SyntaxEngine | null>(null);
+  const [font, setFont] = useState<HriFont | null>(null);
   const [symbology, setSymbology] = useState<SymbologyId>("gs1-datamatrix");
   const [text, setText] = useState(EXAMPLE);
-  const [xMm, setXMm] = useState(0.495);
+  const [environmentChoice, setEnvironmentChoice] = useState<string>("");
+  const [size, setSize] = useState(100);
+  const [linearChoice, setLinearChoice] = useState<LinearChoice>("none");
+  const [linearSize, setLinearSize] = useState<number | null>(null);
+  const [showHri, setShowHri] = useState(true);
+  const [hriAsText, setHriAsText] = useState(false);
+  const [error, setError] = useState<ErrorLevel>("m");
+  const [xMmManual, setXMmManual] = useState(0.495);
   const [dpi, setDpi] = useState(203);
   const [zplError, setZplError] = useState<string | null>(null);
 
   useEffect(() => {
-    syntaxEngine().then(setEngine, (error: unknown) => console.error(error));
+    syntaxEngine().then(setEngine, (e: unknown) => console.error(e));
+    fetch(fontUrl)
+      .then((response) => response.arrayBuffer())
+      .then((bytes) => setFont(HriFont.fromBytes(bytes)), (e: unknown) => console.error(e));
   }, []);
 
   const parsed = useMemo(() => {
     if (!engine) return null;
     try {
       return { input: engine.parse(text) };
-    } catch (error) {
-      return { error: error instanceof InputError ? error : new InputError(String(error)) };
+    } catch (e) {
+      return { error: e instanceof InputError ? e : new InputError(String(e)) };
     }
   }, [engine, text]);
 
-  const symbol = useMemo(() => {
-    if (!parsed?.input) return null;
+  // The key's scanning environments, its default first (General Specifications figure 5-68).
+  const keyAi = parsed?.input?.elements[0]?.ai ?? "01";
+  const environments = environmentsFor(keyAi);
+  const environment = environments.includes(environmentChoice) ? environmentChoice : environments[0]!;
+  const laidOut = LAID_OUT.includes(symbology);
+  const twoD = TWO_D.includes(symbology);
+  const sizes = twoD ? sizesFor(environment, linearChoice !== "none" && linearSize === null) : linearSizesFor(environment);
+  const effectiveSize = sizes.includes(size) ? size : (sizes.includes(100) ? 100 : sizes[0]) ?? 100;
+
+  const label = useMemo(() => {
+    if (!parsed?.input || !font) return null;
     try {
       const data = dataFor(symbology, parsed.input);
-      return { data, geometry: encode(symbology, data) };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : String(error) };
+      if (!laidOut) {
+        const geometry = encode(symbology, data);
+        const quietZone = SYMBOLOGIES[symbology].kind === "linear" ? 10 : 2;
+        return { data, geometry, xMm: xMmManual, svg: toSvg(geometry, { xMm: xMmManual, quietZone }) };
+      }
+      const gtin = parsed.input.elements.find((e) => e.ai === "01")?.value;
+      const linear = twoD && linearChoice !== "none" && gtin ? symbolFor(gtin, linearChoice) : null;
+      if (twoD && linearChoice !== "none" && !gtin) throw new InputError("An EAN/UPC beside the 2D symbol needs a GTIN (01).");
+      const options: LabelOptions = {
+        symbology, data, showHri, error, environment, size: effectiveSize, linear,
+        hriLines: parsed.input.elements.map((e) => `(${e.ai})${e.value}`),
+        linearSize: twoD ? linearSize : null,
+      };
+      const layout = layoutLabel(options, font);
+      const geometry = encode(symbology, data, twoD && symbology.endsWith("qrcode") ? { eclevel: error.toUpperCase() as "L" } : {});
+      return { data, geometry, xMm: layout.xMm, svg: labelSvg(options, layout, font, hriAsText), layout };
+    } catch (e) {
+      const message = e instanceof Error && e.name === "NotPossible"
+        ? linearChoice === "upce" ? "This GTIN has no UPC-E (a GTIN-12 that zero-suppresses)." : "This GTIN cannot be carried by an EAN/UPC (its indicator is not 0)."
+        : errorText(e);
+      return { error: message };
     }
-  }, [parsed, symbology]);
+  }, [parsed, font, symbology, laidOut, twoD, xMmManual, linearChoice, showHri, error, environment, effectiveSize, linearSize, hriAsText]);
 
+  const xMm = label?.xMm ?? xMmManual;
   const snap = snapToDots(xMm, dpi);
   const quietZone = SYMBOLOGIES[symbology].kind === "linear" ? 10 : 2;
-  const svg = symbol?.geometry ? toSvg(symbol.geometry, { xMm, quietZone }) : null;
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
   function downloadZpl(template: boolean) {
-    if (!symbol?.geometry || !symbol.data) return;
-    const { geometry, data } = symbol;
+    if (!label?.geometry || !label.data) return;
+    const { geometry, data } = label;
     const d = snap.dots;
     const barHeightDots = 50 * d;
     const textDots = Math.round((2.2 / 25.4) * dpi);
@@ -101,8 +161,8 @@ export function App() {
       const zpl = template ? zplTemplate(symbology, data, options).zpl : zplLabel(symbology, data, options);
       download(`${symbology}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
       setZplError(null);
-    } catch (error) {
-      setZplError(error instanceof Error ? error.message : String(error));
+    } catch (e) {
+      setZplError(errorText(e));
     }
   }
 
@@ -192,17 +252,92 @@ export function App() {
             ))}
           </select>
         </label>
-        <label>
-          X-dimension (mm)
-          <input
-            type="number"
-            step="0.005"
-            min="0.17"
-            max="2"
-            value={xMm}
-            onChange={(event) => setXMm(Number(event.target.value) || 0.495)}
-          />
-        </label>
+
+        {laidOut ? (
+          <>
+            <label>
+              Scanning environment
+              <select value={environment} onChange={(event) => setEnvironmentChoice(event.target.value)}>
+                {environments.map((name) => (
+                  <option key={name} value={name}>
+                    {name} — symbol specification table {ENVIRONMENTS[name]!.table}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Size (percentage of the environment's target X-dimension)
+              <select value={effectiveSize} onChange={(event) => setSize(Number(event.target.value))}>
+                {sizes.map((s) => (
+                  <option key={s} value={s}>
+                    {s} %
+                  </option>
+                ))}
+              </select>
+            </label>
+            {twoD && (
+              <>
+                <label>
+                  EAN/UPC beside the 2D symbol
+                  <select value={linearChoice} onChange={(event) => setLinearChoice(event.target.value as LinearChoice)}>
+                    <option value="none">None</option>
+                    <option value="auto">EAN-13, UPC-A or EAN-8, as the GTIN takes</option>
+                    <option value="upce">UPC-E</option>
+                  </select>
+                </label>
+                {linearChoice !== "none" && (
+                  <label>
+                    Size of the EAN/UPC
+                    <select
+                      value={linearSize ?? ""}
+                      onChange={(event) => setLinearSize(event.target.value ? Number(event.target.value) : null)}
+                    >
+                      <option value="">As the 2D symbol</option>
+                      {linearSizesFor(environment).map((s) => (
+                        <option key={s} value={s}>
+                          {s} %
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {symbology.endsWith("qrcode") && (
+                  <label>
+                    QR error correction
+                    <select value={error} onChange={(event) => setError(event.target.value as ErrorLevel)}>
+                      {ERROR_LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {level.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </>
+            )}
+            <label className="check">
+              <input type="checkbox" checked={showHri} onChange={(event) => setShowHri(event.target.checked)} />
+              Human readable text
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={hriAsText} onChange={(event) => setHriAsText(event.target.checked)} />
+              SVG text as editable text (needs Liberation Sans and OCR-B where printed)
+            </label>
+          </>
+        ) : (
+          <label>
+            X-dimension (mm)
+            <input
+              type="number"
+              step="0.005"
+              min="0.17"
+              max="2"
+              value={xMmManual}
+              onChange={(event) => setXMmManual(Number(event.target.value) || 0.495)}
+            />
+          </label>
+        )}
+
         <label>
           Printer resolution
           <select value={dpi} onChange={(event) => setDpi(Number(event.target.value))}>
@@ -214,25 +349,26 @@ export function App() {
           </select>
         </label>
         <p className="hint">
-          At {dpi} dpi a module prints as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}:{" "}
+          X-dimension {xMm.toFixed(3)} mm. At {dpi} dpi a module prints as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}:{" "}
           <strong>{snap.xMm.toFixed(3)} mm</strong>.
         </p>
       </section>
 
       <section className="preview" aria-live="polite">
-        {symbol?.error && <p className="error">{symbol.error}</p>}
+        {!font && <p className="hint">Loading the font…</p>}
+        {label?.error && <p className="error">{label.error}</p>}
         {zplError && <p className="error">{zplError}</p>}
-        {svg && <div className="symbol" dangerouslySetInnerHTML={{ __html: svg }} />}
+        {label?.svg && <div className="symbol" dangerouslySetInnerHTML={{ __html: label.svg }} />}
       </section>
 
       <section className="actions">
-        <button disabled={!svg} onClick={() => svg && download(`${symbology}.svg`, svg, "image/svg+xml")}>
+        <button disabled={!label?.svg} onClick={() => label?.svg && download(`${symbology}.svg`, label.svg, "image/svg+xml")}>
           Download SVG
         </button>
-        <button disabled={!svg} onClick={() => downloadZpl(false)}>
+        <button disabled={!label?.svg} onClick={() => downloadZpl(false)}>
           Download ZPL ({dpi} dpi)
         </button>
-        <button disabled={!svg} onClick={() => downloadZpl(true)}>
+        <button disabled={!label?.svg} onClick={() => downloadZpl(true)}>
           Download ZPL template
         </button>
       </section>
