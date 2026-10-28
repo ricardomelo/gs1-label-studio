@@ -34,3 +34,9 @@ data attributes — was not the starting point. It had been used for its knowled
 TypeScript keeping it as the reference; run its Python on a server; run Python in the browser), the owner chose the
 first (ADR 0004). Its Python runs in the sandbox, so a script writes its answers as fixtures; the first module ported,
 the scanning environments, gives the same answer in all 2 970 combinations.
+
+Item 1.4 followed: `linear.py` and the layout of `label.py`, with the SVG. Twenty-three layouts, ten EAN/UPC
+encodings and four text outlines from the resolver are the fixtures; positions agree within 1e-9 and the outlines
+character for character, once two details were matched — the point where fontTools starts each glyph contour, and
+Python rounding ties to even (9.3125 → 9.312) where JavaScript rounds up. One deliberate difference appeared: bwip-js
+makes some QR codes a version smaller than segno did, by encoding the GTIN's digits in numeric mode.

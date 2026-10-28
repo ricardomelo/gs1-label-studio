@@ -49,7 +49,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
   GS1 QR Code, QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later
 - 1.4 Layout and human readable text as the General Specifications place them: the resolver's 2D symbol with an EAN/UPC
-  beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction
+  beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction —
+  *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar to do with 1.3*
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
   prepress options (bar width reduction, 100 % K)
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English)
@@ -90,5 +91,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 ## Licence
 
 [Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT), GS1's
-[Barcode Syntax Engine](https://github.com/gs1/gs1-syntax-engine) (`gs1encoder`, Apache-2.0) and, for tests,
-[zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT).
+[Barcode Syntax Engine](https://github.com/gs1/gs1-syntax-engine) (`gs1encoder`, Apache-2.0),
+[opentype.js](https://github.com/opentypejs/opentype.js) (MIT) and the Liberation Sans font (SIL Open Font License,
+`packages/core/assets/fonts/OFL.txt`); for tests, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) and
+[resvg-js](https://github.com/yisibl/resvg-js) (MPL-2.0).

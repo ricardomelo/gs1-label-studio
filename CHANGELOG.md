@@ -21,4 +21,8 @@
 - The resolver's label studio is the starting point, ported to TypeScript (ADR 0004): its scanning environments
   (General Specifications 26.0 symbol specification tables), sizes and checks first, with the resolver's own answers
   as test fixtures (`scripts/resolver-reference/golden.py`).
+- The label's layout ported from the resolver (item 1.4): a 2D symbol with its quiet zone and text, an EAN/UPC beside it
+  with guard bars and digits, sizes by scanning environment, QR version and error correction; human readable text as
+  glyph outlines identical to the resolver's, or as text; the SVG; an EAN/UPC alone. On the page: scanning environment,
+  size, EAN/UPC beside, its own size, QR error correction, text on or off and as outlines or text.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
