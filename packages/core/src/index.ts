@@ -48,18 +48,32 @@ export {
 } from "./environments.ts";
 export {
   minimumBarHeight,
+  PARTS,
   SPEC_SYMBOL_NAMES,
   SPECIFICATION_TABLES,
   specificationFor,
   specificationsFor,
   specSizesFor,
-  T12_GROUPING,
-  T12_LOGISTIC,
-  T12_UNIT,
   type SpecificationTable,
   type SpecSymbol,
   type SymbolSpecification,
 } from "./specifications.ts";
+export {
+  carries,
+  gs1128DataCharacters,
+  guidance,
+  QUESTIONS,
+  TREE,
+  walk,
+  type Answers,
+  type Carries,
+  type Guidance,
+  type Leaf,
+  type QuestionId,
+  type Step,
+  type SymbolOption,
+  type Walk,
+} from "./guide.ts";
 export { HriFont } from "./hri.ts";
 export { pyFixed } from "./pyformat.ts";
 export {

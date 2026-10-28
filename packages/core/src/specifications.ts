@@ -89,17 +89,22 @@ const UPCE: Quiet = [9, 7];
 const NONE: Quiet = [0, 0];
 const TEN: Quiet = [10, 10];
 
-const T1_ADD1 = "addendum 1: with AI (8200)";
-const T1_ADD2 = "addendum 2: 2D barcodes";
-const T3_ADD1 = "addendum 1: 2D barcodes";
-const T7_OTHER = "direct marking of items other than medical devices";
-const T7_INK = "ink-based direct part marking of medical devices";
-const T7_A = "direct part marking A: connected modules (laser, chemical etching)";
-const T7_B = "direct part marking B: non-connected modules (dot peen)";
-const T9_LOCATION = "location marking (note to the table; section 2.4.2)";
-export const T12_UNIT = "trade items at unit pack level";
-export const T12_GROUPING = "trade item groupings";
-export const T12_LOGISTIC = "logistic units";
+/** The parts of the tables that give a symbol more than one row. */
+export const PARTS = {
+  t1Ai8200: "addendum 1: with AI (8200)",
+  t1TwoD: "addendum 2: 2D barcodes",
+  t3TwoD: "addendum 1: 2D barcodes",
+  t7Other: "direct marking of items other than medical devices",
+  t7Ink: "ink-based direct part marking of medical devices",
+  t7A: "direct part marking A: connected modules (laser, chemical etching)",
+  t7B: "direct part marking B: non-connected modules (dot peen)",
+  t9Location: "location marking (note to the table; section 2.4.2)",
+  t12Unit: "trade items at unit pack level",
+  t12Grouping: "trade item groupings",
+  t12Logistic: "logistic units",
+} as const;
+const { t1Ai8200: T1_ADD1, t1TwoD: T1_ADD2, t3TwoD: T3_ADD1, t7Other: T7_OTHER, t7Ink: T7_INK, t7A: T7_A, t7B: T7_B,
+  t9Location: T9_LOCATION, t12Unit: T12_UNIT, t12Grouping: T12_GROUPING, t12Logistic: T12_LOGISTIC } = PARTS;
 
 const R = (min: number, target: number | null, max: number) => [min, target, max] as const;
 const H = (forMin: number, forTarget: number, forMax: number) => [forMin, forTarget, forMax] as const;
