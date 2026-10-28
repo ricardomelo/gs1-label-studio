@@ -7,3 +7,5 @@ test-results/
 .DS_Store
 .env
 .vitest/
+apps/web/test-results/
+apps/web/playwright-report/

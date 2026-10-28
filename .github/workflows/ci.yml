@@ -23,3 +23,8 @@ jobs:
         env:
           LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
       - run: pnpm build
+      # The editor in a browser (apps/web/e2e), desktop and phone widths, against the build above.
+      - run: pnpm --filter @gs1-label-studio/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @gs1-label-studio/web e2e
+        env:
+          CI: "1"
