@@ -19,9 +19,9 @@ this public repository.
   commits are never rewritten.
 - One topic per commit, with a message that explains why, and an area prefix (`core:`, `web:`, `docs:`, `ci:`,
   `metrics:`). Code and its technical documents go in the same commit.
-- After a push that changes code, read the CI run (`gh run list`). The sandbox cannot download job logs; read the
-  failures as annotations: `gh api repos/ricardomelo/gs1-label-studio/check-runs/JOB_ID/annotations` (job id from
-  `gh api repos/ricardomelo/gs1-label-studio/actions/runs/RUN_ID/jobs`).
+- After a push that changes code, read the CI run (`gh run list`, `gh run view --log-failed`). Failures are also
+  annotations (`gh api repos/ricardomelo/gs1-label-studio/check-runs/JOB_ID/annotations`), for an environment whose
+  network does not reach the log storage.
 - `pnpm check` (typecheck, tests, build) must pass before a push.
 
 ## Indicators (docs/metrics/README.md) — from day one
@@ -40,10 +40,13 @@ this public repository.
 - Prove that a new check can fail (mutation); restore the file and compare checksums.
 - Printer languages: a native command is offered only once a test shows it gives the same symbol (ADR 0002).
 - There is no physical printer for tests: ZPL is checked with Labelary (`packages/core/test/labelary.test.ts`, run in
-  CI with `LABELARY=1`; this sandbox cannot reach api.labelary.com unless the environment allows it). The maintainer
-  uses Labelary's viewer (https://labelary.com/viewer.html) for manual checks.
-- ZPL reference: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*
-  (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
+  CI with `LABELARY=1`). Locally: `NODE_USE_ENV_PROXY=1 LABELARY=1 npx vitest run test/labelary.test.ts` in
+  `packages/core` (the cloud environment has full internet access since 28 October 2026). The maintainer uses
+  Labelary's viewer (https://labelary.com/viewer.html) for manual checks.
+- ZPL reference: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
+  (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf; a
+  copy in the maintainer's Drive, `references`). For searching: download it and run `pdftotext -layout` in the
+  scratchpad.
 
 ## Working with the maintainer
 
