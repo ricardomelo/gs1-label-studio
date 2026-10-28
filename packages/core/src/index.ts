@@ -29,3 +29,20 @@ export {
   type ParsedElement,
   type ParsedInput,
 } from "./syntax.ts";
+export {
+  checkEnvironment,
+  ENVIRONMENTS,
+  environmentsFor,
+  linearSizesFor,
+  linearXDimension,
+  OutOfRange,
+  RESOLVER_SYMBOL_OF,
+  RESOLVER_SYMBOLS,
+  SIZES,
+  sizesFor,
+  xDimension,
+  type Environment,
+  type EnvironmentChoice,
+  type Range,
+  type ResolverSymbol,
+} from "./environments.ts";

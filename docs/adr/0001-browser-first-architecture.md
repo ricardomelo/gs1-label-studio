@@ -37,9 +37,8 @@ send them to as many printers as possible. Managing links is out of scope.
 5. **Tests**: Vitest; every symbol is read back by an independent decoder (ZXing, `zxing-wasm`), comparing the
    symbology identifier and the data, as the resolver's tests did with zxing-cpp. Playwright for the browser. Mutation
    checks prove that a new check can fail.
-6. **Knowledge carried over** from the resolver's label studio, rewritten in TypeScript: the scanning environments
-   table (General Specifications release 26.0, section 5.12.3), the sizes as percentages of the target, the EAN/UPC's
-   own size, quiet zones, human readable text rules, the PDF written without a library.
+6. **The resolver's label studio as the starting point**: its code ported to TypeScript and kept as the reference the
+   tests compare with ([ADR 0004](0004-port-of-the-resolver-label-studio.md)).
 
 ## Options considered
 
