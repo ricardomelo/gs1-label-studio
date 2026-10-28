@@ -46,6 +46,20 @@ export {
   type Range,
   type ResolverSymbol,
 } from "./environments.ts";
+export {
+  minimumBarHeight,
+  SPEC_SYMBOL_NAMES,
+  SPECIFICATION_TABLES,
+  specificationFor,
+  specificationsFor,
+  specSizesFor,
+  T12_GROUPING,
+  T12_LOGISTIC,
+  T12_UNIT,
+  type SpecificationTable,
+  type SpecSymbol,
+  type SymbolSpecification,
+} from "./specifications.ts";
 export { HriFont } from "./hri.ts";
 export { pyFixed } from "./pyformat.ts";
 export {

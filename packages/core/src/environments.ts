@@ -9,7 +9,8 @@ import type { SymbologyId } from "./symbologies.ts";
  * `symbols` are the resolver's 2D symbols: "qr" (a QR code: with a GS1 Digital Link URI, or a GS1 QR Code), "dm" (a
  * Data Matrix with a GS1 Digital Link URI) and "gs1dm" (GS1 DataMatrix). A table that names GS1 DataMatrix gives its
  * range to both Data Matrix symbols; QR codes only where a table names a QR Code. `linear` is the EAN/UPC range, null
- * where the table has none. `keys`: null for trade items (every key without a table of its own), the keys of the table,
+ * where the table has none; the tables themselves, with the ranges of ITF-14, GS1-128, GS1 DataBar and GS1 DotCode, are
+ * in `specifications.ts`. `keys`: null for trade items (every key without a table of its own), the keys of the table,
  * or "any". The order is the decision tree's (figure 5-68): a key's first environment is its default.
  */
 export type Range = readonly [min: number, target: number, max: number];
@@ -42,7 +43,7 @@ export const ENVIRONMENTS: Record<string, Environment> = {
   healthcare: { table: 6, "2d": [0.254, 0.380, 0.990], linear: [0.170, 0.330, 0.660], symbols: DM, keys: null },
   // Not at retail point of sale, not in general distribution, not regulated healthcare: table 4
   other: { table: 4, "2d": [0.375, 0.495, 0.990], linear: [0.264, 0.330, 0.660], symbols: RESOLVER_SYMBOLS, keys: null },
-  // Logistic units (SSCC) in general distribution: table 5 (its GS1-128 range comes with that symbol, backlog 1.2)
+  // Logistic units (SSCC) in general distribution: table 5 (its GS1-128 row is in specifications.ts)
   logistics: { table: 5, "2d": [0.743, 0.743, 1.50], linear: null, symbols: RESOLVER_SYMBOLS, keys: ["00"] },
   // GDTI, GRAI, GIAI and GLN: table 9
   assets: { table: 9, "2d": [0.375, 0.375, 0.743], linear: null, symbols: RESOLVER_SYMBOLS,
