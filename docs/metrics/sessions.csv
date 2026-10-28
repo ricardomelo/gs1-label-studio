@@ -1,2 +1,2 @@
 session,date,start_utc,end_utc,kind,claude_minutes,owner_minutes,commits,items,notes
-session_01AV1osrFkvHXfNuXUbGJSg5,2026-10-28,16:19,17:29,cloud,,,13,0.1 0.2 0.3,"Kick-off: stack, repository, printer languages, walking skeleton, metrics from day one; English only; ZPL checked through Labelary in CI"
+session_01AV1osrFkvHXfNuXUbGJSg5,2026-10-28,16:19,18:05,cloud,,,18,0.1 0.2 0.3,"Kick-off: stack, repository, printer languages, walking skeleton, metrics from day one; English only; ZPL checked through Labelary; Drive folder for handover and time sheet; ^GF stripes"
