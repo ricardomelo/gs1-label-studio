@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import bwipjs from "bwip-js";
 import {
@@ -12,9 +11,8 @@ import {
   type LinearKind,
 } from "../src/index.ts";
 import { hriFont } from "./font.ts";
+import { fixture, optionsOf, type Resolver } from "./resolver.ts";
 
-// The resolver's answers, from its own code at a pinned commit (scripts/resolver-reference/golden.py; ADR 0004).
-const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/resolver/${name}`, import.meta.url), "utf8"));
 const linear = fixture("linear.json");
 const layouts = fixture("layouts.json");
 const font = hriFont();
@@ -50,22 +48,6 @@ describe("EAN/UPC, as the resolver encoded them", () => {
     expect(() => encodeLinear("ean13", "9506000134353")).toThrow(NotPossible);
   });
 });
-
-type Resolver = {
-  uri: string; hri_lines: string[]; show_hri: boolean; version?: number; error?: "l" | "m" | "q" | "h"; size?: number;
-  linear?: [LinearKind, string]; symbol?: "qr" | "dm" | "gs1dm"; element_string?: string; environment?: string;
-  linear_size?: number;
-};
-
-function optionsOf(r: Resolver): LabelOptions {
-  const symbol = r.symbol ?? "qr";
-  return {
-    symbology: symbol === "qr" ? "dl-qrcode" : symbol === "dm" ? "dl-datamatrix" : "gs1-datamatrix",
-    data: symbol === "gs1dm" ? r.element_string! : r.uri,
-    hriLines: r.hri_lines, showHri: r.show_hri, version: r.version ?? null, error: r.error ?? "m", size: r.size ?? 100,
-    linear: r.linear ?? null, environment: r.environment ?? "retail", linearSize: r.linear_size ?? null,
-  };
-}
 
 const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
 

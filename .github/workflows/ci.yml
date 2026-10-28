@@ -18,6 +18,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # poppler's pdftoppm draws the PDFs the tests read back (packages/core/test/render.test.ts).
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       # Failures as annotations too: they can be read through the API where the logs cannot.
       - run: pnpm --filter @gs1-label-studio/core exec vitest run --reporter=default --reporter=github-actions
         env:

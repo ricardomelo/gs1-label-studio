@@ -1,4 +1,4 @@
-import { encode, EncodeError } from "./encode.ts";
+import { encode, EncodeError, type SymbolGeometry } from "./encode.ts";
 import {
   checkEnvironment,
   ENVIRONMENTS,
@@ -193,6 +193,35 @@ export function layoutLabel(options: LabelOptions, font: HriFont): Layout {
     [width, height] = placeLinear(options.linear, unit, rects, texts, width + LINEAR_GAP, boxY, height, font);
   }
   return { width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version };
+}
+
+/** Whether the symbology has the resolver's label layout (a 2D symbol, or an EAN/UPC alone); the others, not yet (1.3). */
+export function hasLayout(symbology: SymbologyId): boolean {
+  return TWO_D.includes(symbology) || LINEAR_ALONE.includes(symbology);
+}
+
+/**
+ * A symbol without the label layout yet (ITF-14, GS1-128, GS1 DataBar: item 1.3), as `toSvg()` draws it: the symbol
+ * and its quiet zones, no text, a linear symbol `barHeight` modules high; so that it has a PNG and a PDF too.
+ */
+export function symbolLayout(geometry: SymbolGeometry, xMm: number, quietZone: number, barHeight = 50): Layout {
+  const rects: [number, number, number, number][] = [];
+  let width: number;
+  let height: number;
+  if (geometry.kind === "linear") {
+    let x = quietZone;
+    geometry.widths.forEach((w, i) => {
+      if (i % 2 === 0) rects.push([x, 0, w, barHeight]);
+      x += w;
+    });
+    [width, height] = [x + quietZone, barHeight];
+  } else {
+    const matrix = Array.from({ length: geometry.rows }, (_, r) =>
+      Array.from({ length: geometry.cols }, (_, c) => Boolean(geometry.dark[r * geometry.cols + c])));
+    rects.push(...qrRects(matrix, quietZone, quietZone));
+    [width, height] = [geometry.cols + 2 * quietZone, geometry.rows + 2 * quietZone];
+  }
+  return { width, height, rects, symbolRects: rects.length, texts: [], xMm, modules: 0, version: null };
 }
 
 /** An EAN/UPC alone, in units of its own module, at its environment's linear target times the size. */

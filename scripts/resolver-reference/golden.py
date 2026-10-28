@@ -279,3 +279,41 @@ write("epc.json", {
             "bad": {name: gcp_outcome(xml) for name, xml in GCP_BAD.items()}},
 })
 print("epc written")
+
+# ------------------------------------------------------------------------------------------- PNG, PDF and zip (1.5)
+import base64  # noqa: E402
+import io  # noqa: E402
+import re  # noqa: E402
+import zipfile  # noqa: E402
+import zlib  # noqa: E402
+
+
+def pdf_parts(pdf: bytes) -> dict:
+    """What a port can match: the page's size, the content stream's operators (inflated) and the information
+    dictionary; the compressed bytes depend on the zlib that wrote them."""
+    stream = re.search(rb"stream\n(.*?)\nendstream", pdf, re.S).group(1)
+    return {"mediaBox": re.search(rb"/MediaBox \[([^\]]*)\]", pdf).group(1).decode("ascii"),
+            "content": zlib.decompress(stream).decode("ascii"),
+            "info": re.search(rb"5 0 obj\n(.*?)\nendobj", pdf, re.S).group(1).decode("latin-1")}
+
+
+def render_case(**options):
+    o = label.LabelOptions(**options)
+    with zipfile.ZipFile(io.BytesIO(label.render_zip(o, "label"))) as archive:
+        names = archive.namelist()
+        readme = archive.read("README.txt").decode("utf-8")
+    return {"options": options, "pdf": pdf_parts(label.render_pdf(o)),
+            "png": base64.b64encode(label.render_png(o)).decode("ascii"), "zipNames": names, "readme": readme}
+
+
+RENDER_CASES = [
+    kw(),
+    kw(linear=("ean13", "9506000134352")),
+    kw(symbol="gs1dm", element_string=ES, hri_lines=["(01)09506000134352", "(17)271231", "(10)ABC123"]),
+    kw(linear=("upce", "01234565"), linear_size=200, version=4, uri="https://id.gs1.org/01/00012345000065?x=(a)\\b"),
+    kw(symbol="dm", environment="dpm", size=90, show_hri=False),
+    kw(linear=("upca", "614141000036"), size=120, error="q", version=4, hri_lines=["(01)00614141000036", "(10)ABC123"]),
+]
+write("renders.json", {"pngPixelsPerModule": label.PNG_PIXELS_PER_MODULE,
+                       "renders": [render_case(**c) for c in RENDER_CASES]})
+print(f"{len(RENDER_CASES)} renders written")
