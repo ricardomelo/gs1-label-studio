@@ -14,12 +14,21 @@ export type SymbolGeometry =
 
 export class EncodeError extends Error {}
 
+/** QR code options: the error correction level, exactly as chosen (never raised), and a version (1–40). */
+export interface EncodeOptions {
+  eclevel?: "L" | "M" | "Q" | "H";
+  version?: number;
+}
+
 /** Encodes `data` (see `Symbology.data`) and checks it on the way: GS1 syntax, check digits, lengths. */
-export function encode(symbology: SymbologyId, data: string): SymbolGeometry {
+export function encode(symbology: SymbologyId, data: string, options: EncodeOptions = {}): SymbolGeometry {
   const { bcid, kind } = SYMBOLOGIES[symbology];
+  const extra: Record<string, string> = {};
+  if (options.eclevel) extra.eclevel = options.eclevel;
+  if (options.version) extra.version = String(options.version);
   let raw;
   try {
-    raw = bwipjs.raw({ bcid, text: data })[0];
+    raw = bwipjs.raw({ bcid, text: data, ...extra })[0];
   } catch (error) {
     throw new EncodeError(String(error instanceof Error ? error.message : error));
   }
