@@ -18,7 +18,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm test
+      # Failures as annotations too: they can be read through the API where the logs cannot.
+      - run: pnpm -r test -- --reporter=default --reporter=github-actions
         env:
           LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
       - run: pnpm build
