@@ -74,3 +74,30 @@ export {
   type LabelText,
   type Layout,
 } from "./layout.ts";
+export {
+  aiEntry,
+  DICTIONARY,
+  exclusiveQualifiers,
+  formatHint,
+  pathAis,
+  primaryKeys,
+  qualifiersOf,
+  type AiEntry,
+  type Attribute,
+  type Component,
+} from "./dictionary.ts";
+export {
+  attributeByCode,
+  AttributeError,
+  attributeHint,
+  attributesForKey,
+  COMMON_ATTRIBUTES,
+  decimalFamilies,
+  MAX_ATTRIBUTES,
+  offeredAttributes,
+  refuseDayZero,
+  resolveDecimal,
+  type Offered,
+  type Resolved,
+} from "./attributes.ts";
+export { checkKeyValue, elementStringOf, fieldsOf, identify, type Identification, type Identified } from "./identify.ts";

@@ -23,8 +23,10 @@ export interface ParsedInput {
   /** Bracketed, as GS1 writes it: "(01)09506000134352(10)ABC123". */
   elementString: string;
   elements: ParsedElement[];
-  /** On the canonical stem, https://id.gs1.org/, unless another is given. Empty when the data has no primary key. */
+  /** On the canonical stem, https://id.gs1.org/, unless another is given. Empty when the data cannot be one. */
   digitalLinkUri: string;
+  /** Why there is no GS1 Digital Link URI (no primary key, an AI that is not a data attribute…), in the engine's words. */
+  digitalLinkError?: string;
 }
 
 export class InputError extends Error {
@@ -106,12 +108,14 @@ export class SyntaxEngine {
       return { ai, value, title: withTitle.slice(0, Math.max(0, withTitle.lastIndexOf(` (${ai}) `))) };
     });
     let digitalLinkUri = "";
+    let digitalLinkError: string | undefined;
     try {
       digitalLinkUri = gs.getDLuri(stem);
-    } catch {
-      // No primary key (a GTIN, an SSCC…): the data cannot become a GS1 Digital Link URI.
+    } catch (error) {
+      // No primary key, or an AI a GS1 Digital Link URI cannot carry: the element string symbols still can.
+      digitalLinkError = error instanceof Error ? error.message : String(error);
     }
-    return { kind, elementString, elements, digitalLinkUri };
+    return { kind, elementString, elements, digitalLinkUri, ...(digitalLinkError ? { digitalLinkError } : {}) };
   }
 
   free(): void {
@@ -137,7 +141,9 @@ export function dataFor(symbology: SymbologyId, input: ParsedInput): string {
   if (data === "element-string") return input.elementString;
   if (data === "uri") {
     if (!input.digitalLinkUri) {
-      throw new InputError(`${name} carries a GS1 Digital Link URI, which needs a primary key such as a GTIN or an SSCC.`);
+      throw new InputError(
+        `${name} carries a GS1 Digital Link URI, and this data cannot be one: ${input.digitalLinkError ?? "it has no primary key"}.`,
+      );
     }
     return input.digitalLinkUri;
   }

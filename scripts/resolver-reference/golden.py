@@ -152,3 +152,44 @@ write("layouts.json", {
     "hriPaths": hri_paths,
 })
 print(f"{len(cases)} layouts written")
+
+# --------------------------------------------------------------------------------------- data attributes (1.9)
+import gs1dict  # noqa: E402
+import syntax  # noqa: E402  (logs that the C engine is absent: only the parts that do not need it are used)
+
+dictionary = gs1dict.load()
+reference = syntax.Engine.__new__(syntax.Engine)
+reference.attributes = gs1dict.data_attributes(dictionary)
+reference.families = syntax.decimal_families(reference.attributes)
+reference.path_ais = gs1dict.path_ais(dictionary)
+reference.available, reference.release = True, dictionary["release"]
+
+
+def outcome(call):
+    try:
+        return {"ok": list(call())}
+    except syntax.ValidationError as error:
+        return {"error": error.code, "params": {k: v for k, v in error.params.items()}}
+
+
+DECIMALS = [("310n", "0,5"), ("310n", "1.25"), ("310n", "123,456"), ("310n", "12"), ("310n", "1,2,3"),
+            ("310n", "1,1234567"), ("310n", "abc"), ("3103", "0,5"), ("3103", "500"), ("3103", "1,2345"),
+            ("392n", "12,5"), ("3922", "12,5"), ("393n", "98612,30"), ("393n", "986x2"), ("392n", "1234567890123456"),
+            ("17", "271231"), ("315n", "  2,5 "), ("310n", "0"), ("310n", "000,500"), ("330n", "1,5")]
+DAY_ZERO = [("17", "271200"), ("17", "270200"), ("17", "271231"), ("15", "260000"), ("11", "270100"), ("7006", "270100")]
+
+
+def day_zero(ai, value):
+    syntax._refuse_day_zero(ai, value, reference.attributes[ai]["components"])
+    return []
+
+
+write("attributes.json", {
+    "release": dictionary["release"], "dictionaryDate": dictionary["dictionary"],
+    "describe": reference.describe(),
+    "pathAis": {key: sorted(ais) for key, ais in reference.path_ais.items()},
+    "decimals": [[ai, value, outcome(lambda ai=ai, value=value: reference.resolve_decimal(ai, value))]
+                 for ai, value in DECIMALS],
+    "dayZero": [[ai, value, outcome(lambda ai=ai, value=value: day_zero(ai, value))] for ai, value in DAY_ZERO],
+})
+print("attributes written")
