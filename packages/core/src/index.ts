@@ -19,3 +19,13 @@ export {
   type ZplPlaceholder,
   type ZplTemplate,
 } from "./zpl.ts";
+export {
+  dataFor,
+  InputError,
+  syntaxEngine,
+  SyntaxEngine,
+  zeroSuppress,
+  type InputKind,
+  type ParsedElement,
+  type ParsedInput,
+} from "./syntax.ts";

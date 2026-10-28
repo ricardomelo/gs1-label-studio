@@ -31,7 +31,9 @@ send them to as many printers as possible. Managing links is out of scope.
    geometry every exporter draws from, as `label.py` drew every format from one layout.
 4. **GS1 rules: the GS1 Barcode Syntax Engine** (Apache-2.0, npm `gs1encoder`, the same engine the resolver used) for
    parsing and validating input — bracketed element strings, unbracketed with GS separators as a scanner sends them,
-   GS1 Digital Link URIs — and for the messages explaining what is wrong.
+   GS1 Digital Link URIs — and for the messages explaining what is wrong. It is the gate: the data a symbol carries is
+   derived from what the engine accepted (`packages/core/src/syntax.ts`), and bwip-js only draws. A value holding "("
+   is refused for now: the engine escapes it as "\(", which bwip-js's bracketed input cannot take.
 5. **Tests**: Vitest; every symbol is read back by an independent decoder (ZXing, `zxing-wasm`), comparing the
    symbology identifier and the data, as the resolver's tests did with zxing-cpp. Playwright for the browser. Mutation
    checks prove that a new check can fail.
