@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Proposed** (28 October 2026), for discussion with the owner |
+| Status | **Proposed** (28 October 2026), for discussion with the owner; the interface language **decided** (below) |
 
 ## Who it is for
 
@@ -26,8 +26,9 @@
 4. **See it at real size.** A preview at 1:1 with a ruler, the X-dimension, the symbol's printed size, and a "scan
    test" that reads the symbol back with the same decoder the tests use.
 5. **Private.** Nothing leaves the browser; said on the page.
-6. **Accessible and international.** Keyboard and screen reader, light and dark, phone width; pt-BR and English first,
-   more languages through the same files as the resolver.
+6. **Accessible.** Keyboard and screen reader, light and dark, phone width.
+7. **In English.** The owner fixed the tool in English (28 October 2026): one language to write, test and document.
+   Texts are kept apart from the code so that a translation remains possible, but none is planned.
 
 ## Screens
 

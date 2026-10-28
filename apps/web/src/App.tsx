@@ -62,12 +62,12 @@ export function App() {
     <main>
       <header>
         <h1>GS1 Label Studio</h1>
-        <p>Gerador de códigos de barras GS1 — tudo é processado no seu navegador.</p>
+        <p>GS1 barcode generator — everything is processed in your browser.</p>
       </header>
 
       <section className="form">
         <label>
-          Símbolo
+          Symbol
           <select
             value={symbology}
             onChange={(event) => {
@@ -84,11 +84,11 @@ export function App() {
           </select>
         </label>
         <label>
-          Dados
+          Data
           <input value={data} onChange={(event) => setData(event.target.value)} spellCheck={false} />
         </label>
         <label>
-          Dimensão X (mm)
+          X-dimension (mm)
           <input
             type="number"
             step="0.005"
@@ -99,7 +99,7 @@ export function App() {
           />
         </label>
         <label>
-          Impressora (dpi)
+          Printer resolution
           <select value={dpi} onChange={(event) => setDpi(Number(event.target.value))}>
             {COMMON_DPI.map((value) => (
               <option key={value} value={value}>
@@ -109,7 +109,7 @@ export function App() {
           </select>
         </label>
         <p className="hint">
-          A {dpi} dpi o módulo é impresso com {snap.dots} {snap.dots === 1 ? "ponto" : "pontos"}:{" "}
+          At {dpi} dpi a module prints as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}:{" "}
           <strong>{snap.xMm.toFixed(3)} mm</strong>.
         </p>
       </section>
@@ -121,10 +121,10 @@ export function App() {
 
       <section className="actions">
         <button disabled={!svg} onClick={() => svg && download(`${symbology}.svg`, svg, "image/svg+xml")}>
-          Baixar SVG
+          Download SVG
         </button>
         <button disabled={!svg} onClick={downloadZpl}>
-          Baixar ZPL ({dpi} dpi)
+          Download ZPL ({dpi} dpi)
         </button>
       </section>
     </main>

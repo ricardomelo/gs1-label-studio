@@ -33,7 +33,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Phase 0 — setting up**
 
-- 0.1 Repository, CI, publication on GitHub Pages — *done locally; waiting for the GitHub repository*
+- 0.1 Repository, CI, publication on GitHub Pages — *done*
 - 0.2 Development indicators from the first day (`docs/metrics`) — *done*
 - 0.3 Walking skeleton: core encoding through bwip-js, read back by ZXing; printer dot grid; SVG; ZPL graphic — *done*
 
@@ -47,7 +47,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   GS1 QR Code, QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later
 - 1.4 Human readable text as the General Specifications place it (EAN/UPC digits and guard bars, element strings)
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size), EPS, zip; prepress options (bar width reduction, 100 % K)
-- 1.6 Preview at real size with a ruler and a scan test; pt-BR and English; light and dark; phone width
+- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English)
 - 1.7 Offline (PWA)
 
 **Phase 2 — in bulk**
@@ -62,7 +62,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 **Phase 3 — printers** (ADR 0002)
 
 - 3.1 Printer profiles; whole-dot X-dimensions within the table's range; test print
-- 3.2 ZPL II: graphic, then native commands where proven (Labelary and physical printers)
+- 3.2 ZPL II: graphic (checked through Labelary in CI), then native commands where proven
 - 3.3 TSPL/TSPL2 · 3.4 PPLB · 3.5 PPLA · 3.6 EPL2 · 3.7 DPL
 - 3.8 Direct printing: WebUSB, Zebra Browser Print; a local agent for network printers
 - 3.9 Compatibility matrix from tests on physical printers
