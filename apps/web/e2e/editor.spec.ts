@@ -59,3 +59,38 @@ test("the page fits the screen's width", async ({ page }) => {
     await page.evaluate(() => window.innerWidth),
   );
 });
+
+test("the EPC asks for a serial number, then writes every format", async ({ page }) => {
+  const section = page.locator("details.epc");
+  await expect(section.locator(".epc-message")).toHaveText("This key's EPC needs its qualifier (21), such as the serial number.");
+  await page.fill("#q-21", "S1001");
+  await page.selectOption("#epc-prefix", "7");
+  const kv = section.locator(".kv");
+  await expect(kv).toContainText("SGTIN-198");
+  // 198 bits, zero-filled to the 16-bit word as a tag holds them: 52 hexadecimal digits
+  await expect(kv).toContainText("36364433400d1f69b160c1880000000000000000000000000000");
+  await expect(kv).toContainText("urn:epc:tag:sgtin-198:1.9506000.013437.S1001");
+  await expect(kv).toContainText("urn:epc:id:sgtin:9506000.013437.S1001");
+  await expect(kv).toContainText("https://id.gs1.org/eh36364433400d1f69b160c18800000000000000000000000000 Copy");
+  await expect(kv).toContainText("https://id.gs1.org/exNjZEM0ANH2mxYMGIAAAAAAAAAAAAAAAAA");
+});
+
+test("GS1's GCP length table gives the prefix's length and stays in the browser", async ({ page }) => {
+  await page.fill("#q-21", "S1001");
+  await expect(page.locator("details.epc .epc-message")).toHaveText(
+    "Choose the company prefix length, or load GS1's GCP length table.",
+  );
+  await page.setInputFiles("#gcp-file", {
+    name: "GCPPrefixFormatList.xml",
+    mimeType: "application/xml",
+    buffer: Buffer.from(
+      '<?xml version="1.0"?><GCPPrefixFormatList date="2026-09-17T11:04:36.316Z">' +
+        '<entry prefix="950" gcpLength="7"/><entry prefix="9506" gcpLength="9"/></GCPPrefixFormatList>',
+    ),
+  });
+  await expect(page.locator("details.epc .gcp .hint")).toContainText("GS1's list of 2026-09-17 loaded: 2 prefixes");
+  await expect(page.locator("details.epc")).toContainText("A company prefix of 9 digits, from GS1's list of 2026-09-17.");
+  await expect(page.locator("details.epc .kv")).toContainText("urn:epc:id:sgtin:950600013.0437.S1001");
+  await page.reload();
+  await expect(page.locator("details.epc .gcp .hint")).toContainText("GS1's list of 2026-09-17: 2 prefixes, kept in this browser.");
+});

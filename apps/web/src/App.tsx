@@ -21,6 +21,7 @@ import {
   widthInModules,
   zplLabel,
   zplTemplate,
+  GcpTable,
   type Identification,
   type Identified,
   type LabelOptions,
@@ -29,7 +30,9 @@ import {
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
+import { EpcSection } from "./EpcSection.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
+import { kept } from "./keep.ts";
 import { LabelCard, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
@@ -60,8 +63,10 @@ export function App() {
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, xMmManual: 0.495,
   });
   const [zplError, setZplError] = useState<string | null>(null);
+  const [gcp, setGcp] = useState<GcpTable | null>(null);
 
   useEffect(() => {
+    kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
     syntaxEngine().then(setEngine, (e: unknown) => console.error(e));
     fetch(fontUrl)
       .then((response) => response.arrayBuffer())
@@ -212,7 +217,9 @@ export function App() {
           onDownloadSvg={() => view.svg && download(`${settings.symbology}.svg`, view.svg, "image/svg+xml")}
           onDownloadZpl={downloadZpl}
           zplError={zplError}
-        />
+        >
+          <EpcSection id={id} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
+        </LabelCard>
       </main>
     </>
   );

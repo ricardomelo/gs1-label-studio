@@ -48,6 +48,8 @@ export interface LabelView {
 }
 
 interface Props {
+  /** Shown below the options: the EPC section. */
+  children?: React.ReactNode;
   settings: LabelSettings;
   onChange: (settings: LabelSettings) => void;
   view: LabelView;
@@ -79,7 +81,7 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
   );
 }
 
-export function LabelCard({ settings: s, onChange, view, onDownloadSvg, onDownloadZpl, zplError }: Props) {
+export function LabelCard({ children, settings: s, onChange, view, onDownloadSvg, onDownloadZpl, zplError }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const snap = snapToDots(view.xMm, s.dpi);
   const target = ENVIRONMENTS[s.environment]?.["2d"][1];
@@ -308,6 +310,7 @@ export function LabelCard({ settings: s, onChange, view, onDownloadSvg, onDownlo
               </button>
             </div>
           )}
+          {children}
         </div>
       </div>
     </section>
