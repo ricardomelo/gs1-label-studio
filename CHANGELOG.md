@@ -8,4 +8,5 @@
   ZPL II graphic field. Every symbol read back by ZXing in the tests.
 - Web: one symbol, preview, X-dimension at the printer's resolution, SVG and ZPL downloads.
 - Development indicators from day one: `scripts/metrics.mjs`, `docs/metrics/` (sessions, the owner's hours, snapshots).
+- The interface is in English; ZPL output checked through Labelary in CI.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

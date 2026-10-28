@@ -11,3 +11,9 @@ a public repository under Apache-2.0, and — beyond PDF and ZPL — PPLA/PPLB, 
 during the session to record development and management indicators from the start, for a closing report like the
 resolver's ("Resolver CE em números"): `docs/metrics/`. Walking skeleton delivered: encoding through bwip-js, every
 symbol read back by ZXing, the printer dot grid, SVG and a ZPL graphic.
+
+The owner then created the repository (with a licence commit, identical to the local one; the work was rebased onto
+it), and decided: every document in English and the tool fixed in English. The resolver had no ZPL (PNG and SVG
+only); the reference is Zebra's ZPL II programming guide. With no printer at hand the owner uses Labelary's viewer, so
+the CI sends the studio's ZPL to Labelary and reads the rendered symbol back (the sandbox's network does not reach
+labelary.com or zebra.com).
