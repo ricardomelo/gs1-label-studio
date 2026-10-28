@@ -30,7 +30,7 @@ async function printWithLabelary(symbology: SymbologyId, data: string, xMm: numb
   const url = `https://api.labelary.com/v1/printers/${DPMM[dpi]}/labels/` +
     `${inches(bitmap.width)}x${inches(bitmap.height)}/0/`;
   for (let attempt = 0; ; attempt++) {
-    const response = await fetch(url, { method: "POST", headers: { Accept: "image/png" }, body: zpl });
+    const response = await fetch(url, { method: "POST", headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" }, body: zpl });
     if (response.status === 429 && attempt < 3) {
       await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
       continue;
@@ -51,7 +51,7 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     ["gs1-qrcode", "(01)09506000134352(21)12345", 0.495, 203, "]Q3", "(01)09506000134352(21)12345"],
     ["dl-qrcode", "https://id.gs1.org/01/09506000134352/10/ABC123", 0.495, 600, "]Q1",
       "https://id.gs1.org/01/09506000134352/10/ABC123"],
-  ])("%s at %s mm, %i dpi", { timeout: 30000 }, async (symbology, data, xMm, dpi, identifier, text) => {
+  ])("%s %s at %s mm, %i dpi", { timeout: 30000 }, async (symbology, data, xMm, dpi, identifier, text) => {
     const { result } = await printWithLabelary(symbology, data, xMm, dpi);
     expect(result?.symbologyIdentifier).toBe(identifier);
     expect(result?.text).toBe(text);
