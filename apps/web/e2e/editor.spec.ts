@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 
 // The editor (ADR 0004, mock-ups of 28 October 2026): what the code identifies on the left, the label redrawn beside
@@ -93,4 +94,28 @@ test("GS1's GCP length table gives the prefix's length and stays in the browser"
   await expect(page.locator("details.epc .kv")).toContainText("urn:epc:id:sgtin:950600013.0437.S1001");
   await page.reload();
   await expect(page.locator("details.epc .gcp .hint")).toContainText("GS1's list of 2026-09-17: 2 prefixes, kept in this browser.");
+});
+
+test("the label downloads as SVG, PNG, PDF and zip, named after the key", async ({ page }) => {
+  const name = "dl-qrcode_01_09506000134376_10_B42";
+  const files: [RegExp, string, number[]][] = [
+    [/^Download SVG$/, `${name}.svg`, [0x3c, 0x3f, 0x78, 0x6d, 0x6c]], // <?xml
+    [/^PNG \(616 dpi\)$/, `${name}.png`, [0x89, 0x50, 0x4e, 0x47]],
+    [/^PDF$/, `${name}.pdf`, [0x25, 0x50, 0x44, 0x46]], // %PDF
+    [/^Zip: /, `${name}.zip`, [0x50, 0x4b, 0x03, 0x04]],
+  ];
+  for (const [button, file, signature] of files) {
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: button }).click()]);
+    expect(download.suggestedFilename()).toBe(file);
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk as Buffer);
+    expect([...Buffer.concat(chunks).subarray(0, signature.length)]).toEqual(signature);
+    // The browser's own deflate wrote the zip: every entry's CRC checked by Info-ZIP's unzip.
+    if (file.endsWith(".zip")) {
+      expect(execFileSync("unzip", ["-tq", (await download.path())!], { encoding: "utf8" })).toContain("No errors");
+      expect(execFileSync("unzip", ["-Z1", (await download.path())!], { encoding: "utf8" }).split("\n").filter(Boolean))
+        .toEqual([`${name}.svg`, `${name}.png`, `${name}.pdf`, "README.txt"]);
+    }
+  }
 });

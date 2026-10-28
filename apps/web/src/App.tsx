@@ -6,15 +6,21 @@ import {
   ENVIRONMENTS,
   environmentsFor,
   fieldsOf,
+  fileName,
   HriFont,
   identify,
   InputError,
+  labelPdf,
+  labelPng,
   labelSvg,
+  labelZip,
   layoutLabel,
   linearSizesFor,
+  pngDpi,
   sizesFor,
   snapToDots,
   symbolFor,
+  symbolLayout,
   SYMBOLOGIES,
   syntaxEngine,
   toSvg,
@@ -25,6 +31,7 @@ import {
   type Identification,
   type Identified,
   type LabelOptions,
+  type Layout,
   type SymbolGeometry,
   type SyntaxEngine,
   type SymbologyId,
@@ -33,7 +40,7 @@ import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.
 import { EpcSection } from "./EpcSection.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
-import { LabelCard, type LabelSettings, type LabelView } from "./LabelCard.tsx";
+import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
 // code identifies on the left, the label beside it on the right, redrawn as anything changes. Everything stays in the
@@ -45,7 +52,7 @@ const DEFAULT_STEM = "https://id.gs1.org";
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
 
-function download(name: string, content: string, type: string) {
+function download(name: string, content: string | Uint8Array<ArrayBuffer>, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
   const link = Object.assign(document.createElement("a"), { href: url, download: name });
   link.click();
@@ -62,7 +69,7 @@ export function App() {
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, xMmManual: 0.495,
   });
-  const [zplError, setZplError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [gcp, setGcp] = useState<GcpTable | null>(null);
 
   useEffect(() => {
@@ -100,7 +107,14 @@ export function App() {
   const size = sizes.includes(settings.size) ? settings.size : sizes.includes(100) ? 100 : (sizes[0] ?? 100);
   effective.size = size;
 
-  const label = useMemo((): { view: Omit<LabelView, "environments" | "sizes" | "laidOut" | "twoD" | "isQr" | "linearPossible">; data?: string; geometry?: SymbolGeometry } => {
+  // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
+  const label = useMemo((): {
+    view: Omit<LabelView, "environments" | "sizes" | "laidOut" | "twoD" | "isQr" | "linearPossible">;
+    data?: string;
+    geometry?: SymbolGeometry;
+    options?: LabelOptions;
+    layout?: Layout;
+  } => {
     const identified = checked.identified;
     const base = { xMm: effective.xMmManual, uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "" };
     if (!identified || !font) return { view: { ...base, error: checked.error ?? (engine && font ? undefined : "Loading…") } };
@@ -110,7 +124,14 @@ export function App() {
       if (!laidOut) {
         const geometry = encode(symbology, data);
         const quietZone = SYMBOLOGIES[symbology].kind === "linear" ? 10 : 2;
-        return { view: { ...base, svg: toSvg(geometry, { xMm: effective.xMmManual, quietZone }), caption: `${SYMBOLOGIES[symbology].name} · X ${effective.xMmManual.toFixed(3)} mm` }, data, geometry };
+        const layout = symbolLayout(geometry, effective.xMmManual, quietZone);
+        return {
+          view: {
+            ...base, svg: toSvg(geometry, { xMm: effective.xMmManual, quietZone }), pngDpi: pngDpi(layout),
+            caption: `${SYMBOLOGIES[symbology].name} · X ${effective.xMmManual.toFixed(3)} mm`,
+          },
+          data, geometry, layout, options: { symbology, data, hriLines: [], showHri: false },
+        };
       }
       const lines = identified.elements.map((e) => `(${e.ai})${e.value}`);
       const gtin = identified.elements.find((e) => e.ai === "01")?.value;
@@ -143,10 +164,10 @@ export function App() {
           : SYMBOLOGIES[symbology].name;
       return {
         view: {
-          ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText),
+          ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
           caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 %`,
         },
-        data, geometry,
+        data, geometry, options, layout,
       };
     } catch (error) {
       return { view: { ...base, error: errorText(error) } };
@@ -173,10 +194,28 @@ export function App() {
     };
     try {
       const zpl = template ? zplTemplate(settings.symbology, data, options).zpl : zplLabel(settings.symbology, data, options);
-      download(`${settings.symbology}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
-      setZplError(null);
+      download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
+      setFileError(null);
     } catch (error) {
-      setZplError(errorText(error));
+      setFileError(errorText(error));
+    }
+  }
+
+  // The files' name, as the resolver named them: the symbol, the key and its qualifiers.
+  const qualifiers = Object.entries(id.qualifiers).filter(([, v]) => v.trim()).map(([q, v]) => `_${q}_${v.trim()}`);
+  const name = fileName(`${settings.symbology}_${id.key}_${id.value.trim()}${qualifiers.join("")}`);
+
+  async function downloadFile(kind: FileKind) {
+    const { options, layout } = label;
+    if (!view.svg || !options || !layout || !font) return;
+    try {
+      if (kind === "svg") download(`${name}.svg`, view.svg, "image/svg+xml");
+      if (kind === "png") download(`${name}.png`, await labelPng(layout, font), "image/png");
+      if (kind === "pdf") download(`${name}.pdf`, await labelPdf(options, layout, font), "application/pdf");
+      if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg), "application/zip");
+      setFileError(null);
+    } catch (error) {
+      setFileError(errorText(error));
     }
   }
 
@@ -197,7 +236,7 @@ export function App() {
           id={id}
           onChange={(next) => {
             setId(next);
-            setZplError(null);
+            setFileError(null);
           }}
           onPaste={(text) => {
             if (!engine) throw new Error("The GS1 Barcode Syntax Engine is still loading.");
@@ -211,12 +250,12 @@ export function App() {
           settings={effective}
           onChange={(next) => {
             setSettings(next);
-            setZplError(null);
+            setFileError(null);
           }}
           view={view}
-          onDownloadSvg={() => view.svg && download(`${settings.symbology}.svg`, view.svg, "image/svg+xml")}
+          onDownload={(kind) => void downloadFile(kind)}
           onDownloadZpl={downloadZpl}
-          zplError={zplError}
+          fileError={fileError}
         >
           <EpcSection id={id} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
         </LabelCard>

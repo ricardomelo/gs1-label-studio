@@ -45,7 +45,11 @@ export interface LabelView {
   isQr: boolean;
   /** A GTIN in an environment with an EAN/UPC range: the linear barcode beside the 2D symbol is offered. */
   linearPossible: boolean;
+  /** The PNG's resolution, at which it prints at the label's size. */
+  pngDpi?: number;
 }
+
+export type FileKind = "svg" | "png" | "pdf" | "zip";
 
 interface Props {
   /** Shown below the options: the EPC section. */
@@ -53,9 +57,9 @@ interface Props {
   settings: LabelSettings;
   onChange: (settings: LabelSettings) => void;
   view: LabelView;
-  onDownloadSvg: () => void;
+  onDownload: (kind: FileKind) => void;
   onDownloadZpl: (template: boolean) => void;
-  zplError: string | null;
+  fileError: string | null;
 }
 
 function copy(text: string) {
@@ -81,7 +85,7 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
   );
 }
 
-export function LabelCard({ children, settings: s, onChange, view, onDownloadSvg, onDownloadZpl, zplError }: Props) {
+export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const snap = snapToDots(view.xMm, s.dpi);
   const target = ENVIRONMENTS[s.environment]?.["2d"][1];
@@ -101,10 +105,19 @@ export function LabelCard({ children, settings: s, onChange, view, onDownloadSvg
             )}
           </div>
           {view.caption && <div className="caption">{view.caption}</div>}
-          {zplError && <p className="error small">{zplError}</p>}
+          {fileError && <p className="error small">{fileError}</p>}
           <div className="downloads">
-            <button type="button" className="btn primary" disabled={!view.svg} onClick={onDownloadSvg}>
+            <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
               Download SVG
+            </button>
+            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
+              PNG{view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
+            </button>
+            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("pdf")}>
+              PDF
+            </button>
+            <button type="button" className="btn wide" disabled={!view.svg} onClick={() => onDownload("zip")}>
+              Zip: SVG, PNG, PDF and README
             </button>
             <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
               ZPL ({s.dpi} dpi)

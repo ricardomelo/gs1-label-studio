@@ -77,7 +77,7 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .preview .error { color: #b3261e; font-size: 13px; }
 .caption { font-size: 12px; color: var(--muted); text-align: center; margin: 6px 0 12px; }
 .downloads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.downloads .primary { grid-column: 1 / -1; }
+.downloads .primary, .downloads .wide { grid-column: 1 / -1; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 .uri { background: var(--soft); border-radius: 8px; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; margin-top: 14px; word-break: break-all; }
 .uri .d { color: var(--dom); }
