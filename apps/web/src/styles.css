@@ -21,3 +21,8 @@ input, select, button { font: inherit; padding: 8px; }
 .symbol { background: #fff; padding: 8px; }
 .error { color: var(--error); }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.parsed table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+.parsed th, .parsed td { text-align: left; padding: 4px 8px; border-bottom: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
+.parsed code, .hint code { overflow-wrap: anywhere; }
+.markup { font-size: 1.1em; }
+.markup mark { background: var(--error); color: var(--bg); padding: 0 2px; }
