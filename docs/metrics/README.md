@@ -13,7 +13,7 @@ people alone, what worked and what weighed.
 | Lines by category: code, tests, docs, data and translations, configuration | measured | tracked files | `node scripts/metrics.mjs` |
 | Automated tests | measured | the test suites | `node scripts/metrics.mjs` |
 | Sessions: start, end, Claude's working minutes, commits, backlog items | measured | each session | `sessions.csv`, by Claude at the end of each session |
-| The owner's hours: decisions, tests on printers, staging, reviews | **measured by the owner** | a simple time sheet | `hours.csv`, by the owner (or dictated to Claude) |
+| The owner's hours: decisions, tests on printers, staging, reviews | **measured by the owner** | a simple time sheet | the owner's Google Drive (below), by the owner or dictated to Claude |
 | Tokens and cost at API list prices | measured where the session records usage | the session IDs in `sessions.csv` | at the closing |
 | Delivered scope: symbologies, formats, printer languages, printers tested | measured | the backlog and the CHANGELOG | at each release |
 | Effort of a team of people alone | estimated | lines × typical rates (below) | at the closing |
@@ -32,9 +32,11 @@ Defined once in `scripts/metrics.mjs` and not changed without a note here, so th
 - **config**: package manifests, TypeScript and Vite settings, workflows, dot files;
 - **generated** (lock file, snapshots) and **excluded** (licence, binaries) are not weighed.
 
-## The owner's time sheet (`hours.csv`)
+## The owner's time sheet
 
-One line per block of work, in minutes; it takes a few seconds and is what the previous project lacked ("measure the
+A spreadsheet in the owner's Google Drive (`ClaudeAI/gs1-label-studio/Owner time sheet — gs1-label-studio`), easier
+to fill in than a file in Git and kept out of the public repository; its figures are summed into the closing report.
+Columns `date`, `minutes`, `activity`, `notes`; one line per block of work, in minutes; it takes a few seconds and is what the previous project lacked ("measure the
 hours from the first day, with a simple time sheet"). Activities:
 
 - `requirements` — decisions, answering options, reading GS1 standards;

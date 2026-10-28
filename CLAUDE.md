@@ -1,7 +1,10 @@
 # Working on this repository with Claude Code
 
 GS1 Label Studio: GS1 barcodes and labels generated in the browser, exported for artwork and for label printers.
-Read `README.md` (backlog), `docs/adr/` and the maintainer's handover at the start of each session.
+Read the maintainer's handover first, then `README.md` (backlog) and `docs/adr/`. The handover, the maintainer's
+time sheet and reference manuals live in the maintainer's Google Drive, folder `ClaudeAI/gs1-label-studio` (find it
+with the Drive search tool); update the handover at the end of each session, newest first. Nothing private goes into
+this public repository.
 
 ## Language
 
@@ -16,7 +19,9 @@ Read `README.md` (backlog), `docs/adr/` and the maintainer's handover at the sta
   commits are never rewritten.
 - One topic per commit, with a message that explains why, and an area prefix (`core:`, `web:`, `docs:`, `ci:`,
   `metrics:`). Code and its technical documents go in the same commit.
-- After a push that changes code, read the CI run (`gh run list`, `gh run view --log-failed`).
+- After a push that changes code, read the CI run (`gh run list`). The sandbox cannot download job logs; read the
+  failures as annotations: `gh api repos/ricardomelo/gs1-label-studio/check-runs/JOB_ID/annotations` (job id from
+  `gh api repos/ricardomelo/gs1-label-studio/actions/runs/RUN_ID/jobs`).
 - `pnpm check` (typecheck, tests, build) must pass before a push.
 
 ## Indicators (docs/metrics/README.md) — from day one
@@ -24,7 +29,8 @@ Read `README.md` (backlog), `docs/adr/` and the maintainer's handover at the sta
 - At the start of a session add its line to `docs/metrics/sessions.csv` (session id, date, start time in UTC); at
   the end fill in the end time, Claude's working minutes, the commits and the backlog items, and whether the session
   stopped at a usage limit.
-- When the maintainer reports time spent (decisions, tests, printers, reviews), add it to `docs/metrics/hours.csv`.
+- When the maintainer reports time spent (decisions, tests, printers, reviews), add it to the time sheet in Drive
+  (`Owner time sheet — gs1-label-studio`).
 - At the end of each backlog item and at each release: `node scripts/metrics.mjs --write` and commit the snapshot.
 - Do not change the line categories in `scripts/metrics.mjs` without recording why in `docs/metrics/README.md`.
 
