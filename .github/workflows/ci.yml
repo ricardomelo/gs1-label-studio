@@ -19,7 +19,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       # Failures as annotations too: they can be read through the API where the logs cannot.
-      - run: pnpm -r test -- --reporter=default --reporter=github-actions
+      - run: pnpm --filter @gs1-label-studio/core exec vitest run --reporter=default --reporter=github-actions
         env:
           LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
       - run: pnpm build
