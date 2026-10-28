@@ -1,73 +1,92 @@
-# ADR 0002 — Printer output: the dot grid first, a graphic in every language, native commands where proven
+# ADR 0002 — Printer output: the dot grid, the printer's own commands, templates with placeholders
 
 | | |
 |---|---|
-| Status | **Proposed** (28 October 2026); languages chosen by the owner |
-| Languages | PDF (any printer with a driver), ZPL II, EPL2, TSPL/TSPL2, PPLA, PPLB, DPL |
+| Status | **Accepted** for ZPL (28 October 2026); the other languages follow the same principle, confirmed when each starts |
+| Languages | PDF (any printer with a driver), ZPL II, EPL2, TSPL/TSPL2, PPLA, PPLB, DPL — chosen by the owner |
 
 ## Context
 
-The resolver's label studio exported PNG and SVG only; ZPL is new in this project. The goal now is to reach as many label printers as possible: Zebra and the
-many printers that emulate ZPL, and the families common in Brazil and elsewhere that speak other languages — Argox and
-Elgin (PPLA, PPLB), TSC and most generic thermal printers (TSPL), older Zebras and their emulations (EPL2), Datamax-O'Neil
-and Honeywell (DPL).
+The resolver's label studio exported PNG and SVG only; ZPL is new in this project. The goal is to reach as many label
+printers as possible: Zebra and the many printers that emulate ZPL, and the families common in Brazil and elsewhere
+that speak other languages — Argox and Elgin (PPLA, PPLB), TSC and most generic thermal printers (TSPL), older Zebras
+and their emulations (EPL2), Datamax-O'Neil and Honeywell (DPL).
 
-Three facts shape the design:
+Facts that shape the design:
 
 1. **The dot grid.** A thermal printer prints whole dots (152, 203, 300, 406 or 600 dpi). A module that is not a whole
    number of dots is rounded differently bar by bar and the symbol degrades. An EAN-13 at 100 % (0.330 mm) prints at
    0.375 mm on a 203 dpi printer (3 dots, 114 %) or 0.339 mm on 300 dpi (4 dots); at 80 % (0.264 mm) a 203 dpi
    printer must choose between 0.250 mm (below the minimum) and 0.375 mm.
-2. **Native barcode commands differ in GS1 support.** Each language has its own way, or none, to put FNC1 in first
-   position and as separator, and to choose GS1 mode in QR and Data Matrix; firmware versions and emulations differ
-   again. A symbol the printer encodes may silently not be a GS1 symbol.
-3. **Every language prints a monochrome graphic** (ZPL `^GF`, EPL2 `GW`, TSPL `BITMAP`, PPLA and DPL graphics, PPLB
-   `GW`), and a graphic of the symbol drawn by the studio carries exactly the geometry the tests read back.
+2. **Native barcode commands differ in GS1 support**, between languages, firmware versions and emulations. A symbol
+   the printer encodes may silently not be the GS1 symbol meant — the tests below found three such cases in ZPL.
+3. **Size and integration.** A label as an image is large: a 100 × 150 mm label is about 240 KB at 203 dpi and 520 KB
+   at 300 dpi as hexadecimal, hundreds of megabytes for a batch of a thousand, slow over serial or Bluetooth, and
+   tied to one resolution. With the printer's commands it is well under a kilobyte, readable, editable, and a
+   **template**: a system (an ERP, a WMS) keeps the ZPL with placeholders, replaces the values and sends it to print.
 
 ## Decision
 
-1. **A printer profile**: language, resolution, label width and height, gap or black mark, darkness and speed, and
-   the origin offset. The studio offers only the X-dimensions that are whole numbers of dots and lie within the range
-   of the application's symbol specification table, and shows the X-dimension that will actually be printed and its
-   magnification.
-2. **Graphic mode first, for every language**: the symbol (and later the whole label) rasterised at the printer's
-   resolution with whole dots per module, sent as the language's graphic. One renderer, one set of tests, the same
-   symbol on every printer.
-3. **Native mode per symbology and language, once proven**: smaller files, faster printing, and the printer's own
-   counters for serial numbers. A native command is offered only when a test shows it produces the same symbol (data,
-   FNC1, symbology identifier) — for ZPL by rendering with Labelary or a reference printer and decoding; for the other
-   languages on physical printers. Until then the graphic is used, without the user having to know.
-4. **Human readable text**: drawn by the studio (part of the graphic) by default, so it is the same everywhere; printer
-   fonts as an option where native mode is used.
-5. **Delivery of the print file**: download (`.zpl`, `.prn`, `.txt`), copy to clipboard, and direct printing where the
+1. **The printer's own commands for symbols and text, always.** Images (ZPL `^GF`) only for what is an image — a
+   logo. *(First proposed the other way round — every symbol as an image, native commands once proven; the owner
+   decided for native commands on 28 October 2026, for the size and for the templates.)*
+2. **Only what is proven.** A symbology is offered in a printer language only when a test prints it (Labelary for ZPL,
+   physical printers for the others) and an independent decoder reads back the same symbology identifier and data.
+   What the language cannot print correctly is refused with an explanation and an alternative, never printed wrong.
+3. **Templates with placeholders**: the same label with `{{01}}`, `{{10}}`… or `{{URI}}` where the values go, each
+   described at the top of the file (ZPL `^FX` comments: what it takes, how to escape, an example). The structure that
+   depends on the data (FNC1 separators, code sets) is laid out so that any value of the AI's format fits.
+4. **A printer profile**: language, resolution, label width and height, gap or black mark, darkness and speed, and
+   the origin offset. Only X-dimensions that are whole numbers of dots and within the application's symbol
+   specification table are offered, with the X-dimension actually printed. The symbol must fit the label: checked
+   before printing (a GS1-128 wider than the label prints nothing).
+5. **Human readable text**: the printer's interpretation line where it follows the General Specifications (EAN/UPC,
+   ITF-14); the studio's text lines in the printer's scalable font (`^A0`) where it does not (GS1-128 in mode N has no
+   parentheses) and below 2D symbols.
+6. **Delivery of the print file**: download (`.zpl`, `.prn`, `.txt`), copy to clipboard, and direct printing where the
    browser allows it — WebUSB (Chromium), Zebra Browser Print — and later a small local agent for network printers
    (raw TCP 9100) and Windows shared printers.
-6. **PDF at the exact label size** for every printer with a driver (the most universal route), and for laser sheets.
-7. **A compatibility matrix** (`docs/printers.md`, later): printer model, firmware, language, mode, symbologies,
-   result, date and who tested. It is the evidence behind "works with".
+7. **PDF at the exact label size** for every printer with a driver, and for laser sheets.
+8. **A compatibility matrix** (`docs/printers.md`, later): printer model, firmware, language, symbologies, result,
+   date and who tested. It is the evidence behind "works with".
+
+## ZPL II: commands chosen and what the tests found
+
+Checked through Labelary and read back by ZXing (`packages/core/test/labelary.test.ts`):
+
+| Symbol | Command | Notes |
+|---|---|---|
+| EAN-13, EAN-8, UPC-A | `^BE`, `^B8`, `^BU` | Field data without the check digit (12, 7, 11 digits): the printer adds it. Given one digit more, the printer drops the first — a template says so. |
+| UPC-E | `^B9` | Field data is the UPC-A's 10 manufacturer and product digits, not the 8 of UPC-E: expanded by `upcaManufacturerAndProduct()`. |
+| ITF-14 | `^B2` with check digit | 13 digits; wide-to-narrow ratio 3. Bearer bars to come with the label layout. |
+| GS1-128 | `^BC` mode **N** | FNC1 (`>8`) first and after each variable-length element string, code sets chosen by the studio (`gs1128FieldData()`), `>` written `>0`. **Mode D** (UCC/EAN) joins the element strings without FNC1 — "(10)ABC(21)X" reads as "(10)ABC21X" — and cannot carry a `>`; **mode A** prints `>8` as text. Text below the bars by the studio. |
+| GS1 DataMatrix | `^BX` quality 200 | FNC1 is `_1` with `_` declared as the escape character: its default changed between firmware versions (`~` before V60.13.0.12), and `~1` was not read. `_` in data is `__`. |
+| Data Matrix and QR with a GS1 Digital Link URI | `^BX`, `^BQ` model 2 | Plain data. |
+| **GS1 QR Code** | — | `^BQ` has no FNC1: refused, with GS1 DataMatrix or the QR code with a GS1 Digital Link URI offered instead. |
+| GS1 DataBar | `^BR` | Omnidirectional read correctly; Expanded not yet with two element strings: offered when proven. |
+
+Reserved characters (`^`, `~`, `\`) go through `^FH`. In templates, values are placed in the code set any value of the
+AI's format fits: element strings of predefined length (all digits, even length) in code set C, other values in code
+set B; a Data Matrix keeps the sample's size so that the text below it stays clear.
 
 ## References and verification
 
 - ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
   (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
-  Its `^GF` takes byte counts from 1 to 99999: a larger image is sent as horizontal stripes, one graphic field each,
-  at consecutive `^FO` positions (`graphicFields()`). Hexadecimal without compression for now; the guide's ASCII
-  run-length compression and `:Z64:` are candidates for item 3.2, once their support across firmware and emulations
-  is known.
-- No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), a ZPL renderer: the
-  owner uses its viewer by hand, and the tests send the studio's ZPL to its API, at the printer's resolution, and read
-  the rendered symbol back with ZXing (`packages/core/test/labelary.test.ts`, in CI). Labelary renders what Zebra
-  firmware would print; emulations by other brands are only proven on their own hardware.
-- The other languages (TSPL, PPLA, PPLB, EPL2, DPL) have no comparable simulator: their graphic mode is checked by
-  decoding the bitmap the studio sends and by the exact byte layout of each manual; native commands wait for physical
-  printers.
+  Its `^GF` takes byte counts from 1 to 99999: a larger image (a logo) is sent as horizontal stripes, one graphic
+  field each (`graphicFields()`).
+- No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), which renders what
+  Zebra firmware prints; emulations by other brands are proven only on their own hardware.
+- The other languages have no comparable simulator: their commands wait for manuals and physical printers.
 
 ## Order of work
 
-ZPL II (graphic, then native EAN/UPC, GS1-128, GS1 DataMatrix, QR), then TSPL, PPLB, PPLA, EPL2, DPL. The order can
-change with the printers the owner has at hand for tests.
+ZPL II (done for the symbols above; DataBar Expanded and the label layout next), then TSPL, PPLB, PPLA, EPL2, DPL.
+The order can change with the printers the owner has at hand for tests.
 
 ## Open points for the owner
 
 - Physical printers for tests (model, resolution, language): none for now; to be listed when available.
 - Manuals of the other languages (TSPL, PPLA, PPLB, EPL2, DPL), to be gathered before their items.
+- A printer whose ZPL emulation fails a symbol: refuse it for that printer profile, or offer the image as an exception?
+  To be decided with the first such printer.

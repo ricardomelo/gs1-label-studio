@@ -4,4 +4,18 @@ export { encode, EncodeError, widthInModules, type SymbolGeometry } from "./enco
 export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
-export { bitmapToGraphicField, graphicFields, MAX_GRAPHIC_FIELD_BYTES, zplLabel, type ZplLabelOptions } from "./zpl.ts";
+export { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
+export {
+  bitmapToGraphicField,
+  fillTemplate,
+  graphicFields,
+  gs1128FieldData,
+  MAX_GRAPHIC_FIELD_BYTES,
+  upcaManufacturerAndProduct,
+  zplLabel,
+  zplTemplate,
+  ZplUnsupportedError,
+  type ZplLabelOptions,
+  type ZplPlaceholder,
+  type ZplTemplate,
+} from "./zpl.ts";

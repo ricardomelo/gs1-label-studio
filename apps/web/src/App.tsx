@@ -3,11 +3,12 @@ import {
   COMMON_DPI,
   encode,
   EncodeError,
-  rasterize,
   snapToDots,
   SYMBOLOGIES,
   toSvg,
+  widthInModules,
   zplLabel,
+  zplTemplate,
   type SymbologyId,
 } from "@gs1-label-studio/core";
 
@@ -51,11 +52,32 @@ export function App() {
   const quietZone = SYMBOLOGIES[symbology].kind === "linear" ? 10 : 2;
   const svg = result.geometry ? toSvg(result.geometry, { xMm, quietZone }) : null;
 
-  function downloadZpl() {
-    if (!result.geometry) return;
-    const bitmap = rasterize(result.geometry, { dotsPerModule: snap.dots, quietZone, barHeight: 50 * snap.dots });
-    const zpl = zplLabel(bitmap, { widthDots: bitmap.width, heightDots: bitmap.height, x: 0, y: 0 });
-    download(`${symbology}.zpl`, zpl, "text/plain");
+  const [zplError, setZplError] = useState<string | null>(null);
+
+  // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
+  function downloadZpl(template: boolean) {
+    const geometry = result.geometry;
+    if (!geometry) return;
+    const d = snap.dots;
+    const barHeightDots = 50 * d;
+    const textDots = Math.round((2.2 / 25.4) * dpi);
+    const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
+    const options = {
+      x: quietZone * d,
+      y: quietZone * d,
+      dotsPerModule: d,
+      barHeightDots,
+      dpi,
+      widthDots: (widthInModules(geometry) + 2 * quietZone) * d,
+      heightDots: symbolHeight + 2 * quietZone * d + 4 * textDots,
+    };
+    try {
+      const zpl = template ? zplTemplate(symbology, data, options).zpl : zplLabel(symbology, data, options);
+      download(`${symbology}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
+      setZplError(null);
+    } catch (error) {
+      setZplError(error instanceof Error ? error.message : String(error));
+    }
   }
 
   return (
@@ -74,6 +96,7 @@ export function App() {
               const id = event.target.value as SymbologyId;
               setSymbology(id);
               setData(EXAMPLES[id]);
+              setZplError(null);
             }}
           >
             {Object.values(SYMBOLOGIES).map((s) => (
@@ -85,7 +108,14 @@ export function App() {
         </label>
         <label>
           Data
-          <input value={data} onChange={(event) => setData(event.target.value)} spellCheck={false} />
+          <input
+            value={data}
+            onChange={(event) => {
+              setData(event.target.value);
+              setZplError(null);
+            }}
+            spellCheck={false}
+          />
         </label>
         <label>
           X-dimension (mm)
@@ -116,6 +146,7 @@ export function App() {
 
       <section className="preview" aria-live="polite">
         {result.error && <p className="error">{result.error}</p>}
+        {zplError && <p className="error">{zplError}</p>}
         {svg && <div className="symbol" dangerouslySetInnerHTML={{ __html: svg }} />}
       </section>
 
@@ -123,8 +154,11 @@ export function App() {
         <button disabled={!svg} onClick={() => svg && download(`${symbology}.svg`, svg, "image/svg+xml")}>
           Download SVG
         </button>
-        <button disabled={!svg} onClick={downloadZpl}>
+        <button disabled={!svg} onClick={() => downloadZpl(false)}>
           Download ZPL ({dpi} dpi)
+        </button>
+        <button disabled={!svg} onClick={() => downloadZpl(true)}>
+          Download ZPL template
         </button>
       </section>
     </main>
