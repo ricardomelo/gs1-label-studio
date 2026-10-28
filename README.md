@@ -47,7 +47,9 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   named and checked; errors explained — *done (a "(" inside a value is refused: the barcode encoder cannot take it)*
 - 1.2 Guided choice: what is identified → symbol specification table → symbols allowed and recommended; scanning
   environments table carried over from the resolver (General Specifications 26.0, section 5.12.3) — *table, sizes and
-  checks ported (2 970 of the resolver's answers equal); ranges of ITF-14, GS1-128 and GS1 DataBar, and the screen, to do*
+  checks ported (2 970 of the resolver's answers equal); every row of tables 1 to 13, with ITF-14, GS1-128, GS1 DataBar
+  and GS1 DotCode, tested against the standard's text; the decision tree (figure 5-68), section 2's carrier choices and
+  a recommendation in the core; the screen to do, mock-ups first*
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
   QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later. GS1 QR Code is encoded by
   the core but not offered in the editor: beside the QR code with a GS1 Digital Link URI it confuses (ADR 0003)

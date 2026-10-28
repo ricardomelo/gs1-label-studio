@@ -37,4 +37,9 @@
   one page the size of the label (vector modules and bars, the text as glyph outlines, no fonts; written without a
   library), the zip with SVG, PNG, PDF and a README of the data, the symbol, its sizes and how to print; files named
   after the symbol, the key and its qualifiers. Symbols without the label layout yet get them too.
+- The GS1 symbol specification tables 1 to 13 in full (item 1.2): X-dimensions, bar heights, quiet zones and quality
+  for every symbol they name, ITF-14, GS1-128, GS1 DataBar and GS1 DotCode included, each row tested against the
+  General Specifications 26.0. The guided choice in the core: the decision tree of figure 5-68 asked one question at a
+  time, the key answering what it can; each leaf's carrier choices from section 2; what each symbol can carry
+  (GS1-128's 48 data characters, DataBar Limited, the GS1 Digital Link URI) and the symbol recommended.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

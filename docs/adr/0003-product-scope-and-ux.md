@@ -17,7 +17,11 @@
 1. **Ask what is being identified, not which symbology.** "A product sold at a till", "a medicine or medical device",
    "a pallet or carton (logistic unit)", "a location", "an asset" — the studio follows the General Specifications'
    decision tree (figure 5-68) to the symbol specification table, offers the symbols it allows and recommends one.
-   Experts can still pick a symbology directly.
+   Experts can still pick a symbology directly. *In the core since 28 October 2026 (`guide.ts`, item 1.2): the tree's
+   questions one at a time, those the key answers left out; each leaf is a section 2 application whose carrier choices
+   give the order; the recommendation is the first carrier the studio draws that carries all the data, or — where only
+   the GTIN fits, as EAN/UPC at a till — that carrier with the first symbol allowed in addition that carries the rest
+   (a QR code with a GS1 Digital Link URI at retail). A symbol in addition is never recommended alone.*
 2. **Paste anything.** A GTIN, an element string with or without brackets, a GS1 Digital Link URI, or what a scanner
    types (with GS separators): the studio recognises it, shows each AI with its name and checks it, and explains an
    error in plain words (the GS1 Syntax Engine's messages, translated).

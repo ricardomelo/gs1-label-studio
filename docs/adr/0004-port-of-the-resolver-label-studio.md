@@ -35,6 +35,7 @@ for its code to be the starting point.
 | Resolver | Here | Backlog | State |
 |---|---|---|---|
 | `label.py`: `ENVIRONMENTS`, `environments_for`, `sizes_for`, `linear_sizes_for`, `check_environment` | `environments.ts` | 1.2 | **ported**, 2 970 checks equal |
+| — (the resolver kept one 2D range and the EAN/UPC range per table) | `specifications.ts`, `guide.ts` | 1.2 | **new**: every row of tables 1 to 13, each tested against the General Specifications' text, and the resolver's summary checked against them; the decision tree and section 2's carrier choices |
 | `label.py`: layout (2D symbol with EAN/UPC beside, quiet zones, margins), QR smallest version and error correction, `DoesNotFit` | `layout.ts` | 1.4 | **ported**: 23 layouts, positions within 1e-9 |
 | `linear.py`: EAN/UPC modules, guard bars, quiet zones, bar heights, digits under the bars, UPC-E from UPC-A, `symbol_for` | `linear.ts` | 1.4 | **ported**: 10 encodings equal, and equal to bwip-js's bars |
 | `label.py`: HRI as glyph outlines (Liberation Sans, fontTools) or as text (OCR-B for EAN/UPC); text height (2 mm minimum) | `hri.ts` (opentype.js), `pyformat.ts` | 1.4 | **ported**: metrics equal, outlines equal character for character |
