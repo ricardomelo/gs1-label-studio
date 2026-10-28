@@ -7,7 +7,7 @@
 
 ## Context
 
-The resolver's last version added ZPL. The goal now is to reach as many label printers as possible: Zebra and the
+The resolver's label studio exported PNG and SVG only; ZPL is new in this project. The goal now is to reach as many label printers as possible: Zebra and the
 many printers that emulate ZPL, and the families common in Brazil and elsewhere that speak other languages — Argox and
 Elgin (PPLA, PPLB), TSC and most generic thermal printers (TSPL), older Zebras and their emulations (EPL2), Datamax-O'Neil
 and Honeywell (DPL).
@@ -46,6 +46,18 @@ Three facts shape the design:
 7. **A compatibility matrix** (`docs/printers.md`, later): printer model, firmware, language, mode, symbologies,
    result, date and who tested. It is the evidence behind "works with".
 
+## References and verification
+
+- ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*
+  (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
+- No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), a ZPL renderer: the
+  owner uses its viewer by hand, and the tests send the studio's ZPL to its API, at the printer's resolution, and read
+  the rendered symbol back with ZXing (`packages/core/test/labelary.test.ts`, in CI). Labelary renders what Zebra
+  firmware would print; emulations by other brands are only proven on their own hardware.
+- The other languages (TSPL, PPLA, PPLB, EPL2, DPL) have no comparable simulator: their graphic mode is checked by
+  decoding the bitmap the studio sends and by the exact byte layout of each manual; native commands wait for physical
+  printers.
+
 ## Order of work
 
 ZPL II (graphic, then native EAN/UPC, GS1-128, GS1 DataMatrix, QR), then TSPL, PPLB, PPLA, EPL2, DPL. The order can
@@ -53,6 +65,5 @@ change with the printers the owner has at hand for tests.
 
 ## Open points for the owner
 
-- Which physical printers (model, resolution, language) are available for tests?
-- ZPL from the resolver's last version: its code is not in the public repository (`gs1br/develop` and `master` at
-  `eab13aa`, 23 October). Where is it, to carry its decisions over?
+- Physical printers for tests (model, resolution, language): none for now; to be listed when available.
+- Manuals of the other languages (TSPL, PPLA, PPLB, EPL2, DPL), to be gathered before their items.

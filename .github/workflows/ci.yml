@@ -19,4 +19,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+        env:
+          LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
       - run: pnpm build

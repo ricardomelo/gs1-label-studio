@@ -6,7 +6,8 @@ Read `README.md` (backlog), `docs/adr/` and the maintainer's handover at the sta
 ## Language
 
 - Code, comments, identifiers, commit messages and documents: **British English**.
-- User-facing texts: **pt-BR and English** to begin with, every text in both; more languages later.
+- User-facing texts: **English only** — the tool is fixed in English (decided on 28 October 2026; ADR 0003).
+  Write texts so they can be extracted later, but add no other language unless asked.
 - The conversation with the maintainer is in Portuguese.
 
 ## Commits and delivery
@@ -32,6 +33,11 @@ Read `README.md` (backlog), `docs/adr/` and the maintainer's handover at the sta
 - Every symbol an exporter produces is read back by ZXing (`zxing-wasm`) in the tests: symbology identifier and data.
 - Prove that a new check can fail (mutation); restore the file and compare checksums.
 - Printer languages: a native command is offered only once a test shows it gives the same symbol (ADR 0002).
+- There is no physical printer for tests: ZPL is checked with Labelary (`packages/core/test/labelary.test.ts`, run in
+  CI with `LABELARY=1`; this sandbox cannot reach api.labelary.com unless the environment allows it). The maintainer
+  uses Labelary's viewer (https://labelary.com/viewer.html) for manual checks.
+- ZPL reference: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*
+  (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
 
 ## Working with the maintainer
 
