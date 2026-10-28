@@ -33,4 +33,8 @@
   GSRNP, GDTI, SGCN, CPI, ITIP) as scheme, hexadecimal as on the tag (16-bit words), base 64, tag URI, pure identity
   URI and the NFC links /eh… and /ex… on the chosen domain; the company prefix's length chosen, or from GS1's GCP length
   table loaded once and kept in the browser; the filter.
+- PNG, PDF and zip, item 1.5, ported from the resolver: the PNG at 12 pixels per module with its DPI recorded, the PDF
+  one page the size of the label (vector modules and bars, the text as glyph outlines, no fonts; written without a
+  library), the zip with SVG, PNG, PDF and a README of the data, the symbol, its sizes and how to print; files named
+  after the symbol, the key and its qualifiers. Symbols without the label layout yet get them too.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

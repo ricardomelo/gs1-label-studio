@@ -54,3 +54,13 @@ Step 2, the EPC (item 1.8): the resolver's epc.py and gcp.py ported, every one o
 Reading them back with epc-tds, an independent decoder, showed what the resolver had shown wrongly: its hexadecimal was
 filled to 4 bits, while the EPC field of a tag is zero-filled to the 16-bit word (TDS 2.3), so a SGTIN-198 came out as
 50 digits where an encoder writes 52. The page shows the tag's form; the NFC link keeps the resolver's.
+
+Two requests came between steps. The resolver's hexadecimal was taken back to the resolver as a fix of its own, in a
+session on its repository (the owner: no one uses its API yet, so the field itself may change). And the owner asked
+for GS1 QR Code to leave the list of symbols: beside the QR code with a GS1 Digital Link URI, it confuses.
+
+Step 3, PNG, PDF and zip (item 1.5): `render_png`, `render_pdf` and `render_zip` ported, with six of the resolver's
+labels as fixtures. The PDF's operators are the resolver's one for one after the 2D symbol's modules (whose masks
+bwip-js may choose differently); the PNG's pixels are the resolver's outside the 2D symbol and the text, the text
+within about a pixel (Pillow hints it, the port does not). The PDFs are drawn by poppler's pdftoppm in the tests and
+read back by ZXing, like the PNGs. Compression comes from the platform (Compression Streams), so no library was added.

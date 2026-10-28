@@ -5,7 +5,8 @@ export them as vector files for artwork or as print files for label printers (PD
 DPL). Nothing you type or upload leaves your computer.
 
 > **Status:** early development (28 October 2026). The resolver's editor in the browser: key, qualifiers and data
-> attributes, the label beside its options, live; SVG, and ZPL with the printer's own commands (and as a template).
+> attributes, the label beside its options, live; SVG, PNG, PDF and zip, and ZPL with the printer's own commands (and
+> as a template); EPC for RFID and NFC.
 > See the backlog.
 
 ## Development
@@ -53,7 +54,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction —
   *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar to do with 1.3*
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
-  prepress options (bar width reduction, 100 % K)
+  prepress options (bar width reduction, 100 % K) — *SVG, PNG (12 pixels per module, its dpi recorded), PDF and zip
+  with README ported from the resolver and checked against it; a chosen dpi, EPS and the prepress options to do*
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *the
   editor screen done (preview beside the options, live, desktop and phone, light and dark); ruler and scan test to do*
 - 1.7 Offline (PWA)
@@ -98,4 +100,5 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 [opentype.js](https://github.com/opentypejs/opentype.js) (MIT) and the Liberation Sans font (SIL Open Font License,
 `packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts; for
 tests, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), [resvg-js](https://github.com/yisibl/resvg-js)
-(MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT) and [Playwright](https://playwright.dev) (Apache-2.0).
+(MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT), [Playwright](https://playwright.dev) (Apache-2.0) and
+poppler's `pdftoppm` (GPL-2.0, run as a separate program).
