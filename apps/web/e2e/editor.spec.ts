@@ -119,3 +119,9 @@ test("the label downloads as SVG, PNG, PDF and zip, named after the key", async 
     }
   }
 });
+
+test("GS1 QR Code is not offered beside the QR code with a GS1 Digital Link URI", async ({ page }) => {
+  const symbols = await page.locator("#opt-symbol option").allTextContents();
+  expect(symbols).toContain("QR code (GS1 Digital Link)");
+  expect(symbols).not.toContain("GS1 QR Code");
+});

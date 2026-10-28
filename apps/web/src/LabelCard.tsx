@@ -62,6 +62,9 @@ interface Props {
   fileError: string | null;
 }
 
+// The symbols offered: not GS1 QR Code, which beside the QR code with a GS1 Digital Link URI confuses (ADR 0003).
+const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
+
 function copy(text: string) {
   void navigator.clipboard?.writeText(text);
 }
@@ -133,7 +136,7 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
             <div>
               <label htmlFor="opt-symbol">Symbol</label>
               <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
-                {Object.values(SYMBOLOGIES).map((symbology) => (
+                {OFFERED.map((symbology) => (
                   <option key={symbology.id} value={symbology.id}>
                     {symbology.name}
                   </option>

@@ -49,7 +49,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   environments table carried over from the resolver (General Specifications 26.0, section 5.12.3) — *table, sizes and
   checks ported (2 970 of the resolver's answers equal); ranges of ITF-14, GS1-128 and GS1 DataBar, and the screen, to do*
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
-  GS1 QR Code, QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later
+  QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later. GS1 QR Code is encoded by
+  the core but not offered in the editor: beside the QR code with a GS1 Digital Link URI it confuses (ADR 0003)
 - 1.4 Layout and human readable text as the General Specifications place them: the resolver's 2D symbol with an EAN/UPC
   beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction —
   *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar to do with 1.3*

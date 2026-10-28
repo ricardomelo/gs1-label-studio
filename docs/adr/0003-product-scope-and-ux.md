@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Proposed** (28 October 2026), for discussion with the owner; the interface language and the one-code screen **decided** (below) |
+| Status | **Proposed** (28 October 2026), for discussion with the owner; the interface language, the one-code screen and the symbols offered **decided** (below) |
 
 ## Who it is for
 
@@ -43,6 +43,11 @@
 3. **Labels** (later) — templates and a designer: text, images, lines, several symbols, fields bound to columns; ready
    templates such as the GS1 Logistic Label (SSCC) in A6 and 100 × 150 mm.
 4. **Printers** — profiles (ADR 0002) and a test print.
+
+**Symbols offered** (decided by the owner, 28 October 2026): GS1 QR Code (the element string in a QR code, FNC1 in
+first position) is not offered. Beside the QR code with a GS1 Digital Link URI it confuses: both are "a GS1 QR code" to
+most people, and the Digital Link one is what GS1 recommends for consumer products. The core still encodes and lays it
+out, so that bringing it back is a choice in the editor only.
 
 ## Bulk generation
 
