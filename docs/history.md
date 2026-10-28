@@ -49,3 +49,8 @@ attribute logic were ported and checked against it; two things it did not need c
 Digital Link attributes for element string symbols, and refusing qualifiers of different alternatives (TPX with a
 batch), which its form prevented. The owner added the GS1 General Specifications 2026 and the EPC TDS 2.3, TDT 2.3
 and RFID standards to the Drive folder.
+
+Step 2, the EPC (item 1.8): the resolver's epc.py and gcp.py ported, every one of its 51 encodings and 7 refusals equal.
+Reading them back with epc-tds, an independent decoder, showed what the resolver had shown wrongly: its hexadecimal was
+filled to 4 bits, while the EPC field of a tag is zero-filled to the 16-bit word (TDS 2.3), so a SGTIN-198 came out as
+50 digits where an encoder writes 52. The page shows the tag's form; the NFC link keeps the resolver's.

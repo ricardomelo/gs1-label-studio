@@ -40,8 +40,9 @@ for its code to be the starting point.
 | `label.py`: HRI as glyph outlines (Liberation Sans, fontTools) or as text (OCR-B for EAN/UPC); text height (2 mm minimum) | `hri.ts` (opentype.js), `pyformat.ts` | 1.4 | **ported**: metrics equal, outlines equal character for character |
 | `label.py`: `render_svg` | `labelSvg()` in `layout.ts` | 1.4 | **ported**; every symbol on the drawn SVG read back by ZXing |
 | `label.py`: `render_png` (dpi), `render_pdf` (no library), `render_zip` (README) | `png.ts`, `pdf.ts`, `zip.ts` | 1.5 | to do |
-| `epc.py` + `epc_schemes.json`: EPC for every key (SGTIN, SSCC, SGLN, GRAI, GIAI, GSRN, GDTI, SGCN, CPI, ITIP) | `epc.ts` + the same JSON | 1.8 (new) | to do |
-| `gcp.py`: GCP length table (GS1's restricted XML) | `gcp.ts`: the user loads the file, kept in the browser | 1.8 | to do |
+| `epc.py` + `epc_schemes.json`: EPC for every key (SGTIN, SSCC, SGLN, GRAI, GIAI, GSRN, GDTI, SGCN, CPI, ITIP) | `epc.ts` + the same JSON, loaded when needed | 1.8 | **ported**: 51 encodings in 19 schemes and 7 refusals equal; 45 read back by epc-tds |
+| `gcp.py`: GCP length table (GS1's restricted XML) | `gcp.ts`: the person loads the file, which stays in the browser (IndexedDB) | 1.8 | **ported**: parsing, refusals and longest-prefix lookup equal |
+| `app.js`: the EPC block of the label panel | `apps/web/src/EpcSection.tsx` | 1.8 | **ported**, with the pure identity URI and the base 64 shown |
 | `app.js`: the editor — key, qualifiers, data attribute rows, the label panel beside the preview, the coloured URI, the domain | `apps/web/src/IdentifyCard.tsx`, `LabelCard.tsx` | 1.2, 1.6, 1.9 | **ported** without records and publishing, after mock-ups approved on 28 October 2026; browser tests at desktop and phone widths |
 | `gs1_dictionary.json`, `gs1dict.py` (keys, qualifiers, formats, titles) | `src/data/gs1_dictionary.json` (the same file), `dictionary.ts` | 1.9 | **ported**: the same release (1.4.1) and path AIs |
 | `syntax.py`: data attributes, decimal families, day 00, refusals | `attributes.ts`, `identify.ts` | 1.9 | **ported**: 216 AIs offered in the same order, 20 decimal and 6 day-zero cases equal |
@@ -58,6 +59,7 @@ for its code to be the starting point.
 | Modules of 2D symbols | segno and libzint | bwip-js: the same sizes (or smaller, above), not necessarily the same masks or encodation; ZXing reads both |
 | An EAN/UPC alone | not drawn (the resolver always drew a 2D symbol) | laid out the same way in units of its own module, at the environment's linear target times the size |
 | Data attributes that are not GS1 Digital Link attributes | refused (the resolver drew Digital Link QR codes only) | kept: an element string symbol (GS1 DataMatrix, GS1-128) carries them; the URI says why it cannot |
+| EPC hexadecimal | the binary string filled to 4 bits (a SGTIN-198 in 50 digits) | `hex` zero-filled to the 16-bit word, as the tag's EPC field holds it and an encoder takes it (TDS 2.3: the PC bits' Length counts 16-bit words); `linkHex` keeps the resolver's form for the NFC link /eh…. Found when epc-tds could not read SGLN-195, GRAI-170 and GIAI-202 in the shorter form |
 | Qualifier hints | the resolver's policy for its records (unaccented letters, digits, full stop, hyphen, underscore) | the GS1 format of the AI from the dictionary ("up to 20 characters") |
 | Text outlines | fontTools draws the glyphs | opentype.js reads the font; `hri.ts` draws the contours as fontTools does (start point, implied points after the transform) and `pyFixed()` rounds ties to even as Python does, so the paths are identical |
 

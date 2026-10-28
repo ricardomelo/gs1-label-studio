@@ -29,4 +29,8 @@
   its qualifiers, data attribute rows with the resolver's decimal families and hints —, the label beside its options
   on the right, redrawn as anything changes, with the GS1 Digital Link URI coloured by part and its domain; a small
   live preview fixed at the top on phones; light and dark. Browser tests (Playwright) at desktop and phone widths in CI.
+- RFID and NFC (EPC), item 1.8: every key the EPC Tag Data Standard encodes (SGTIN, SSCC, SGLN, GRAI, GIAI, GSRN,
+  GSRNP, GDTI, SGCN, CPI, ITIP) as scheme, hexadecimal as on the tag (16-bit words), base 64, tag URI, pure identity
+  URI and the NFC links /eh… and /ex… on the chosen domain; the company prefix's length chosen, or from GS1's GCP length
+  table loaded once and kept in the browser; the filter.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

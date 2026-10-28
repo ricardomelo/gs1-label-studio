@@ -58,7 +58,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   editor screen done (preview beside the options, live, desktop and phone, light and dark); ruler and scan test to do*
 - 1.7 Offline (PWA)
 - 1.8 EPC for RFID and NFC: every key with a TDS scheme, from the resolver's TDT-derived schemes; the GS1 Company
-  Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser
+  Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser — *done, checked against the
+  resolver and read back by epc-tds; the tag's hexadecimal filled to the 16-bit word*
 - 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
   1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it*
 
@@ -95,5 +96,6 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 [Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT), GS1's
 [Barcode Syntax Engine](https://github.com/gs1/gs1-syntax-engine) (`gs1encoder`, Apache-2.0),
 [opentype.js](https://github.com/opentypejs/opentype.js) (MIT) and the Liberation Sans font (SIL Open Font License,
-`packages/core/assets/fonts/OFL.txt`); for tests, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) and
-[resvg-js](https://github.com/yisibl/resvg-js) (MPL-2.0).
+`packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts; for
+tests, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), [resvg-js](https://github.com/yisibl/resvg-js)
+(MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT) and [Playwright](https://playwright.dev) (Apache-2.0).
