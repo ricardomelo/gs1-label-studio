@@ -58,4 +58,7 @@
 - Prepress, the rest of item 1.5: EPS (the PDF's content stream through a PostScript prolog), PDF and EPS in process
   black alone (DeviceCMYK 0 0 0 1), a bar width reduction of 0.010 to 0.050 mm for linear symbols, the PNG at 300, 600
   or 1200 dpi with whole pixels a module; the zip holds the EPS too.
+- ZPL (item 3.2): GS1 DataBar through `^BR` (13 digits, or Expanded's element strings), refused where a table asks a
+  taller symbol than `^BR` prints or Expanded would need a separator; ITF-14's bearer bars through `^GB` with its digits
+  below. Every one printed through Labelary and read back.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

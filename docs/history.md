@@ -96,3 +96,9 @@ Then the rest of item 1.5. The EPS was written as the PDF's own content stream u
 its few operators, so the two cannot drift apart; Ghostscript joined poppler in CI to draw it for ZXing. Black became
 process black in DeviceCMYK rather than the resolver's DeviceGray, and the bar width reduction stays with linear
 symbols: narrowing a 2D symbol's dark areas would need their outlines, not their rows of modules.
+
+With the symbols laid out, ZPL followed them (item 3.2). Labelary showed what Zebra's guide leaves out: `^BR` wants the
+GTIN's first 13 digits and nothing is read from 14; it prints each GS1 DataBar at one height, so the retail tables'
+taller Omnidirectional symbols cannot come from it; and no way was found to put a separator between two variable
+element strings in Expanded. Those cases are refused with the reason, as ADR 0002 asks, and the PDF is offered. ITF-14's
+bearer bars became `^GB` boxes, which moved its digits from the printer's interpretation line to the studio's text.

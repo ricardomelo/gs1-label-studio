@@ -92,8 +92,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 - 3.1 Printer profiles; whole-dot X-dimensions within the table's range; test print
 - 3.2 ZPL II with the printer's commands and templates with placeholders — *EAN/UPC, ITF-14, GS1-128, GS1 DataMatrix,
-  QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); DataBar (refused until proven),
-  ITF-14's bearer bars, layout to do*
+  QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); GS1 DataBar through `^BR` and
+  ITF-14's bearer bars through `^GB` done, with what `^BR` cannot print refused (ADR 0002); the label layout to do*
 - 3.3 TSPL/TSPL2 · 3.4 PPLB · 3.5 PPLA · 3.6 EPL2 · 3.7 DPL
 - 3.8 Direct printing: WebUSB, Zebra Browser Print; a local agent for network printers
 - 3.9 Compatibility matrix from tests on physical printers
