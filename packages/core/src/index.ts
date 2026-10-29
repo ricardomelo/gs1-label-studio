@@ -172,3 +172,14 @@ export { labelEps } from "./eps.ts";
 export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
 export { expectedReads } from "./scan.ts";
+export { excelDate, excelNumber, parseDelimited, parseTableFile, parseXlsx, TableError, unzip, type Table } from "./table.ts";
+export {
+  checkRows,
+  guessColumn,
+  guessMapping,
+  normaliseCell,
+  rowIdentification,
+  type CheckedRow,
+  type ColumnMapping,
+  type FixedValue,
+} from "./bulk.ts";
