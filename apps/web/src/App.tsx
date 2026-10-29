@@ -243,14 +243,23 @@ export function App() {
     const { geometry, data } = label;
     if (!geometry || !data) return;
     const d = snapToDots(view.xMm, settings.dpi).dots;
-    const quietZone = linearKind ? 10 : 2;
+    // The quiet zones of the table's row (GS1 DataBar has none: two modules of margin), else as before.
+    const quietZone = spec && typeof spec.quietZone !== "number" ? Math.max(2, ...spec.quietZone) : linearKind ? 10 : 2;
     const barHeightDots = Math.round((label.layout?.barHeight ?? 50) * d);
     const textDots = Math.round((2.2 / 25.4) * settings.dpi);
     const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
+    // ITF-14's bearer bars, as the label has them: a frame of 4.83 mm, or bars of 2X; printed at ratio 3 (135 modules).
+    const bearer = symbology === "itf14"
+      ? { kind: settings.bearer, thicknessDots: settings.bearer === "frame" ? Math.round((4.83 / 25.4) * settings.dpi) : 2 * d }
+      : undefined;
+    const t = bearer?.thicknessDots ?? 0;
+    const side = bearer?.kind === "frame" ? t : 0;
+    const symbolWidth = symbology === "itf14" ? 135 : widthInModules(geometry);
     const options = {
-      x: quietZone * d, y: quietZone * d, dotsPerModule: d, barHeightDots, dpi: settings.dpi,
-      widthDots: (widthInModules(geometry) + 2 * quietZone) * d,
-      heightDots: symbolHeight + 2 * quietZone * d + 6 * textDots,
+      x: quietZone * d + side, y: quietZone * d + t, dotsPerModule: d, barHeightDots, dpi: settings.dpi,
+      widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
+      heightDots: symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
+      ...(bearer ? { bearer } : {}),
     };
     try {
       const zpl = template ? zplTemplate(symbology, data, options).zpl : zplLabel(symbology, data, options);

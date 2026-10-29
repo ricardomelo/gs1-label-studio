@@ -209,6 +209,12 @@ test("a case in general distribution: ITF-14 with its bearer bars and digits, at
   await expect(page.locator(".caption")).toContainText("label 71.5 × 39.6 mm at 100 %");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(download.suggestedFilename()).toBe("itf14_01_19506000134373.pdf");
+  // The ZPL draws the same bearer bars with ^GB, and the digits below them.
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const text = readFileSync((await zpl.path())!, "utf8");
+  expect(text).toContain("^BY4,3.0,257^B2N,257,N,N,N^FD19506000134373^FS"); // 31.75 mm: 257 dots
+  expect(text.match(/\^GB\d+,8,8\^FS/g)).toHaveLength(2);
+  expect(text).toContain("^FD19506000134373^FS");
 });
 
 test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch, two symbols to choose from", async ({ page }) => {
@@ -218,6 +224,9 @@ test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch,
   await answer(page, "Is it scanned in general distribution?", "No");
   await expect(page.locator(".chosen")).toContainText("GS1 DataBar Omnidirectional · table 1");
   await expect(page.locator(".caption")).toContainText("GS1 DataBar Omnidirectional · bars 15.19 mm · X 0.330 mm");
+  // ^BR prints it 33 modules high; table 1 asks for 46: the ZPL is refused, with the reason.
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("^BR prints GS1 DataBar Omnidirectional 33 modules high");
   await page.fill("#q-10", "B42");
   const step = page.locator("section[aria-labelledby='scan-title']");
   await expect(step).toContainText(
