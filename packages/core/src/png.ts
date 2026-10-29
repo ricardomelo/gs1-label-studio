@@ -19,6 +19,15 @@ function pyRound(value: number): number {
   return floor % 2 === 0 ? floor : floor + 1;
 }
 
+/**
+ * A PNG for a chosen resolution: the whole number of pixels a module closest to it (never less than one), so every
+ * module stays the same number of pixels, and the X-dimension it then prints at, as a printer's dot grid does.
+ */
+export function pngAt(layout: Layout, dpi: number): { pixelsPerModule: number; dpi: number; xMm: number } {
+  const pixelsPerModule = Math.max(1, Math.round((layout.xMm * dpi) / MM_PER_INCH));
+  return { pixelsPerModule, dpi, xMm: (pixelsPerModule * MM_PER_INCH) / dpi };
+}
+
 /** The DPI at which the PNG prints at the label's size. */
 export function pngDpi(layout: Layout, pixelsPerModule = PNG_PIXELS_PER_MODULE): number {
   return (pixelsPerModule / layout.xMm) * MM_PER_INCH;
@@ -134,8 +143,16 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
   return out;
 }
 
-/** The label as PNG at `pixelsPerModule` pixels per module, its DPI giving the size when printed. */
-export async function labelPng(layout: Layout, font: HriFont, pixelsPerModule = PNG_PIXELS_PER_MODULE): Promise<Uint8Array<ArrayBuffer>> {
+/**
+ * The label as PNG at `pixelsPerModule` pixels per module, its DPI recorded: by default the one at which it prints at
+ * the label's size; a chosen one (`pngAt()`) prints it at the X-dimension the whole pixels give.
+ */
+export async function labelPng(
+  layout: Layout,
+  font: HriFont,
+  pixelsPerModule = PNG_PIXELS_PER_MODULE,
+  dpi = pngDpi(layout, pixelsPerModule),
+): Promise<Uint8Array<ArrayBuffer>> {
   const { width, height, grey } = labelPixels(layout, font, pixelsPerModule);
   // Every row with the "Up" filter: rows repeat (bars, module rows), so they become zeros.
   const raw = new Uint8Array((width + 1) * height);
@@ -152,7 +169,7 @@ export async function labelPng(layout: Layout, font: HriFont, pixelsPerModule = 
   h.setUint32(4, height);
   header.set([8, 0, 0, 0, 0], 8); // 8 bits, grey, deflate, adaptive filters, not interlaced
   const physical = new Uint8Array(9);
-  const perMetre = Math.floor(pngDpi(layout, pixelsPerModule) / 0.0254 + 0.5); // Pillow's rounding
+  const perMetre = Math.floor(dpi / 0.0254 + 0.5); // Pillow's rounding
   new DataView(physical.buffer).setUint32(0, perMetre);
   new DataView(physical.buffer).setUint32(4, perMetre);
   physical[8] = 1; // the unit is the metre

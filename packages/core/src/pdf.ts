@@ -6,7 +6,11 @@ import { pyFixed } from "./pyformat.ts";
 
 // The label as a PDF, written without a library as the resolver's render_pdf wrote it (ADR 0004): one page the size of
 // the label, the modules and bars as filled rectangles, the human readable text as glyph outlines (no font to embed,
-// nothing to substitute where it is printed). The content stream is the resolver's, operator for operator.
+// nothing to substitute where it is printed). The content stream is the resolver's, operator for operator, except the
+// colours: process black alone (100 % K) on white, in DeviceCMYK, as prepress asks (the resolver wrote DeviceGray).
+
+export const CMYK_WHITE = "0 0 0 0 k";
+export const CMYK_BLACK = "0 0 0 1 k";
 
 /** A PDF literal string. */
 function pdfText(value: string): string {
@@ -28,7 +32,7 @@ export function pdfContent(layout: Layout, font: HriFont): { content: string; wi
   const pageH = layout.height * scale;
   const f = (value: number) => pyFixed(value, 3);
   const point = (x: number, y: number) => `${f(x * scale)} ${f(pageH - y * scale)}`;
-  const ops = ["1 g", `0 0 ${f(pageW)} ${f(pageH)} re f`, "0 g"];
+  const ops = [CMYK_WHITE, `0 0 ${f(pageW)} ${f(pageH)} re f`, CMYK_BLACK];
   for (const [x, y, w, h] of layout.rects) ops.push(`${point(x, y + h)} ${f(w * scale)} ${f(h * scale)} re`);
   ops.push("f");
   for (const t of layout.texts) {

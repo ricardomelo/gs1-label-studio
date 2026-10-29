@@ -9,6 +9,7 @@ import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   crc32,
   fileName,
+  labelEps,
   labelPdf,
   labelPixels,
   labelPng,
@@ -104,7 +105,8 @@ describe.each(renders.renders.map((r, i) => [i, JSON.stringify(r.options), r] as
     const { content } = pdfContent(layout, font);
     expect(r.pdf.mediaBox).toBe(`0 0 ${/0 0 ([\d.]+ [\d.]+) re f/.exec(content)![1]}`);
     const ours = content.split("\n");
-    const theirs = r.pdf.content.split("\n");
+    // The resolver painted in DeviceGray; here process black alone, in DeviceCMYK (ADR 0004).
+    const theirs = r.pdf.content.split("\n").map((op) => ({ "1 g": "0 0 0 0 k", "0 g": "0 0 0 1 k" })[op] ?? op);
     expect(ours.slice(0, 3)).toEqual(theirs.slice(0, 3));
     // The 2D symbol's rectangles come first: after them, the EAN/UPC's bars and the text's outlines.
     const rest = ours.slice(3 + layout.symbolRects);
@@ -168,13 +170,16 @@ describe.each(renders.renders.map((r, i) => [i, JSON.stringify(r.options), r] as
   it("zip: SVG, PNG, PDF and the resolver's README", async () => {
     const zip = await labelZip(options, layout, font, "label");
     const files = unzip(zip);
-    expect([...files.keys()]).toEqual(r.zipNames);
+    // The EPS is this project's (backlog 1.5), after the PDF.
+    expect([...files.keys()]).toEqual(r.zipNames.flatMap((n) => (n.endsWith(".pdf") ? [n, n.replace(/pdf$/, "eps")] : [n])));
+    expect(new TextDecoder().decode(files.get("label.eps"))).toBe(labelEps(options, layout, font));
     const svg = labelSvg(options, layout, font);
     expect(new TextDecoder().decode(files.get("label.svg"))).toBe(svg);
     expect(files.get("label.png")).toEqual(await labelPng(layout, font));
     expect(files.get("label.pdf")).toEqual(await labelPdf(options, layout, font));
     const readme = new TextDecoder().decode(files.get("README.txt"));
-    expect(readme).toBe(r.readme.replace("Data Matrix with a GS1 Digital Link URI:", "Data Matrix (GS1 Digital Link):"));
+    expect(readme).toBe(r.readme.replace("Data Matrix with a GS1 Digital Link URI:", "Data Matrix (GS1 Digital Link):")
+      .replace("SVG and PDF are vector", "SVG, PDF and EPS are vector"));
     expect(readme).toBe(labelReadme(options, layout));
   }, SLOW);
 });

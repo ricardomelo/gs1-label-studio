@@ -80,4 +80,8 @@ out, so that bringing it back is a choice in the editor only.
 
 SVG (vector, real size, text as outlines or as text), PNG (at a chosen dpi, carrying the dpi), PDF (vector, real
 size), EPS (prepress), zip of all; options for prepress: bar width reduction, colour (100 % K), margins and crop marks;
-printer languages (ADR 0002).
+printer languages (ADR 0002). *Since 29 October 2026 (item 1.5): EPS (the PDF's content stream through a PostScript
+prolog), PDF and EPS in process black alone (DeviceCMYK 0 0 0 1), a bar width reduction of 0.010 to 0.050 mm taken off
+every bar of a linear symbol (2D modules left as they are: their reduction would need the dark areas' outlines), and a
+PNG at 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said. Margins and
+crop marks to do.*

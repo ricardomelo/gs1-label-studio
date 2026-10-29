@@ -1,7 +1,8 @@
 import { crc32, deflate, utf8 } from "./deflate.ts";
 import { ENVIRONMENTS, xDimension, linearXDimension } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
-import { labelSvg, QUIET_ZONE, specDescription, type LabelOptions, type Layout } from "./layout.ts";
+import { labelEps } from "./eps.ts";
+import { labelSvg, QUIET_ZONE, reductionNote, specDescription, type LabelOptions, type Layout } from "./layout.ts";
 import { BAR_HEIGHT, LINEAR_NAMES, type LinearKind } from "./linear.ts";
 import { labelPdf } from "./pdf.ts";
 import { labelPng } from "./png.ts";
@@ -47,6 +48,7 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
       `${pyFixed(target, 3)} mm of the scanning environment ${environment}), quiet zone ${QUIET_ZONE}X`);
     if (options.linear) lines.push(linearLine(options.linear[0], options.linear[1], environment, options.linearSize ?? size));
   }
+  if (options.barWidthReduction) lines.push(`Prepress: ${reductionNote(options).slice(2)}; black is 100 % K in the PDF and EPS`);
   const texts = layout.texts.length && symbology.kind === "linear" && !options.spec
     ? `${layout.texts.map((t) => t.text).join(" ")} (under the bars)`
     : options.showHri && layout.texts.length ? (options.spec ? layout.texts.map((t) => t.text) : options.hriLines).join(" ") : "none";
@@ -54,7 +56,7 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
     `Human readable text: ${texts}`,
     `Label size: ${pyFixed(layout.width * layout.xMm, 1)} x ${pyFixed(layout.height * layout.xMm, 1)} mm; print at 100 % ` +
       "(no scaling) to keep these dimensions.",
-    "Files: SVG and PDF are vector (for artwork); PNG is for screens and documents (its DPI gives the size).",
+    "Files: SVG, PDF and EPS are vector (for artwork); PNG is for screens and documents (its DPI gives the size).",
   );
   return lines.join("\r\n") + "\r\n";
 }
@@ -118,7 +120,7 @@ export async function zipArchive(files: { name: string; bytes: Uint8Array }[], d
   return out;
 }
 
-/** The label as SVG, PNG and PDF, and its README.txt, in one zip; the files named `name`. */
+/** The label as SVG, PNG, PDF and EPS, and its README.txt, in one zip; the files named `name`. */
 export async function labelZip(
   options: LabelOptions,
   layout: Layout,
@@ -131,6 +133,7 @@ export async function labelZip(
     { name: `${base}.svg`, bytes: utf8(svg) },
     { name: `${base}.png`, bytes: await labelPng(layout, font) },
     { name: `${base}.pdf`, bytes: await labelPdf(options, layout, font) },
+    { name: `${base}.eps`, bytes: utf8(labelEps(options, layout, font)) },
     { name: "README.txt", bytes: utf8(labelReadme(options, layout)) },
   ]);
 }

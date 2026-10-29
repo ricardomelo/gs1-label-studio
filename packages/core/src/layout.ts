@@ -73,6 +73,11 @@ export interface LabelOptions {
   table?: number;
   /** ITF-14's bearer bars; the frame when not given. */
   bearer?: Bearer;
+  /**
+   * Bar width reduction in mm (prepress: the printing process's gain, taken off every bar of a linear symbol, half
+   * on each side). 2D symbols' modules are left as they are.
+   */
+  barWidthReduction?: number;
 }
 
 export interface LabelText {
@@ -100,6 +105,8 @@ export interface Layout {
   version: number | null;
   /** ITF-14, GS1-128, GS1 DataBar: the bars' height (a stacked symbol's, all rows), in the label's units. */
   barHeight?: number;
+  /** Which of `rects` are a linear symbol's bars, [from, to): what a bar width reduction narrows. */
+  barRects?: readonly [number, number];
 }
 
 /** The data does not fit the QR version chosen at the level chosen. */
@@ -174,6 +181,24 @@ function qrRects(matrix: boolean[][], x0: number, y0: number): [number, number, 
  * right with its own quiet zones, tops aligned.
  */
 export function layoutLabel(options: LabelOptions, font: HriFont): Layout {
+  const layout = layoutAtFullWidth(options, font);
+  return options.barWidthReduction ? reduceBars(layout, options.barWidthReduction) : layout;
+}
+
+/** The layout with its bars narrowed by `mm`, half on each side; refused where a bar would vanish. */
+export function reduceBars(layout: Layout, mm: number): Layout {
+  const [from, to] = layout.barRects ?? [0, 0];
+  const cut = mm / layout.xMm;
+  const rects = layout.rects.map((rect, index): [number, number, number, number] => {
+    if (index < from || index >= to) return rect;
+    const [x, y, w, h] = rect;
+    if (w - cut <= 1e-9) throw new RangeError(`a bar width reduction of ${mm} mm leaves bars of no width at X = ${layout.xMm.toFixed(3)} mm`);
+    return [x + cut / 2, y, w - cut, h];
+  });
+  return { ...layout, rects };
+}
+
+function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
   const environment = options.environment ?? "retail";
   const size = options.size ?? 100;
   if (!(SIZES as readonly number[]).includes(size)) throw new Error(`size ${size} is not one of ${SIZES.join(", ")}`);
@@ -224,7 +249,10 @@ export function layoutLabel(options: LabelOptions, font: HriFont): Layout {
     const unit = linearXDimension(environment, options.linearSize ?? size) / xMm; // one linear module in 2D modules
     [width, height] = placeLinear(options.linear, unit, rects, texts, width + LINEAR_GAP, boxY, height, font);
   }
-  return { width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version };
+  return {
+    width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version,
+    barRects: [symbolRects, rects.length],
+  };
 }
 
 /** The X-dimension in mm of a symbol sized by its table's row: the size is a percentage of the row's base. */
@@ -321,6 +349,7 @@ function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout 
     rects.push([boxX, MARGIN, boxWidth, thickness], [boxX, MARGIN + thickness + height, boxWidth, thickness]);
     if (side) rects.push([boxX, MARGIN + thickness, side, height], [boxX + boxWidth - side, MARGIN + thickness, side, height]);
   }
+  const bearers = rects.length;
   const x0 = boxX + side + quietLeft;
   let y = MARGIN + thickness;
   for (const band of bands) {
@@ -336,7 +365,7 @@ function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout 
   const bottom = texts.length ? texts.at(-1)!.baseline + (font.descent * em) / font.unitsPerEm : MARGIN + boxHeight;
   return {
     width: MARGIN + contentWidth + MARGIN, height: bottom + MARGIN, rects, symbolRects: rects.length, texts, xMm,
-    modules: 0, version: null, barHeight: height,
+    modules: 0, version: null, barHeight: height, barRects: [bearers, rects.length],
   };
 }
 
@@ -350,7 +379,7 @@ function layoutLinearAlone(options: LabelOptions, font: HriFont, environment: st
   const [width, height] = placeLinear([kind, options.data], 1, rects, texts, MARGIN, MARGIN, MARGIN, font);
   return {
     width: width + MARGIN, height: height + MARGIN, rects, symbolRects: 0, texts,
-    xMm: linearXDimension(environment, linearSize), modules: 0, version: null,
+    xMm: linearXDimension(environment, linearSize), modules: 0, version: null, barRects: [0, rects.length],
   };
 }
 
@@ -426,6 +455,11 @@ export function specDescription(options: LabelOptions, layout: Layout): string {
   return parts.join(", ");
 }
 
+/** The bar width reduction, in words, where there is one. */
+export function reductionNote(options: Pick<LabelOptions, "barWidthReduction">): string {
+  return options.barWidthReduction ? `, bars reduced by ${pyFixed(options.barWidthReduction, 3)} mm (bar width reduction)` : "";
+}
+
 const OCR_B = "OCR-B, 'OCR B', 'OCR-B 10 BT', monospace"; // the font of EAN/UPC digits, when the HRI is text
 const HRI_FONT_FAMILY = "'Liberation Sans', Arial, Helvetica, sans-serif";
 
@@ -459,9 +493,9 @@ export function labelSvg(options: LabelOptions, layout: Layout, font: HriFont, h
       `viewBox="0 0 ${pyFixed(layout.width, 4)} ${pyFixed(layout.height, 4)}">`,
     `<title>${xml(options.data)}</title>`,
     options.spec
-      ? `<desc>${xml(specDescription(options, layout))}.</desc>`
+      ? `<desc>${xml(specDescription(options, layout))}${reductionNote(options)}.</desc>`
       : `<desc>${SYMBOLOGIES[options.symbology].name} at ${size} % of the target size of the scanning environment ` +
-        `${environment} (X = ${pyFixed(layout.xMm, 3)} mm), quiet zone ${QUIET_ZONE}X${linearNote}.</desc>`,
+        `${environment} (X = ${pyFixed(layout.xMm, 3)} mm), quiet zone ${QUIET_ZONE}X${linearNote}${reductionNote(options)}.</desc>`,
     `<rect width="${pyFixed(layout.width, 4)}" height="${pyFixed(layout.height, 4)}" fill="#fff"/>`,
     `<path fill="#000" shape-rendering="crispEdges" d="${path}"/>`,
   ];

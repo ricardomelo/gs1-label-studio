@@ -103,6 +103,8 @@ export {
   labelSvg,
   layoutLabel,
   QUIET_ZONE,
+  reduceBars,
+  reductionNote,
   specDescription,
   symbolMatrix,
   type Bearer,
@@ -165,7 +167,8 @@ export {
 } from "./epc.ts";
 export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";
 export { crc32, deflate } from "./deflate.ts";
-export { labelPdf, pdfContent } from "./pdf.ts";
-export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngDpi } from "./png.ts";
+export { CMYK_BLACK, CMYK_WHITE, labelPdf, pdfContent } from "./pdf.ts";
+export { labelEps } from "./eps.ts";
+export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
 export { expectedReads } from "./scan.ts";
