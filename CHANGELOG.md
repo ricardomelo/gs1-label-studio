@@ -64,4 +64,6 @@
 - Offline (item 1.7): a service worker written at build time keeps every file on the first visit — pages from the
   network first, everything else from the cache —; a web app manifest and icons. A browser test reloads the editor
   with the network off and runs the scan test.
+- GS1 DotCode is named in step 2 but not drawn: no independent decoder reads it back (ZXing does not), which every
+  symbol needs before it is offered; tobacco unit packs get GS1 DataMatrix at table 12's size.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

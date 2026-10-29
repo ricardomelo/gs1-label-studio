@@ -326,3 +326,18 @@ test("works offline once loaded, the scan test too", async ({ page, context }) =
     await context.setOffline(false);
   }
 });
+
+test("tobacco unit packs: GS1 DotCode named but not drawn, GS1 DataMatrix at table 12's size", async ({ page }) => {
+  await answer(page, "Is it scanned at a general retail point of sale?", "No");
+  await answer(page, "Is it a regulated healthcare item sold in a retail pharmacy?", "No");
+  await answer(page, "Is it scanned in general distribution?", "Yes");
+  await answer(page, "Is it a tobacco product under the EU traceability regulation?", "Yes");
+  await answer(page, "Is it a unit pack?", "Yes");
+  await expect(page.locator(".chosen")).toContainText("GS1 DataMatrix · table 12");
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  await expect(step).toContainText("GS1 DotCode");
+  await expect(step).toContainText("none reads GS1 DotCode yet");
+  await expect(page.locator(".caption")).toContainText("X 0.380 mm");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231", { timeout: 30_000 });
+});

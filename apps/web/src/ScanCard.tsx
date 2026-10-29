@@ -72,7 +72,7 @@ export function pickList(guide: Guidance): PickItem[] {
     if (o.role !== "in-addition") {
       const choice: Choice = { symbol: o.symbol as SymbologyId };
       if (same(choice, recommended)) continue;
-      if (!o.drawn) items.push({ key: o.symbol, group: "allowed", name: o.name, meta, tag: "coming" });
+      if (!o.drawn) items.push({ key: o.symbol, group: "allowed", name: o.name, meta: `${meta} ${GUIDE_TEXTS.notDrawn}`, tag: "coming" });
       else if (o.symbol === "gs1-qrcode") items.push({ key: o.symbol, group: "allowed", name: o.name, meta: GUIDE_TEXTS.notOffered, tag: "not-offered" });
       else items.push({ key: o.symbol, group: "allowed", name: o.carries === "key" && recommended?.with ? `${o.name} alone` : o.name, meta, choice });
       continue;
@@ -106,7 +106,7 @@ export function chosen(guide: Guidance, picked: Choice | null): Choice | null {
 const TAGS: Record<NonNullable<PickItem["tag"]>, string> = {
   recommended: "Recommended",
   "in-addition": "In addition",
-  coming: "Coming with item 1.3",
+  coming: "Not drawn",
   "not-offered": "Not offered",
 };
 
@@ -198,7 +198,7 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
                 ? `${GUIDE_TEXTS.together} ${SPEC_SYMBOL_NAMES[guide.together.symbol]} with a ` +
                   `${SPEC_SYMBOL_NAMES[guide.together.with]} beside it. ${GUIDE_TEXTS.togetherLater}`
                 : guide.waiting
-                  ? `${GUIDE_TEXTS.waiting} ${SPEC_SYMBOL_NAMES[guide.waiting]} (backlog item 1.3).`
+                  ? `${GUIDE_TEXTS.waiting} ${SPEC_SYMBOL_NAMES[guide.waiting]}. ${GUIDE_TEXTS.notDrawn}`
                   : GUIDE_TEXTS.nothing}
             </p>
           )}

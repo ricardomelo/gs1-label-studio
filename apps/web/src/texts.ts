@@ -173,6 +173,7 @@ export const GUIDE_TEXTS = {
   answer: "Answer to see the symbols the GS1 General Specifications allow here, and the one recommended for this data.",
   fixData: "Correct the data in step 1 to see the symbols this table allows.",
   waiting: "The studio does not draw the symbol this needs yet:",
+  notDrawn: "The studio draws a symbol only once an independent decoder reads it back in its tests, and none reads GS1 DotCode yet.",
   nothing: "No symbol this table allows carries this data.",
   together: "This data needs two symbols:",
   togetherLater: "The label lays a symbol in addition out beside an EAN/UPC only, for now: choose one of them below.",

@@ -391,7 +391,7 @@ export interface SymbolOption {
   specs: SymbolSpecification[];
   carries: Carries;
   reason?: string;
-  /** The studio draws it (GS1 DotCode comes with backlog 1.3). */
+  /** The studio draws it: all but GS1 DotCode, which no independent decoder reads back (ZXing does not read it). */
   drawn: boolean;
 }
 
