@@ -102,3 +102,8 @@ GTIN's first 13 digits and nothing is read from 14; it prints each GS1 DataBar a
 taller Omnidirectional symbols cannot come from it; and no way was found to put a separator between two variable
 element strings in Expanded. Those cases are refused with the reason, as ADR 0002 asks, and the PDF is offered. ITF-14's
 bearer bars became `^GB` boxes, which moved its digits from the printer's interpretation line to the studio's text.
+
+Item 1.7 came next: offline. A plugin of the build writes the service worker with the list of every file the build
+makes, so nothing is forgotten when a file is added; it needed no library. The first browser test offline failed:
+the preview server answers "Vary: Origin" and a module script is fetched with an Origin, so the cache did not match
+until the worker was told to ignore Vary, which is safe for files whose names carry their content's hash.

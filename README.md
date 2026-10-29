@@ -72,7 +72,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
   between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with
   ZXing in the browser (mock-up A)*
-- 1.7 Offline (PWA)
+- 1.7 Offline (PWA) — *done: a service worker written at build time keeps every file of the application (the
+  engines' WebAssembly, the font, the EPC schemes) on the first visit; a web app manifest and icons, so it installs*
 - 1.8 EPC for RFID and NFC: every key with a TDS scheme, from the resolver's TDT-derived schemes; the GS1 Company
   Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser — *done, checked against the
   resolver and read back by epc-tds; the tag's hexadecimal filled to the 16-bit word*

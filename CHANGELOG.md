@@ -61,4 +61,7 @@
 - ZPL (item 3.2): GS1 DataBar through `^BR` (13 digits, or Expanded's element strings), refused where a table asks a
   taller symbol than `^BR` prints or Expanded would need a separator; ITF-14's bearer bars through `^GB` with its digits
   below. Every one printed through Labelary and read back.
+- Offline (item 1.7): a service worker written at build time keeps every file on the first visit — pages from the
+  network first, everything else from the cache —; a web app manifest and icons. A browser test reloads the editor
+  with the network off and runs the scan test.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
