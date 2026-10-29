@@ -71,4 +71,8 @@
   Spanish words) and remembered for files with the same headers; values the same on every row; dates as YYMMDD from
   Excel's dates and day-first forms; every row checked by the Syntax Engine, those in error listed, the label's preview
   stepping through the rows.
+- The validation report (item 2.2): rows with errors, fixed, skipped or all, each with its reason and its cells, the
+  cell at fault outlined and fixed in place without changing the file; a hint when Excel kept 15 digits of a code or a
+  CSV wrote it in scientific notation; rows skipped one by one or all those in error; the report and the corrected
+  rows as CSV.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

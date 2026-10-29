@@ -114,3 +114,17 @@ read from their zip and XML like the GCP table before them; a workbook written b
 custom date format and Excel's built-in one, since the first mutation of the date formats went unnoticed with only
 the custom one. Headers are matched in Portuguese and Spanish as well as English: the interface is in English, but a
 spreadsheet is in its author's language.
+
+The owner's review of 29 October brought eight notes. Placed in the backlog rather than done at once, each went where
+it is cheapest: the editor's small corrections (full width, AI lists in alphabetical order, a calibration that fits)
+as 1.10, every key and qualifier as 1.11, several keys in one symbol before the generated SSCCs that need them (1.12),
+GS1-128 over several symbols as the opening of the logistic label (1.13), and QR Code's encoding modes last (1.14),
+since bwip-js chooses its segments itself and offers no way to force one. The dictionary answered the question on
+several keys: every GS1 key may be a GS1 Digital Link data attribute, and the Syntax Engine already refuses the pairs
+the standard forbids, so the work is the editor's, not the checks'.
+
+Item 2.2 followed, with mock-up A of three: the report in the rows card, the cell at fault fixed where it is shown.
+Two details came from using it: a row fixed while its value is typed would vanish from the list of errors at the
+first valid character, so a row touched stays until another filter is chosen; and the report's class names first met
+the page's own `.error` and `.fixed`, painting labels red. The hint about Excel's 15 digits needed a second test
+after its mutation to 16 digits went unnoticed.

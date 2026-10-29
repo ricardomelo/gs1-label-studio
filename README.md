@@ -38,8 +38,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 ## Backlog
 
-**Order from here** (29 October 2026): 2.2 → 1.10 → 2.4 → 1.11 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
-editor's corrections (1.10) come first after 2.2, being small and seen every day; several keys (1.12) before the
+**Order from here** (29 October 2026; 2.2 done the same day): 1.10 → 2.4 → 1.11 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
+editor's corrections (1.10) come first, being small and seen every day; several keys (1.12) before the
 generated SSCCs (2.3), which a logistic unit's label needs; GS1-128 over several symbols (1.13) after them, opening
 the logistic label of phase 4.
 
@@ -123,7 +123,10 @@ the logistic label of phase 4.
   code" (mock-up A): CSV (comma, semicolon or tab), pasted rows and Excel workbooks read without a library; each
   column's AI guessed from its header and remembered for the same headers; values for every row; each row checked by
   the Syntax Engine, its label in the preview*
-- 2.2 Validation report; fix or skip rows
+- 2.2 Validation report; fix or skip rows — *done (mock-up A of three): in the rows card, the rows with errors, fixed,
+  skipped or all; each with its reason and its cells, the one at fault outlined and fixed in place (the file is not
+  changed); a hint when Excel kept 15 digits of a code or a CSV wrote it in scientific notation; one row or every row
+  in error skipped; the report and the corrected rows as CSV*
 - 2.3 Generated sequences: serial numbers, SSCCs
 - 2.4 Outputs: zip by row with a name pattern, multi-page PDF, laser label sheets (Pimaco, Avery, custom), one print
   file per printer language, CSV of what was generated

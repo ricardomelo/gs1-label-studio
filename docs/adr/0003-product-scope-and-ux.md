@@ -60,7 +60,10 @@
    rule while the owner was away): not a wizard but a mode of the editor — "One code | In bulk" in the header; in bulk,
    step 1 is the rows (a file dropped or chosen, or rows pasted), each column's AI and the values every row takes, with
    the rows ready and those in error (each a link to it); steps 2 and 3 stay the editor's, so the label is designed once
-   and its preview steps through the rows. The columns are kept in localStorage for files with the same headers.*
+   and its preview steps through the rows. The columns are kept in localStorage for files with the same headers.
+   The report of the rows in error (item 2.2, mock-up A of three, taken under the owner's rule) stays in step 1: each
+   row in error shows its cells with the one at fault outlined, fixed in place — the file is not changed, the
+   corrected rows are downloaded to fix it at its source —, or skipped.*
 3. **Labels** (later) — templates and a designer: text, images, lines, several symbols, fields bound to columns; ready
    templates such as the GS1 Logistic Label (SSCC) in A6 and 100 × 150 mm.
 4. **Printers** — profiles (ADR 0002) and a test print.
