@@ -7,7 +7,8 @@ DPL). Nothing you type or upload leaves your computer.
 > **Status:** early development (29 October 2026). The resolver's editor in the browser: key, qualifiers and data
 > attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options,
 > live — EAN/UPC, ITF-14, GS1-128, GS1 DataBar, GS1 DataMatrix and the QR code and Data Matrix with a GS1 Digital Link
-> URI, each laid out as the GS1 General Specifications place it; SVG, PNG, PDF and zip, and ZPL with the printer's own
+> URI, each laid out as the GS1 General Specifications place it, seen at real size and read back by a scan test in the
+> browser; SVG, PNG, PDF and zip, and ZPL with the printer's own
 > commands (and as a template); EPC for RFID and NFC.
 > See the backlog.
 
@@ -65,8 +66,10 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   prepress options (bar width reduction, 100 % K) — *SVG, PNG (12 pixels per module, its dpi recorded), PDF and zip
   with README ported from the resolver and checked against it, for every symbol from its layout (1.3); a chosen dpi,
   EPS and the prepress options to do*
-- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *the
-  editor screen done (preview beside the options, live, desktop and phone, light and dark); ruler and scan test to do*
+- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *done:
+  the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
+  between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with
+  ZXing in the browser (mock-up A)*
 - 1.7 Offline (PWA)
 - 1.8 EPC for RFID and NFC: every key with a TDS scheme, from the resolver's TDT-derived schemes; the GS1 Company
   Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser — *done, checked against the
@@ -108,7 +111,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 [Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT), GS1's
 [Barcode Syntax Engine](https://github.com/gs1/gs1-syntax-engine) (`gs1encoder`, Apache-2.0),
 [opentype.js](https://github.com/opentypejs/opentype.js) (MIT) and the Liberation Sans font (SIL Open Font License,
-`packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts; for
-tests, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), [resvg-js](https://github.com/yisibl/resvg-js)
-(MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT), [Playwright](https://playwright.dev) (Apache-2.0) and
+`packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts;
+[zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) for the editor's scan test and the tests; for tests,
+[resvg-js](https://github.com/yisibl/resvg-js) (MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT), [Playwright](https://playwright.dev) (Apache-2.0) and
 poppler's `pdftoppm` (GPL-2.0, run as a separate program).

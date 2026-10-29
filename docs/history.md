@@ -85,3 +85,9 @@ settled from section 2: at a till GS1 DataBar Expanded carries a fixed measure i
 dates going in a 2D symbol in addition, and carries everything for a variable measure item (2.1.12.1); and a GTIN
 carrier other than an EAN/UPC is not recommended with a 2D symbol beside it, since the label cannot lay that pair out
 yet — a defect of item 1.2 that showed only once DataBar could be the carrier.
+
+Item 1.6 followed while the owner slept, with the owner's leave to take the recommended option. Of three mock-ups
+(the check in the preview itself, a step 4, a dialog) the first was taken: the ruler and the scan test sit where the
+label is looked at. The scan test reads the label as the browser draws its SVG, with the decoder the tests use; its
+WebAssembly is served by the application, so the test sends nothing anywhere. A bank card's long side was too wide
+for the preview's column on a laptop, so the calibration matches its short side.

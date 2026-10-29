@@ -52,4 +52,7 @@
   height. Their SVG, PNG, PDF and zip are labels; 2D symbols of tables 12 and 13 too. Step 2 offers GS1 DataBar; at a
   till GS1 DataBar Expanded carries the attributes of a variable measure item only (section 2.1.12.1). Choosing a symbol
   yourself sizes it by a table of the key's scanning environments. ZPL refuses GS1 DataBar until `^BR` is proven.
+- The preview at real size and the scan test (item 1.6, mock-up A): "Fit" or "Real size", rulers in millimetres, the
+  screen calibrated against a bank card and kept in the browser; "Scan test" reads the label's SVG back with ZXing in
+  the browser and says whether each symbol carries what it should (symbology identifier and data).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
