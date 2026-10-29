@@ -47,6 +47,7 @@ export {
   type ResolverSymbol,
 } from "./environments.ts";
 export {
+  baseX,
   minimumBarHeight,
   PARTS,
   SPEC_SYMBOL_NAMES,

@@ -335,14 +335,16 @@ export function specificationFor(table: number, symbol: SpecSymbol, part?: strin
   return rows.find((row) => row.part === part) ?? rows.find((row) => row.part === undefined) ?? rows[0];
 }
 
-/**
- * The sizes (percentages of the target X-dimension) that keep a symbol within its row's range; none where the table
- * gives no target (table 13: the X-dimension is chosen within the range).
- */
+/** The X-dimension sizes are percentages of: the target, or the minimum where the table gives no target (table 13). */
+export function baseX(spec: SymbolSpecification): number {
+  return spec.x[1] ?? spec.x[0];
+}
+
+/** The sizes (percentages of `baseX`) that keep a symbol within its row's range. */
 export function specSizesFor(spec: SymbolSpecification, sizes: readonly number[]): number[] {
-  const [low, target, high] = spec.x;
-  if (target === null) return [];
-  return sizes.filter((size) => low - 1e-9 <= (target * size) / 100 && (target * size) / 100 <= high + 1e-9);
+  const [low, , high] = spec.x;
+  const base = baseX(spec);
+  return sizes.filter((size) => low - 1e-9 <= (base * size) / 100 && (base * size) / 100 <= high + 1e-9);
 }
 
 /**

@@ -303,7 +303,8 @@ describe("GS1 symbol specification tables (General Specifications 26.0, section 
     expect(specSizesFor(specificationFor(5, "gs1-128")!, SIZES)).toEqual([100, 120, 150]);
     expect(specSizesFor(specificationFor(4, "gs1-128")!, SIZES)).toEqual([80, 90, 100]);
     expect(specSizesFor(specificationFor(1, "databar-omni")!, SIZES)).toEqual([80, 90, 100, 120, 150, 200]);
-    expect(specSizesFor(specificationFor(13, "gs1-128")!, SIZES)).toEqual([]);
+    // Table 13 gives no target: sizes of its minimum, 0.495 mm, up to 0.940 mm
+    expect(specSizesFor(specificationFor(13, "gs1-128")!, SIZES)).toEqual([100, 120, 150]);
   });
 
   it("chooses the part asked for, or the row without a part", () => {
