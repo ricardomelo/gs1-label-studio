@@ -14,7 +14,8 @@
   "dependencies": {
     "@gs1-label-studio/core": "workspace:*",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "zxing-wasm": "3.1.6"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

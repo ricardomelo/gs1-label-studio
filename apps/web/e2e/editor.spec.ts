@@ -232,3 +232,47 @@ test("choosing ITF-14 yourself offers the key's scanning environments whose tabl
   expect(environments).toEqual(["distribution", "pharmacy", "pharmacy-gd", "healthcare", "other"]);
   await expect(page.locator(".preview .error")).toContainText("ITF-14 carries the GTIN alone");
 });
+
+// Item 1.6 (mock-up A of 29 October 2026): the preview at real size with rulers, the screen's calibration, the scan test.
+test("the scan test reads the label back as intended, with ZXing in the browser", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 });
+  // An ITF-14 with its bearer bars, from step 2.
+  await page.fill("#paste", "(01)19506000134373");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("Reads the label back with ZXing, here in the browser.");
+  await answer(page, "Is it scanned at a general retail point of sale?", "No");
+  await answer(page, "Is it a regulated healthcare item sold in a retail pharmacy?", "No");
+  await answer(page, "Is it scanned in general distribution?", "Yes");
+  await answer(page, "Is it a tobacco product under the EU traceability regulation?", "No");
+  await answer(page, "Is it a regulated healthcare item not sold at retail?", "No");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]I1 19506000134373", { timeout: 30_000 });
+  // Nothing leaves the browser: the reader and its WebAssembly come from the application.
+  expect(requests.filter((url) => !url.startsWith("http://localhost:4173/") && !url.startsWith("blob:"))).toEqual([]);
+});
+
+test("at real size the label is drawn between rulers in millimetres, at the screen's calibration", async ({ page }) => {
+  await page.getByRole("button", { name: "Real size" }).click();
+  const symbol = page.locator(".real .symbol");
+  // 32.6 mm wide at 96 CSS pixels an inch.
+  const box = await symbol.boundingBox();
+  expect(box!.width).toBeCloseTo((32.6 * 96) / 25.4, 0);
+  await expect(page.locator(".real .ruler")).toHaveCount(2);
+  await page.getByRole("button", { name: "Calibrate the screen" }).click();
+  await page.locator("#calibrate").fill("5");
+  expect((await page.locator(".card-bar").boundingBox())!.width).toBeCloseTo(53.98 * 5, 0); // a card's short side
+  expect((await symbol.boundingBox())!.width).toBeCloseTo(32.6 * 5, 0);
+  // Kept in this browser.
+  await page.reload();
+  await page.getByRole("button", { name: "Real size" }).click();
+  expect((await page.locator(".real .symbol").boundingBox())!.width).toBeCloseTo(32.6 * 5, 0);
+  await page.getByRole("button", { name: "Calibrate the screen" }).click();
+  await page.getByRole("button", { name: "Reset" }).click();
+  expect((await page.locator(".real .symbol").boundingBox())!.width).toBeCloseTo((32.6 * 96) / 25.4, 0);
+  await page.getByRole("button", { name: "Fit" }).click();
+  await expect(page.locator(".real")).toHaveCount(0);
+});

@@ -5,6 +5,7 @@ import {
   baseX,
   dataFor,
   encode,
+  expectedReads,
   ENVIRONMENTS,
   environmentsFor,
   fieldsOf,
@@ -202,6 +203,7 @@ export function App() {
       return {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
+          widthMm: wMm, heightMm: hMm, expected: expectedReads(options),
           caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 %`,
         },
         data, geometry, options, layout,

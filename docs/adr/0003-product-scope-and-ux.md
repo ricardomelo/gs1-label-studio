@@ -35,7 +35,12 @@
 3. **Right by construction.** Only sizes within the table's range; check digits computed or checked; quiet zones and
    human readable text as the General Specifications place them; for printers, only whole-dot X-dimensions.
 4. **See it at real size.** A preview at 1:1 with a ruler, the X-dimension, the symbol's printed size, and a "scan
-   test" that reads the symbol back with the same decoder the tests use.
+   test" that reads the symbol back with the same decoder the tests use. *On the page since 29 October 2026 (item 1.6,
+   mock-up A of three, the recommended one, taken under the owner's rule while the owner was away): "Fit" or "Real
+   size" above the preview, rulers in millimetres along the label at real size, the screen calibrated against the short
+   side of a bank card (ISO/IEC 7810 ID-1, 53.98 mm) and kept in the browser; "Scan test" draws the label's SVG in the
+   browser and reads it with ZXing (zxing-wasm, its WebAssembly served by the application), comparing the symbology
+   identifier and the data of every symbol with what the label should carry (`expectedReads()`).*
 5. **Private.** Nothing leaves the browser; said on the page.
 6. **Accessible.** Keyboard and screen reader, light and dark, phone width.
 7. **In English.** The owner fixed the tool in English (28 October 2026): one language to write, test and document.

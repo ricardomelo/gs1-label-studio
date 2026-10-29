@@ -11,6 +11,9 @@ import {
   type ErrorLevel,
   type SymbologyId,
 } from "@gs1-label-studio/core";
+import { useState } from "react";
+import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
+import { scanSvg } from "./scan.ts";
 import {
   BEARER_CHOICES,
   ENVIRONMENT_NAMES,
@@ -63,7 +66,17 @@ export interface LabelView {
   guided?: { summary: string; table: number; application: string };
   /** A symbol sized by its table's row: sizes are percentages of this X-dimension (mm). */
   sizeBase?: number;
+  /** The label's size in millimetres, for the real-size view. */
+  widthMm?: number;
+  heightMm?: number;
+  /** What a reader should give back for the symbols on the label (`expectedReads()`), for the scan test. */
+  expected?: string[];
 }
+
+type Scan =
+  | { svg: string; status: "reading" }
+  | { svg: string; status: "ok" | "different"; reads: string[] }
+  | { svg: string; status: "error"; message: string };
 
 export type FileKind = "svg" | "png" | "pdf" | "zip";
 
@@ -106,6 +119,22 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
 
 export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
+  const [real, setReal] = useState(false);
+  const [calibrating, setCalibrating] = useState(false);
+  const [pxPerMm, setPxPerMm] = useState(keptScale);
+  const [scanned, setScanned] = useState<Scan | null>(null);
+  const scan = scanned && scanned.svg === view.svg ? scanned : null; // a test of an earlier label says nothing
+  const expected = view.expected ?? [];
+
+  function runScan() {
+    const svg = view.svg;
+    if (!svg) return;
+    setScanned({ svg, status: "reading" });
+    scanSvg(svg).then(
+      (reads) => setScanned({ svg, status: reads.join("\n") === expected.join("\n") ? "ok" : "different", reads }),
+      (error: unknown) => setScanned({ svg, status: "error", message: error instanceof Error ? error.message : String(error) }),
+    );
+  }
   const snap = snapToDots(view.xMm, s.dpi);
   const target = view.sizeBase ?? (view.twoD ? ENVIRONMENTS[s.environment]?.["2d"][1] : ENVIRONMENTS[s.environment]?.linear?.[1]);
 
@@ -116,14 +145,54 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
       </h2>
       <div className="panel">
         <div>
-          <div className="preview" aria-live="polite">
-            {view.svg ? (
-              <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
-            ) : (
-              <p className="error">{view.error ?? "Loading…"}</p>
-            )}
-          </div>
+          {view.svg && view.widthMm && (
+            <div className="view-bar">
+              <span className="seg" role="group" aria-label="Preview size">
+                <button type="button" aria-pressed={!real} onClick={() => setReal(false)}>
+                  Fit
+                </button>
+                <button type="button" aria-pressed={real} onClick={() => setReal(true)}>
+                  Real size
+                </button>
+              </span>
+              {real && (
+                <button type="button" className="link" aria-expanded={calibrating} onClick={() => setCalibrating(!calibrating)}>
+                  Calibrate the screen
+                </button>
+              )}
+            </div>
+          )}
+          {real && calibrating && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
+          {real && view.svg && view.widthMm && view.heightMm ? (
+            <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm} />
+          ) : (
+            <div className="preview" aria-live="polite">
+              {view.svg ? (
+                <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
+              ) : (
+                <p className="error">{view.error ?? "Loading…"}</p>
+              )}
+            </div>
+          )}
           {view.caption && <div className="caption">{view.caption}</div>}
+          {view.svg && (
+            <div className="scan">
+              <button type="button" className="btn" disabled={scan?.status === "reading"} onClick={runScan}>
+                Scan test
+              </button>
+              <span className={`scan-result ${scan?.status ?? ""}`} aria-live="polite">
+                {!scan
+                  ? "Reads the label back with ZXing, here in the browser."
+                  : scan.status === "reading"
+                    ? "Reading…"
+                    : scan.status === "error"
+                      ? `The test could not run: ${scan.message}`
+                      : scan.status === "ok"
+                        ? `✓ Read as intended: ${scan.reads.join(" and ")}`
+                        : `✗ Read ${scan.reads.join(" and ") || "nothing"}; expected ${expected.join(" and ")}.`}
+              </span>
+            </div>
+          )}
           {fileError && <p className="error small">{fileError}</p>}
           <div className="downloads">
             <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
