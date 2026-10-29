@@ -84,7 +84,10 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Phase 2 — in bulk**
 
-- 2.1 CSV, Excel and pasted rows; column mapping remembered by header; fixed values
+- 2.1 CSV, Excel and pasted rows; column mapping remembered by header; fixed values — *done: "In bulk" beside "One
+  code" (mock-up A): CSV (comma, semicolon or tab), pasted rows and Excel workbooks read without a library; each
+  column's AI guessed from its header and remembered for the same headers; values for every row; each row checked by
+  the Syntax Engine, its label in the preview*
 - 2.2 Validation report; fix or skip rows
 - 2.3 Generated sequences: serial numbers, SSCCs
 - 2.4 Outputs: zip by row with a name pattern, multi-page PDF, laser label sheets (Pimaco, Avery, custom), one print

@@ -66,4 +66,9 @@
   with the network off and runs the scan test.
 - GS1 DotCode is named in step 2 but not drawn: no independent decoder reads it back (ZXing does not), which every
   symbol needs before it is offered; tobacco unit packs get GS1 DataMatrix at table 12's size.
+- In bulk (item 2.1): "One code | In bulk"; rows from a CSV, rows pasted from a spreadsheet or an Excel workbook, read
+  without a library; each column's AI guessed from its header (an AI, a GS1 data title, common English, Portuguese and
+  Spanish words) and remembered for files with the same headers; values the same on every row; dates as YYMMDD from
+  Excel's dates and day-first forms; every row checked by the Syntax Engine, those in error listed, the label's preview
+  stepping through the rows.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

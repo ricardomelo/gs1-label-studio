@@ -107,3 +107,10 @@ Item 1.7 came next: offline. A plugin of the build writes the service worker wit
 makes, so nothing is forgotten when a file is added; it needed no library. The first browser test offline failed:
 the preview server answers "Vary: Origin" and a module script is fetched with an Origin, so the cache did not match
 until the worker was told to ignore Vary, which is safe for files whose names carry their content's hash.
+
+Phase 2 began with item 2.1. Of three mock-ups — a mode of the editor, a wizard, a dialog — the first was taken: the
+label is designed once, in the editor's own steps, and the rows are stepped through in its preview. Excel workbooks are
+read from their zip and XML like the GCP table before them; a workbook written by openpyxl is the test's, with a
+custom date format and Excel's built-in one, since the first mutation of the date formats went unnoticed with only
+the custom one. Headers are matched in Portuguese and Spanish as well as English: the interface is in English, but a
+spreadsheet is in its author's language.
