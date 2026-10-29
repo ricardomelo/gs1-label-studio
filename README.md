@@ -38,6 +38,11 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 ## Backlog
 
+**Order from here** (29 October 2026): 2.2 → 1.10 → 2.4 → 1.11 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
+editor's corrections (1.10) come first after 2.2, being small and seen every day; several keys (1.12) before the
+generated SSCCs (2.3), which a logistic unit's label needs; GS1-128 over several symbols (1.13) after them, opening
+the logistic label of phase 4.
+
 **Phase 0 — setting up**
 
 - 0.1 Repository, CI, publication on GitHub Pages — *done*
@@ -81,6 +86,36 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   resolver and read back by epc-tds; the tag's hexadecimal filled to the 16-bit word*
 - 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
   1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it*
+
+*The owner's review of 29 October 2026 added items 1.10 to 1.14.*
+
+- 1.10 The editor, corrected: (a) it takes the whole width of the screen (today at most 1 400 px, centred); (b) every
+  list of AIs in alphabetical order of the name it shows — the identifier types (today in the dictionary's order,
+  GDTI first), the attributes (today the common ones first, then by AI) and the bulk columns' AIs; (c) the screen's
+  calibration (1.6) usable at its whole range: the bar outgrows the options column near the slider's maximum, so it
+  cannot be measured, and the slider is coarse — the bar where there is room, and a fine adjustment
+- 1.11 Every identifier and qualifier: every GS1 key the dictionary has (the 16 GS1 Digital Link primary keys are
+  offered today) and every qualifier of each, from the current GS1 Digital Link URI syntax; the four main qualifiers
+  on the screen and the rest behind "+ Add qualifier", as the attributes are; checked against the GS1 General
+  Specifications 2026 and the GS1 Digital Link standard in `references`
+- 1.12 Several keys in one symbol. An element string may carry more than one key; the Syntax Engine already checks the
+  pairs the General Specifications forbid (e.g. (01) with (02) or (37); (8017) with (8018)) and require ((02) needs
+  (37); (8020) and (415) go together). The cases to support: a logistic unit, SSCC (00) with the content's GTIN (02)
+  and count (37), or with a GTIN (01) when the unit is itself a trade item, or with (8026) and (37); the transport
+  keys beside it — consignment GINC (401), shipment GSIN (402), routing (403), ship to GLN (410); a trade item that is
+  also an asset (GTIN with GRAI (8003) or GIAI (8004), e.g. a returnable keg). Today another key can only be added as
+  a data attribute. To do: the cases confirmed against sections 3 and 4.13–4.14 of the General Specifications, the
+  editor's "other keys" with their check digits, the GS1 Digital Link URI with one key in its path and the others in
+  its query string, and the HRI
+- 1.13 GS1-128 over several symbols: when the data passes 48 characters (section 5.4.4.3), split it into as many
+  GS1-128 symbols as needed, the key in the first and the rest in data-only symbols without a key, in the
+  standard's order, stacked as the GS1 Logistic Label stacks them; the person can also move element strings between
+  the symbols. Each symbol read back. Prepares 4.1
+- 1.14 QR Code's encoding modes: today bwip-js chooses the segments itself (numeric, alphanumeric, byte, mixed, for the
+  smallest symbol). Offer automatic (as today) or one mode for the whole data — numeric, alphanumeric, byte — as ISO/IEC
+  18004 defines them, alphanumeric only when the data allow it (upper case: a GS1 Digital Link URI's scheme and domain
+  may be upper case, its path and values are case-sensitive). bwip-js has no option for it: an encoder that takes
+  segments is needed (to choose), and every mode read back by ZXing
 
 **Phase 2 — in bulk**
 

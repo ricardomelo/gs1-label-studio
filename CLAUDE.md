@@ -61,3 +61,7 @@ this public repository.
 - Before implementing a screen, show mock-ups (Playwright screenshots of the real application); then implement the
   recommended one.
 - At the end of a backlog item, or when the conversation has grown long, write a handover for the next session.
+- Whenever a piece of work is finished, an updated test plan for the maintainer (the maintainer, 29 October 2026), as
+  in the resolver's project: a Claude Docs doc with checkboxes, one section per delivery with its commit, each step in
+  the published tool (https://ricardomelo.github.io/gs1-label-studio/) with its expected result; what is still
+  untested from earlier plans carried over. Its link goes in the handover.
