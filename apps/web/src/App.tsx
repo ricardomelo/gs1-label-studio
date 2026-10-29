@@ -13,6 +13,7 @@ import {
   HriFont,
   identify,
   InputError,
+  labelEps,
   labelPdf,
   labelPng,
   labelSvg,
@@ -20,6 +21,7 @@ import {
   layoutLabel,
   linearSizesFor,
   linearXDimension,
+  pngAt,
   pngDpi,
   sizesFor,
   snapToDots,
@@ -61,6 +63,7 @@ import { GUIDE_TEXTS } from "./texts.ts";
 
 const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
 const DEFAULT_STEM = "https://id.gs1.org";
+const PNG_RESOLUTIONS = [300, 600, 1200]; // besides the PNG at the label's size (backlog 1.5)
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
 
@@ -79,7 +82,8 @@ export function App() {
   const [id, setId] = useState<Identification>(START);
   const [settings, setSettings] = useState<LabelSettings>({
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
-    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", expert: false,
+    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
+    expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
   const [picked, setPicked] = useState<Choice | null>(null);
@@ -188,6 +192,7 @@ export function App() {
         symbology, data, showHri: effective.hri !== "none", hriLines: effective.hri === "key" ? lines.slice(0, 1) : lines,
         version: effective.version, error: effective.error, environment: environment ?? undefined, size, linear,
         linearSize: twoD ? effective.linearSize : null, ...(spec ? { spec, table } : {}), bearer: effective.bearer,
+        ...(effective.reduction ? { barWidthReduction: effective.reduction } : {}),
       };
       const layout = layoutLabel(options, font);
       const geometry = encode(symbology, data, symbology.endsWith("qrcode") ? { eclevel: effective.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) } : {});
@@ -204,6 +209,8 @@ export function App() {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
           widthMm: wMm, heightMm: hMm, expected: expectedReads(options),
+          pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
+          hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
           caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 %`,
         },
         data, geometry, options, layout,
@@ -211,7 +218,7 @@ export function App() {
     } catch (error) {
       return { view: { ...base, error: errorText(error) } };
     }
-  }, [checked, gtinOnly, font, engine, blocked, spec, table, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, effective.bearer, environment, size, twoD]);
+  }, [checked, gtinOnly, font, engine, blocked, spec, table, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, effective.bearer, effective.reduction, environment, size, twoD]);
 
   const view: LabelView = {
     ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible,
@@ -263,8 +270,13 @@ export function App() {
     if (!view.svg || !options || !layout || !font) return;
     try {
       if (kind === "svg") download(`${name}.svg`, view.svg, "image/svg+xml");
-      if (kind === "png") download(`${name}.png`, await labelPng(layout, font), "image/png");
+      if (kind === "png") {
+        const chosen = settings.pngResolution ? pngAt(layout, settings.pngResolution) : null;
+        const png = chosen ? await labelPng(layout, font, chosen.pixelsPerModule, chosen.dpi) : await labelPng(layout, font);
+        download(`${name}.png`, png, "image/png");
+      }
       if (kind === "pdf") download(`${name}.pdf`, await labelPdf(options, layout, font), "application/pdf");
+      if (kind === "eps") download(`${name}.eps`, labelEps(options, layout, font), "application/postscript");
       if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg), "application/zip");
       setFileError(null);
     } catch (error) {

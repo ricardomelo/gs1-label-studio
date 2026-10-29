@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 // The editor (ADR 0004, mock-ups of 28 October 2026): what the code identifies on the left, the label redrawn beside
@@ -96,13 +97,14 @@ test("GS1's GCP length table gives the prefix's length and stays in the browser"
   await expect(page.locator("details.epc .gcp .hint")).toContainText("GS1's list of 2026-09-17: 2 prefixes, kept in this browser.");
 });
 
-test("the label downloads as SVG, PNG, PDF and zip, named after the key", async ({ page }) => {
+test("the label downloads as SVG, PNG, PDF, EPS and zip, named after the key", async ({ page }) => {
   const name = "dl-qrcode_01_09506000134376_10_B42";
   const files: [RegExp, string, number[]][] = [
     [/^Download SVG$/, `${name}.svg`, [0x3c, 0x3f, 0x78, 0x6d, 0x6c]], // <?xml
     [/^PNG \(616 dpi\)$/, `${name}.png`, [0x89, 0x50, 0x4e, 0x47]],
     [/^PDF$/, `${name}.pdf`, [0x25, 0x50, 0x44, 0x46]], // %PDF
-    [/^Zip: /, `${name}.zip`, [0x50, 0x4b, 0x03, 0x04]],
+    [/^EPS$/, `${name}.eps`, [0x25, 0x21, 0x50, 0x53]], // %!PS
+    [/^Zip of all$/, `${name}.zip`, [0x50, 0x4b, 0x03, 0x04]],
   ];
   for (const [button, file, signature] of files) {
     const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: button }).click()]);
@@ -115,7 +117,7 @@ test("the label downloads as SVG, PNG, PDF and zip, named after the key", async 
     if (file.endsWith(".zip")) {
       expect(execFileSync("unzip", ["-tq", (await download.path())!], { encoding: "utf8" })).toContain("No errors");
       expect(execFileSync("unzip", ["-Z1", (await download.path())!], { encoding: "utf8" }).split("\n").filter(Boolean))
-        .toEqual([`${name}.svg`, `${name}.png`, `${name}.pdf`, "README.txt"]);
+        .toEqual([`${name}.svg`, `${name}.png`, `${name}.pdf`, `${name}.eps`, "README.txt"]);
     }
   }
 });
@@ -275,4 +277,21 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
   expect((await page.locator(".real .symbol").boundingBox())!.width).toBeCloseTo((32.6 * 96) / 25.4, 0);
   await page.getByRole("button", { name: "Fit" }).click();
   await expect(page.locator(".real")).toHaveCount(0);
+});
+
+// The rest of item 1.5: prepress.
+test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution", async ({ page }) => {
+  await expect(page.locator("#opt-reduction")).toHaveCount(0); // a QR code alone has no bars
+  await page.selectOption("#opt-linear", "auto");
+  await page.selectOption("#opt-reduction", "0.02");
+  await expect(page.locator(".preview svg desc")).toContainText("bars reduced by 0.020 mm (bar width reduction)");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await expect(page.locator("#opt-png option").nth(1)).toHaveText("300 dpi — 6 pixels a module, X 0.508 mm");
+  await page.selectOption("#opt-png", "300");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG (300 dpi)" }).click()]);
+  const png = readFileSync((await download.path())!);
+  // pHYs: 11811 pixels a metre, 300 dpi.
+  const at = png.indexOf("pHYs");
+  expect(png.readUInt32BE(at + 4)).toBe(11811);
 });

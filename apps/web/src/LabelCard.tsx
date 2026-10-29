@@ -41,6 +41,10 @@ export interface LabelSettings {
   stem: string;
   /** ITF-14's bearer bars. */
   bearer: Bearer;
+  /** Bar width reduction in mm (0: none). */
+  reduction: number;
+  /** The PNG's resolution; null: the one at which it prints at the label's size. */
+  pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
   expert: boolean;
 }
@@ -62,6 +66,10 @@ export interface LabelView {
   linearPossible: boolean;
   /** The PNG's resolution, at which it prints at the label's size. */
   pngDpi?: number;
+  /** The PNG at each resolution offered: pixels a module and the X-dimension it prints at. */
+  pngResolutions?: { dpi: number; pixelsPerModule: number; xMm: number }[];
+  /** The label has a linear symbol's bars, which a bar width reduction narrows. */
+  hasBars?: boolean;
   /** The symbol chosen in step 2, and its table. */
   guided?: { summary: string; table: number; application: string };
   /** A symbol sized by its table's row: sizes are percentages of this X-dimension (mm). */
@@ -78,7 +86,10 @@ type Scan =
   | { svg: string; status: "ok" | "different"; reads: string[] }
   | { svg: string; status: "error"; message: string };
 
-export type FileKind = "svg" | "png" | "pdf" | "zip";
+export type FileKind = "svg" | "png" | "pdf" | "eps" | "zip";
+
+// Prepress (backlog 1.5): the bar width reductions offered, in mm.
+const REDUCTIONS = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05];
 
 interface Props {
   /** Shown below the options: the EPC section. */
@@ -199,13 +210,22 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               Download SVG
             </button>
             <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
-              PNG{view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
+              PNG{s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
             </button>
             <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("pdf")}>
               PDF
             </button>
-            <button type="button" className="btn wide" disabled={!view.svg} onClick={() => onDownload("zip")}>
-              Zip: SVG, PNG, PDF and README
+            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("eps")}>
+              EPS
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={!view.svg}
+              title="SVG, PNG, PDF, EPS and a README"
+              onClick={() => onDownload("zip")}
+            >
+              Zip of all
             </button>
             <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
               ZPL ({s.dpi} dpi)
@@ -350,6 +370,33 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
                 )}
               </>
             )}
+            {view.hasBars && (
+              <div>
+                <label htmlFor="opt-reduction">Bar width reduction</label>
+                <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
+                  {REDUCTIONS.map((mm) => (
+                    <option key={mm} value={mm}>
+                      {mm ? `${mm.toFixed(3)} mm` : "None"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label htmlFor="opt-png">PNG resolution</label>
+              <select
+                id="opt-png"
+                value={s.pngResolution ?? ""}
+                onChange={(e) => set("pngResolution", e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">At the label's size{view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}</option>
+                {(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => (
+                  <option key={dpi} value={dpi}>
+                    {dpi} dpi — {pixelsPerModule} {pixelsPerModule === 1 ? "pixel" : "pixels"} a module, X {xMm.toFixed(3)} mm
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label htmlFor="opt-hritext">Text in the SVG</label>
               <select
