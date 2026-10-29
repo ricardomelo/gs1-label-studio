@@ -169,6 +169,26 @@ table.mapping select { padding: 4px 6px; font-size: 13px; }
 .summary .ok, .row-nav .ok { color: var(--ok); font-weight: 600; }
 .summary .bad, .row-nav .bad { color: var(--error); font-weight: 600; }
 .summary ul { margin: 6px 0 0; padding-left: 18px; }
+.rep-tabs { display: flex; flex-wrap: wrap; margin: 8px 0 2px; }
+.rep-tabs button { border: 1px solid var(--navy); background: transparent; color: var(--navy); padding: 4px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: -1px; }
+.rep-tabs button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+.rep-tabs button:last-child { border-radius: 0 6px 6px 0; }
+.rep-tabs button[aria-pressed="true"] { background: var(--navy); color: var(--card); }
+.rrow { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; background: var(--card); }
+.rrow .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rrow .tag-line { display: flex; gap: 4px; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
+.rrow .why { color: var(--error); margin: 2px 0 4px; }
+.rrow .cells { display: grid; grid-template-columns: minmax(70px, auto) 1fr; gap: 4px 8px; align-items: center; margin-top: 4px; }
+.rrow .cells label { margin: 0; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.rrow .cells input { padding: 4px 6px; font-size: 12px; }
+.rrow .cells input.at-fault { border: 2px solid var(--error); background: color-mix(in srgb, var(--error) 8%, var(--field)); }
+.rrow .cells input.edited { border: 2px solid var(--ok); }
+.rrow[data-status="skipped"] { opacity: 0.6; }
+.tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 9px; background: color-mix(in srgb, var(--ok) 15%, var(--card)); color: var(--ok); }
+.tag[data-status="skipped"] { background: var(--soft); color: var(--muted); }
+.rep-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
+.report .more { display: block; margin-top: 8px; }
+.row-nav .muted { color: var(--muted); font-weight: 600; }
 .row-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; }
 .row-nav button { border: 1.5px solid var(--navy); background: transparent; color: var(--navy); border-radius: 6px; padding: 0 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
 .row-nav button:disabled { opacity: 0.35; cursor: default; }

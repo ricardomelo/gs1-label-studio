@@ -352,12 +352,12 @@ test("in bulk: an Excel workbook's rows, columns guessed from their headers, eac
   await expect(page.locator("#map-2")).toHaveValue("17");
   await expect(page.locator("#map-4")).toHaveValue("");
   await expect(page.locator(".summary")).toContainText("2 rows ready · 2 with errors");
-  await expect(page.locator(".summary")).toContainText("Row 4: The check digit does not match: it should be 2.");
+  await expect(page.locator(".rrow[data-row='4'] .why")).toHaveText("The check digit does not match: it should be 2.");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&3101=000005&11=261001");
   await page.getByRole("button", { name: "Next row" }).click();
   await expect(page.locator(".row-nav")).toContainText("Row 3 · 2 of 4 · ready");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125&11=261001");
-  await page.locator(".summary").getByRole("button", { name: "Row 5" }).click();
+  await page.locator(".rrow[data-row='5']").getByRole("button", { name: "Show" }).click();
   await expect(page.locator(".row-nav")).toContainText("Row 5 · 4 of 4 · error");
   await expect(page.locator(".preview .error")).toHaveText("Row 5: The key's column is empty on this row.");
   // A column left out: the production date goes.
@@ -384,4 +384,49 @@ test("in bulk: pasted rows, a value for every row, and the columns remembered fo
   await page.fill("#rows-paste", "Código de barras\tLote\tVence\n9506000134352\tB7\t01/01/2029\n");
   await page.getByRole("button", { name: "Use the pasted rows" }).click();
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/B7?17=290101&422=076");
+});
+
+// Item 2.2 (mock-up A of 29 October 2026): the validation report — the cell at fault fixed in place, rows skipped,
+// the report and the corrected rows as CSV.
+test("in bulk: the validation report, a cell fixed in place, rows skipped, the report and the corrected rows", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\tValidade\n9506000134376\tA1\t31/12/2027\n9506000134352\tA2\t31/02/2028\n" +
+    "9506000134377\tA3\t30/06/2028\n\tA4\t30/06/2028\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  const report = page.locator(".report");
+  await expect(report).toContainText("1 row ready · 3 with errors");
+  await expect(report.getByRole("button", { name: "With errors (3)" })).toHaveAttribute("aria-pressed", "true");
+  // The cell at fault, marked: the date of row 3, the GTIN of rows 4 and 5.
+  await expect(page.locator("#cell-1-2")).toHaveClass(/at-fault/);
+  await expect(page.locator("#cell-1-0")).not.toHaveClass(/at-fault/);
+  await expect(page.locator("#cell-2-0")).toHaveClass(/at-fault/);
+  await expect(page.locator(".rrow[data-row='3'] .why")).toHaveText("AI (17): The date contains an illegal day of the month.");
+  // Fixed in place: the row stays in the list, now fixed, and the label shows it.
+  await page.fill("#cell-1-2", "28/02/2028");
+  await expect(report).toContainText("1 row ready · 2 with errors · 1 fixed");
+  await expect(page.locator(".rrow[data-row='3'] .tag")).toHaveText("fixed");
+  await page.locator(".rrow[data-row='3']").getByRole("button", { name: "Show" }).click();
+  await expect(page.locator(".row-nav")).toContainText("Row 3 · 2 of 4 · fixed");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/A2?17=280228");
+  // The rows still in error skipped together; one of them included again.
+  await page.getByRole("button", { name: "Skip the 2 rows with errors" }).click();
+  await expect(report).toContainText("1 row ready · 1 fixed · 2 skipped");
+  await report.getByRole("button", { name: "Skipped (2)" }).click();
+  await page.locator(".rrow[data-row='5']").getByRole("button", { name: "Include" }).click();
+  await expect(report).toContainText("1 row ready · 1 with errors · 1 fixed · 1 skipped");
+  // The report and the corrected rows as CSV.
+  const [reportFile] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Report (CSV)" }).click()]);
+  expect(reportFile.suggestedFilename()).toBe("Pasted_rows_report.csv");
+  const reportText = readFileSync((await reportFile.path())!, "utf8");
+  expect(reportText).toContain("Row,Status,Reason,Columns at fault,Fixed in the studio,GTIN (01),Lote (10),Validade (17)\r\n");
+  expect(reportText).toContain("3,fixed,,,Validade,9506000134352,A2,28/02/2028\r\n");
+  expect(reportText).toContain("4,skipped,The check digit does not match: it should be 6.,GTIN,,9506000134377,A3,30/06/2028\r\n");
+  const [corrected] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Corrected rows (CSV)" }).click()]);
+  expect(readFileSync((await corrected.path())!, "utf8")).toBe("GTIN,Lote,Validade\r\n9506000134376,A1,31/12/2027\r\n" +
+    "9506000134352,A2,28/02/2028\r\n9506000134377,A3,30/06/2028\r\n,A4,30/06/2028\r\n");
+  // Undone: the file's value again, the row back in error.
+  await report.getByRole("button", { name: "All (4)" }).click();
+  await page.locator(".rrow[data-row='3']").getByRole("button", { name: "Undo the fixes" }).click();
+  await expect(page.locator("#cell-1-2")).toHaveValue("31/02/2028");
+  await expect(report).toContainText("1 row ready · 2 with errors · 1 skipped");
 });

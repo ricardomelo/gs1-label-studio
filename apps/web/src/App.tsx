@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AttributeError,
+  applyEdits,
   BARS,
   checkRows,
+  correctedCsv,
+  editCell,
+  reportCsv,
+  rowStatus,
   guessMapping,
   parseDelimited,
   parseTableFile,
@@ -43,6 +48,7 @@ import {
   specSizesFor,
   walk,
   type Answers,
+  type CellEdits,
   type ColumnMapping,
   type FixedValue,
   type Table,
@@ -124,6 +130,9 @@ export function App() {
   const [fixed, setFixed] = useState<FixedValue[]>([]);
   const [rowIndex, setRowIndex] = useState(0);
   const [tableError, setTableError] = useState<string | null>(null);
+  // The validation report (backlog 2.2): values fixed in the studio and rows skipped, until another file is taken.
+  const [edits, setEdits] = useState<CellEdits>({});
+  const [skipped, setSkipped] = useState<ReadonlySet<number>>(new Set());
 
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
@@ -134,8 +143,10 @@ export function App() {
   }, []);
 
   const rows = useMemo(
-    () => (engine && dataTable ? checkRows(engine, dataTable, mapping, fixed, settings.stem.trim() || DEFAULT_STEM) : []),
-    [engine, dataTable, mapping, fixed, settings.stem],
+    () => (engine && dataTable
+      ? checkRows(engine, applyEdits(dataTable, edits), mapping, fixed, settings.stem.trim() || DEFAULT_STEM)
+      : []),
+    [engine, dataTable, edits, mapping, fixed, settings.stem],
   );
   const bulk = mode === "bulk";
   const current = bulk ? rows[Math.min(rowIndex, rows.length - 1)] : undefined;
@@ -149,6 +160,8 @@ export function App() {
     setMapping(kept?.mapping ?? guessMapping(next.headers));
     setFixed(kept?.fixed ?? []);
     setRowIndex(0);
+    setEdits({});
+    setSkipped(new Set());
     setTableError(null);
     setFileError(null);
   }
@@ -382,6 +395,8 @@ export function App() {
               mapping={mapping}
               fixed={fixed}
               rows={rows}
+              edits={edits}
+              skipped={skipped}
               error={tableError}
               onFile={(file) => {
                 file.arrayBuffer()
@@ -406,6 +421,26 @@ export function App() {
               onShow={(index) => {
                 setRowIndex(index);
                 setFileError(null);
+              }}
+              onEdit={(index, column, value) => dataTable && setEdits(editCell(edits, dataTable, index, column, value))}
+              onUndo={(index) => {
+                const next = { ...edits };
+                delete next[index];
+                setEdits(next);
+              }}
+              onSkip={(indexes, skip) => {
+                const next = new Set(skipped);
+                for (const index of indexes) {
+                  if (skip) next.add(index);
+                  else next.delete(index);
+                }
+                setSkipped(next);
+              }}
+              onDownload={(what) => {
+                if (!dataTable) return;
+                const stem = source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows";
+                if (what === "report") download(`${stem}_report.csv`, reportCsv(dataTable, mapping, rows, edits, skipped), "text/csv");
+                else download(`${stem}_corrected.csv`, correctedCsv(dataTable, edits), "text/csv");
               }}
             />
           ) : (
@@ -454,7 +489,8 @@ export function App() {
           onDownloadZpl={downloadZpl}
           rows={bulk && rows.length
             ? {
-                index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2, ready: !current?.error,
+                index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2,
+                status: current ? rowStatus(current, Math.min(rowIndex, rows.length - 1), edits, skipped) : "error",
                 onMove: (index) => {
                   setRowIndex(index);
                   setFileError(null);

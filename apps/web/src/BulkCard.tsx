@@ -2,12 +2,16 @@ import { useState } from "react";
 import {
   aiEntry,
   normaliseCell,
+  reportCounts,
+  rowStatus,
+  type CellEdits,
   offeredAttributes,
   primaryKeys,
   qualifiersOf,
   type CheckedRow,
   type ColumnMapping,
   type FixedValue,
+  type RowStatus,
   type Table,
 } from "@gs1-label-studio/core";
 import { BULK_TEXTS, KEY_TEXTS } from "./texts.ts";
@@ -15,6 +19,8 @@ import { BULK_TEXTS, KEY_TEXTS } from "./texts.ts";
 // Step 1 in bulk (backlog 2.1, mock-up A of 29 October 2026): rows from a file or pasted, each column's AI — guessed
 // from its header, remembered for files with the same headers —, values the same on every row, and how many rows the
 // GS1 Barcode Syntax Engine accepts. Steps 2 and 3 are the editor's, drawing the row chosen in the label's preview.
+// Below, the validation report (backlog 2.2, mock-up A of 29 October 2026): the rows in error with the cell at fault
+// fixed in place — the file itself is not changed —, rows skipped, the report and the corrected rows as CSV.
 
 interface Props {
   table: Table | null;
@@ -22,6 +28,9 @@ interface Props {
   mapping: ColumnMapping;
   fixed: FixedValue[];
   rows: CheckedRow[];
+  /** Values fixed in the studio and rows skipped (by data row: 0 is the first row after the header). */
+  edits: CellEdits;
+  skipped: ReadonlySet<number>;
   error: string | null;
   onFile: (file: File) => void;
   onPaste: (text: string) => void;
@@ -29,6 +38,10 @@ interface Props {
   onFixed: (fixed: FixedValue[]) => void;
   /** Shows a row (its index among the data rows) in the label's preview. */
   onShow: (index: number) => void;
+  onEdit: (index: number, column: number, value: string) => void;
+  onUndo: (index: number) => void;
+  onSkip: (indexes: number[], skip: boolean) => void;
+  onDownload: (what: "report" | "corrected") => void;
 }
 
 /** The AIs a column can go to: keys, their qualifiers, then the data attributes, each once. */
@@ -61,12 +74,10 @@ function AiSelect({ id, value, onChange, label }: { id: string; value: string | 
   );
 }
 
-export function BulkCard({ table, source, mapping, fixed, rows, error, onFile, onPaste, onMapping, onFixed, onShow }: Props) {
+export function BulkCard(props: Props) {
+  const { table, source, mapping, fixed, rows, error, onFile, onPaste, onMapping, onFixed } = props;
   const [pasted, setPasted] = useState("");
   const [dragging, setDragging] = useState(false);
-  const [allErrors, setAllErrors] = useState(false);
-  const bad = rows.filter((r) => r.error);
-  const shown = allErrors ? bad : bad.slice(0, 5);
 
   return (
     <section className="card" aria-labelledby="rows-title">
@@ -186,35 +197,159 @@ export function BulkCard({ table, source, mapping, fixed, rows, error, onFile, o
             {!fixed.length && <div className="hint">{BULK_TEXTS.fixedHint}</div>}
           </div>
 
-          <div className="summary" aria-live="polite">
-            <span className="ok">
-              {rows.length - bad.length} {rows.length - bad.length === 1 ? "row" : "rows"} ready
-            </span>
-            {bad.length > 0 && (
-              <>
-                {" · "}
-                <span className="bad">{bad.length} with errors</span>
-                <ul>
-                  {shown.map((r) => (
-                    <li key={r.row}>
-                      <button type="button" className="link" onClick={() => onShow(r.row - 2)}>
-                        Row {r.row}
-                      </button>
-                      : {r.error}
-                    </li>
-                  ))}
-                </ul>
-                {bad.length > 5 && (
-                  <button type="button" className="link" onClick={() => setAllErrors(!allErrors)}>
-                    {allErrors ? "Show the first five" : `Show all ${bad.length}`}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+          <Report {...props} table={table} />
           <div className="hint">{BULK_TEXTS.remembered}</div>
         </>
       )}
     </section>
+  );
+}
+
+const PAGE = 20;
+const FILTERS: { status: RowStatus | "all"; label: string }[] = [
+  { status: "error", label: "With errors" },
+  { status: "fixed", label: "Fixed" },
+  { status: "skipped", label: "Skipped" },
+  { status: "all", label: "All" },
+];
+
+/** The validation report: how many rows are ready, fixed, in error or skipped, and the rows of the filter chosen. */
+function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, onUndo, onSkip, onDownload }: Props & { table: Table }) {
+  const counts = reportCounts(rows, edits, skipped);
+  const [filter, setFilter] = useState<RowStatus | "all">("error");
+  const [shown, setShown] = useState(PAGE);
+  // A row fixed or skipped here stays in the list until another filter is chosen, so that it does not vanish while
+  // its value is typed.
+  const [kept, setKept] = useState<ReadonlySet<number>>(new Set());
+  const keep = (index: number) => kept.has(index) || setKept(new Set([...kept, index]));
+  const statuses = rows.map((row, index) => rowStatus(row, index, edits, skipped));
+  const listed = rows.map((row, index) => ({ row, index, status: statuses[index]! }))
+    .filter(({ index, status }) => filter === "all" || status === filter || kept.has(index));
+  const errors = statuses.flatMap((status, index) => (status === "error" ? [index] : []));
+  const skippedRows = [...skipped];
+  const count = (status: RowStatus | "all") => (status === "all" ? rows.length : counts[status]);
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+  return (
+    <div className="summary report" aria-live="polite">
+      <span className="ok">{plural(counts.ready, "row ready", "rows ready")}</span>
+      {counts.error > 0 && (
+        <>
+          {" · "}
+          <span className="bad">{counts.error} with errors</span>
+        </>
+      )}
+      {counts.fixed > 0 && ` · ${counts.fixed} fixed`}
+      {counts.skipped > 0 && ` · ${counts.skipped} skipped`}
+      <div className="rep-tabs" role="group" aria-label="Rows shown">
+        {FILTERS.map(({ status, label }) => (
+          <button
+            key={status}
+            type="button"
+            aria-pressed={filter === status}
+            onClick={() => {
+              setFilter(status);
+              setShown(PAGE);
+              setKept(new Set());
+            }}
+          >
+            {label} ({count(status)})
+          </button>
+        ))}
+      </div>
+      {!listed.length && <div className="hint">{filter === "error" ? "No row has an error." : "No rows here."}</div>}
+      {listed.slice(0, shown).map(({ row, index, status }) => (
+        <div className="rrow" data-status={status} key={row.row} data-row={row.row}>
+          <div className="head">
+            <b>Row {row.row}</b>
+            <span className="tag-line">
+              {status !== "error" && <span className="tag" data-status={status}>{status}</span>}
+              <button type="button" className="link" onClick={() => onShow(index)}>
+                Show
+              </button>
+              {" · "}
+              <button type="button" className="link" onClick={() => {
+                  keep(index);
+                  onSkip([index], status !== "skipped");
+                }}>
+                {status === "skipped" ? "Include" : "Skip"}
+              </button>
+              {edits[index] && (
+                <>
+                  {" · "}
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={() => {
+                      keep(index);
+                      onUndo(index);
+                    }}
+                  >
+                    Undo the fixes
+                  </button>
+                </>
+              )}
+            </span>
+          </div>
+          {row.error && <div className="why">{row.error}</div>}
+          {row.hint && <div className="hint">{row.hint}</div>}
+          {row.fixedAt?.length ? (
+            <div className="hint">
+              {row.fixedAt.map((at) => `(${fixed[at]![0]}) ${fixed[at]![1]}`).join(", ")} is a value for every row: change it
+              above.
+            </div>
+          ) : null}
+          <div className="cells">
+            {mapping.flatMap((ai, column) => {
+              if (!ai) return [];
+              const at = row.columns?.includes(column);
+              const edited = edits[index]?.[column] !== undefined;
+              const id = `cell-${index}-${column}`;
+              return [
+                <label key={`l${column}`} htmlFor={id} title={`(${ai})`}>
+                  {table.headers[column]}
+                </label>,
+                <input
+                  key={`i${column}`}
+                  id={id}
+                  className={`mono${at ? " at-fault" : edited ? " edited" : ""}`}
+                  aria-invalid={at || undefined}
+                  value={edits[index]?.[column] ?? table.rows[index]?.[column] ?? ""}
+                  onChange={(e) => {
+                    keep(index);
+                    onEdit(index, column, e.target.value);
+                  }}
+                  spellCheck={false}
+                />,
+              ];
+            })}
+          </div>
+        </div>
+      ))}
+      {listed.length > shown && (
+        <button type="button" className="link more" onClick={() => setShown(shown + PAGE)}>
+          Show {Math.min(PAGE, listed.length - shown)} more of {listed.length - shown}
+        </button>
+      )}
+      <div className="rep-actions">
+        {errors.length > 0 && (
+          <button type="button" className="btn" onClick={() => onSkip(errors, true)}>
+            Skip the {plural(errors.length, "row", "rows")} with errors
+          </button>
+        )}
+        {skippedRows.length > 0 && (
+          <button type="button" className="btn" onClick={() => onSkip(skippedRows, false)}>
+            Include the skipped rows
+          </button>
+        )}
+        <button type="button" className="btn" onClick={() => onDownload("report")}>
+          Report (CSV)
+        </button>
+        <button type="button" className="btn" disabled={!Object.keys(edits).length} onClick={() => onDownload("corrected")}>
+          Corrected rows (CSV)
+        </button>
+      </div>
+      <div className="hint">{BULK_TEXTS.report}</div>
+    </div>
   );
 }

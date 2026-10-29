@@ -9,6 +9,7 @@ import {
   xDimension,
   type Bearer,
   type ErrorLevel,
+  type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useState } from "react";
@@ -101,7 +102,7 @@ interface Props {
   onDownloadZpl: (template: boolean) => void;
   fileError: string | null;
   /** In bulk: the row shown among the data rows, and a way to show another. */
-  rows?: { index: number; count: number; row: number; ready: boolean; onMove: (index: number) => void };
+  rows?: { index: number; count: number; row: number; status: RowStatus; onMove: (index: number) => void };
 }
 
 // The symbols offered: not GS1 QR Code, which beside the QR code with a GS1 Digital Link URI confuses (ADR 0003).
@@ -165,7 +166,7 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               </button>
               <span aria-live="polite">
                 Row <b>{rows.row}</b> · {rows.index + 1} of {rows.count} ·{" "}
-                <span className={rows.ready ? "ok" : "bad"}>{rows.ready ? "ready" : "error"}</span>
+                <span className={rows.status === "error" ? "bad" : rows.status === "skipped" ? "muted" : "ok"}>{rows.status}</span>
               </span>
               <button
                 type="button"

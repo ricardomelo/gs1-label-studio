@@ -203,4 +203,7 @@ export const BULK_TEXTS = {
   fixedHint: "For an AI with the same value on every row, such as a country of origin (422).",
   remembered: "The columns are remembered for files with the same headers, in this browser.",
   noRows: "Add rows: a CSV or Excel file, or rows pasted from a spreadsheet.",
+  report:
+    "A value fixed here is checked at once; the file itself is not changed: download the corrected rows to fix it at " +
+    "its source. Skipped rows are left out of what is generated.",
 } as const;
