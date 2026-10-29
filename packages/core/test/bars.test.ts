@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   encode,
+  expectedReads,
   labelPdf,
   labelPng,
   labelReadme,
@@ -84,6 +85,7 @@ const CASES: [string, LabelOptions, string][] = [
 
 describe("ITF-14, GS1-128 and GS1 DataBar: the label read back from every file", () => {
   it.each(CASES)("%s: SVG, PNG and PDF", async (_name, o, reads) => {
+    expect(expectedReads(o)).toEqual([reads]); // what the editor's scan test expects
     const layout = layoutLabel(o, font);
     const svg = labelSvg(o, layout, font);
     expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 4 }, background: "#fff" }).render().asPng())).toEqual([reads]);

@@ -168,3 +168,4 @@ export { crc32, deflate } from "./deflate.ts";
 export { labelPdf, pdfContent } from "./pdf.ts";
 export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
+export { expectedReads } from "./scan.ts";

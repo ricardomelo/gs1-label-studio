@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
-import { labelSvg, layoutLabel, type LabelOptions } from "../src/index.ts";
+import { expectedReads, labelSvg, layoutLabel, type LabelOptions } from "../src/index.ts";
 import { hriFont } from "./font.ts";
 
 // The SVG label as a viewer draws it (resvg), read back by ZXing: every symbol on it, with its data.
@@ -49,5 +49,6 @@ describe("the label's SVG, drawn and read back", () => {
   it.each(CASES)("%s", async (_name, options, expected) => {
     const svg = labelSvg(options, layoutLabel(options, font), font);
     expect(await read(svg)).toEqual(expected);
+    expect(expectedReads(options)).toEqual(expected); // what the editor's scan test expects
   });
 });
