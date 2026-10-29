@@ -100,6 +100,8 @@ interface Props {
   onDownload: (kind: FileKind) => void;
   onDownloadZpl: (template: boolean) => void;
   fileError: string | null;
+  /** In bulk: the row shown among the data rows, and a way to show another. */
+  rows?: { index: number; count: number; row: number; ready: boolean; onMove: (index: number) => void };
 }
 
 // The symbols offered: not GS1 QR Code, which beside the QR code with a GS1 Digital Link URI confuses (ADR 0003).
@@ -128,7 +130,7 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
   );
 }
 
-export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError }: Props) {
+export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const [real, setReal] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
@@ -156,6 +158,25 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
       </h2>
       <div className="panel">
         <div>
+          {rows && (
+            <div className="row-nav">
+              <button type="button" aria-label="Previous row" disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>
+                ‹
+              </button>
+              <span aria-live="polite">
+                Row <b>{rows.row}</b> · {rows.index + 1} of {rows.count} ·{" "}
+                <span className={rows.ready ? "ok" : "bad"}>{rows.ready ? "ready" : "error"}</span>
+              </span>
+              <button
+                type="button"
+                aria-label="Next row"
+                disabled={rows.index === rows.count - 1}
+                onClick={() => rows.onMove(rows.index + 1)}
+              >
+                ›
+              </button>
+            </div>
+          )}
           {view.svg && view.widthMm && (
             <div className="view-bar">
               <span className="seg" role="group" aria-label="Preview size">

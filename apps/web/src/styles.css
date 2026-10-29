@@ -148,3 +148,29 @@ details.epc summary { font-weight: 600; cursor: pointer; }
 .scan-result { overflow-wrap: anywhere; }
 .scan-result.ok { color: var(--ok); font-weight: 600; }
 .scan-result.different, .scan-result.error { color: var(--error); font-weight: 600; }
+
+/* In bulk (item 2.1): the mode switch, the rows, their columns, the row shown. */
+header.top .mode { display: inline-flex; border: 1.5px solid #fff; border-radius: 6px; overflow: hidden; margin-left: 8px; }
+header.top .mode button { border: 0; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 4px 12px; cursor: pointer; }
+header.top .mode button[aria-pressed="true"] { background: #fff; color: #002c6c; }
+.drop { border: 1.5px dashed #9fb0c6; border-radius: 8px; padding: 12px; background: var(--soft); font-size: 13px; color: var(--muted); display: grid; gap: 8px; }
+.drop.over { border-color: var(--navy); background: var(--card); }
+.drop textarea { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; padding: 6px 8px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); box-sizing: border-box; }
+.drop .btn { justify-self: start; }
+.source { font-size: 13px; margin: 12px 0 6px; }
+table.mapping { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+table.mapping th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+table.mapping td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: middle; overflow-wrap: anywhere; }
+table.mapping td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+table.mapping select { padding: 4px 6px; font-size: 13px; }
+.fixed { margin-top: 12px; font-size: 13px; }
+.fixed-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 6px; align-items: center; }
+.summary { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--soft); font-size: 13px; }
+.summary .ok, .row-nav .ok { color: var(--ok); font-weight: 600; }
+.summary .bad, .row-nav .bad { color: var(--error); font-weight: 600; }
+.summary ul { margin: 6px 0 0; padding-left: 18px; }
+.row-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.row-nav button { border: 1.5px solid var(--navy); background: transparent; color: var(--navy); border-radius: 6px; padding: 0 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.row-nav button:disabled { opacity: 0.35; cursor: default; }
+table.mapping th:first-child { width: 26%; }
+table.mapping th:nth-child(2) { width: 30%; }

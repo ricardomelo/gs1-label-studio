@@ -341,3 +341,47 @@ test("tobacco unit packs: GS1 DotCode named but not drawn, GS1 DataMatrix at tab
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231", { timeout: 30_000 });
 });
+
+// Item 2.1 (mock-up A of 29 October 2026): in bulk, rows from a file or pasted, their columns, the row shown.
+test("in bulk: an Excel workbook's rows, columns guessed from their headers, each row drawn and checked", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await expect(page.locator(".preview .error")).toHaveText("Add rows: a CSV or Excel file, or rows pasted from a spreadsheet.");
+  await page.locator("#rows-file").setInputFiles(new URL("../../../packages/core/test/fixtures/bulk/products.xlsx", import.meta.url).pathname);
+  await expect(page.locator(".source")).toContainText("products.xlsx · sheet “Produtos” · 4 rows");
+  await expect(page.locator("#map-0")).toHaveValue("01");
+  await expect(page.locator("#map-2")).toHaveValue("17");
+  await expect(page.locator("#map-4")).toHaveValue("");
+  await expect(page.locator(".summary")).toContainText("2 rows ready · 2 with errors");
+  await expect(page.locator(".summary")).toContainText("Row 4: The check digit does not match: it should be 2.");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&3101=000005&11=261001");
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator(".row-nav")).toContainText("Row 3 · 2 of 4 · ready");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125&11=261001");
+  await page.locator(".summary").getByRole("button", { name: "Row 5" }).click();
+  await expect(page.locator(".row-nav")).toContainText("Row 5 · 4 of 4 · error");
+  await expect(page.locator(".preview .error")).toHaveText("Row 5: The key's column is empty on this row.");
+  // A column left out: the production date goes.
+  await page.getByRole("button", { name: "Previous row" }).click();
+  await page.getByRole("button", { name: "Previous row" }).click();
+  await page.selectOption("#map-5", "");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125");
+});
+
+test("in bulk: pasted rows, a value for every row, and the columns remembered for the same headers", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "Código de barras\tLote\tVence\n9506000134376\tA1\t31/12/2027\n9506000134352\tA2\t30/06/2028\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await expect(page.locator("#map-2")).toHaveValue(""); // "Vence" is not a word the guess knows
+  await page.selectOption("#map-2", "17");
+  await page.getByRole("button", { name: "+ Add" }).click();
+  await page.selectOption("#fixed-ai-0", "422");
+  await page.fill("[aria-label='Value 1']", "076");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/A1?17=271231&422=076");
+  // The same headers again, after a reload: the columns and the fixed value as they were chosen.
+  await page.reload();
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "Código de barras\tLote\tVence\n9506000134352\tB7\t01/01/2029\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/B7?17=290101&422=076");
+});

@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AttributeError,
   BARS,
+  checkRows,
+  guessMapping,
+  parseDelimited,
+  parseTableFile,
   baseX,
   dataFor,
   encode,
@@ -39,6 +43,9 @@ import {
   specSizesFor,
   walk,
   type Answers,
+  type ColumnMapping,
+  type FixedValue,
+  type Table,
   type Identification,
   type Identified,
   type LabelOptions,
@@ -49,12 +56,13 @@ import {
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
+import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
-import { GUIDE_TEXTS } from "./texts.ts";
+import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
 // code identifies and where it is scanned on the left (step 2, the guided choice: mock-up B of 29 October 2026), the
@@ -76,6 +84,25 @@ function download(name: string, content: string | Uint8Array<ArrayBuffer>, type:
 
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+// In bulk, the columns chosen for a file are kept for the next file with the same headers (localStorage: a convenience
+// of this browser, never needed).
+const mappingKey = (headers: string[]) => `gs1-label-studio.columns.${headers.join("\u001f")}`;
+function rememberedColumns(headers: string[]): { mapping: ColumnMapping; fixed: FixedValue[] } | null {
+  try {
+    const kept = JSON.parse(localStorage.getItem(mappingKey(headers)) ?? "null") as { mapping: ColumnMapping; fixed: FixedValue[] } | null;
+    return kept && kept.mapping.length === headers.length ? kept : null;
+  } catch {
+    return null;
+  }
+}
+function rememberColumns(headers: string[], mapping: ColumnMapping, fixed: FixedValue[]) {
+  try {
+    localStorage.setItem(mappingKey(headers), JSON.stringify({ mapping, fixed }));
+  } catch {
+    // Not kept: the guess is made again next time.
+  }
+}
+
 export function App() {
   const [engine, setEngine] = useState<SyntaxEngine | null>(null);
   const [font, setFont] = useState<HriFont | null>(null);
@@ -89,6 +116,14 @@ export function App() {
   const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [gcp, setGcp] = useState<GcpTable | null>(null);
+  // In bulk (backlog 2.1): the rows, each column's AI, the values every row takes, and the row shown.
+  const [mode, setMode] = useState<"one" | "bulk">("one");
+  const [dataTable, setDataTable] = useState<Table | null>(null);
+  const [source, setSource] = useState("");
+  const [mapping, setMapping] = useState<ColumnMapping>([]);
+  const [fixed, setFixed] = useState<FixedValue[]>([]);
+  const [rowIndex, setRowIndex] = useState(0);
+  const [tableError, setTableError] = useState<string | null>(null);
 
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
@@ -98,7 +133,32 @@ export function App() {
       .then((bytes) => setFont(HriFont.fromBytes(bytes)), (e: unknown) => console.error(e));
   }, []);
 
+  const rows = useMemo(
+    () => (engine && dataTable ? checkRows(engine, dataTable, mapping, fixed, settings.stem.trim() || DEFAULT_STEM) : []),
+    [engine, dataTable, mapping, fixed, settings.stem],
+  );
+  const bulk = mode === "bulk";
+  const current = bulk ? rows[Math.min(rowIndex, rows.length - 1)] : undefined;
+  // What the steps after the first work from: the identification typed, or the row shown.
+  const active: Identification = bulk ? (current?.id ?? id) : id;
+
+  function takeTable(next: Table, name: string) {
+    const kept = rememberedColumns(next.headers);
+    setDataTable(next);
+    setSource(name);
+    setMapping(kept?.mapping ?? guessMapping(next.headers));
+    setFixed(kept?.fixed ?? []);
+    setRowIndex(0);
+    setTableError(null);
+    setFileError(null);
+  }
+
   const checked = useMemo((): { identified?: Identified; error?: string; markup?: string } => {
+    if (bulk) {
+      if (!dataTable) return { error: BULK_TEXTS.noRows };
+      if (!current) return { error: "The file has no data rows." };
+      return current.identified ? { identified: current.identified } : { error: `Row ${current.row}: ${current.error}` };
+    }
     if (!engine) return {};
     try {
       return { identified: identify(engine, id, settings.stem.trim() || DEFAULT_STEM) };
@@ -107,12 +167,12 @@ export function App() {
       if (error instanceof AttributeError) return { error: error.message };
       return { error: errorText(error) };
     }
-  }, [engine, id, settings.stem]);
+  }, [engine, id, settings.stem, bulk, dataTable, current]);
 
   // Step 2: the decision tree walked with the answers so far; at a leaf, the symbols its table allows for this data
   // and the one chosen (the recommended one unless another was picked). Until then, or when the person chooses the
   // symbol themselves, the label's own fields decide.
-  const walked = walk(id.key, answers);
+  const walked = walk(active.key, answers);
   const guide = walked.leaf && checked.identified ? guidance(walked.leaf, checked.identified) : null;
   const guided = guide !== null && !settings.expert;
   const choice = guided ? chosen(guide, picked) : null;
@@ -124,9 +184,9 @@ export function App() {
   // the symbol. Guided, the table of step 2 decides.
   const bars = BARS.includes(symbology);
   const allowed = (name: string) => !bars || Boolean(specificationFor(ENVIRONMENTS[name]!.table, symbology));
-  const environments = environmentsFor(id.key).filter(allowed);
+  const environments = environmentsFor(active.key).filter(allowed);
   const environment: string | null = guided
-    ? guide.environment && environmentsFor(id.key).includes(guide.environment) ? guide.environment : null
+    ? guide.environment && environmentsFor(active.key).includes(guide.environment) ? guide.environment : null
     : environments.includes(settings.environment) ? settings.environment : (environments[0] ?? null);
   // The table's row that sizes the symbol: ITF-14, GS1-128 and GS1 DataBar always; a 2D symbol of a table without a
   // scanning environment (12, 13). The others are sized by the scanning environment, as the resolver sized them.
@@ -139,7 +199,7 @@ export function App() {
   const twoD = TWO_D.includes(symbology);
   // An EAN/UPC beside the 2D symbol only where it can be: a GTIN, in an environment with an EAN/UPC range. Otherwise
   // the choice is kept for later but not applied (its field is not shown). Guided, the choice of step 2 decides.
-  const linearPossible = !guided && twoD && id.key === "01" && Boolean(environment && ENVIRONMENTS[environment]?.linear);
+  const linearPossible = !guided && twoD && active.key === "01" && Boolean(environment && ENVIRONMENTS[environment]?.linear);
   const linearChoice = choice ? (choice.with ? (choice.symbol === "upce" ? "upce" : "auto") : "none") : linearPossible ? settings.linear : "none";
   const effective: LabelSettings = { ...settings, symbology, environment: environment ?? "", linear: linearChoice };
   const sizes = spec
@@ -271,8 +331,8 @@ export function App() {
   }
 
   // The files' name, as the resolver named them: the symbol, the key and its qualifiers.
-  const qualifiers = Object.entries(id.qualifiers).filter(([, v]) => v.trim()).map(([q, v]) => `_${q}_${v.trim()}`);
-  const name = fileName(`${symbology}_${id.key}_${id.value.trim()}${qualifiers.join("")}`);
+  const qualifiers = Object.entries(active.qualifiers).filter(([, v]) => v.trim()).map(([q, v]) => `_${q}_${v.trim()}`);
+  const name = fileName(`${symbology}_${active.key}_${active.value.trim()}${qualifiers.join("")}`);
 
   async function downloadFile(kind: FileKind) {
     const { options, layout } = label;
@@ -297,6 +357,14 @@ export function App() {
     <>
       <header className="top">
         <h1>GS1 Label Studio</h1>
+        <span className="mode" role="group" aria-label="Mode">
+          <button type="button" aria-pressed={!bulk} onClick={() => setMode("one")}>
+            One code
+          </button>
+          <button type="button" aria-pressed={bulk} onClick={() => setMode("bulk")}>
+            In bulk
+          </button>
+        </span>
         <span>Everything stays in your browser, and it works offline.</span>
       </header>
       {view.svg && (
@@ -307,6 +375,40 @@ export function App() {
       )}
       <main className="editor">
         <div className="steps">
+          {bulk ? (
+            <BulkCard
+              table={dataTable}
+              source={source}
+              mapping={mapping}
+              fixed={fixed}
+              rows={rows}
+              error={tableError}
+              onFile={(file) => {
+                file.arrayBuffer()
+                  .then((bytes) => parseTableFile(new Uint8Array(bytes)))
+                  .then((next) => takeTable(next, file.name), (error: unknown) => setTableError(errorText(error)));
+              }}
+              onPaste={(text) => {
+                try {
+                  takeTable(parseDelimited(text), "Pasted rows");
+                } catch (error) {
+                  setTableError(errorText(error));
+                }
+              }}
+              onMapping={(next) => {
+                setMapping(next);
+                if (dataTable) rememberColumns(dataTable.headers, next, fixed);
+              }}
+              onFixed={(next) => {
+                setFixed(next);
+                if (dataTable) rememberColumns(dataTable.headers, mapping, next);
+              }}
+              onShow={(index) => {
+                setRowIndex(index);
+                setFileError(null);
+              }}
+            />
+          ) : (
           <IdentifyCard
             id={id}
             onChange={(next) => {
@@ -321,8 +423,9 @@ export function App() {
             }}
             status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
           />
+          )}
           <ScanCard
-            identifierKey={id.key}
+            identifierKey={active.key}
             walked={walked}
             guide={guide}
             dataError={checked.error}
@@ -349,9 +452,18 @@ export function App() {
           view={view}
           onDownload={(kind) => void downloadFile(kind)}
           onDownloadZpl={downloadZpl}
+          rows={bulk && rows.length
+            ? {
+                index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2, ready: !current?.error,
+                onMove: (index) => {
+                  setRowIndex(index);
+                  setFileError(null);
+                },
+              }
+            : undefined}
           fileError={fileError}
         >
-          <EpcSection id={id} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
+          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
         </LabelCard>
       </main>
     </>

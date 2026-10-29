@@ -195,3 +195,12 @@ export const BY_KEY: Record<string, string> = {
   "retail:false": "not sold at a retail till",
   "healthcare-retail:false": "not sold in a pharmacy",
 };
+
+// In bulk (backlog 2.1).
+export const BULK_TEXTS = {
+  drop: "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first.",
+  pastePlaceholder: "GTIN\tBatch\tExpiry\n09506000134376\tB42\t31/12/2027",
+  fixedHint: "For an AI with the same value on every row, such as a country of origin (422).",
+  remembered: "The columns are remembered for files with the same headers, in this browser.",
+  noRows: "Add rows: a CSV or Excel file, or rows pasted from a spreadsheet.",
+} as const;

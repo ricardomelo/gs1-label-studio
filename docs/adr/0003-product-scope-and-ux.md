@@ -56,7 +56,11 @@
    come first, with a small live preview fixed at the top.
 2. **In bulk** — a wizard: upload CSV or Excel (or paste), map columns to AIs (remembered by header), fixed values for
    the columns that do not change, validation with a report of the rows in error (fix or skip), preview of the first
-   labels, generate.
+   labels, generate. *Since 29 October 2026 (item 2.1, mock-up A of three, the recommended one, taken under the owner's
+   rule while the owner was away): not a wizard but a mode of the editor — "One code | In bulk" in the header; in bulk,
+   step 1 is the rows (a file dropped or chosen, or rows pasted), each column's AI and the values every row takes, with
+   the rows ready and those in error (each a link to it); steps 2 and 3 stay the editor's, so the label is designed once
+   and its preview steps through the rows. The columns are kept in localStorage for files with the same headers.*
 3. **Labels** (later) — templates and a designer: text, images, lines, several symbols, fields bound to columns; ready
    templates such as the GS1 Logistic Label (SSCC) in A6 and 100 × 150 mm.
 4. **Printers** — profiles (ADR 0002) and a test print.
