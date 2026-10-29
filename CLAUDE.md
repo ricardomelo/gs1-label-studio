@@ -15,8 +15,11 @@ this public repository.
 
 ## Commits and delivery
 
-- `main` is the development branch until a release process is decided. Fetch and rebase before pushing; pushed
-  commits are never rewritten.
+- `main` is the development branch until the first release; then `main` holds the stable version and `develop` the
+  work in progress (backlog 0.4, as in the resolver's project). Fetch and rebase before pushing; pushed commits are
+  never rewritten.
+- A cloud session may be given a branch of its own: its work goes to `main` by a fast-forward push once `pnpm check`
+  passes, so that CI runs and the published tool shows it (the owner, 29 October 2026).
 - One topic per commit, with a message that explains why, and an area prefix (`core:`, `web:`, `docs:`, `ci:`,
   `metrics:`). Code and its technical documents go in the same commit.
 - After a push that changes code, read the CI run (`gh run list`, `gh run view --log-failed`). Failures are also

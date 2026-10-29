@@ -48,6 +48,9 @@ the logistic label of phase 4.
 - 0.1 Repository, CI, publication on GitHub Pages — *done*
 - 0.2 Development indicators from the first day (`docs/metrics`) — *done*
 - 0.3 Walking skeleton: core encoding through bwip-js, read back by ZXing; printer dot grid; SVG; ZPL graphic — *done*
+- 0.4 Release process, as in the resolver's project (the owner, 29 October 2026): `main` holds the last stable
+  version, published at the site's root; `develop` holds the work in progress, published for the owner's tests under
+  `/develop/`. Set up at the first release: until then there is no stable version, and `main` is where work lands
 
 **Phase 1 — one code, right by construction** (ported from the resolver's label studio where it had it: ADR 0004)
 
