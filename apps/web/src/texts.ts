@@ -155,6 +155,12 @@ export type HriChoice = keyof typeof HRI_CHOICES;
 
 export const ERROR_NAMES = { l: "L — low (7 %)", m: "M — medium (15 %)", q: "Q — quartile (25 %)", h: "H — high (30 %)" } as const;
 
+// ITF-14's bearer bars (GS1 General Specifications 5.3.2.4).
+export const BEARER_CHOICES = {
+  frame: "A frame, 4.83 mm (any printing; needed with printing plates)",
+  bars: "Top and bottom, 2X (printing without plates: thermal, laser)",
+} as const;
+
 export const LINEAR_CHOICES = {
   none: "None",
   auto: "EAN-13 / UPC-A / EAN-8, as the GTIN takes",
@@ -168,6 +174,8 @@ export const GUIDE_TEXTS = {
   fixData: "Correct the data in step 1 to see the symbols this table allows.",
   waiting: "The studio does not draw the symbol this needs yet:",
   nothing: "No symbol this table allows carries this data.",
+  together: "This data needs two symbols:",
+  togetherLater: "The label lays a symbol in addition out beside an EAN/UPC only, for now: choose one of them below.",
   gtinAlone: "Carries the GTIN alone: the rest of the data is left out.",
   notOffered: "Not offered here: beside the QR code with a GS1 Digital Link URI it confuses.",
   oneSymbol: "For now the label lays out a symbol in addition beside an EAN/UPC only.",

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AttributeError,
+  BARS,
   baseX,
   dataFor,
   encode,
@@ -17,20 +18,20 @@ import {
   labelZip,
   layoutLabel,
   linearSizesFor,
+  linearXDimension,
   pngDpi,
   sizesFor,
   snapToDots,
+  specificationFor,
   symbolFor,
-  symbolLayout,
   SYMBOLOGIES,
   syntaxEngine,
-  toSvg,
   widthInModules,
+  xDimension,
   zplLabel,
   zplTemplate,
   GcpTable,
   guidance,
-  minimumBarHeight,
   SIZES,
   specSizesFor,
   walk,
@@ -40,6 +41,7 @@ import {
   type LabelOptions,
   type Layout,
   type SymbolGeometry,
+  type SymbolSpecification,
   type SyntaxEngine,
   type SymbologyId,
 } from "@gs1-label-studio/core";
@@ -56,7 +58,6 @@ import { GUIDE_TEXTS } from "./texts.ts";
 // label beside them on the right, redrawn as anything changes. Everything stays in the
 // browser: the GS1 Barcode Syntax Engine and the encoder run here.
 
-const LAID_OUT: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix", "ean13", "upca", "upce", "ean8"];
 const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
 const DEFAULT_STEM = "https://id.gs1.org";
 
@@ -77,7 +78,7 @@ export function App() {
   const [id, setId] = useState<Identification>(START);
   const [settings, setSettings] = useState<LabelSettings>({
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
-    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, xMmManual: 0.495, expert: false,
+    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
   const [picked, setPicked] = useState<Choice | null>(null);
@@ -111,47 +112,46 @@ export function App() {
   const guided = guide !== null && !settings.expert;
   const choice = guided ? chosen(guide, picked) : null;
   const symbology = choice ? (choice.with ?? choice.symbol) : settings.symbology;
-  const spec = guided ? guide.options.find((o) => o.symbol === symbology)?.specs[0] : undefined;
   // A symbol chosen alone that carries the GTIN alone (an EAN-13 alone, with a batch typed): it draws the GTIN.
   const gtinOnly = Boolean(choice && !choice.with && guide?.options.find((o) => o.symbol === choice.symbol)?.carries === "key");
 
-  // The key's scanning environments, its default first, and the sizes the environment allows. A table without one
-  // (12, 13) draws the symbol alone, at its row's sizes.
-  const environments = environmentsFor(id.key);
+  // The key's scanning environments, its default first; for ITF-14, GS1-128 and GS1 DataBar, those whose table allows
+  // the symbol. Guided, the table of step 2 decides.
+  const bars = BARS.includes(symbology);
+  const allowed = (name: string) => !bars || Boolean(specificationFor(ENVIRONMENTS[name]!.table, symbology));
+  const environments = environmentsFor(id.key).filter(allowed);
   const environment: string | null = guided
-    ? guide.environment && environments.includes(guide.environment) ? guide.environment : null
-    : environments.includes(settings.environment) ? settings.environment : environments[0]!;
-  const laidOut = LAID_OUT.includes(symbology) && environment !== null;
+    ? guide.environment && environmentsFor(id.key).includes(guide.environment) ? guide.environment : null
+    : environments.includes(settings.environment) ? settings.environment : (environments[0] ?? null);
+  // The table's row that sizes the symbol: ITF-14, GS1-128 and GS1 DataBar always; a 2D symbol of a table without a
+  // scanning environment (12, 13). The others are sized by the scanning environment, as the resolver sized them.
+  const option = guided ? guide.options.find((o) => o.symbol === symbology) : undefined;
+  const table = guided ? guide.leaf.table : environment ? ENVIRONMENTS[environment]!.table : undefined;
+  const spec: SymbolSpecification | undefined = !bars && environment !== null
+    ? undefined
+    : option ? (option.specs.find((row) => row.part) ?? option.specs[0])
+    : table !== undefined ? specificationFor(table, symbology) : undefined;
   const twoD = TWO_D.includes(symbology);
   // An EAN/UPC beside the 2D symbol only where it can be: a GTIN, in an environment with an EAN/UPC range. Otherwise
   // the choice is kept for later but not applied (its field is not shown). Guided, the choice of step 2 decides.
   const linearPossible = !guided && twoD && id.key === "01" && Boolean(environment && ENVIRONMENTS[environment]?.linear);
   const linearChoice = choice ? (choice.with ? (choice.symbol === "upce" ? "upce" : "auto") : "none") : linearPossible ? settings.linear : "none";
   const effective: LabelSettings = { ...settings, symbology, environment: environment ?? "", linear: linearChoice };
-  const sizes = laidOut
-    ? twoD
-      ? sizesFor(environment!, linearChoice !== "none" && settings.linearSize === null)
-      : linearSizesFor(environment!)
-    : spec ? specSizesFor(spec, SIZES) : [];
+  const sizes = spec
+    ? specSizesFor(spec, SIZES)
+    : environment === null ? [] : twoD ? sizesFor(environment, linearChoice !== "none" && settings.linearSize === null) : linearSizesFor(environment);
   const size = sizes.includes(settings.size) ? settings.size : sizes.includes(100) ? 100 : (sizes[0] ?? 100);
   effective.size = size;
-  // A symbol without the label layout yet: at the table's sizes and bar height when guided, else as typed.
-  const linearKind = SYMBOLOGIES[symbology].kind === "linear";
-  const manual = spec
-    ? {
-        xMm: (baseX(spec) * size) / 100,
-        quietZone: typeof spec.quietZone === "number" ? spec.quietZone : Math.max(...spec.quietZone),
-        barHeightMm: minimumBarHeight(spec, (baseX(spec) * size) / 100),
-      }
-    : { xMm: settings.xMmManual, quietZone: linearKind ? 10 : 2, barHeightMm: null };
-  const barModules = manual.barHeightMm ? manual.barHeightMm / manual.xMm : 50;
+  const linearKind = SYMBOLOGIES[symbology].kind !== "matrix";
   const blocked = guided && !choice
-    ? guide.waiting ? `${GUIDE_TEXTS.waiting} ${guide.options.find((o) => o.symbol === guide.waiting)?.name}.` : GUIDE_TEXTS.nothing
+    ? guide.together ? `${GUIDE_TEXTS.together} ${GUIDE_TEXTS.togetherLater}`
+    : guide.waiting ? `${GUIDE_TEXTS.waiting} ${guide.options.find((o) => o.symbol === guide.waiting)?.name}.` : GUIDE_TEXTS.nothing
+    : !spec && environment === null ? `No scanning environment of this key allows ${SYMBOLOGIES[symbology].name}: choose it in step 2.`
     : null;
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
-    view: Omit<LabelView, "environments" | "sizes" | "laidOut" | "twoD" | "isQr" | "linearPossible">;
+    view: Omit<LabelView, "environments" | "sizes" | "twoD" | "isQr" | "linearPossible" | "bars">;
     data?: string;
     geometry?: SymbolGeometry;
     options?: LabelOptions;
@@ -160,25 +160,14 @@ export function App() {
     const identified = checked.identified && gtinOnly
       ? { ...checked.identified, elements: checked.identified.elements.filter((e) => e.ai === "01") }
       : checked.identified;
-    const base = { xMm: manual.xMm, uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "" };
+    const base = {
+      xMm: spec ? (baseX(spec) * size) / 100 : !environment ? 0.495 : twoD ? xDimension(environment, size) : linearXDimension(environment, size), uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "",
+    };
     if (!identified || !font) return { view: { ...base, error: checked.error ?? (engine && font ? undefined : "Loading…") } };
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
       const data = dataFor(symbology, identified);
-      if (!laidOut) {
-        const geometry = encode(symbology, data);
-        const { xMm, quietZone } = manual;
-        const layout = symbolLayout(geometry, xMm, quietZone, barModules);
-        const bars = geometry.kind === "linear" ? ` · bars ${(barModules * xMm).toFixed(2)} mm` : "";
-        return {
-          view: {
-            ...base, svg: toSvg(geometry, { xMm, quietZone, barHeightMm: barModules * xMm }), pngDpi: pngDpi(layout),
-            caption: `${SYMBOLOGIES[symbology].name} · X ${xMm.toFixed(3)} mm${bars}`,
-          },
-          data, geometry, layout, options: { symbology, data, hriLines: [], showHri: false },
-        };
-      }
       const lines = identified.elements.map((e) => `(${e.ai})${e.value}`);
       const gtin = identified.elements.find((e) => e.ai === "01")?.value;
       let linear: LabelOptions["linear"] = null;
@@ -196,8 +185,8 @@ export function App() {
       }
       const options: LabelOptions = {
         symbology, data, showHri: effective.hri !== "none", hriLines: effective.hri === "key" ? lines.slice(0, 1) : lines,
-        version: effective.version, error: effective.error, environment, size, linear,
-        linearSize: twoD ? effective.linearSize : null,
+        version: effective.version, error: effective.error, environment: environment ?? undefined, size, linear,
+        linearSize: twoD ? effective.linearSize : null, ...(spec ? { spec, table } : {}), bearer: effective.bearer,
       };
       const layout = layoutLabel(options, font);
       const geometry = encode(symbology, data, symbology.endsWith("qrcode") ? { eclevel: effective.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) } : {});
@@ -207,7 +196,9 @@ export function App() {
         ? `QR code version ${layout.version} · ${layout.modules} × ${layout.modules} modules · correction ${effective.error.toUpperCase()}`
         : layout.modules
           ? `${SYMBOLOGIES[symbology].name} · ${layout.modules} × ${layout.modules} modules`
-          : SYMBOLOGIES[symbology].name;
+          : layout.barHeight !== undefined
+            ? `${SYMBOLOGIES[symbology].name} · bars ${(layout.barHeight * layout.xMm).toFixed(2)} mm`
+            : SYMBOLOGIES[symbology].name;
       return {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
@@ -218,10 +209,10 @@ export function App() {
     } catch (error) {
       return { view: { ...base, error: errorText(error) } };
     }
-  }, [checked, gtinOnly, font, engine, blocked, manual.xMm, manual.quietZone, barModules, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, environment, size, laidOut, twoD]);
+  }, [checked, gtinOnly, font, engine, blocked, spec, table, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, effective.bearer, environment, size, twoD]);
 
   const view: LabelView = {
-    ...label.view, environments, sizes, laidOut, twoD, isQr: symbology.endsWith("qrcode"), linearPossible,
+    ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible,
     ...(guided && walked.leaf
       ? {
           guided: {
@@ -235,7 +226,7 @@ export function App() {
           },
         }
       : {}),
-    ...(spec && !laidOut ? { sizeBase: baseX(spec), barHeightMm: manual.barHeightMm ?? undefined } : {}),
+    ...(spec ? { sizeBase: baseX(spec) } : {}),
   };
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
@@ -243,8 +234,8 @@ export function App() {
     const { geometry, data } = label;
     if (!geometry || !data) return;
     const d = snapToDots(view.xMm, settings.dpi).dots;
-    const quietZone = laidOut ? (linearKind ? 10 : 2) : manual.quietZone;
-    const barHeightDots = Math.round((laidOut ? 50 : barModules) * d);
+    const quietZone = linearKind ? 10 : 2;
+    const barHeightDots = Math.round((label.layout?.barHeight ?? 50) * d);
     const textDots = Math.round((2.2 / 25.4) * settings.dpi);
     const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
     const options = {

@@ -194,9 +194,12 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
           {walked.leaf && !guide && <p className="hint error">{dataError ?? GUIDE_TEXTS.fixData}</p>}
           {guide && !guide.recommended && (
             <p className="hint error">
-              {guide.waiting
-                ? `${GUIDE_TEXTS.waiting} ${SPEC_SYMBOL_NAMES[guide.waiting]} (backlog item 1.3).`
-                : GUIDE_TEXTS.nothing}
+              {guide.together
+                ? `${GUIDE_TEXTS.together} ${SPEC_SYMBOL_NAMES[guide.together.symbol]} with a ` +
+                  `${SPEC_SYMBOL_NAMES[guide.together.with]} beside it. ${GUIDE_TEXTS.togetherLater}`
+                : guide.waiting
+                  ? `${GUIDE_TEXTS.waiting} ${SPEC_SYMBOL_NAMES[guide.waiting]} (backlog item 1.3).`
+                  : GUIDE_TEXTS.nothing}
             </p>
           )}
           {(["recommended", "allowed", "in-addition"] as const).map((group) => {

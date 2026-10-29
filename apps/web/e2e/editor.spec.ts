@@ -147,7 +147,10 @@ test("at a retail till, a batch and a date: the EAN-13 with a QR code beside it,
   await step.getByRole("radio", { name: /^EAN-13 alone/ }).click();
   await expect(page.locator(".caption")).toContainText("EAN-13");
   await expect(page.locator(".caption")).not.toContainText("QR code");
-  await expect(step.getByRole("radio", { name: /GS1 DataBar Expanded\b/ }).first()).toBeDisabled();
+  // GS1 DataBar Expanded carries a fixed measure item's GTIN alone at a till (section 2.1.3).
+  await step.getByRole("radio", { name: /^GS1 DataBar Expanded alone/ }).click();
+  await expect(page.locator(".caption")).toContainText("GS1 DataBar Expanded · bars 11.23 mm · X 0.330 mm");
+  await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(01)09506000134376");
 });
 
 test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async ({ page }) => {
@@ -160,12 +163,13 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await expect(step).toContainText("The SSCC already answers 5 questions of the tree: not an asset, document or location; " +
     "not a service relationship (GSRN); not sold at a retail till; not sold in a pharmacy; a logistic unit.");
   await expect(step.getByRole("radio", { checked: true })).toContainText("GS1-128");
-  await expect(page.locator(".caption")).toHaveText("GS1-128 · X 0.495 mm · bars 31.75 mm");
+  await expect(page.locator(".caption")).toHaveText("GS1-128 · bars 31.75 mm · X 0.495 mm · label 89.1 × 37.6 mm at 100 %");
   await expect(page.locator("#opt-size option")).toHaveText([
     "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
   ]);
   await page.selectOption("#opt-size", "150");
-  await expect(page.locator(".caption")).toHaveText("GS1-128 · X 0.743 mm · bars 31.75 mm");
+  await expect(page.locator(".caption")).toContainText("GS1-128 · bars 31.75 mm · X 0.743 mm");
+  await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(00)106141411234567897");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
   expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
 });
@@ -182,4 +186,49 @@ test("choosing the symbol yourself starts from the guided choice and can go back
   await expect(page.locator("#opt-env")).toHaveValue("healthcare");
   await page.getByRole("button", { name: "Back to the guided choice" }).click();
   await expect(page.locator(".chosen")).toContainText("GS1 DataMatrix · table 6");
+});
+
+// Item 1.3: ITF-14, GS1-128 and GS1 DataBar laid out as the General Specifications place them.
+test("a case in general distribution: ITF-14 with its bearer bars and digits, at table 2's sizes", async ({ page }) => {
+  await page.fill("#paste", "(01)19506000134373");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await answer(page, "Is it scanned at a general retail point of sale?", "No");
+  await answer(page, "Is it a regulated healthcare item sold in a retail pharmacy?", "No");
+  await answer(page, "Is it scanned in general distribution?", "Yes");
+  await answer(page, "Is it a tobacco product under the EU traceability regulation?", "No");
+  await answer(page, "Is it a regulated healthcare item not sold at retail?", "No");
+  await expect(page.locator(".chosen")).toContainText("ITF-14 · table 2");
+  await expect(page.locator(".caption")).toHaveText("ITF-14 · bars 31.75 mm · X 0.495 mm · label 81.2 × 47.3 mm at 100 %");
+  await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "19506000134373");
+  await expect(page.locator("#opt-bearer option")).toHaveText([
+    "A frame, 4.83 mm (any printing; needed with printing plates)", "Top and bottom, 2X (printing without plates: thermal, laser)",
+  ]);
+  await page.selectOption("#opt-bearer", "bars");
+  await expect(page.locator(".caption")).toContainText("label 71.5 × 39.6 mm at 100 %");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
+  expect(download.suggestedFilename()).toBe("itf14_01_19506000134373.pdf");
+});
+
+test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch, two symbols to choose from", async ({ page }) => {
+  await page.fill("#paste", "(01)19506000134373");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  await expect(page.locator(".chosen")).toContainText("GS1 DataBar Omnidirectional · table 1");
+  await expect(page.locator(".caption")).toContainText("GS1 DataBar Omnidirectional · bars 15.19 mm · X 0.330 mm");
+  await page.fill("#q-10", "B42");
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  await expect(step).toContainText(
+    "This data needs two symbols: GS1 DataBar Omnidirectional with a QR code (GS1 Digital Link) beside it.");
+  await expect(page.locator(".preview .error")).toContainText("This data needs two symbols");
+  await step.getByRole("radio", { name: /^GS1 DataBar Stacked Omnidirectional/ }).click();
+  await expect(page.locator(".caption")).toContainText("GS1 DataBar Stacked Omnidirectional · bars 31.37 mm");
+});
+
+test("choosing ITF-14 yourself offers the key's scanning environments whose table allows it", async ({ page }) => {
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "itf14");
+  const environments = await page.locator("#opt-env").evaluate((select: HTMLSelectElement) => [...select.options].map((o) => o.value));
+  expect(environments).toEqual(["distribution", "pharmacy", "pharmacy-gd", "healthcare", "other"]);
+  await expect(page.locator(".preview .error")).toContainText("ITF-14 carries the GTIN alone");
 });
