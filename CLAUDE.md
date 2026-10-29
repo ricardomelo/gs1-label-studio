@@ -56,7 +56,8 @@ this public repository.
 ## Working with the maintainer
 
 - New to Git: give step-by-step instructions with the expected output.
-- Questions: 2–3 options with the recommended one first. When the maintainer is away, take the recommended option,
-  say so at the top of the work, and carry on.
-- Before implementing a screen, show mock-ups (Playwright screenshots of the real application).
+- Questions: 2–3 options with the recommended one first. Always take the recommended option without waiting (the
+  maintainer, 29 October 2026): say so at the top of the work, and carry on; the maintainer can still change it.
+- Before implementing a screen, show mock-ups (Playwright screenshots of the real application); then implement the
+  recommended one.
 - At the end of a backlog item, or when the conversation has grown long, write a handover for the next session.

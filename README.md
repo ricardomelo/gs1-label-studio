@@ -4,8 +4,8 @@ Create GS1 barcodes — and, later, whole labels — in your browser, one at a t
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
 DPL). Nothing you type or upload leaves your computer.
 
-> **Status:** early development (28 October 2026). The resolver's editor in the browser: key, qualifiers and data
-> attributes, the label beside its options, live; SVG, PNG, PDF and zip, and ZPL with the printer's own commands (and
+> **Status:** early development (29 October 2026). The resolver's editor in the browser: key, qualifiers and data
+> attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options, live; SVG, PNG, PDF and zip, and ZPL with the printer's own commands (and
 > as a template); EPC for RFID and NFC.
 > See the backlog.
 
@@ -47,9 +47,10 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   named and checked; errors explained — *done (a "(" inside a value is refused: the barcode encoder cannot take it)*
 - 1.2 Guided choice: what is identified → symbol specification table → symbols allowed and recommended; scanning
   environments table carried over from the resolver (General Specifications 26.0, section 5.12.3) — *table, sizes and
-  checks ported (2 970 of the resolver's answers equal); every row of tables 1 to 13, with ITF-14, GS1-128, GS1 DataBar
-  and GS1 DotCode, tested against the standard's text; the decision tree (figure 5-68), section 2's carrier choices and
-  a recommendation in the core; the screen to do, mock-ups first*
+  checks ported (2 970 of the resolver's answers equal); done: every row of tables 1 to 13, with ITF-14, GS1-128, GS1
+  DataBar and GS1 DotCode, tested against the standard's text; the decision tree (figure 5-68), section 2's carrier
+  choices and a recommendation; the editor's step 2, "Where is it scanned?" (mock-up B); ITF-14 and GS1-128 at their
+  table's sizes and bar height*
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
   QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later. GS1 QR Code is encoded by
   the core but not offered in the editor: beside the QR code with a GS1 Digital Link URI it confuses (ADR 0003)

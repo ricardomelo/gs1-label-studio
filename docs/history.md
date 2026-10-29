@@ -64,3 +64,13 @@ labels as fixtures. The PDF's operators are the resolver's one for one after the
 bwip-js may choose differently); the PNG's pixels are the resolver's outside the 2D symbol and the text, the text
 within about a pixel (Pillow hints it, the port does not). The PDFs are drawn by poppler's pdftoppm in the tests and
 read back by ZXing, like the PNGs. Compression comes from the platform (Compression Streams), so no library was added.
+
+Session 2 began with item 1.2, as the owner had chosen. The ranges of ITF-14, GS1-128 and GS1 DataBar came from the GS1
+General Specifications 2026 itself: every row of its thirteen symbol specification tables was transcribed and each
+tested against the text of the PDF, read by a parser of its own; the resolver's summary (one 2D range and the EAN/UPC
+range a table) agreed with them. Table 13 (durable marking for long distances) gives no target X-dimension, and the
+encoder accepts a GS1-128 longer than the 48 data characters the standard allows — both found on the way. The guided
+choice followed the decision tree of figure 5-68 node by node, its leaves the applications of section 2, whose carrier
+choices give the order of the recommendation; healthcare has two (table 2-11 puts GS1 DataMatrix first, table 2-15
+GS1-128 in distribution), and the tree's path tells them apart. Of three mock-ups the owner took the recommended one,
+a step of its own, and asked that the recommended option always be taken from now on.

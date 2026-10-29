@@ -21,7 +21,8 @@
    questions one at a time, those the key answers left out; each leaf is a section 2 application whose carrier choices
    give the order; the recommendation is the first carrier the studio draws that carries all the data, or — where only
    the GTIN fits, as EAN/UPC at a till — that carrier with the first symbol allowed in addition that carries the rest
-   (a QR code with a GS1 Digital Link URI at retail). A symbol in addition is never recommended alone.*
+   (a QR code with a GS1 Digital Link URI at retail). A symbol in addition is never recommended alone. On the page since
+   29 October 2026: the editor's step 2 (mock-up B, the owner's choice among three).*
 2. **Paste anything.** A GTIN, an element string with or without brackets, a GS1 Digital Link URI, or what a scanner
    types (with GS separators): the studio recognises it, shows each AI with its name and checks it, and explains an
    error in plain words (the GS1 Syntax Engine's messages, translated).
@@ -38,7 +39,8 @@
 
 1. **One code** — the resolver's editor without its records (decided with mock-ups on 28 October 2026, ADR 0004): on the
    left what the code identifies — a box to paste anything, the key, its qualifiers, data attribute rows —, on the right
-   the label panel, sticky, with the preview beside its options, the GS1 Digital Link URI coloured by part, the element
+   the label panel, sticky, with the preview beside its options (step 3; step 2, "Where is it scanned?", sits under the
+   identification since 29 October 2026 and chooses the symbol), the GS1 Digital Link URI coloured by part, the element
    string and the downloads, redrawn as anything changes; RFID and NFC (EPC) below the options. On a phone the fields
    come first, with a small live preview fixed at the top.
 2. **In bulk** — a wizard: upload CSV or Excel (or paste), map columns to AIs (remembered by header), fixed values for

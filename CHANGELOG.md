@@ -42,4 +42,7 @@
   General Specifications 26.0. The guided choice in the core: the decision tree of figure 5-68 asked one question at a
   time, the key answering what it can; each leaf's carrier choices from section 2; what each symbol can carry
   (GS1-128's 48 data characters, DataBar Limited, the GS1 Digital Link URI) and the symbol recommended.
+- The editor's step 2, "Where is it scanned?" (item 1.2): the tree's questions with Yes and No, the table reached, the
+  symbols it allows for the data with the recommended one drawn, those only in addition, those coming with item 1.3;
+  ITF-14 and GS1-128 at their table's sizes and minimum bar height; "Choose a symbol yourself" keeps the former fields.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
