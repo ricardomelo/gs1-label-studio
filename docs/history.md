@@ -74,3 +74,14 @@ choice followed the decision tree of figure 5-68 node by node, its leaves the ap
 choices give the order of the recommendation; healthcare has two (table 2-11 puts GS1 DataMatrix first, table 2-15
 GS1-128 in distribution), and the tree's path tells them apart. Of three mock-ups the owner took the recommended one,
 a step of its own, and asked that the recommended option always be taken from now on.
+
+Session 3 took item 1.3 as the handover had it. The General Specifications placed the text: section 4.14 asks for the
+element strings beside the symbol, never one broken over two lines, the AIs in parentheses; section 5.3.2 gives
+ITF-14 its bearer bars — a 4.83 mm frame for printing plates, at least 2X at the top and bottom without them — and
+1.02 mm to its digits. Two findings on the way: bwip-js draws ITF-14 at a wide-to-narrow ratio of 2, below the 2.25 the
+standard allows, so the layout widens the wide elements to the target 2.5; and it returns a stacked GS1 DataBar as its
+distinct rows only, so their heights come from ISO/IEC 24724. Drawing GS1 DataBar changed two recommendations, both
+settled from section 2: at a till GS1 DataBar Expanded carries a fixed measure item's GTIN only (2.1.3), its batch and
+dates going in a 2D symbol in addition, and carries everything for a variable measure item (2.1.12.1); and a GTIN
+carrier other than an EAN/UPC is not recommended with a 2D symbol beside it, since the label cannot lay that pair out
+yet — a defect of item 1.2 that showed only once DataBar could be the carrier.

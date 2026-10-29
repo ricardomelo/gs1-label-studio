@@ -5,8 +5,10 @@ export them as vector files for artwork or as print files for label printers (PD
 DPL). Nothing you type or upload leaves your computer.
 
 > **Status:** early development (29 October 2026). The resolver's editor in the browser: key, qualifiers and data
-> attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options, live; SVG, PNG, PDF and zip, and ZPL with the printer's own commands (and
-> as a template); EPC for RFID and NFC.
+> attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options,
+> live — EAN/UPC, ITF-14, GS1-128, GS1 DataBar, GS1 DataMatrix and the QR code and Data Matrix with a GS1 Digital Link
+> URI, each laid out as the GS1 General Specifications place it; SVG, PNG, PDF and zip, and ZPL with the printer's own
+> commands (and as a template); EPC for RFID and NFC.
 > See the backlog.
 
 ## Development
@@ -53,13 +55,16 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   table's sizes and bar height*
 - 1.3 Every GS1 symbology: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14, GS1-128, GS1 DataBar family, GS1 DataMatrix,
   QR and Data Matrix with a GS1 Digital Link URI, GS1 DotCode; composite components later. GS1 QR Code is encoded by
-  the core but not offered in the editor: beside the QR code with a GS1 Digital Link URI it confuses (ADR 0003)
+  the core but not offered in the editor: beside the QR code with a GS1 Digital Link URI it confuses (ADR 0003) —
+  *ITF-14, GS1-128 and the GS1 DataBar family done: laid out by their table's row, ITF-14 with bearer bars, each read
+  back by ZXing from the SVG, PNG and PDF; GS1 DotCode and composite components to do*
 - 1.4 Layout and human readable text as the General Specifications place them: the resolver's 2D symbol with an EAN/UPC
   beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction —
-  *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar to do with 1.3*
+  *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar with 1.3*
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
   prepress options (bar width reduction, 100 % K) — *SVG, PNG (12 pixels per module, its dpi recorded), PDF and zip
-  with README ported from the resolver and checked against it; a chosen dpi, EPS and the prepress options to do*
+  with README ported from the resolver and checked against it, for every symbol from its layout (1.3); a chosen dpi,
+  EPS and the prepress options to do*
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *the
   editor screen done (preview beside the options, live, desktop and phone, light and dark); ruler and scan test to do*
 - 1.7 Offline (PWA)
@@ -82,7 +87,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 - 3.1 Printer profiles; whole-dot X-dimensions within the table's range; test print
 - 3.2 ZPL II with the printer's commands and templates with placeholders — *EAN/UPC, ITF-14, GS1-128, GS1 DataMatrix,
-  QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); DataBar, bearer bars, layout to do*
+  QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); DataBar (refused until proven),
+  ITF-14's bearer bars, layout to do*
 - 3.3 TSPL/TSPL2 · 3.4 PPLB · 3.5 PPLA · 3.6 EPL2 · 3.7 DPL
 - 3.8 Direct printing: WebUSB, Zebra Browser Print; a local agent for network printers
 - 3.9 Compatibility matrix from tests on physical printers

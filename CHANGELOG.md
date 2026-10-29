@@ -45,4 +45,11 @@
 - The editor's step 2, "Where is it scanned?" (item 1.2): the tree's questions with Yes and No, the table reached, the
   symbols it allows for the data with the recommended one drawn, those only in addition, those coming with item 1.3;
   ITF-14 and GS1-128 at their table's sizes and minimum bar height; "Choose a symbol yourself" keeps the former fields.
+- ITF-14, GS1-128 and the GS1 DataBar family laid out (item 1.3): sized by their row of the symbol specification table
+  (X-dimension, minimum bar height, quiet zones); ITF-14 with bearer bars (a 4.83 mm frame, or 2X bars at the top and
+  bottom) at the wide-to-narrow ratio 2.5 and its 14 digits below; GS1-128 and GS1 DataBar with their element strings
+  below, never broken over two lines; the seven GS1 DataBar symbols drawn, the stacked ones grown to the table's
+  height. Their SVG, PNG, PDF and zip are labels; 2D symbols of tables 12 and 13 too. Step 2 offers GS1 DataBar; at a
+  till GS1 DataBar Expanded carries the attributes of a variable measure item only (section 2.1.12.1). Choosing a symbol
+  yourself sizes it by a table of the key's scanning environments. ZPL refuses GS1 DataBar until `^BR` is proven.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
