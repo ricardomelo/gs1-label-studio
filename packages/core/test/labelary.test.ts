@@ -103,6 +103,46 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     },
   );
 
+  // Item 3.2 with the layouts of item 1.3. GS1 DataBar through ^BR at the height it prints each symbol at.
+  const GTIN = "(01)09506000134352";
+  const BARS: [SymbologyId, string, number, number][] = [
+    ["databar-omni", GTIN, 33, 203],
+    ["databar-truncated", GTIN, 13, 300],
+    ["databar-stacked", GTIN, 13, 203],
+    ["databar-stacked-omni", GTIN, 69, 203],
+    ["databar-limited", "(01)15012345678907", 10, 300],
+    ["databar-expanded", "(01)09506000134352(3103)001250(17)271231(10)AB-12", 34, 203],
+    ["databar-expanded-stacked", "(01)09506000134352(3103)001250(17)271231(21)SERIAL-0001", 34, 300],
+  ];
+  it.each(BARS)("%s %s, %i modules high, %i dpi", { timeout: 30000 }, async (symbology, data, modules, dpi) => {
+    const o = { ...options(0.33, dpi), hri: true };
+    o.barHeightDots = modules * o.dotsPerModule;
+    const result = await print(zplLabel(symbology, data, o), dpi, o.widthDots, o.heightDots);
+    expect(result?.symbologyIdentifier).toBe("]e0");
+    expect(result?.text).toBe(data);
+  });
+
+  it("templates GS1 DataBar Expanded, filled with other values", { timeout: 30000 }, async () => {
+    const o = { ...options(0.33, 203), hri: true };
+    o.barHeightDots = 34 * o.dotsPerModule;
+    const template = zplTemplate("databar-expanded", "(01)09506000134352(17)271231(10)AB-12", o);
+    const filled = fillTemplate(template, { "01": "09506000134376", "17": "281130", "10": "ZZ-99" });
+    const result = await print(filled, 203, o.widthDots, o.heightDots);
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe("]e0 (01)09506000134376(17)281130(10)ZZ-99");
+  });
+
+  // ITF-14's bearer bars through ^GB: a frame 4.83 mm thick, or bars of 2X; the GTIN-14 given whole.
+  it.each([["frame", 203], ["bars", 300]] as const)("ITF-14 with bearer bars as a %s, %i dpi", { timeout: 30000 }, async (kind, dpi) => {
+    const { dots } = snapToDots(0.495, dpi);
+    const t = kind === "frame" ? Math.round((4.83 / 25.4) * dpi) : 2 * dots;
+    const o = {
+      x: 10 * dots + t + 20, y: t + 20, dotsPerModule: dots, barHeightDots: Math.round((31.75 / 25.4) * dpi), dpi,
+      widthDots: Math.round(4.5 * dpi), heightDots: Math.round(2.2 * dpi), hri: true, bearer: { kind, thicknessDots: t },
+    };
+    const result = await print(zplLabel("itf14", "19506000134359", o), dpi, o.widthDots, o.heightDots);
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe("]I1 19506000134359");
+  });
+
   it("prints an image (a logo) larger than one graphic field, in stripes", { timeout: 30000 }, async () => {
     // A symbol stands in for a logo: a picture ZXing can check. At 600 dpi it is 1 222 dots square, 153 bytes a row,
     // 186 966 bytes in all: two graphic fields.

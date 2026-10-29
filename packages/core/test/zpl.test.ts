@@ -83,3 +83,47 @@ describe("ZPL with the printer's commands", () => {
     expect(() => parseElementString("0109506000134352")).toThrow();
   });
 });
+
+// Item 3.2 with the layouts of item 1.3: GS1 DataBar through ^BR, ITF-14's bearer bars through ^GB.
+describe("GS1 DataBar and ITF-14's bearer bars in ZPL", () => {
+  const databar = { ...at203, barHeightDots: 33 * 3 };
+  it("gives ^BR the GTIN's first 13 digits, or Expanded's element strings, at the module's dots, the text below", () => {
+    const omni = zplLabel("databar-omni", "(01)09506000134352", databar);
+    expect(omni).toContain("^FO40,40^BRN,1,3,1,99,22^FD0950600013435^FS");
+    expect(omni).toMatch(/\^A0N,18,18\^FB288,1,0,C\^FD\(01\)09506000134352\^FS/); // 96 modules of 3 dots
+    expect(zplLabel("databar-limited", "(01)09506000134352", { ...databar, barHeightDots: 30 })).toContain("^BRN,5,3,1,30,22^FD0950600013435^FS");
+    expect(zplLabel("databar-expanded", "(01)09506000134352(17)271231(10)AB", { ...databar, barHeightDots: 102 }))
+      .toContain("^BRN,6,3,1,102,22^FD01095060001343521727123110AB^FS");
+    expect(zplLabel("databar-expanded-stacked", "(01)09506000134352(10)AB", { ...databar, barHeightDots: 213 }))
+      .toContain("^BRN,6,3,1,213,4^FD0109506000134352" + "10AB^FS");
+  });
+
+  it("refuses what ^BR cannot print as the table asks: a taller symbol, a variable-length element string not last", () => {
+    // Table 1 asks GS1 DataBar Omnidirectional 46 modules high; ^BR prints 33.
+    expect(() => zplLabel("databar-omni", "(01)09506000134352", { ...at203, barHeightDots: 46 * 3 })).toThrow(/33 modules high/);
+    expect(() => zplLabel("databar-expanded", "(01)09506000134352(10)AB(17)271231", { ...databar, barHeightDots: 102 }))
+      .toThrow(ZplUnsupportedError);
+    expect(() => zplLabel("databar-omni", "(01)09506000134352", { ...databar, dotsPerModule: 11 })).toThrow(/1 to 10 dots/);
+  });
+
+  it("templates GS1 DataBar with the GTIN's 13 digits for the symbol and the whole GTIN for the text", () => {
+    const template = zplTemplate("databar-truncated", "(01)09506000134352", { ...databar, barHeightDots: 39 });
+    expect(template.placeholders.map((p) => [p.name, p.sample])).toEqual([["01", "0950600013435"], ["GTIN", "09506000134352"]]);
+    expect(fillTemplate(template, { "01": "1950600013435", GTIN: "19506000134359" })).toContain("^FD(01)19506000134359^FS");
+  });
+
+  it("draws ITF-14's bearer bars around the symbol and its quiet zones, its 14 digits below them", () => {
+    const o = { ...at203, x: 70, y: 60, barHeightDots: 254 };
+    const frame = zplLabel("itf14", "19506000134359", { ...o, bearer: { kind: "frame", thicknessDots: 39 } });
+    // 135 modules at ratio 3 and 3 dots: 405 dots; quiet zones of 30 dots; a frame of 39 dots.
+    expect(frame).toContain("^FO70,60^BY3,3.0,254^B2N,254,N,N,N^FD19506000134359^FS");
+    expect(frame).toContain("^FO1,21^GB543,332,39^FS");
+    expect(frame).toContain("^FO1,361^A0N,18,18^FB543,1,0,C^FD19506000134359^FS"); // 1.02 mm: 8 dots below
+    const bars = zplLabel("itf14", "19506000134359", { ...o, bearer: { kind: "bars", thicknessDots: 6 } });
+    expect(bars).toContain("^FO40,54^GB465,6,6^FS");
+    expect(bars).toContain("^FO40,314^GB465,6,6^FS");
+    const template = zplTemplate("itf14", "19506000134359", { ...o, bearer: { kind: "bars", thicknessDots: 6 } });
+    expect(template.placeholders.map((p) => p.name)).toEqual(["01"]);
+    expect(template.zpl).toContain("^FB465,1,0,C^FD{{01}}^FS");
+  });
+});

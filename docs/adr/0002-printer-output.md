@@ -58,12 +58,12 @@ Checked through Labelary and read back by ZXing (`packages/core/test/labelary.te
 |---|---|---|
 | EAN-13, EAN-8, UPC-A | `^BE`, `^B8`, `^BU` | Field data without the check digit (12, 7, 11 digits): the printer adds it. Given one digit more, the printer drops the first — a template says so. |
 | UPC-E | `^B9` | Field data is the UPC-A's 10 manufacturer and product digits, not the 8 of UPC-E: expanded by `upcaManufacturerAndProduct()`. |
-| ITF-14 | `^B2` with check digit | 13 digits; wide-to-narrow ratio 3. Bearer bars not yet: the label layout has them (SVG, PNG, PDF; item 1.3), ZPL will draw them with `^GB` once tested. |
+| ITF-14 | `^B2` | Wide-to-narrow ratio 3 (whole dots for any module, within GS1's 2.25 to 3). With the label's bearer bars (item 1.3), drawn with `^GB`: a frame 4.83 mm thick around the symbol and its quiet zones, or bars of 2X at the top and bottom; the 14 digits printed below them, 1.02 mm away, by the studio, since the printer's interpretation line would fall under the bottom bar; the symbol then takes the whole GTIN-14 with no check digit computed, so that symbol and text carry the same value in a template. Without bearer bars: 13 digits, the printer adds the check digit. |
 | GS1-128 | `^BC` mode **N** | FNC1 (`>8`) first and after each variable-length element string, code sets chosen by the studio (`gs1128FieldData()`), `>` written `>0`. **Mode D** (UCC/EAN) joins the element strings without FNC1 — "(10)ABC(21)X" reads as "(10)ABC21X" — and cannot carry a `>`; **mode A** prints `>8` as text. Text below the bars by the studio. |
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 is `_1` with `_` declared as the escape character: its default changed between firmware versions (`~` before V60.13.0.12), and `~1` was not read. `_` in data is `__`. |
 | Data Matrix and QR with a GS1 Digital Link URI | `^BX`, `^BQ` model 2 | Plain data. |
 | **GS1 QR Code** | — | `^BQ` has no FNC1: refused, with GS1 DataMatrix or the QR code with a GS1 Digital Link URI offered instead. |
-| GS1 DataBar | `^BR` | Omnidirectional read correctly; Expanded not yet with two element strings: offered when proven. Until then a ZPL of a GS1 DataBar is refused with that explanation (`ZplUnsupportedError`); the PDF prints it. |
+| GS1 DataBar | `^BR` | Orientation N given (its default is R). Omnidirectional, Truncated, Stacked, Stacked Omnidirectional and Limited take the GTIN's first 13 digits and add the check digit (given 14, nothing is read); Expanded takes the element strings without brackets, Expanded Stacked is Expanded with 4 segments a row. `^BR` prints each at a fixed height — Omnidirectional 33 modules, Stacked Omnidirectional 69, Truncated and Stacked 13, Limited 10, Expanded 34 a row — and its height parameter is for composite symbols only: where a table asks for more (tables 1 and 3: 46 and 95 modules at a till) the ZPL is refused and the PDF offered. No separator was read back between an element string of no predefined length and the next ("#" printed other data; a GS byte through `^FH` was not read), so Expanded carries such an element string last only. The element strings are printed below as text (a template has `{{01}}` for the symbol's 13 digits and `{{GTIN}}` for the text). Checked through Labelary, every symbol at 203 and 300 dpi (29 October 2026). |
 
 Reserved characters (`^`, `~`, `\`) go through `^FH`. In templates, values are placed in the code set any value of the
 AI's format fits: element strings of predefined length (all digits, even length) in code set C, other values in code
@@ -81,7 +81,8 @@ set B; a Data Matrix keeps the sample's size so that the text below it stays cle
 
 ## Order of work
 
-ZPL II (done for the symbols above; DataBar Expanded and the label layout next), then TSPL, PPLB, PPLA, EPL2, DPL.
+ZPL II (done for the symbols above, GS1 DataBar and ITF-14's bearer bars included; the label layout next), then TSPL,
+PPLB, PPLA, EPL2, DPL.
 The order can change with the printers the owner has at hand for tests.
 
 ## Open points for the owner

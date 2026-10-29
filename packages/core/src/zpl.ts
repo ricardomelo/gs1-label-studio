@@ -2,7 +2,7 @@ import { MM_PER_INCH } from "./dots.ts";
 import { encode, widthInModules, type SymbolGeometry } from "./encode.ts";
 import { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 import type { Bitmap } from "./raster.ts";
-import type { SymbologyId } from "./symbologies.ts";
+import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 
 /**
  * ZPL II with the printer's own barcode commands (ADR 0002, decided on 28 October 2026): a few hundred bytes a label,
@@ -24,6 +24,11 @@ export interface ZplSymbolOptions {
   dpi: number;
   /** Human readable text: the printer's interpretation line for linear symbols, text lines below 2D symbols. */
   hri?: boolean;
+  /**
+   * ITF-14's bearer bars (section 5.3.2.4), drawn with ^GB: a frame around the symbol and its quiet zones of 10X, or
+   * bars at the top and bottom; `thicknessDots` thick. `x` and `y` stay the symbol's corner.
+   */
+  bearer?: { kind: "frame" | "bars"; thicknessDots: number };
 }
 
 export interface ZplLabelOptions extends ZplSymbolOptions {
@@ -140,6 +145,22 @@ const LINEAR_GTIN: Partial<Record<SymbologyId, LinearGtin>> = {
   },
 };
 
+const ITF14_RATIO = 3; // ^BY's wide-to-narrow ratio for ^B2: whole dots for any module, within GS1's 2.25 to 3
+const HRI_GAP_MM = 1.02; // section 5.3.2.2: from the bearer bar to the text
+
+// ^BR: the GS1 DataBar type, and the height in modules it prints each at, which ^BR does not let a label change (its
+// height parameter is for the linear part of composite symbols). Checked through Labelary.
+const DATABAR: Partial<Record<SymbologyId, { type: number; modules?: number }>> = {
+  "databar-omni": { type: 1, modules: 33 },
+  "databar-truncated": { type: 2, modules: 13 },
+  "databar-stacked": { type: 3, modules: 13 },
+  "databar-stacked-omni": { type: 4, modules: 69 },
+  "databar-limited": { type: 5, modules: 10 },
+  "databar-expanded": { type: 6, modules: 34 },
+  "databar-expanded-stacked": { type: 6 },
+};
+const EXPANDED_STACKED_SEGMENTS = 4; // segments a row, as the studio's layout draws it (the encoder's default)
+
 function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions, template: boolean) {
   const geometry = encode(symbology, data); // checks the data: GS1 syntax, check digits
   const { x, y, dotsPerModule: d, barHeightDots: h } = options;
@@ -155,6 +176,7 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
   const matrixSize = geometry.kind === "matrix" && template ? `${geometry.cols},${geometry.rows}` : "0,0";
 
   const linear = LINEAR_GTIN[symbology];
+  if (symbology === "itf14" && options.bearer) return { commands: itf14WithBearers(data, options, value), placeholders };
   if (linear) {
     const digits = value("01", linear.digits(data), linear.description);
     const command = linear.command.replace("{h}", String(h)).replace("{f}", f);
@@ -220,13 +242,88 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
     case "databar-limited":
     case "databar-expanded":
     case "databar-expanded-stacked":
-      throw new ZplUnsupportedError(
-        "GS1 DataBar is not offered in ZPL yet: its command (^BR) is offered once a test shows it prints the same " +
-          "symbol (ADR 0002). Use the PDF, or GS1-128.",
-      );
+      return { commands: databar(symbology, data, geometry, options, value), placeholders };
     default:
       throw new ZplUnsupportedError(`no ZPL command for ${symbology}`);
   }
+}
+
+type Value = (name: string, sample: string, description: string, escapes?: Record<string, string>) => string;
+
+/** The text below a linear symbol, centred on `widthDots` from `x`, in the printer's scalable font. */
+function textBelow(text: string, x: number, y: number, widthDots: number, dpi: number): string {
+  const dots = hriTextDots(dpi);
+  return `^FO${x},${y}^A0N,${dots},${dots}^FB${widthDots},1,0,C${fieldData(text)}`;
+}
+
+/**
+ * ITF-14 with its bearer bars as ^GB boxes and its 14 digits below them, 1.02 mm away: the printer's interpretation
+ * line would print under the bottom bearer bar. The symbol takes the whole GTIN-14 with no check digit computed, so
+ * that the symbol and the text below it carry the same value — in a template too.
+ */
+function itf14WithBearers(data: string, options: ZplSymbolOptions, value: Value) {
+  const { x, y, dotsPerModule: d, barHeightDots: h, bearer } = options;
+  const t = bearer!.thicknessDots;
+  const quiet = 10 * d;
+  const width = (7 * (4 * ITF14_RATIO + 6) + ITF14_RATIO + 6) * d; // section 5.3.2.2: P(4N+6)+N+6 modules
+  const side = bearer!.kind === "frame" ? t : 0;
+  const left = x - quiet - side;
+  const outer = width + 2 * quiet + 2 * side;
+  const gtin = value("01", data, "the GTIN-14, its check digit included.");
+  const boxes = bearer!.kind === "frame"
+    ? [`^FO${left},${y - t}^GB${outer},${h + 2 * t},${t}^FS`]
+    : [`^FO${left},${y - t}^GB${outer},${t},${t}^FS`, `^FO${left},${y + h}^GB${outer},${t},${t}^FS`];
+  const text = options.hri ?? true
+    ? [textBelow(gtin, left, y + h + t + Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), outer, options.dpi)]
+    : [];
+  return [`^FO${x},${y}^BY${d},${ITF14_RATIO}.0,${h}^B2N,${h},N,N,N${fieldData(gtin)}`, ...boxes, ...text];
+}
+
+/**
+ * GS1 DataBar through ^BR. The family but Expanded takes the GTIN's first 13 digits and adds the check digit; Expanded
+ * takes the element strings without brackets. ^BR could not be made to separate an element string of no predefined
+ * length from the next (neither "#" nor a GS byte through ^FH was read back), so Expanded is refused where one would
+ * need it; and ^BR prints each symbol at a fixed height, so a table that asks for more is refused too. The element
+ * strings are printed below as text.
+ */
+function databar(symbology: SymbologyId, data: string, geometry: SymbolGeometry, options: ZplSymbolOptions, value: Value) {
+  const { x, y, dotsPerModule: d, barHeightDots: h } = options;
+  const { type, modules } = DATABAR[symbology]!;
+  const name = SYMBOLOGIES[symbology].name;
+  if (d > 10) throw new ZplUnsupportedError(`^BR prints ${name} at 1 to 10 dots a module; this X-dimension needs ${d}.`);
+  if (modules && h > modules * d + d / 2) {
+    throw new ZplUnsupportedError(
+      `^BR prints ${name} ${modules} modules high and no higher; this table asks for ${Math.round(h / d)}. Use the PDF, ` +
+        "or a symbol the table lets the printer draw as high as it asks.",
+    );
+  }
+  const elements = parseElementString(data);
+  if (type === 6 && elements.slice(0, -1).some((e) => !hasPredefinedLength(e.ai))) {
+    throw new ZplUnsupportedError(
+      `^BR cannot separate an element string of no predefined length from the next, so ${name} carries such a one ` +
+        "only last. Put it last, or use GS1-128 or the PDF.",
+    );
+  }
+  const shown: string[] = [];
+  const fd = type === 6
+    ? elements.map((e) => {
+        const v = value(e.ai, e.value, aiDescription(e.ai, "as it is"));
+        shown.push(`(${e.ai})${v}`);
+        return e.ai + v;
+      }).join("")
+    : (() => {
+        const gtin = elements[0]!.value;
+        const v = value("01", gtin.slice(0, 13), "the GTIN-14's first 13 digits; the printer adds the check digit.");
+        shown.push(`(01)${value("GTIN", gtin, "the whole GTIN-14, for the text below the symbol.")}`);
+        return v;
+      })();
+  const segments = symbology === "databar-expanded-stacked" ? EXPANDED_STACKED_SEGMENTS : 22;
+  const height = (modules ?? (geometry.kind === "matrix" ? geometry.rows : 34)) * d;
+  const widthDots = widthInModules(geometry) * d;
+  const text = options.hri ?? true
+    ? [textBelow(type === 6 ? shown.join("") : shown[0]!, x, y + height + Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), widthDots, options.dpi)]
+    : [];
+  return [`^FO${x},${y}^BRN,${type},${d},1,${h},${segments}${fieldData(fd)}`, ...text];
 }
 
 function aiDescription(ai: string, escaping: string): string {
