@@ -161,3 +161,28 @@ export const LINEAR_CHOICES = {
   upce: "UPC-E (a GTIN-12 that zero-suppresses)",
 } as const;
 export type LinearChoice = keyof typeof LINEAR_CHOICES;
+
+// Step 2, where the code is scanned (backlog 1.2). The questions themselves are the core's (guide.ts: QUESTIONS).
+export const GUIDE_TEXTS = {
+  answer: "Answer to see the symbols the GS1 General Specifications allow here, and the one recommended for this data.",
+  fixData: "Correct the data in step 1 to see the symbols this table allows.",
+  waiting: "The studio does not draw the symbol this needs yet:",
+  nothing: "No symbol this table allows carries this data.",
+  gtinAlone: "Carries the GTIN alone: the rest of the data is left out.",
+  notOffered: "Not offered here: beside the QR code with a GS1 Digital Link URI it confuses.",
+  oneSymbol: "For now the label lays out a symbol in addition beside an EAN/UPC only.",
+  expert: "You are choosing the symbol and the scanning environment yourself, in step 3.",
+  expertOffer: "every symbol, with the key's scanning environments.",
+} as const;
+
+/** What the key answers in the decision tree, by question and answer. */
+export const BY_KEY: Record<string, string> = {
+  "key-asset:true": "an asset, document or location (GDTI, GRAI, GIAI, GLN)",
+  "key-asset:false": "not an asset, document or location",
+  "key-gsrn:true": "a service relationship (GSRN)",
+  "key-gsrn:false": "not a service relationship (GSRN)",
+  "key-logistic:true": "a logistic unit",
+  "key-logistic:false": "not a logistic unit",
+  "retail:false": "not sold at a retail till",
+  "healthcare-retail:false": "not sold in a pharmacy",
+};

@@ -12,7 +12,7 @@ import {
 } from "@gs1-label-studio/core";
 import { ENVIRONMENT_NAMES, ERROR_NAMES, HRI_CHOICES, LINEAR_CHOICES, type HriChoice, type LinearChoice } from "./texts.ts";
 
-// Step 2 of the editor, as the resolver's label panel (ADR 0004): the preview beside its options, updated as the
+// Step 3 of the editor, as the resolver's label panel (ADR 0004): the preview beside its options, updated as the
 // fields change; the GS1 Digital Link URI coloured by part; the downloads.
 
 export interface LabelSettings {
@@ -27,8 +27,10 @@ export interface LabelSettings {
   hriAsText: boolean;
   dpi: number;
   stem: string;
-  /** For symbols without a layout yet (GS1-128, ITF-14). */
+  /** For symbols without a layout yet (GS1-128, ITF-14), chosen without step 2. */
   xMmManual: number;
+  /** The symbol chosen here rather than in step 2. */
+  expert: boolean;
 }
 
 export interface LabelView {
@@ -47,6 +49,11 @@ export interface LabelView {
   linearPossible: boolean;
   /** The PNG's resolution, at which it prints at the label's size. */
   pngDpi?: number;
+  /** The symbol chosen in step 2, and its table. */
+  guided?: { summary: string; table: number; application: string };
+  /** A symbol without the label layout yet, guided: sizes are percentages of this X-dimension (mm), bars this high. */
+  sizeBase?: number;
+  barHeightMm?: number;
 }
 
 export type FileKind = "svg" | "png" | "pdf" | "zip";
@@ -96,7 +103,7 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
   return (
     <section className="card label-card" aria-labelledby="label-title">
       <h2 id="label-title">
-        <span className="n">2</span> Label <span className="badge">updates as you type</span>
+        <span className="n">3</span> Label <span className="badge">updates as you type</span>
       </h2>
       <div className="panel">
         <div>
@@ -133,28 +140,41 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
 
         <div>
           <div className="grid">
-            <div>
-              <label htmlFor="opt-symbol">Symbol</label>
-              <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
-                {OFFERED.map((symbology) => (
-                  <option key={symbology.id} value={symbology.id}>
-                    {symbology.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {view.guided ? (
+              <div className="chosen">
+                <span>
+                  <b>{view.guided.summary}</b> · table {view.guided.table}, {view.guided.application.toLowerCase()}
+                </span>
+                <a className="link" href="#scan-title">
+                  Change in step 2
+                </a>
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="opt-symbol">Symbol</label>
+                <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
+                  {OFFERED.map((symbology) => (
+                    <option key={symbology.id} value={symbology.id}>
+                      {symbology.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {view.laidOut ? (
               <>
-                <div>
-                  <label htmlFor="opt-env">Scanning environment</label>
-                  <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
-                    {view.environments.map((name) => (
-                      <option key={name} value={name}>
-                        {ENVIRONMENT_NAMES[name] ?? name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {!view.guided && (
+                  <div>
+                    <label htmlFor="opt-env">Scanning environment</label>
+                    <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
+                      {view.environments.map((name) => (
+                        <option key={name} value={name}>
+                          {ENVIRONMENT_NAMES[name] ?? name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="opt-size">Size</label>
                   <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
@@ -207,18 +227,20 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
                     </div>
                   </>
                 )}
-                {view.linearPossible && (
+                {(view.linearPossible || (view.guided && view.twoD && s.linear !== "none")) && (
                   <>
-                    <div>
-                      <label htmlFor="opt-linear">Linear barcode beside it</label>
-                      <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
-                        {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
-                          <option key={value} value={value}>
-                            {text}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {view.linearPossible && (
+                      <div>
+                        <label htmlFor="opt-linear">Linear barcode beside it</label>
+                        <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
+                          {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
+                            <option key={value} value={value}>
+                              {text}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     {s.linear !== "none" && (
                       <div>
                         <label htmlFor="opt-linear-size">Size of the linear barcode</label>
@@ -250,6 +272,17 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
                   </select>
                 </div>
               </>
+            ) : view.sizeBase ? (
+              <div>
+                <label htmlFor="opt-size">Size</label>
+                <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
+                  {view.sizes.map((size) => (
+                    <option key={size} value={size}>
+                      {size} % (X {((view.sizeBase! * size) / 100).toFixed(3)} mm{size === 100 ? ", recommended" : ""})
+                    </option>
+                  ))}
+                </select>
+              </div>
             ) : (
               <div>
                 <label htmlFor="opt-x">X-dimension (mm)</label>
@@ -282,7 +315,14 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
             </div>
           </div>
-          {view.laidOut && (
+          {view.guided && (
+            <div className="hint">
+              Sizes within table {view.guided.table}'s ranges (GS1 General Specifications 5.12.3.{view.guided.table})
+              {view.barHeightMm ? `; bars ${view.barHeightMm.toFixed(2)} mm high, the table's minimum at this X-dimension` : ""}. At{" "}
+              {s.dpi} dpi a module prints as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}.
+            </div>
+          )}
+          {view.laidOut && !view.guided && (
             <div className="hint">
               Only the key's scanning environments and the sizes within their ranges are offered (GS1 General
               Specifications 5.12.3{target ? `; target X ${target.toFixed(3)} mm` : ""}). At {s.dpi} dpi a module prints

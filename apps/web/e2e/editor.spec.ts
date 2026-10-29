@@ -125,3 +125,61 @@ test("GS1 QR Code is not offered beside the QR code with a GS1 Digital Link URI"
   expect(symbols).toContain("QR code (GS1 Digital Link)");
   expect(symbols).not.toContain("GS1 QR Code");
 });
+
+// Step 2, where the code is scanned (backlog 1.2, mock-up B of 29 October 2026): the decision tree's questions, the
+// table they lead to, and the symbols it allows for the data, the recommended one drawn.
+const answer = (page: import("@playwright/test").Page, question: string, value: "Yes" | "No") =>
+  page.getByRole("group", { name: question }).getByRole("button", { name: value }).click();
+
+test("at a retail till, a batch and a date: the EAN-13 with a QR code beside it, from table 1", async ({ page }) => {
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  await expect(step).toContainText("The GTIN already answers 2 questions of the tree");
+  await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  await expect(step.locator(".table-box")).toContainText("Symbol specification table 1");
+  await expect(step.getByRole("radio", { checked: true })).toContainText("EAN-13, with a QR code (GS1 Digital Link) beside it");
+  await expect(page.locator(".chosen")).toContainText("EAN-13 with a QR code (GS1 Digital Link) beside it · table 1");
+  await expect(page.locator("#opt-symbol")).toHaveCount(0);
+  await expect(page.locator("#opt-env")).toHaveCount(0);
+  await expect(page.locator(".caption")).toContainText("label 71.8 × 32.7 mm");
+  await expect(step).toContainText("Not for this data: UPC-A (carries a GTIN-12)");
+
+  await step.getByRole("radio", { name: /^EAN-13 alone/ }).click();
+  await expect(page.locator(".caption")).toContainText("EAN-13");
+  await expect(page.locator(".caption")).not.toContainText("QR code");
+  await expect(step.getByRole("radio", { name: /GS1 DataBar Expanded\b/ }).first()).toBeDisabled();
+});
+
+test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async ({ page }) => {
+  await page.fill("#paste", "https://id.gs1.org/00/106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  await expect(step).toContainText("The SSCC already answers 4 questions");
+  await answer(page, "Is it scanned in general distribution?", "Yes");
+  await answer(page, "Is it a tobacco product under the EU traceability regulation?", "No");
+  await expect(step).toContainText("The SSCC already answers 5 questions of the tree: not an asset, document or location; " +
+    "not a service relationship (GSRN); not sold at a retail till; not sold in a pharmacy; a logistic unit.");
+  await expect(step.getByRole("radio", { checked: true })).toContainText("GS1-128");
+  await expect(page.locator(".caption")).toHaveText("GS1-128 · X 0.495 mm · bars 31.75 mm");
+  await expect(page.locator("#opt-size option")).toHaveText([
+    "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
+  ]);
+  await page.selectOption("#opt-size", "150");
+  await expect(page.locator(".caption")).toHaveText("GS1-128 · X 0.743 mm · bars 31.75 mm");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
+});
+
+test("choosing the symbol yourself starts from the guided choice and can go back", async ({ page }) => {
+  await answer(page, "Is it scanned at a general retail point of sale?", "No");
+  await answer(page, "Is it a regulated healthcare item sold in a retail pharmacy?", "No");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  await answer(page, "Is it a regulated healthcare item?", "Yes");
+  await answer(page, "Is the code marked directly on the item?", "No");
+  await expect(page.locator(".chosen")).toContainText("GS1 DataMatrix · table 6");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await expect(page.locator("#opt-symbol")).toHaveValue("gs1-datamatrix");
+  await expect(page.locator("#opt-env")).toHaveValue("healthcare");
+  await page.getByRole("button", { name: "Back to the guided choice" }).click();
+  await expect(page.locator(".chosen")).toContainText("GS1 DataMatrix · table 6");
+});

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AttributeError,
+  baseX,
   dataFor,
   encode,
   ENVIRONMENTS,
@@ -28,6 +29,12 @@ import {
   zplLabel,
   zplTemplate,
   GcpTable,
+  guidance,
+  minimumBarHeight,
+  SIZES,
+  specSizesFor,
+  walk,
+  type Answers,
   type Identification,
   type Identified,
   type LabelOptions,
@@ -41,9 +48,12 @@ import { EpcSection } from "./EpcSection.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
+import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
+import { GUIDE_TEXTS } from "./texts.ts";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
-// code identifies on the left, the label beside it on the right, redrawn as anything changes. Everything stays in the
+// code identifies and where it is scanned on the left (step 2, the guided choice: mock-up B of 29 October 2026), the
+// label beside them on the right, redrawn as anything changes. Everything stays in the
 // browser: the GS1 Barcode Syntax Engine and the encoder run here.
 
 const LAID_OUT: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix", "ean13", "upca", "upce", "ean8"];
@@ -67,8 +77,10 @@ export function App() {
   const [id, setId] = useState<Identification>(START);
   const [settings, setSettings] = useState<LabelSettings>({
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
-    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, xMmManual: 0.495,
+    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, xMmManual: 0.495, expert: false,
   });
+  const [answers, setAnswers] = useState<Answers>({});
+  const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [gcp, setGcp] = useState<GcpTable | null>(null);
 
@@ -91,21 +103,51 @@ export function App() {
     }
   }, [engine, id, settings.stem]);
 
-  // The key's scanning environments, its default first, and the sizes the environment allows.
+  // Step 2: the decision tree walked with the answers so far; at a leaf, the symbols its table allows for this data
+  // and the one chosen (the recommended one unless another was picked). Until then, or when the person chooses the
+  // symbol themselves, the label's own fields decide.
+  const walked = walk(id.key, answers);
+  const guide = walked.leaf && checked.identified ? guidance(walked.leaf, checked.identified) : null;
+  const guided = guide !== null && !settings.expert;
+  const choice = guided ? chosen(guide, picked) : null;
+  const symbology = choice ? (choice.with ?? choice.symbol) : settings.symbology;
+  const spec = guided ? guide.options.find((o) => o.symbol === symbology)?.specs[0] : undefined;
+  // A symbol chosen alone that carries the GTIN alone (an EAN-13 alone, with a batch typed): it draws the GTIN.
+  const gtinOnly = Boolean(choice && !choice.with && guide?.options.find((o) => o.symbol === choice.symbol)?.carries === "key");
+
+  // The key's scanning environments, its default first, and the sizes the environment allows. A table without one
+  // (12, 13) draws the symbol alone, at its row's sizes.
   const environments = environmentsFor(id.key);
-  const environment = environments.includes(settings.environment) ? settings.environment : environments[0]!;
-  const laidOut = LAID_OUT.includes(settings.symbology);
-  const twoD = TWO_D.includes(settings.symbology);
+  const environment: string | null = guided
+    ? guide.environment && environments.includes(guide.environment) ? guide.environment : null
+    : environments.includes(settings.environment) ? settings.environment : environments[0]!;
+  const laidOut = LAID_OUT.includes(symbology) && environment !== null;
+  const twoD = TWO_D.includes(symbology);
   // An EAN/UPC beside the 2D symbol only where it can be: a GTIN, in an environment with an EAN/UPC range. Otherwise
-  // the choice is kept for later but not applied (its field is not shown).
-  const linearPossible = twoD && id.key === "01" && Boolean(ENVIRONMENTS[environment]?.linear);
-  const linearChoice = linearPossible ? settings.linear : "none";
-  const effective: LabelSettings = { ...settings, environment, linear: linearChoice };
-  const sizes = twoD
-    ? sizesFor(environment, linearChoice !== "none" && settings.linearSize === null)
-    : linearSizesFor(environment);
+  // the choice is kept for later but not applied (its field is not shown). Guided, the choice of step 2 decides.
+  const linearPossible = !guided && twoD && id.key === "01" && Boolean(environment && ENVIRONMENTS[environment]?.linear);
+  const linearChoice = choice ? (choice.with ? (choice.symbol === "upce" ? "upce" : "auto") : "none") : linearPossible ? settings.linear : "none";
+  const effective: LabelSettings = { ...settings, symbology, environment: environment ?? "", linear: linearChoice };
+  const sizes = laidOut
+    ? twoD
+      ? sizesFor(environment!, linearChoice !== "none" && settings.linearSize === null)
+      : linearSizesFor(environment!)
+    : spec ? specSizesFor(spec, SIZES) : [];
   const size = sizes.includes(settings.size) ? settings.size : sizes.includes(100) ? 100 : (sizes[0] ?? 100);
   effective.size = size;
+  // A symbol without the label layout yet: at the table's sizes and bar height when guided, else as typed.
+  const linearKind = SYMBOLOGIES[symbology].kind === "linear";
+  const manual = spec
+    ? {
+        xMm: (baseX(spec) * size) / 100,
+        quietZone: typeof spec.quietZone === "number" ? spec.quietZone : Math.max(...spec.quietZone),
+        barHeightMm: minimumBarHeight(spec, (baseX(spec) * size) / 100),
+      }
+    : { xMm: settings.xMmManual, quietZone: linearKind ? 10 : 2, barHeightMm: null };
+  const barModules = manual.barHeightMm ? manual.barHeightMm / manual.xMm : 50;
+  const blocked = guided && !choice
+    ? guide.waiting ? `${GUIDE_TEXTS.waiting} ${guide.options.find((o) => o.symbol === guide.waiting)?.name}.` : GUIDE_TEXTS.nothing
+    : null;
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -115,20 +157,24 @@ export function App() {
     options?: LabelOptions;
     layout?: Layout;
   } => {
-    const identified = checked.identified;
-    const base = { xMm: effective.xMmManual, uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "" };
+    const identified = checked.identified && gtinOnly
+      ? { ...checked.identified, elements: checked.identified.elements.filter((e) => e.ai === "01") }
+      : checked.identified;
+    const base = { xMm: manual.xMm, uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "" };
     if (!identified || !font) return { view: { ...base, error: checked.error ?? (engine && font ? undefined : "Loading…") } };
+    if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
       const data = dataFor(symbology, identified);
       if (!laidOut) {
         const geometry = encode(symbology, data);
-        const quietZone = SYMBOLOGIES[symbology].kind === "linear" ? 10 : 2;
-        const layout = symbolLayout(geometry, effective.xMmManual, quietZone);
+        const { xMm, quietZone } = manual;
+        const layout = symbolLayout(geometry, xMm, quietZone, barModules);
+        const bars = geometry.kind === "linear" ? ` · bars ${(barModules * xMm).toFixed(2)} mm` : "";
         return {
           view: {
-            ...base, svg: toSvg(geometry, { xMm: effective.xMmManual, quietZone }), pngDpi: pngDpi(layout),
-            caption: `${SYMBOLOGIES[symbology].name} · X ${effective.xMmManual.toFixed(3)} mm`,
+            ...base, svg: toSvg(geometry, { xMm, quietZone, barHeightMm: barModules * xMm }), pngDpi: pngDpi(layout),
+            caption: `${SYMBOLOGIES[symbology].name} · X ${xMm.toFixed(3)} mm${bars}`,
           },
           data, geometry, layout, options: { symbology, data, hriLines: [], showHri: false },
         };
@@ -172,10 +218,24 @@ export function App() {
     } catch (error) {
       return { view: { ...base, error: errorText(error) } };
     }
-  }, [checked, font, engine, effective.symbology, effective.xMmManual, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, environment, size, laidOut, twoD]);
+  }, [checked, gtinOnly, font, engine, blocked, manual.xMm, manual.quietZone, barModules, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, environment, size, laidOut, twoD]);
 
   const view: LabelView = {
-    ...label.view, environments, sizes, laidOut, twoD, isQr: settings.symbology.endsWith("qrcode"), linearPossible,
+    ...label.view, environments, sizes, laidOut, twoD, isQr: symbology.endsWith("qrcode"), linearPossible,
+    ...(guided && walked.leaf
+      ? {
+          guided: {
+            summary: choice
+              ? choice.with
+                ? `${SYMBOLOGIES[choice.symbol].name} with a ${SYMBOLOGIES[choice.with].name} beside it`
+                : SYMBOLOGIES[choice.symbol].name
+              : "No symbol yet",
+            table: walked.leaf.table,
+            application: walked.leaf.application,
+          },
+        }
+      : {}),
+    ...(spec && !laidOut ? { sizeBase: baseX(spec), barHeightMm: manual.barHeightMm ?? undefined } : {}),
   };
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
@@ -183,8 +243,8 @@ export function App() {
     const { geometry, data } = label;
     if (!geometry || !data) return;
     const d = snapToDots(view.xMm, settings.dpi).dots;
-    const quietZone = SYMBOLOGIES[settings.symbology].kind === "linear" ? 10 : 2;
-    const barHeightDots = 50 * d;
+    const quietZone = laidOut ? (linearKind ? 10 : 2) : manual.quietZone;
+    const barHeightDots = Math.round((laidOut ? 50 : barModules) * d);
     const textDots = Math.round((2.2 / 25.4) * settings.dpi);
     const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
     const options = {
@@ -193,7 +253,7 @@ export function App() {
       heightDots: symbolHeight + 2 * quietZone * d + 6 * textDots,
     };
     try {
-      const zpl = template ? zplTemplate(settings.symbology, data, options).zpl : zplLabel(settings.symbology, data, options);
+      const zpl = template ? zplTemplate(symbology, data, options).zpl : zplLabel(symbology, data, options);
       download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
       setFileError(null);
     } catch (error) {
@@ -203,7 +263,7 @@ export function App() {
 
   // The files' name, as the resolver named them: the symbol, the key and its qualifiers.
   const qualifiers = Object.entries(id.qualifiers).filter(([, v]) => v.trim()).map(([q, v]) => `_${q}_${v.trim()}`);
-  const name = fileName(`${settings.symbology}_${id.key}_${id.value.trim()}${qualifiers.join("")}`);
+  const name = fileName(`${symbology}_${id.key}_${id.value.trim()}${qualifiers.join("")}`);
 
   async function downloadFile(kind: FileKind) {
     const { options, layout } = label;
@@ -232,20 +292,40 @@ export function App() {
         </a>
       )}
       <main className="editor">
-        <IdentifyCard
-          id={id}
-          onChange={(next) => {
-            setId(next);
-            setFileError(null);
-          }}
-          onPaste={(text) => {
-            if (!engine) throw new Error("The GS1 Barcode Syntax Engine is still loading.");
-            const fields = fieldsOf(engine.parse(text));
-            setId(fields);
-            return fields;
-          }}
-          status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
-        />
+        <div className="steps">
+          <IdentifyCard
+            id={id}
+            onChange={(next) => {
+              setId(next);
+              setFileError(null);
+            }}
+            onPaste={(text) => {
+              if (!engine) throw new Error("The GS1 Barcode Syntax Engine is still loading.");
+              const fields = fieldsOf(engine.parse(text));
+              setId(fields);
+              return fields;
+            }}
+            status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
+          />
+          <ScanCard
+            identifierKey={id.key}
+            walked={walked}
+            guide={guide}
+            dataError={checked.error}
+            answers={answers}
+            onAnswer={(question, answer) => {
+              setAnswers({ ...answers, [question]: answer });
+              setPicked(null);
+            }}
+            choice={choice}
+            onPick={setPicked}
+            expert={settings.expert}
+            onExpert={(expert) =>
+              // Choosing it yourself starts from the guided choice.
+              setSettings(expert ? { ...settings, expert, symbology, linear: linearChoice, environment: environment ?? settings.environment } : { ...settings, expert })
+            }
+          />
+        </div>
         <LabelCard
           settings={effective}
           onChange={(next) => {
