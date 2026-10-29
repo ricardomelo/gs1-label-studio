@@ -1,5 +1,6 @@
+import { AttributeError } from "./attributes.ts";
 import { aiEntry, primaryKeys, qualifiersOf } from "./dictionary.ts";
-import { identify, type Identification, type Identified } from "./identify.ts";
+import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
 
@@ -141,11 +142,19 @@ export interface CheckedRow {
   id?: Identification;
   identified?: Identified;
   error?: string;
+  /** The columns the error is about (backlog 2.2), when it names an AI a column holds or concerns the key. */
+  columns?: number[];
+  /** The values for every row the error is about, by their index among the fixed values. */
+  fixedAt?: number[];
+  /** What may have spoilt the value at fault before it reached the studio (Excel's 15 digits, scientific notation). */
+  hint?: string;
 }
 
-/** Every row identified and checked by the Syntax Engine, or the reason it cannot be. */
+/** Every row identified and checked by the Syntax Engine, or the reason it cannot be, with the columns at fault. */
 export function checkRows(engine: SyntaxEngine, table: Table, mapping: ColumnMapping, fixed: FixedValue[] = [],
   stem: string | null = null): CheckedRow[] {
+  const keys = new Set(primaryKeys());
+  const keyColumns = mapping.flatMap((ai, column) => (ai && keys.has(ai) ? [column] : []));
   return table.rows.map((cells, index) => {
     const row = index + 2;
     let id: Identification | undefined;
@@ -153,7 +162,60 @@ export function checkRows(engine: SyntaxEngine, table: Table, mapping: ColumnMap
       id = rowIdentification(cells, mapping, fixed);
       return { row, id, identified: identify(engine, id, stem) };
     } catch (error) {
-      return { row, ...(id ? { id } : {}), error: error instanceof Error ? error.message : String(error) };
+      const message = error instanceof Error ? error.message : String(error);
+      const keyProblem = !id || checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) !== null;
+      const ais = keyProblem ? [id?.key ?? ""] : faultyAis(error);
+      const columns = keyProblem && !id ? keyColumns : columnsOf(ais, mapping, cells);
+      const fixedAt = fixed.flatMap(([ai], at) => (ai && ais.some((a) => sameAi(a, ai)) ? [at] : []));
+      const hint = columns.map((column) => cellHint(cells[column] ?? "", Boolean(table.sheet))).find((h) => h);
+      return {
+        row, ...(id ? { id } : {}), error: message, columns,
+        ...(fixedAt.length && !columns.length ? { fixedAt } : {}), ...(hint ? { hint } : {}),
+      };
     }
   });
+}
+
+/** The AIs an error is about: "AI (17): …", "(310n): at most 5 decimal places", or the AI before the engine's mark. */
+function faultyAis(error: unknown): string[] {
+  if (error instanceof AttributeError && typeof error.params.ai === "string") return [error.params.ai];
+  const message = error instanceof Error ? error.message : String(error);
+  // The AIs before the first colon are the subject ("Qualifiers (22) and (235) cannot be used together: (01) takes…").
+  const named = (text: string) => [...text.matchAll(/\((\d{2,4}n?)\)/g)].map((m) => m[1]!);
+  const subject = named(message.split(": ")[0]!);
+  if (subject.length) return subject;
+  if (named(message).length) return named(message);
+  const markup = error instanceof InputError ? error.markup : "";
+  const before = markup.slice(0, Math.max(0, markup.indexOf("|")));
+  const last = [...before.matchAll(/\((\d{2,4})\)/g)].at(-1);
+  return last ? [last[1]!] : [];
+}
+
+/** "3103" is in the column of its decimal family "310n"; a family is in a column of one of its members. */
+function sameAi(a: string, b: string): boolean {
+  const family = (ai: string) => (/^3[1-69]\d[\dn]$/.test(ai) ? ai.slice(0, 3) : ai);
+  return a === b || (a.length === 4 && b.length === 4 && family(a) === family(b) && (a.endsWith("n") || b.endsWith("n")));
+}
+
+/** The columns holding these AIs on this row (a column left empty on the row does not count). */
+function columnsOf(ais: string[], mapping: ColumnMapping, cells: string[]): number[] {
+  return mapping.flatMap((ai, column) => (ai && cells[column]?.trim() && ais.some((a) => sameAi(a, ai)) ? [column] : []));
+}
+
+/**
+ * Why a cell's value may not be what was typed: Excel keeps 15 significant digits of a number, so an SSCC typed as a
+ * number loses its last digits (they come back as zeros); and a CSV saved by Excel may write a long number in
+ * scientific notation.
+ */
+export function cellHint(value: string, fromWorkbook: boolean): string | undefined {
+  const text = value.trim();
+  if (/^\d+(?:[.,]\d+)?E\+?\d+$/i.test(text)) {
+    return "This value is in scientific notation, as a spreadsheet writes a long number: format the column as text, " +
+      "type the codes again and save the file again.";
+  }
+  if (fromWorkbook && /^\d{15}0+$/.test(text) && text.length > 15) {
+    return "Excel keeps 15 digits of a number, so the last digits of this code became zeros: format the column as " +
+      "text in Excel and type the codes again.";
+  }
+  return undefined;
 }

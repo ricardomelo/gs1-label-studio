@@ -174,6 +174,7 @@ export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
 export { expectedReads } from "./scan.ts";
 export { excelDate, excelNumber, parseDelimited, parseTableFile, parseXlsx, TableError, unzip, type Table } from "./table.ts";
 export {
+  cellHint,
   checkRows,
   guessColumn,
   guessMapping,
@@ -183,3 +184,15 @@ export {
   type ColumnMapping,
   type FixedValue,
 } from "./bulk.ts";
+export {
+  applyEdits,
+  correctedCsv,
+  editCell,
+  reportCounts,
+  reportCsv,
+  rowStatus,
+  toDelimited,
+  type CellEdits,
+  type ReportCounts,
+  type RowStatus,
+} from "./report.ts";
