@@ -22,7 +22,13 @@
    give the order; the recommendation is the first carrier the studio draws that carries all the data, or — where only
    the GTIN fits, as EAN/UPC at a till — that carrier with the first symbol allowed in addition that carries the rest
    (a QR code with a GS1 Digital Link URI at retail). A symbol in addition is never recommended alone. On the page since
-   29 October 2026: the editor's step 2 (mock-up B, the owner's choice among three).*
+   29 October 2026: the editor's step 2 (mock-up B, the owner's choice among three). With GS1 DataBar drawn (item 1.3,
+   29 October 2026), two refinements: at a retail point of sale (tables 1 and 3) GS1 DataBar Expanded carries all the
+   data only for a variable measure item — a variable count or trade measure, AIs (30), (31nn), (32nn), (35nn), (36nn),
+   section 2.1.12.1 —, since a fixed measure item's carriers carry its GTIN and its attributes go in a 2D symbol in
+   addition (section 2.1.3); and a pair whose GTIN carrier is not an EAN/UPC (ITF-14 or GS1 DataBar with a 2D symbol)
+   is named but not recommended, because the label lays a symbol in addition out beside an EAN/UPC only until labels of
+   several symbols (phase 4): either symbol can be chosen alone.*
 2. **Paste anything.** A GTIN, an element string with or without brackets, a GS1 Digital Link URI, or what a scanner
    types (with GS separators): the studio recognises it, shows each AI with its name and checks it, and explains an
    error in plain words (the GS1 Syntax Engine's messages, translated).

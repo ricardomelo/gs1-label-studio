@@ -172,6 +172,15 @@ export function dataFor(symbology: SymbologyId, input: ParsedInput): string {
     }
     case "itf14":
       return gtin;
+    case "databar-limited":
+      // Section 5.5.1.1: GS1 DataBar Limited carries 0 or 1 in the first digit only.
+      if (!/^[01]/.test(gtin)) throw new InputError("GS1 DataBar Limited carries a GTIN starting with 0 or 1.");
+      return `(01)${gtin}`;
+    case "databar-omni":
+    case "databar-truncated":
+    case "databar-stacked":
+    case "databar-stacked-omni":
+      return `(01)${gtin}`;
     default:
       throw new InputError(`${name} does not carry a GTIN alone.`);
   }

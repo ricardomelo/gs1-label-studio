@@ -42,6 +42,14 @@ describe("encode, rasterise and read back", () => {
       "https://id.gs1.org/01/09506000134352/10/ABC123",
     ],
     ["dl-datamatrix", "https://id.gs1.org/01/09506000134352", "]d1", "https://id.gs1.org/01/09506000134352"],
+    ["databar-omni", "(01)09506000134352", "]e0", "(01)09506000134352"],
+    ["databar-truncated", "(01)09506000134352", "]e0", "(01)09506000134352"],
+    ["databar-stacked", "(01)09506000134352", "]e0", "(01)09506000134352"],
+    ["databar-stacked-omni", "(01)09506000134352", "]e0", "(01)09506000134352"],
+    ["databar-limited", "(01)15012345678907", "]e0", "(01)15012345678907"],
+    ["databar-expanded", "(01)09506000134352(10)ABC123", "]e0", "(01)09506000134352(10)ABC123"],
+    ["databar-expanded-stacked", "(01)09506000134352(3103)001250(10)ABC123(21)12345", "]e0",
+      "(01)09506000134352(3103)001250(10)ABC123(21)12345"],
   ])("%s %s", async (symbology, data, identifier, text) => {
     const result = await decode(symbology, data);
     expect(result?.symbologyIdentifier).toBe(identifier);
@@ -52,6 +60,26 @@ describe("encode, rasterise and read back", () => {
     expect(() => encode("ean13", "9506000134353")).toThrow(EncodeError);
     expect(() => encode("gs1-datamatrix", "(01)09506000134353")).toThrow(EncodeError);
     expect(() => encode("gs1-128", "(17)271331")).toThrow(EncodeError);
+    expect(() => encode("databar-limited", "(01)25012345678901")).toThrow(EncodeError);
+  });
+
+  it("gives a stacked GS1 DataBar its rows at their least heights (ISO/IEC 24724)", () => {
+    const rows = (symbology: SymbologyId, data: string) => {
+      const geometry = encode(symbology, data);
+      if (geometry.kind !== "matrix") throw new Error("not rows");
+      const heights: number[] = [];
+      for (let r = 0; r < geometry.rows; r++) {
+        const same = r > 0 && geometry.dark.slice(r * geometry.cols, (r + 1) * geometry.cols)
+          .every((d, c) => d === geometry.dark[(r - 1) * geometry.cols + c]);
+        if (same) heights[heights.length - 1]!++;
+        else heights.push(1);
+      }
+      return heights;
+    };
+    expect(rows("databar-stacked", "(01)09506000134352")).toEqual([5, 1, 7]);
+    expect(rows("databar-stacked-omni", "(01)09506000134352")).toEqual([33, 1, 1, 1, 33]);
+    expect(rows("databar-expanded-stacked", "(01)09506000134352(3103)001250(10)ABC123(21)12345")).toEqual(
+      [34, 1, 1, 1, 34, 1, 1, 1, 34, 1, 1, 1, 34]);
   });
 });
 

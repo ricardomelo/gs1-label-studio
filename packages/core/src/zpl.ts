@@ -213,6 +213,17 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
         "ZPL's QR code command (^BQ) has no FNC1, so it cannot print a GS1 QR Code. Use a GS1 DataMatrix, or a QR code " +
           "with a GS1 Digital Link URI.",
       );
+    case "databar-omni":
+    case "databar-truncated":
+    case "databar-stacked":
+    case "databar-stacked-omni":
+    case "databar-limited":
+    case "databar-expanded":
+    case "databar-expanded-stacked":
+      throw new ZplUnsupportedError(
+        "GS1 DataBar is not offered in ZPL yet: its command (^BR) is offered once a test shows it prints the same " +
+          "symbol (ADR 0002). Use the PDF, or GS1-128.",
+      );
     default:
       throw new ZplUnsupportedError(`no ZPL command for ${symbology}`);
   }

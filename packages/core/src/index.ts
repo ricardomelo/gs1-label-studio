@@ -1,6 +1,6 @@
 export { checkDigit, hasValidCheckDigit } from "./checkDigit.ts";
-export { SYMBOLOGIES, type Symbology, type SymbologyId } from "./symbologies.ts";
-export { encode, EncodeError, widthInModules, type EncodeOptions, type SymbolGeometry } from "./encode.ts";
+export { DATABAR, SYMBOLOGIES, type Symbology, type SymbologyId } from "./symbologies.ts";
+export { encode, EncodeError, stackedRows, widthInModules, type EncodeOptions, type SymbolGeometry } from "./encode.ts";
 export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
@@ -93,14 +93,19 @@ export {
   type LinearKind,
 } from "./linear.ts";
 export {
+  BARS,
+  BEARER_BARS,
+  BEARER_FRAME_MM,
   DoesNotFit,
   ERROR_LEVELS,
-  hasLayout,
+  HRI_GAP_MM,
+  ITF14_RATIO,
   labelSvg,
   layoutLabel,
   QUIET_ZONE,
-  symbolLayout,
+  specDescription,
   symbolMatrix,
+  type Bearer,
   type ErrorLevel,
   type LabelOptions,
   type LabelText,

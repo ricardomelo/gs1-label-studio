@@ -7,9 +7,7 @@ import { inflateRawSync, inflateSync } from "node:zlib";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
-  baseX,
   crc32,
-  encode,
   fileName,
   labelPdf,
   labelPixels,
@@ -18,14 +16,10 @@ import {
   labelSvg,
   labelZip,
   layoutLabel,
-  minimumBarHeight,
   pdfContent,
   PNG_PIXELS_PER_MODULE,
   pngDpi,
-  specificationFor,
-  symbolLayout,
   type LabelOptions,
-  type Layout,
 } from "../src/index.ts";
 import { hriFont } from "./font.ts";
 import { decodePng } from "./png.ts";
@@ -212,42 +206,11 @@ function unzip(zip: Uint8Array): Map<string, Uint8Array> {
   return files;
 }
 
-describe("the files of symbols without the label layout yet (item 1.3)", () => {
-  const cases: [string, LabelOptions, string][] = [
-    ["ITF-14", { symbology: "itf14", data: "15012345678907", hriLines: [], showHri: false }, "]I1 15012345678907"],
-    ["GS1-128", { symbology: "gs1-128", data: "(00)106141411234567897", hriLines: [], showHri: false },
-      "]C1 (00)106141411234567897"],
-    ["GS1 DataMatrix", { symbology: "gs1-datamatrix", data: "(01)09506000134352(10)A1", hriLines: [], showHri: false },
-      "]d2 (01)09506000134352(10)A1"],
-  ];
-  it.each(cases)("%s: PNG and PDF read back", async (_name, options, reads) => {
-    const geometry = encode(options.symbology, options.data);
-    const layout: Layout = symbolLayout(geometry, 0.5, geometry.kind === "linear" ? 10 : 2);
-    expect(pngDpi(layout)).toBeCloseTo(609.6, 6);
-    expect(await read(await labelPng(layout, font))).toEqual([reads]);
-    expect(await read(drawPdf(await labelPdf(options, layout, font), 400))).toEqual([reads]);
-  }, SLOW);
-
-  // As step 2 of the editor draws them (item 1.2): at the table's target X-dimension and its minimum bar height.
-  const atTable: [string, LabelOptions, number, string][] = [
-    ["ITF-14, table 2", { symbology: "itf14", data: "15012345678907", hriLines: [], showHri: false }, 2, "]I1 15012345678907"],
-    ["GS1-128, table 5", { symbology: "gs1-128", data: "(00)106141411234567897", hriLines: [], showHri: false }, 5,
-      "]C1 (00)106141411234567897"],
-  ];
-  it.each(atTable)("%s: at the table's size and bar height, PNG and PDF read back", async (_name, options, table, reads) => {
-    const spec = specificationFor(table, options.symbology)!;
-    const xMm = baseX(spec);
-    const bars = minimumBarHeight(spec, xMm)!;
-    expect(bars).toBe(31.75);
-    const layout = symbolLayout(encode(options.symbology, options.data), xMm, 10, bars / xMm);
-    expect(layout.height * layout.xMm).toBeCloseTo(31.75, 9);
-    expect(await read(await labelPng(layout, font))).toEqual([reads]);
-    expect(await read(drawPdf(await labelPdf(options, layout, font), 300))).toEqual([reads]);
-  }, SLOW);
-
+describe("files", () => {
   it("records the DPI as Pillow did: pixels per metre, rounded", async () => {
-    const layout = symbolLayout(encode("itf14", "15012345678907"), 0.7, 10);
-    expect(decodePng(await labelPng(layout, font)).perMetre).toBe(17143); // 435.43 dpi: 17142.857 per metre
+    const layout = layoutLabel({ symbology: "ean13", data: "9506000134352", hriLines: [], showHri: false, size: 90 }, font);
+    expect(layout.xMm).toBeCloseTo(0.297, 12);
+    expect(decodePng(await labelPng(layout, font)).perMetre).toBe(40404); // 1026.26 dpi: 40404.04 per metre
   });
 
   it("names files as the resolver did", () => {

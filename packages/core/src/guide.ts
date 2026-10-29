@@ -288,16 +288,7 @@ export function walk(key: string, answers: Answers): Walk {
 
 export type Carries = "all" | "key" | "no";
 
-const BCID: Partial<Record<SpecSymbol, string>> = {
-  "databar-omni": "databaromni",
-  "databar-stacked-omni": "databarstackedomni",
-  "databar-expanded": "databarexpanded",
-  "databar-expanded-stacked": "databarexpandedstacked",
-  "databar-stacked": "databarstacked",
-  "databar-limited": "databarlimited",
-  "databar-truncated": "databartruncated",
-  "gs1-dotcode": "gs1dotcode",
-};
+const bcidOf = (symbol: SpecSymbol) => (symbol === "gs1-dotcode" ? "gs1dotcode" : SYMBOLOGIES[symbol].bcid);
 
 function encodes(bcid: string, text: string): string | null {
   try {
@@ -319,8 +310,16 @@ export function gs1128DataCharacters(input: ParsedInput): number {
   );
 }
 
-/** Whether a symbol carries all that is identified, the GTIN alone, or nothing of it; and why not, when not. */
-export function carries(symbol: SpecSymbol, input: ParsedInput): { carries: Carries; reason?: string } {
+/** A variable count or trade measure (section 3.6.1, 3.6.2): what makes a trade item variable measure at retail. */
+const VARIABLE_MEASURE = /^(30|3[1256]\d\d)$/;
+
+/**
+ * Whether a symbol carries all that is identified, the GTIN alone, or nothing of it; and why not, when not. Given the
+ * leaf, at a retail point of sale (tables 1 and 3) GS1 DataBar Expanded carries all only for a variable measure trade
+ * item (section 2.1.12.1: a variable count or trade measure among the data): a fixed measure one's carriers carry its
+ * GTIN, and its attributes go in a 2D symbol in addition (section 2.1.3).
+ */
+export function carries(symbol: SpecSymbol, input: ParsedInput, leaf?: Leaf): { carries: Carries; reason?: string } {
   const gtin = input.elements.find((e) => e.ai === "01")?.value;
   const alone = input.elements.length === 1;
   const gtinOnly = (): { carries: Carries; reason?: string } =>
@@ -362,8 +361,13 @@ export function carries(symbol: SpecSymbol, input: ParsedInput): { carries: Carr
     case "databar-expanded":
     case "databar-expanded-stacked":
     case "gs1-dotcode": {
-      const error = encodes(BCID[symbol]!, input.elementString);
-      return error ? { carries: "no", reason: error } : { carries: "all" };
+      const error = encodes(bcidOf(symbol), input.elementString);
+      if (error) return { carries: "no", reason: error };
+      const retail = leaf && (leaf.table === 1 || leaf.table === 3) && symbol !== "gs1-dotcode";
+      if (retail && gtin && !alone && !input.elements.some((e) => VARIABLE_MEASURE.test(e.ai))) {
+        return { carries: "key", reason: "carries the GTIN alone at a till, unless a count or measure varies" };
+      }
+      return { carries: "all" };
     }
     case "gs1-datamatrix":
     case "gs1-qrcode":
@@ -387,7 +391,7 @@ export interface SymbolOption {
   specs: SymbolSpecification[];
   carries: Carries;
   reason?: string;
-  /** The studio draws it (GS1 DataBar and GS1 DotCode come with backlog 1.3). */
+  /** The studio draws it (GS1 DotCode comes with backlog 1.3). */
   drawn: boolean;
 }
 
@@ -401,7 +405,15 @@ export interface Guidance {
   recommended: { symbol: SymbologyId; with?: SymbologyId } | null;
   /** Without a recommendation: the first carrier that would carry it all, which the studio does not draw yet. */
   waiting?: SpecSymbol;
+  /**
+   * Without a recommendation: the GTIN's carrier and the symbol in addition that carries the rest, where the carrier is
+   * not an EAN/UPC (ITF-14, GS1 DataBar). The label lays a symbol in addition out beside an EAN/UPC only, so this pair
+   * waits for labels of several symbols (phase 4); either can be drawn alone.
+   */
+  together?: { symbol: SymbologyId; with: SymbologyId };
 }
+
+const EAN_UPC_IDS: readonly SpecSymbol[] = EAN_UPC;
 
 const GS1_EQUIVALENT: Partial<Record<SpecSymbol, SpecSymbol>> = {
   "dl-datamatrix": "gs1-datamatrix",
@@ -425,7 +437,7 @@ export function guidance(leaf: Leaf, input: ParsedInput): Guidance {
   const option = (symbol: SpecSymbol, role: SymbolOption["role"]): SymbolOption | null => {
     const specs = rowsFor(leaf, symbol);
     if (!specs.length) return null;
-    return { symbol, name: SPEC_SYMBOL_NAMES[symbol], role, specs, ...carries(symbol, input), drawn: isDrawn(symbol) };
+    return { symbol, name: SPEC_SYMBOL_NAMES[symbol], role, specs, ...carries(symbol, input, leaf), drawn: isDrawn(symbol) };
   };
   const listed = new Set<SpecSymbol>([...leaf.carriers, ...leaf.inAddition]);
   const others = [...new Set(table.rows.map((row) => row.symbol))].filter((s) => !listed.has(s));
@@ -439,14 +451,21 @@ export function guidance(leaf: Leaf, input: ParsedInput): Guidance {
   const carriers = options.filter((o) => o.role === "carrier" && usable(o));
   const full = carriers.find((o) => o.carries === "all");
   let recommended: Guidance["recommended"] = null;
+  let together: Guidance["together"];
   if (full) recommended = { symbol: full.symbol as SymbologyId };
   else {
     // A symbol in addition never stands alone (e.g. section 2.1.13.1): only beside a carrier of the GTIN.
     const key = carriers.find((o) => o.carries === "key");
     const extra = options.find((o) => o.role === "in-addition" && usable(o) && o.carries === "all");
-    if (key && extra) recommended = { symbol: key.symbol as SymbologyId, with: extra.symbol as SymbologyId };
+    if (key && extra) {
+      const pair = { symbol: key.symbol as SymbologyId, with: extra.symbol as SymbologyId };
+      if (EAN_UPC_IDS.includes(key.symbol)) recommended = pair;
+      else together = pair;
+    }
   }
   const waiting = recommended ? undefined : options.find((o) => o.role === "carrier" && !o.drawn && o.carries === "all")?.symbol;
   const environment = Object.entries(ENVIRONMENTS).find(([, env]) => env.table === leaf.table)?.[0] ?? null;
-  return { leaf, title: table.title, environment, options, recommended, ...(waiting ? { waiting } : {}) };
+  return {
+    leaf, title: table.title, environment, options, recommended, ...(waiting ? { waiting } : {}), ...(together ? { together } : {}),
+  };
 }

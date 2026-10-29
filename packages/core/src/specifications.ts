@@ -12,17 +12,8 @@ import type { SymbologyId } from "./symbologies.ts";
  * ranges too. The tests check every row against the text of the General Specifications.
  */
 
-/** The symbols the tables name: this project's symbologies and those it does not draw yet (backlog 1.3). */
-export type SpecSymbol =
-  | SymbologyId
-  | "databar-omni"
-  | "databar-stacked-omni"
-  | "databar-expanded"
-  | "databar-expanded-stacked"
-  | "databar-stacked"
-  | "databar-limited"
-  | "databar-truncated"
-  | "gs1-dotcode";
+/** The symbols the tables name: this project's symbologies and GS1 DotCode, which it does not draw yet (backlog 1.3). */
+export type SpecSymbol = SymbologyId | "gs1-dotcode";
 
 export const SPEC_SYMBOL_NAMES: Record<SpecSymbol, string> = {
   ean13: "EAN-13",

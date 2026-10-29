@@ -1,8 +1,9 @@
-import { encode, EncodeError, type SymbolGeometry } from "./encode.ts";
+import { encode, EncodeError } from "./encode.ts";
 import {
   checkEnvironment,
   ENVIRONMENTS,
   linearXDimension,
+  OutOfRange,
   RESOLVER_SYMBOL_OF,
   SIZES,
   xDimension,
@@ -10,7 +11,8 @@ import {
 import type { HriFont } from "./hri.ts";
 import { DIGIT_HEIGHT, encodeLinear, GUARD_EXTENSION, LINEAR_NAMES, type LinearKind } from "./linear.ts";
 import { pyFixed } from "./pyformat.ts";
-import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
+import { baseX, minimumBarHeight, specSizesFor, type SymbolSpecification } from "./specifications.ts";
+import { DATABAR, SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 
 /**
  * The label: a 2D symbol with its quiet zone and its human readable text below, and an EAN/UPC beside it if asked —
@@ -18,7 +20,8 @@ import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
  * against it. Everything is placed in units of the 2D symbol's module; the label is that unit times `xMm` millimetres.
  *
  * An EAN/UPC alone (no 2D symbol) is laid out the same way, in units of its own module — something the resolver, which
- * always drew a QR code or a Data Matrix, did not do.
+ * always drew a QR code or a Data Matrix, did not do. So are ITF-14, GS1-128 and the GS1 DataBar family (backlog 1.3),
+ * sized by their row of a symbol specification table rather than by a scanning environment: `layoutBars()`.
  */
 export const QUIET_ZONE = 4; // in X
 export const MARGIN = 2.0; // white border around the whole label, in X
@@ -31,6 +34,16 @@ export type ErrorLevel = (typeof ERROR_LEVELS)[number];
 
 const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
 const LINEAR_ALONE: SymbologyId[] = ["ean13", "upca", "upce", "ean8"];
+/** The symbols sized by their table's row alone: X-dimension, bar height and quiet zones. */
+export const BARS: readonly SymbologyId[] = ["itf14", "gs1-128", ...DATABAR];
+
+// ITF-14 (General Specifications, section 5.3) and the text under bars.
+export const ITF14_RATIO = 2.5; // wide-to-narrow: the target (section 5.12.3, tables' notes; range 2.25 to 3)
+export const BEARER_FRAME_MM = 4.83; // section 5.3.2.4: a frame around the symbol and its quiet zones (printing plates)
+export const BEARER_BARS = 2; // in X: at least twice a narrow bar, top and bottom only (printing without plates)
+export const HRI_GAP_MM = 1.02; // section 5.3.2.2: from the bearer bar to the text; the same under the other bars
+/** ITF-14's bearer bars: the frame, which suits every printing method, or bars at the top and bottom. */
+export type Bearer = "frame" | "bars";
 
 export interface LabelOptions {
   /** A 2D symbol, or an EAN/UPC alone. */
@@ -50,6 +63,16 @@ export interface LabelOptions {
   environment?: string;
   /** The EAN/UPC's percentage of its own target; null: the 2D symbol's size. */
   linearSize?: number | null;
+  /**
+   * The symbol's row of a symbol specification table, for a symbol sized by it rather than by `environment`: ITF-14,
+   * GS1-128 and GS1 DataBar always, a 2D symbol where the table has no scanning environment (tables 12 and 13). `size`
+   * is then a percentage of the row's `baseX()`.
+   */
+  spec?: SymbolSpecification;
+  /** The table of `spec`, for the files' descriptions. */
+  table?: number;
+  /** ITF-14's bearer bars; the frame when not given. */
+  bearer?: Bearer;
 }
 
 export interface LabelText {
@@ -75,6 +98,8 @@ export interface Layout {
   /** The 2D symbol: modules a side, and its QR version (null for a Data Matrix or a linear symbol alone). */
   modules: number;
   version: number | null;
+  /** ITF-14, GS1-128, GS1 DataBar: the bars' height (a stacked symbol's, all rows), in the label's units. */
+  barHeight?: number;
 }
 
 /** The data does not fit the QR version chosen at the level chosen. */
@@ -155,15 +180,22 @@ export function layoutLabel(options: LabelOptions, font: HriFont): Layout {
   if (options.linearSize != null && !(SIZES as readonly number[]).includes(options.linearSize)) {
     throw new Error(`linear size ${options.linearSize} is not one of ${SIZES.join(", ")}`);
   }
+  if (BARS.includes(options.symbology)) return layoutBars(options, font, size);
   if (LINEAR_ALONE.includes(options.symbology)) return layoutLinearAlone(options, font, environment, size);
   const symbol = RESOLVER_SYMBOL_OF[options.symbology];
   if (!symbol || !TWO_D.includes(options.symbology)) {
     throw new Error(`${SYMBOLOGIES[options.symbology].name} has no label layout yet`);
   }
-  checkEnvironment({
-    environment, symbol, size, linear: Boolean(options.linear), linearSize: options.linearSize ?? null,
-  });
-  const xMm = xDimension(environment, size);
+  let xMm: number;
+  if (options.spec) {
+    if (options.linear) throw new Error("an EAN/UPC beside the 2D symbol needs a scanning environment");
+    xMm = specX(options.spec, size);
+  } else {
+    checkEnvironment({
+      environment, symbol, size, linear: Boolean(options.linear), linearSize: options.linearSize ?? null,
+    });
+    xMm = xDimension(environment, size);
+  }
   const { matrix, version } = symbolMatrix(options);
   const modules = matrix[0]?.length ?? 0;
   const box = modules + 2 * QUIET_ZONE;
@@ -195,33 +227,117 @@ export function layoutLabel(options: LabelOptions, font: HriFont): Layout {
   return { width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version };
 }
 
-/** Whether the symbology has the resolver's label layout (a 2D symbol, or an EAN/UPC alone); the others, not yet (1.3). */
-export function hasLayout(symbology: SymbologyId): boolean {
-  return TWO_D.includes(symbology) || LINEAR_ALONE.includes(symbology);
+/** The X-dimension in mm of a symbol sized by its table's row: the size is a percentage of the row's base. */
+function specX(spec: SymbolSpecification, size: number): number {
+  const sizes = specSizesFor(spec, SIZES);
+  if (!sizes.includes(size)) {
+    throw new OutOfRange("label.sizeOutOfRange", {
+      min: spec.x[0].toFixed(3), max: spec.x[2].toFixed(3), sizes: sizes.join(", "),
+    });
+  }
+  return (baseX(spec) * size) / 100;
 }
 
 /**
- * A symbol without the label layout yet (ITF-14, GS1-128, GS1 DataBar: item 1.3), as `toSvg()` draws it: the symbol
- * and its quiet zones, no text, a linear symbol `barHeight` modules high; so that it has a PNG and a PDF too.
+ * ITF-14, GS1-128 and GS1 DataBar, in units of their X-dimension: the bars at the row's minimum height for that
+ * X-dimension, its quiet zones, ITF-14's bearer bars, and the human readable text below (section 4.14: adjacent to the
+ * symbol, an element string never broken over two lines, the AIs in parentheses), centred. ITF-14's text is its 14
+ * digits, as figure 5-32 prints them; the others' are their element strings, on as few lines as the symbol's width
+ * allows. A stacked GS1 DataBar's rows grow alike until the symbol is as high as the table asks (its separators stay
+ * one module each).
  */
-export function symbolLayout(geometry: SymbolGeometry, xMm: number, quietZone: number, barHeight = 50): Layout {
-  const rects: [number, number, number, number][] = [];
-  let width: number;
-  let height: number;
+function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout {
+  const { spec, symbology } = options;
+  if (!spec?.height) throw new Error(`${SYMBOLOGIES[symbology].name} is sized by its row of a symbol specification table`);
+  const xMm = specX(spec, size);
+  const barHeight = minimumBarHeight(spec, xMm)! / xMm;
+  const [quietLeft, quietRight] = typeof spec.quietZone === "number" ? [spec.quietZone, spec.quietZone] : spec.quietZone;
+  const geometry = encode(symbology, options.data);
+  const bearer = symbology === "itf14" ? (options.bearer ?? "frame") : null;
+  const thickness = bearer === "frame" ? BEARER_FRAME_MM / xMm : bearer === "bars" ? BEARER_BARS : 0;
+  const side = bearer === "frame" ? thickness : 0;
+
+  // The symbol as bands of rows, each with its runs of bars: [start, width] in modules.
+  let bands: { height: number; runs: [number, number][] }[];
+  let symbolWidth: number;
   if (geometry.kind === "linear") {
-    let x = quietZone;
-    geometry.widths.forEach((w, i) => {
-      if (i % 2 === 0) rects.push([x, 0, w, barHeight]);
+    const widths = geometry.widths.map((w) => (symbology === "itf14" && w > 1 ? ITF14_RATIO : w));
+    if (widths.length % 2 === 0) widths.pop(); // a space after ITF-14's stop pattern: the quiet zone's
+    const runs: [number, number][] = [];
+    let x = 0;
+    widths.forEach((w, i) => {
+      if (i % 2 === 0 && w > 0) runs.push([x, w]);
       x += w;
     });
-    [width, height] = [x + quietZone, barHeight];
+    bands = [{ height: barHeight, runs }];
+    symbolWidth = x;
   } else {
-    const matrix = Array.from({ length: geometry.rows }, (_, r) =>
-      Array.from({ length: geometry.cols }, (_, c) => Boolean(geometry.dark[r * geometry.cols + c])));
-    rects.push(...qrRects(matrix, quietZone, quietZone));
-    [width, height] = [geometry.cols + 2 * quietZone, geometry.rows + 2 * quietZone];
+    const rows: { row: boolean[]; height: number }[] = [];
+    for (let r = 0; r < geometry.rows; r++) {
+      const row = geometry.dark.slice(r * geometry.cols, (r + 1) * geometry.cols);
+      const last = rows.at(-1);
+      if (last && last.row.every((dark, c) => dark === row[c])) last.height++;
+      else rows.push({ row, height: 1 });
+    }
+    const native = rows.filter((r) => r.height > 1).reduce((sum, r) => sum + r.height, 0);
+    const separators = geometry.rows - native;
+    const grow = Math.max(1, (barHeight - separators) / native);
+    bands = rows.map(({ row, height }) => {
+      const runs: [number, number][] = [];
+      let c = 0;
+      while (c < row.length) {
+        if (!row[c]) {
+          c++;
+          continue;
+        }
+        const start = c;
+        while (c < row.length && row[c]) c++;
+        runs.push([start, c - start]);
+      }
+      return { height: height > 1 ? height * grow : height, runs };
+    });
+    symbolWidth = geometry.cols;
   }
-  return { width, height, rects, symbolRects: rects.length, texts: [], xMm, modules: 0, version: null };
+  const height = bands.reduce((sum, band) => sum + band.height, 0);
+  const boxWidth = 2 * side + quietLeft + symbolWidth + quietRight;
+  const boxHeight = 2 * thickness + height;
+
+  const textHeight = TEXT_HEIGHT_MM / xMm;
+  const em = (textHeight * font.unitsPerEm) / font.capHeight;
+  const pieces = !options.showHri ? [] : symbology === "itf14" ? [options.data] : [...options.hriLines];
+  const lines: string[] = [];
+  const room = Math.max(boxWidth, ...pieces.map((piece) => font.textWidth(piece, em)));
+  for (const piece of pieces) {
+    const joined = lines.length ? lines.at(-1)! + piece : piece;
+    if (lines.length && font.textWidth(joined, em) <= room) lines[lines.length - 1] = joined;
+    else lines.push(piece);
+  }
+  const widths = lines.map((line) => font.textWidth(line, em));
+  const contentWidth = Math.max(boxWidth, ...widths);
+
+  const boxX = MARGIN + (contentWidth - boxWidth) / 2;
+  const rects: [number, number, number, number][] = [];
+  if (thickness) {
+    rects.push([boxX, MARGIN, boxWidth, thickness], [boxX, MARGIN + thickness + height, boxWidth, thickness]);
+    if (side) rects.push([boxX, MARGIN + thickness, side, height], [boxX + boxWidth - side, MARGIN + thickness, side, height]);
+  }
+  const x0 = boxX + side + quietLeft;
+  let y = MARGIN + thickness;
+  for (const band of bands) {
+    for (const [start, width] of band.runs) rects.push([x0 + start, y, width, band.height]);
+    y += band.height;
+  }
+  const texts: LabelText[] = [];
+  const top = MARGIN + boxHeight + (lines.length ? HRI_GAP_MM / xMm : 0);
+  lines.forEach((line, index) => {
+    const baseline = top + textHeight + index * textHeight * LINE_SPACING;
+    texts.push({ text: line, x: MARGIN + (contentWidth - widths[index]!) / 2, baseline, em, linear: false });
+  });
+  const bottom = texts.length ? texts.at(-1)!.baseline + (font.descent * em) / font.unitsPerEm : MARGIN + boxHeight;
+  return {
+    width: MARGIN + contentWidth + MARGIN, height: bottom + MARGIN, rects, symbolRects: rects.length, texts, xMm,
+    modules: 0, version: null, barHeight: height,
+  };
 }
 
 /** An EAN/UPC alone, in units of its own module, at its environment's linear target times the size. */
@@ -282,6 +398,34 @@ function placeLinear(
   return [right, Math.max(bottom, lowest)];
 }
 
+/**
+ * A symbol sized by its table's row, in words: its X-dimension and the table, its bars, quiet zones and bearer bars.
+ * The SVG's description and the README's line.
+ */
+export function specDescription(options: LabelOptions, layout: Layout): string {
+  const spec = options.spec!;
+  const size = options.size ?? 100;
+  const of = spec.x[1] === null ? "minimum" : "target";
+  const table = options.table ? ` of table ${options.table} (GS1 General Specifications 5.12.3.${options.table})` : "";
+  const parts = [
+    `${SYMBOLOGIES[options.symbology].name}: X = ${pyFixed(layout.xMm, 3)} mm, ${size} % of the ${of} ` +
+      `${pyFixed(baseX(spec), 3)} mm${table}`,
+  ];
+  if (layout.barHeight !== undefined) {
+    parts.push(`bars ${pyFixed(layout.barHeight * layout.xMm, 2)} mm high`);
+    const [left, right] = typeof spec.quietZone === "number" ? [spec.quietZone, spec.quietZone] : spec.quietZone;
+    parts.push(left || right ? `quiet zones ${left}X and ${right}X` : "no quiet zones");
+    if (options.symbology === "itf14") {
+      parts.push(options.bearer === "bars"
+        ? `bearer bars ${BEARER_BARS}X at the top and bottom`
+        : `a bearer bar frame ${pyFixed(BEARER_FRAME_MM, 2)} mm thick`, `wide-to-narrow ratio ${ITF14_RATIO}`);
+    }
+  } else {
+    parts.push(`${layout.modules} x ${layout.modules} modules`, `quiet zone ${QUIET_ZONE}X`);
+  }
+  return parts.join(", ");
+}
+
 const OCR_B = "OCR-B, 'OCR B', 'OCR-B 10 BT', monospace"; // the font of EAN/UPC digits, when the HRI is text
 const HRI_FONT_FAMILY = "'Liberation Sans', Arial, Helvetica, sans-serif";
 
@@ -314,8 +458,10 @@ export function labelSvg(options: LabelOptions, layout: Layout, font: HriFont, h
     `<svg xmlns="http://www.w3.org/2000/svg" width="${pyFixed(wMm, 3)}mm" height="${pyFixed(hMm, 3)}mm" ` +
       `viewBox="0 0 ${pyFixed(layout.width, 4)} ${pyFixed(layout.height, 4)}">`,
     `<title>${xml(options.data)}</title>`,
-    `<desc>${SYMBOLOGIES[options.symbology].name} at ${size} % of the target size of the scanning environment ` +
-      `${environment} (X = ${pyFixed(layout.xMm, 3)} mm), quiet zone ${QUIET_ZONE}X${linearNote}.</desc>`,
+    options.spec
+      ? `<desc>${xml(specDescription(options, layout))}.</desc>`
+      : `<desc>${SYMBOLOGIES[options.symbology].name} at ${size} % of the target size of the scanning environment ` +
+        `${environment} (X = ${pyFixed(layout.xMm, 3)} mm), quiet zone ${QUIET_ZONE}X${linearNote}.</desc>`,
     `<rect width="${pyFixed(layout.width, 4)}" height="${pyFixed(layout.height, 4)}" fill="#fff"/>`,
     `<path fill="#000" shape-rendering="crispEdges" d="${path}"/>`,
   ];

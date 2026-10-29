@@ -1,7 +1,7 @@
 import { crc32, deflate, utf8 } from "./deflate.ts";
 import { ENVIRONMENTS, xDimension, linearXDimension } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
-import { hasLayout, labelSvg, QUIET_ZONE, type LabelOptions, type Layout } from "./layout.ts";
+import { labelSvg, QUIET_ZONE, specDescription, type LabelOptions, type Layout } from "./layout.ts";
 import { BAR_HEIGHT, LINEAR_NAMES, type LinearKind } from "./linear.ts";
 import { labelPdf } from "./pdf.ts";
 import { labelPng } from "./png.ts";
@@ -33,8 +33,8 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
   const lines: string[] = [];
   if (symbology.data === "uri") lines.push(`GS1 Digital Link: ${options.data}`);
   if (symbology.data === "element-string") lines.push(`GS1 element string: ${options.data}`);
-  if (!hasLayout(options.symbology)) {
-    lines.push(`${symbology.name}: X = ${pyFixed(layout.xMm, 3)} mm`);
+  if (options.spec) {
+    lines.push(specDescription(options, layout));
   } else if (symbology.kind === "linear") {
     lines.push(linearLine(options.symbology as LinearKind, options.data, environment, options.linearSize ?? size));
   } else {
@@ -47,9 +47,9 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
       `${pyFixed(target, 3)} mm of the scanning environment ${environment}), quiet zone ${QUIET_ZONE}X`);
     if (options.linear) lines.push(linearLine(options.linear[0], options.linear[1], environment, options.linearSize ?? size));
   }
-  const texts = layout.texts.length && symbology.kind === "linear"
+  const texts = layout.texts.length && symbology.kind === "linear" && !options.spec
     ? `${layout.texts.map((t) => t.text).join(" ")} (under the bars)`
-    : options.showHri && layout.texts.length ? options.hriLines.join(" ") : "none";
+    : options.showHri && layout.texts.length ? (options.spec ? layout.texts.map((t) => t.text) : options.hriLines).join(" ") : "none";
   lines.push(
     `Human readable text: ${texts}`,
     `Label size: ${pyFixed(layout.width * layout.xMm, 1)} x ${pyFixed(layout.height * layout.xMm, 1)} mm; print at 100 % ` +

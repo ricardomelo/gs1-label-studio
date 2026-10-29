@@ -129,10 +129,26 @@ describe("the symbols a leaf allows, and the one recommended", () => {
     expect(g.options.find((o) => o.symbol === "ean13")).toMatchObject({ carries: "key" });
   });
 
-  it("at a retail till with a GTIN-14 of a case: nothing the studio draws yet (GS1 DataBar, backlog 1.3)", () => {
+  it("at a retail till with a GTIN-14 of a case: GS1 DataBar Omnidirectional, the first of the family", () => {
     const g = at("01", RETAIL, `(01)${CASE}`);
+    expect(g.recommended).toEqual({ symbol: "databar-omni" });
+    expect(g.waiting).toBeUndefined();
+  });
+
+  it("at a retail till with a case's GTIN-14 and a batch: GS1 DataBar with a QR code, not laid out together yet", () => {
+    const g = at("01", RETAIL, `(01)${CASE}(10)B42`);
     expect(g.recommended).toBeNull();
-    expect(g.waiting).toBe("databar-omni");
+    expect(g.together).toEqual({ symbol: "databar-omni", with: "dl-qrcode" });
+  });
+
+  it("at a retail till, GS1 DataBar Expanded carries the attributes of a variable measure item only (2.1.3, 2.1.12.1)", () => {
+    const fixed = at("01", RETAIL, `(01)${GTIN13}(17)271231(10)B42`);
+    expect(fixed.options.find((o) => o.symbol === "databar-expanded")).toMatchObject({ carries: "key", drawn: true });
+    const variable = at("01", RETAIL, `(01)${GTIN13}(3103)001250(15)271231`);
+    expect(variable.recommended).toEqual({ symbol: "databar-expanded" });
+    expect(variable.options.find((o) => o.symbol === "databar-expanded-stacked")).toMatchObject({ carries: "all" });
+    // Out of retail, the rule does not apply: a GSRN with its service relation instance number.
+    expect(at("8018", {}, `(8018)${GSRN}(8019)12`).recommended).toEqual({ symbol: "databar-expanded" });
   });
 
   it("in general distribution: EAN-13 or ITF-14 for a GTIN, GS1-128 with attributes, a 2D symbol beyond 48 characters", () => {
@@ -143,7 +159,9 @@ describe("the symbols a leaf allows, and the one recommended", () => {
     expect(at("01", DISTRIBUTION, `(01)${CASE}(10)B42(17)271231`).recommended).toEqual({ symbol: "gs1-128" });
     const long = at("01", DISTRIBUTION, `(01)${CASE}(10)ABCDEFGHIJKLMNOPQRST(21)ABCDEFGHIJKL`);
     expect(long.options.find((o) => o.symbol === "gs1-128")).toMatchObject({ carries: "no" });
-    expect(long.recommended).toEqual({ symbol: "itf14", with: "gs1-datamatrix" });
+    // An ITF-14 with a GS1 DataMatrix beside it: two symbols the label does not lay out together yet (phase 4).
+    expect(long.recommended).toBeNull();
+    expect(long.together).toEqual({ symbol: "itf14", with: "gs1-datamatrix" });
   });
 
   it("a logistic unit: GS1-128 (section 2.2.1), table 5", () => {
@@ -166,8 +184,8 @@ describe("the symbols a leaf allows, and the one recommended", () => {
     expect(location.recommended).toEqual({ symbol: "gs1-128" });
     expect(location.options.find((o) => o.symbol === "gs1-128")!.specs.map((s) => s.x[2])).toEqual([0.495, 1.016]);
     const gsrn = at("8018", {}, `(8018)${GSRN}`);
-    expect(gsrn.options[0]).toMatchObject({ symbol: "databar-expanded", carries: "all", drawn: false });
-    expect(gsrn.recommended).toEqual({ symbol: "gs1-128" });
+    expect(gsrn.options[0]).toMatchObject({ symbol: "databar-expanded", carries: "all", drawn: true });
+    expect(gsrn.recommended).toEqual({ symbol: "databar-expanded" }); // section 2.5's first carrier choice
   });
 
   it("tobacco unit packs: GS1 DotCode first, GS1 DataMatrix while the studio does not draw DotCode", () => {

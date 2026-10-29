@@ -58,12 +58,12 @@ Checked through Labelary and read back by ZXing (`packages/core/test/labelary.te
 |---|---|---|
 | EAN-13, EAN-8, UPC-A | `^BE`, `^B8`, `^BU` | Field data without the check digit (12, 7, 11 digits): the printer adds it. Given one digit more, the printer drops the first — a template says so. |
 | UPC-E | `^B9` | Field data is the UPC-A's 10 manufacturer and product digits, not the 8 of UPC-E: expanded by `upcaManufacturerAndProduct()`. |
-| ITF-14 | `^B2` with check digit | 13 digits; wide-to-narrow ratio 3. Bearer bars to come with the label layout. |
+| ITF-14 | `^B2` with check digit | 13 digits; wide-to-narrow ratio 3. Bearer bars not yet: the label layout has them (SVG, PNG, PDF; item 1.3), ZPL will draw them with `^GB` once tested. |
 | GS1-128 | `^BC` mode **N** | FNC1 (`>8`) first and after each variable-length element string, code sets chosen by the studio (`gs1128FieldData()`), `>` written `>0`. **Mode D** (UCC/EAN) joins the element strings without FNC1 — "(10)ABC(21)X" reads as "(10)ABC21X" — and cannot carry a `>`; **mode A** prints `>8` as text. Text below the bars by the studio. |
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 is `_1` with `_` declared as the escape character: its default changed between firmware versions (`~` before V60.13.0.12), and `~1` was not read. `_` in data is `__`. |
 | Data Matrix and QR with a GS1 Digital Link URI | `^BX`, `^BQ` model 2 | Plain data. |
 | **GS1 QR Code** | — | `^BQ` has no FNC1: refused, with GS1 DataMatrix or the QR code with a GS1 Digital Link URI offered instead. |
-| GS1 DataBar | `^BR` | Omnidirectional read correctly; Expanded not yet with two element strings: offered when proven. |
+| GS1 DataBar | `^BR` | Omnidirectional read correctly; Expanded not yet with two element strings: offered when proven. Until then a ZPL of a GS1 DataBar is refused with that explanation (`ZplUnsupportedError`); the PDF prints it. |
 
 Reserved characters (`^`, `~`, `\`) go through `^FH`. In templates, values are placed in the code set any value of the
 AI's format fits: element strings of predefined length (all digits, even length) in code set C, other values in code
