@@ -304,3 +304,25 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   const at = png.indexOf("pHYs");
   expect(png.readUInt32BE(at + 4)).toBe(11811);
 });
+
+// Item 1.7: offline. The service worker keeps every file of the application on the first visit.
+test("works offline once loaded, the scan test too", async ({ page, context }) => {
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    await expect(page.locator(".preview .symbol svg")).toBeVisible();
+    // The GS1 Barcode Syntax Engine and the encoder still answer…
+    await page.fill("#q-21", "S1");
+    await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42/21/S1?17=271231");
+    // …and ZXing's WebAssembly, never loaded before, comes from the cache.
+    await page.getByRole("button", { name: "Scan test" }).click();
+    await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  } finally {
+    await context.setOffline(false);
+  }
+});

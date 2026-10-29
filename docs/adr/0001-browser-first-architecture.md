@@ -19,7 +19,8 @@ send them to as many printers as possible. Managing links is out of scope.
 
 1. **Everything runs in the browser.** A static web application: the user's product data (GTINs, batches, serial
    numbers, spreadsheets of thousands of rows) never leaves their computer; no server to run, scale or secure; free
-   static hosting (GitHub Pages); works offline once loaded (a PWA, later).
+   static hosting (GitHub Pages); works offline once loaded (a PWA: since 29 October 2026, a service worker the build
+   writes with the list of its files, `apps/web/offline.ts`, without a library).
 2. **TypeScript monorepo** (pnpm workspaces):
    - `packages/core` — no user interface: GS1 validation, encoding to a format-independent geometry (modules),
      printer dot-grid snapping, rasterising, and the exporters (SVG, PNG, PDF, EPS and the printer languages). Runs in

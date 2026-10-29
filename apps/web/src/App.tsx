@@ -297,7 +297,7 @@ export function App() {
     <>
       <header className="top">
         <h1>GS1 Label Studio</h1>
-        <span>Everything stays in your browser.</span>
+        <span>Everything stays in your browser, and it works offline.</span>
       </header>
       {view.svg && (
         <a className="mini" href="#label-title" aria-label="Live preview: go to the label">
