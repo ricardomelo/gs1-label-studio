@@ -91,3 +91,8 @@ Item 1.6 followed while the owner slept, with the owner's leave to take the reco
 label is looked at. The scan test reads the label as the browser draws its SVG, with the decoder the tests use; its
 WebAssembly is served by the application, so the test sends nothing anywhere. A bank card's long side was too wide
 for the preview's column on a laptop, so the calibration matches its short side.
+
+Then the rest of item 1.5. The EPS was written as the PDF's own content stream under a PostScript prolog that defines
+its few operators, so the two cannot drift apart; Ghostscript joined poppler in CI to draw it for ZXing. Black became
+process black in DeviceCMYK rather than the resolver's DeviceGray, and the bar width reduction stays with linear
+symbols: narrowing a 2D symbol's dark areas would need their outlines, not their rows of modules.

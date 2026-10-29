@@ -8,8 +8,8 @@ DPL). Nothing you type or upload leaves your computer.
 > attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options,
 > live — EAN/UPC, ITF-14, GS1-128, GS1 DataBar, GS1 DataMatrix and the QR code and Data Matrix with a GS1 Digital Link
 > URI, each laid out as the GS1 General Specifications place it, seen at real size and read back by a scan test in the
-> browser; SVG, PNG, PDF and zip, and ZPL with the printer's own
-> commands (and as a template); EPC for RFID and NFC.
+> browser; SVG, PNG at a chosen resolution, PDF and EPS in process black, a bar width reduction, a zip of all, and ZPL
+> with the printer's own commands (and as a template); EPC for RFID and NFC.
 > See the backlog.
 
 ## Development
@@ -63,9 +63,11 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
   beside it, guard bars, quiet zones, digits in OCR-B, text as outlines or as text; QR version and error correction —
   *ported and checked against the resolver (ADR 0004); an EAN/UPC alone too; GS1-128, ITF-14 and DataBar with 1.3*
 - 1.5 Exports: SVG, PNG with dpi, PDF (vector, real size, written without a library, as the resolver's), EPS, zip;
-  prepress options (bar width reduction, 100 % K) — *SVG, PNG (12 pixels per module, its dpi recorded), PDF and zip
-  with README ported from the resolver and checked against it, for every symbol from its layout (1.3); a chosen dpi,
-  EPS and the prepress options to do*
+  prepress options (bar width reduction, 100 % K) — *done: SVG, PNG (12 pixels per module, its dpi recorded), PDF and
+  zip with README ported from the resolver and checked against it, for every symbol from its layout (1.3); EPS (the
+  PDF's drawing in PostScript, read back through Ghostscript); PDF and EPS in process black alone; a bar width
+  reduction for linear symbols; the PNG at 300, 600 or 1200 dpi. Margins and crop marks later, with the labels of
+  phase 4*
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *done:
   the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
   between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with
@@ -114,4 +116,4 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 `packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts;
 [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) for the editor's scan test and the tests; for tests,
 [resvg-js](https://github.com/yisibl/resvg-js) (MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT), [Playwright](https://playwright.dev) (Apache-2.0) and
-poppler's `pdftoppm` (GPL-2.0, run as a separate program).
+poppler's `pdftoppm` (GPL-2.0) and Ghostscript (AGPL-3.0), both run as separate programs.

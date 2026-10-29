@@ -55,4 +55,7 @@
 - The preview at real size and the scan test (item 1.6, mock-up A): "Fit" or "Real size", rulers in millimetres, the
   screen calibrated against a bank card and kept in the browser; "Scan test" reads the label's SVG back with ZXing in
   the browser and says whether each symbol carries what it should (symbology identifier and data).
+- Prepress, the rest of item 1.5: EPS (the PDF's content stream through a PostScript prolog), PDF and EPS in process
+  black alone (DeviceCMYK 0 0 0 1), a bar width reduction of 0.010 to 0.050 mm for linear symbols, the PNG at 300, 600
+  or 1200 dpi with whole pixels a module; the zip holds the EPS too.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
