@@ -1,4 +1,4 @@
-import { AttributeError } from "./attributes.ts";
+import { attributeByCode, AttributeError } from "./attributes.ts";
 import { aiEntry, primaryKeys, qualifiersOf } from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
@@ -46,12 +46,16 @@ const SYNONYMS: Record<string, string[]> = {
 const BY_WORDS = new Map<string, string>(Object.entries(SYNONYMS).flatMap(([ai, words]) => words.map((w) => [w, ai])));
 
 /**
- * The AI a header names: written as an AI ("(10)", "AI 17", "3103"), as its GS1 data title ("BATCH/LOT"), or in the
- * common words of the synonyms above ("Lote", "Validade"). Null when nothing matches.
+ * The AI a header names: written as an AI ("(10)", "AI 17", "3103", "(01) GTIN", a decimal family "(310n)"), as its
+ * GS1 data title ("BATCH/LOT"), or in the common words of the synonyms above ("Lote", "Validade"). An AI in brackets
+ * may be followed by any words; without brackets, only after a dash or a colon ("17 - expiry"), so that "10 kg" is not
+ * read as (10). Null when nothing matches.
  */
 export function guessColumn(header: string): string | null {
-  const ai = /^\(?\s*(?:ai\s*)?\(?(\d{2,4})\)?\s*(?:[-:–—].*)?$/i.exec(header.trim())?.[1];
-  if (ai && aiEntry(ai)) return ai;
+  const text = header.trim();
+  const ai = (/^(?:ai\s*)?\((\d{2,4}|\d{3}n)\)/i.exec(text) ??
+    /^(?:ai\s*)?(\d{2,4}|\d{3}n)\s*(?:[-:–—].*)?$/i.exec(text))?.[1]?.toLowerCase();
+  if (ai && (ai.endsWith("n") ? attributeByCode(ai)?.family : aiEntry(ai))) return ai;
   const words = plain(header);
   const known = BY_WORDS.get(words);
   if (known) return known;

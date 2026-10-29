@@ -75,4 +75,6 @@
   cell at fault outlined and fixed in place without changing the file; a hint when Excel kept 15 digits of a code or a
   CSV wrote it in scientific notation; rows skipped one by one or all those in error; the report and the corrected
   rows as CSV.
+- Headers written as AIs work for every AI (the owner's suggestion): "(01) GTIN", "(21) Número de série", "AI (17)",
+  "(3103)" and decimal families such as "(310n)" go to that AI, whatever words follow the brackets.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

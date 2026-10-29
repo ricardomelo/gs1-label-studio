@@ -25,6 +25,9 @@ describe("which AI a column holds, from its header", () => {
     ["3103", "3103"], ["Lote", "10"], ["Batch/Lot", "10"], ["BATCH/LOT", "10"], ["Validade", "17"], ["Data de validade", "17"],
     ["USE BY or EXPIRY", "17"], ["Best before", "15"], ["Fabricação", "11"], ["Número de série", "21"], ["Serial", "21"],
     ["SSCC", "00"], ["Peso (kg)", "310n"], ["Net weight (kg)", "310n"], ["GLN", "414"], ["País de origem", "422"],
+    // AIs as headers, for import files that work for every AI (the owner, 29 October 2026)
+    ["00", "00"], ["(00) SSCC", "00"], ["(01) GTIN", "01"], ["(21) Número de série", "21"], ["AI (17) expiry", "17"],
+    ["(310n)", "310n"], ["310n - net weight", "310n"], ["(3922) Price", "3922"], ["(8020)", "8020"],
   ])("%s → (%s)", (header, ai) => {
     expect(guessColumn(header)).toBe(ai);
   });
@@ -32,6 +35,9 @@ describe("which AI a column holds, from its header", () => {
   it("leaves out what it does not know, and a second column for an AI already taken", () => {
     expect(guessColumn("Descrição")).toBeNull();
     expect(guessColumn("99999")).toBeNull();
+    expect(guessColumn("10 kg")).toBeNull(); // a number in a header is not an AI without brackets or a dash
+    expect(guessColumn("(399n)")).toBeNull(); // no such decimal family
+    expect(guessColumn("(99)")).toBe("99");
     expect(guessMapping(["GTIN", "EAN", "Lote", "Notes"])).toEqual(["01", null, "10", null]);
   });
 });
