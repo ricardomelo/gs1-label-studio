@@ -276,6 +276,18 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
   await page.getByRole("button", { name: "Calibrate the screen" }).click();
   await page.locator("#calibrate").fill("5");
   expect((await page.locator(".card-bar").boundingBox())!.width).toBeCloseTo(53.98 * 5, 0); // a card's short side
+  // At the slider's maximum the bar still fits its box, across the label's card (backlog 1.10 c); − and + fine-tune.
+  if (page.viewportSize()!.width > 900) expect(Number(await page.locator("#calibrate").getAttribute("max"))).toBe(7);
+  const top = Number(await page.locator("#calibrate").getAttribute("max")); // 7, or less where 7 does not fit
+  await page.locator("#calibrate").fill(String(top));
+  const bar = (await page.locator(".card-bar").boundingBox())!;
+  const frame = (await page.locator(".calibration").boundingBox())!;
+  expect(bar.width).toBeCloseTo(53.98 * top, 0);
+  expect(bar.x + bar.width).toBeLessThanOrEqual(frame.x + frame.width);
+  await expect(page.getByRole("button", { name: "Longer" })).toBeDisabled();
+  await page.getByRole("button", { name: "Shorter" }).click();
+  expect((await page.locator(".card-bar").boundingBox())!.width).toBeCloseTo(53.98 * (top - 0.01), 1);
+  await page.locator("#calibrate").fill("5");
   expect((await symbol.boundingBox())!.width).toBeCloseTo(32.6 * 5, 0);
   // Kept in this browser.
   await page.reload();

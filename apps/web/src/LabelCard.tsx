@@ -157,6 +157,8 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
       <h2 id="label-title">
         <span className="n">3</span> Label <span className="badge">updates as you type</span>
       </h2>
+      {/* Across the whole card, so that the bar has room up to the slider's maximum (backlog 1.10 c). */}
+      {real && calibrating && view.svg && view.widthMm && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
       <div className="panel">
         <div>
           {rows && (
@@ -195,7 +197,6 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               )}
             </div>
           )}
-          {real && calibrating && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
           {real && view.svg && view.widthMm && view.heightMm ? (
             <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm} />
           ) : (

@@ -97,7 +97,9 @@ the logistic label of phase 4.
   AIs — *done 30 October: every AI choice reads "(AI) abbreviation name", "(01) GTIN Product", "(10) Batch/lot", so
   the order of the text shown is the AI's, as the General Specifications list them (the owner's request)*; (c) the screen's
   calibration (1.6) usable at its whole range: the bar outgrows the options column near the slider's maximum, so it
-  cannot be measured, and the slider is coarse — the bar where there is room, and a fine adjustment
+  cannot be measured, and the slider is coarse — the bar where there is room, and a fine adjustment — *done 30 October:
+  the calibration spans the label's card, its slider stops where the bar still fits (7 pixels a millimetre on a
+  computer, less on a phone), and − and + move the bar by about half a pixel*
 - 1.11 Every identifier and qualifier: every GS1 key the dictionary has (the 16 GS1 Digital Link primary keys are
   offered today) and every qualifier of each, from the current GS1 Digital Link URI syntax; the four main qualifiers
   on the screen and the rest behind "+ Add qualifier", as the attributes are; checked against the GS1 General

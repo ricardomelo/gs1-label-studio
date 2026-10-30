@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 // The preview at real size (item 1.6, mock-up A of 29 October 2026): rulers in millimetres along the label, and a
 // calibration of the screen against a bank card, kept in this browser.
@@ -61,26 +61,60 @@ export function RealSizeView({ svg, widthMm, heightMm, pxPerMm }: { svg: string;
   );
 }
 
-/** The calibration: the person holds a bank card against the screen and matches a bar to it. */
+const MIN = 2.5;
+const MAX = 7;
+const FINE = 0.01; // a step of the − and + buttons: about half a pixel on the bar
+
+/**
+ * The calibration: the person holds a bank card against the screen and matches a bar to it. It spans the label's
+ * card, so the bar fits up to the slider's maximum (7 pixels a millimetre: 378 pixels, less on a narrow screen); − and
+ * + move it by about half a pixel for the last adjustment (backlog 1.10 c).
+ */
 export function Calibration({ pxPerMm, onChange }: { pxPerMm: number; onChange: (pxPerMm: number) => void }) {
   const [value, setValue] = useState(pxPerMm);
+  // On a narrow screen the slider stops where the bar still fits its box: a card wider than the screen cannot be
+  // matched anyway.
+  const box = useRef<HTMLDivElement>(null);
+  const [max, setMax] = useState(MAX);
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (!element) return;
+    const measure = () => {
+      const style = getComputedStyle(element);
+      const room = element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setMax(Math.max(MIN, Math.min(MAX, Math.floor((room / CARD_MM) * 200) / 200))); // on the slider's 0.005 steps
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const set = (next: number) => {
-    setValue(next);
-    keep(next);
-    onChange(next);
+    const bounded = Math.min(max, Math.max(MIN, Math.round(next * 1000) / 1000));
+    setValue(bounded);
+    keep(bounded);
+    onChange(bounded);
   };
   return (
-    <div className="calibration">
+    <div className="calibration" ref={box}>
       <label htmlFor="calibrate">Screen calibration</label>
-      <input
-        id="calibrate"
-        type="range"
-        min={2.5}
-        max={7}
-        step={0.005}
-        value={value}
-        onChange={(e) => set(Number(e.target.value))}
-      />
+      <div className="calibrate-row">
+        <button type="button" className="ibtn" aria-label="Shorter" disabled={value <= MIN} onClick={() => set(value - FINE)}>
+          −
+        </button>
+        <input
+          id="calibrate"
+          type="range"
+          min={MIN}
+          max={max}
+          step={0.005}
+          value={value}
+          onChange={(e) => set(Number(e.target.value))}
+        />
+        <button type="button" className="ibtn" aria-label="Longer" disabled={value >= max} onClick={() => set(value + FINE)}>
+          +
+        </button>
+      </div>
       <div className="card-bar" style={{ width: CARD_MM * value }} />
       <div className="hint">
         Hold the short side of a bank card ({CARD_MM.toFixed(2)} mm) against the screen and move the slider until the bar
