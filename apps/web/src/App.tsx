@@ -12,9 +12,7 @@ import {
   parseDelimited,
   parseTableFile,
   baseX,
-  dataFor,
   encodedCount,
-  encode,
   expectedReads,
   ENVIRONMENTS,
   environmentsFor,
@@ -23,6 +21,9 @@ import {
   HriFont,
   identify,
   InputError,
+  labelFor,
+  zplOptionsFor,
+  type LabelDesign,
   isDigitalLinkKey,
   ITF14_RATIO,
   labelEps,
@@ -30,18 +31,14 @@ import {
   labelPng,
   labelSvg,
   labelZip,
-  layoutLabel,
   linearSizesFor,
   linearXDimension,
   pngAt,
   pngDpi,
   sizesFor,
-  snapToDots,
   specificationFor,
-  symbolFor,
   SYMBOLOGIES,
   syntaxEngine,
-  widthInModules,
   xDimension,
   zplLabel,
   zplTemplate,
@@ -225,12 +222,18 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     : environment === null ? [] : twoD ? sizesFor(environment, linearChoice !== "none" && settings.linearSize === null) : linearSizesFor(environment);
   const size = sizes.includes(settings.size) ? settings.size : sizes.includes(100) ? 100 : (sizes[0] ?? 100);
   effective.size = size;
-  const linearKind = SYMBOLOGIES[symbology].kind !== "matrix";
   const blocked = guided && !choice
     ? guide.together ? `${GUIDE_TEXTS.together} ${GUIDE_TEXTS.togetherLater}`
     : guide.waiting ? `${GUIDE_TEXTS.waiting} ${guide.options.find((o) => o.symbol === guide.waiting)?.name}.` : GUIDE_TEXTS.nothing
     : !spec && environment === null ? `No scanning environment of this key allows ${SYMBOLOGIES[symbology].name}: choose it in step 2.`
     : null;
+
+  // The label's design, the same for the code typed and for every row in bulk (backlog 2.4).
+  const design = useMemo((): LabelDesign => ({
+    symbology, hri: effective.hri, version: effective.version, error: effective.error, environment: environment ?? undefined,
+    size, linear: effective.linear, linearSize: effective.linearSize, ...(spec ? { spec, table } : {}),
+    bearer: effective.bearer, reduction: effective.reduction, gtinOnly,
+  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -240,9 +243,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     options?: LabelOptions;
     layout?: Layout;
   } => {
-    const identified = checked.identified && gtinOnly
-      ? { ...checked.identified, elements: checked.identified.elements.filter((e) => e.ai === "01") }
-      : checked.identified;
+    const identified = checked.identified;
     const base = {
       xMm: spec ? (baseX(spec) * size) / 100 : !environment ? 0.495 : twoD ? xDimension(environment, size) : linearXDimension(environment, size), uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "",
     };
@@ -250,30 +251,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
-      const data = dataFor(symbology, identified);
-      const lines = identified.elements.map((e) => `(${e.ai})${e.value}`);
-      const gtin = identified.elements.find((e) => e.ai === "01")?.value;
-      let linear: LabelOptions["linear"] = null;
-      if (twoD && effective.linear !== "none") {
-        if (!gtin) throw new InputError("A linear barcode beside the 2D symbol needs a GTIN (01).");
-        try {
-          linear = symbolFor(gtin, effective.linear);
-        } catch {
-          throw new InputError(
-            effective.linear === "upce"
-              ? "UPC-E is only for a GTIN-12 that zero-suppresses."
-              : "An EAN/UPC is only for GTINs of consumer units (indicator 0).",
-          );
-        }
-      }
-      const options: LabelOptions = {
-        symbology, data, showHri: effective.hri !== "none", hriLines: effective.hri === "key" ? lines.slice(0, 1) : lines,
-        version: effective.version, error: effective.error, environment: environment ?? undefined, size, linear,
-        linearSize: twoD ? effective.linearSize : null, ...(spec ? { spec, table } : {}), bearer: effective.bearer,
-        ...(effective.reduction ? { barWidthReduction: effective.reduction } : {}),
-      };
-      const layout = layoutLabel(options, font);
-      const geometry = encode(symbology, data, symbology.endsWith("qrcode") ? { eclevel: effective.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) } : {});
+      const { data, options, layout, geometry } = labelFor(identified, design, font);
       const wMm = layout.width * layout.xMm;
       const hMm = layout.height * layout.xMm;
       // The modules in all (a matrix's rows times its columns, a linear symbol's width) and the characters encoded,
@@ -281,7 +259,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       const matrix = geometry.kind === "matrix"
         ? `${geometry.rows} × ${geometry.cols} = ${(geometry.rows * geometry.cols).toLocaleString("en-GB")} modules`
         : "";
-      const count = encodedCount(symbology, identified, data);
+      const count = encodedCount(symbology, gtinOnly ? { ...identified, elements: identified.elements.filter((e) => e.ai === "01") } : identified, data);
       const marks = [count.fnc1 ? "FNC1" : "", count.separators ? `${count.separators} group separator${count.separators === 1 ? "" : "s"}` : ""]
         .filter(Boolean).join(" and ");
       const tail = [
@@ -313,7 +291,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     } catch (error) {
       return { view: { ...base, error: errorText(error) } };
     }
-  }, [checked, gtinOnly, font, engine, blocked, spec, table, effective.symbology, effective.linear, effective.hri, effective.version, effective.error, effective.linearSize, effective.hriAsText, effective.bearer, effective.reduction, environment, size, twoD]);
+  }, [checked, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD]);
 
   const view: LabelView = {
     ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible,
@@ -335,29 +313,11 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
   function downloadZpl(template: boolean) {
-    const { geometry, data } = label;
-    if (!geometry || !data) return;
-    const d = snapToDots(view.xMm, settings.dpi).dots;
-    // The quiet zones of the table's row (GS1 DataBar has none: two modules of margin), else as before.
-    const quietZone = spec && typeof spec.quietZone !== "number" ? Math.max(2, ...spec.quietZone) : linearKind ? 10 : 2;
-    const barHeightDots = Math.round((label.layout?.barHeight ?? 50) * d);
-    const textDots = Math.round((2.2 / 25.4) * settings.dpi);
-    const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
-    // ITF-14's bearer bars, as the label has them: a frame of 4.83 mm, or bars of 2X; printed at ratio 3 (135 modules).
-    const bearer = symbology === "itf14"
-      ? { kind: settings.bearer, thicknessDots: settings.bearer === "frame" ? Math.round((4.83 / 25.4) * settings.dpi) : 2 * d }
-      : undefined;
-    const t = bearer?.thicknessDots ?? 0;
-    const side = bearer?.kind === "frame" ? t : 0;
-    const symbolWidth = symbology === "itf14" ? 135 : widthInModules(geometry);
-    const options = {
-      x: quietZone * d + side, y: quietZone * d + t, dotsPerModule: d, barHeightDots, dpi: settings.dpi,
-      widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
-      heightDots: symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
-      ...(bearer ? { bearer } : {}),
-    };
+    const { geometry, data, options, layout } = label;
+    if (!geometry || !data || !options || !layout) return;
+    const zplOptions = zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi);
     try {
-      const zpl = template ? zplTemplate(symbology, data, options).zpl : zplLabel(symbology, data, options);
+      const zpl = template ? zplTemplate(symbology, data, zplOptions).zpl : zplLabel(symbology, data, zplOptions);
       download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
       setFileError(null);
     } catch (error) {
