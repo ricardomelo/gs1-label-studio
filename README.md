@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17, 1.12, 2.3 and 1.16 too): 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17, 1.12, 2.3, 1.16 and 1.13 too): 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -136,7 +136,13 @@ complete.
 - 1.13 GS1-128 over several symbols: when the data passes 48 characters (section 5.4.4.3), split it into as many
   GS1-128 symbols as needed, the key in the first and the rest in data-only symbols without a key, in the
   standard's order, stacked as the GS1 Logistic Label stacks them; the person can also move element strings between
-  the symbols. Each symbol read back. Prepares 4.1
+  the symbols. Each symbol read back. Prepares 4.1 — *done 30 October: beyond 48 data characters (AIs, data and
+  separating FNC1s), or where a symbol would pass 165.10 mm with its quiet zones (also refused for one symbol, which
+  was not checked before), the element strings go in as many GS1-128 symbols as needed, in order, the key in the
+  first; stacked on the left a quiet zone apart, each with its own text; "GS1-128 symbols" under the options lists the
+  element strings, "new symbol" starts one where the person chooses, "Automatic" goes back; the guided choice now
+  offers GS1-128 for such data; each symbol read back from the SVG, PNG and PDF. ZPL for several symbols waits for
+  3.2's label layout*
 - 1.14 QR Code's encoding modes: today bwip-js chooses the segments itself (numeric, alphanumeric, byte, mixed, for the
   smallest symbol). Offer automatic (as today) or one mode for the whole data — numeric, alphanumeric, byte — as ISO/IEC
   18004 defines them, alphanumeric only when the data allow it (upper case: a GS1 Digital Link URI's scheme and domain
