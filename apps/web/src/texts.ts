@@ -239,3 +239,11 @@ export const GENERATE_TEXTS = {
   zip: "One zip: the files chosen and generated.csv, which lists every row and what was made of it.",
   nothing: "Choose at least one file to generate.",
 } as const;
+
+// In bulk, sequences made in the studio (backlog 2.3).
+export const SEQUENCE_TEXTS = {
+  title: "…or make a sequence: serial numbers or SSCCs",
+  sscc:
+    "Each SSCC is the extension digit, your company prefix, the serial reference and the check digit; one is not used " +
+    "again within a year of its shipment (GS1 General Specifications 2.2.1).",
+} as const;

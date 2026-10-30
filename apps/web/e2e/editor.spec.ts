@@ -668,3 +668,31 @@ test("several keys: an SSCC with the GTIN it contains and their count, each chec
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (00)106141411234567897(02)09506000134376(37)10", { timeout: 30_000 });
 });
+
+// Item 2.3 (mock-up A of two, 30 October 2026): serial numbers and SSCCs made in the studio.
+test("in bulk: SSCCs made as rows, serial numbers added as a column to a file's rows", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.selectOption("#seq-kind", "sscc");
+  await page.fill("#seq-count", "3");
+  await page.fill("#seq-first", "123456789");
+  await page.fill("#seq-extension", "1");
+  await page.fill("#seq-gcp", "061414");
+  await page.fill("#seq-gcp", "0614141");
+  await expect(page.locator(".sequence .hint")).toContainText("106141411234567897 to 106141411234567910");
+  await page.getByRole("button", { name: "Make 3 rows" }).click();
+  await expect(page.locator(".source")).toContainText("SSCCs made here · 3 rows");
+  await expect(page.locator(".summary")).toContainText("3 rows ready");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/00/106141411234567897");
+  // A file's rows, then a serial number for each
+  await page.locator("#rows-file").setInputFiles(new URL("../../../packages/core/test/fixtures/bulk/products.xlsx", import.meta.url).pathname);
+  await expect(page.locator(".source")).toContainText("products.xlsx");
+  await page.selectOption("#seq-kind", "serial");
+  await page.fill("#seq-prefix", "S(");
+  await expect(page.locator(".sequence .hint")).toContainText("character set 82");
+  await page.fill("#seq-prefix", "S-");
+  await page.fill("#seq-first", "1");
+  await page.getByRole("button", { name: "Add as a column to the 4 rows" }).click();
+  await expect(page.locator(".source")).toContainText("products.xlsx + serial numbers");
+  await expect(page.locator("#map-6")).toHaveValue("21");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42/21/S-000001?17=271231&3101=000005&11=261001");
+});

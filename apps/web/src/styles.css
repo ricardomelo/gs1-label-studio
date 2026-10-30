@@ -252,3 +252,8 @@ table.mapping th:nth-child(2) { width: 30%; }
 .param .hint { grid-column: 1 / -1; margin: 0; }
 .other-keys { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; margin-top: 6px; }
 .other-keys .link { text-align: left; }
+
+/* In bulk, sequences made in the studio (backlog 2.3, mock-up A) */
+.sequence { border: 1px dashed var(--line); border-radius: 8px; padding: 10px; margin-top: 12px; text-align: left; }
+.sequence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.sequence-go { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }

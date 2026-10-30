@@ -26,6 +26,8 @@ import {
   patternName,
   zplOptionsFor,
   uriParameters,
+  sequenceTable,
+  withSequence,
   type BatchRow,
   type LabelDesign,
   isDigitalLinkKey,
@@ -435,6 +437,24 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               onPaste={(text) => {
                 try {
                   takeTable(parseDelimited(text), "Pasted rows");
+                } catch (error) {
+                  setTableError(errorText(error));
+                }
+              }}
+              onSequence={(sequence, as) => {
+                try {
+                  if (as === "rows" || !dataTable) {
+                    takeTable(sequenceTable(sequence), sequence.kind === "sscc" ? "SSCCs made here" : "Serial numbers made here");
+                  } else {
+                    // A column after the others: the fixes, the rows skipped and the columns chosen stay as they are
+                    const next = withSequence(dataTable, sequence);
+                    const nextMapping = [...mapping, sequence.kind === "sscc" ? "00" : "21"];
+                    setDataTable(next);
+                    setMapping(nextMapping);
+                    setSource(`${source} + ${sequence.kind === "sscc" ? "SSCCs" : "serial numbers"}`);
+                    rememberColumns(next.headers, nextMapping, fixed);
+                    setTableError(null);
+                  }
                 } catch (error) {
                   setTableError(errorText(error));
                 }

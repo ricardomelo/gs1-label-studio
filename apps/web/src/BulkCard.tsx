@@ -12,8 +12,10 @@ import {
   type ColumnMapping,
   type FixedValue,
   type RowStatus,
+  type Sequence,
   type Table,
 } from "@gs1-label-studio/core";
+import { SequenceForm } from "./SequenceForm.tsx";
 import { aiText, byAi, BULK_TEXTS } from "./texts.ts";
 
 // Step 1 in bulk (backlog 2.1, mock-up A of 29 October 2026): rows from a file or pasted, each column's AI — guessed
@@ -34,6 +36,8 @@ interface Props {
   error: string | null;
   onFile: (file: File) => void;
   onPaste: (text: string) => void;
+  /** A sequence made in the studio (backlog 2.3): rows of its own, or a column added to the rows loaded. */
+  onSequence: (sequence: Sequence, as: "rows" | "column") => void;
   onMapping: (mapping: ColumnMapping) => void;
   onFixed: (fixed: FixedValue[]) => void;
   /** Shows a row (its index among the data rows) in the label's preview. */
@@ -75,7 +79,7 @@ function AiSelect({ id, value, onChange, label }: { id: string; value: string | 
 }
 
 export function BulkCard(props: Props) {
-  const { table, source, mapping, fixed, rows, error, onFile, onPaste, onMapping, onFixed } = props;
+  const { table, source, mapping, fixed, rows, error, onFile, onPaste, onSequence, onMapping, onFixed } = props;
   const [pasted, setPasted] = useState("");
   const [dragging, setDragging] = useState(false);
 
@@ -124,6 +128,11 @@ export function BulkCard(props: Props) {
         <button type="button" className="btn" disabled={!pasted.trim()} onClick={() => onPaste(pasted)}>
           Use the pasted rows
         </button>
+        <SequenceForm
+          loaded={table?.rows.length ?? 0}
+          onRows={(sequence) => onSequence(sequence, "rows")}
+          onColumn={(sequence) => onSequence(sequence, "column")}
+        />
       </div>
       {error && <p className="error small">{error}</p>}
 

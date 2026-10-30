@@ -225,3 +225,13 @@ export {
   type LabelDesign,
 } from "./batch.ts";
 export { fitsSheet, LABEL_SHEETS, sheetCells, sheetPages, sheetProblem, type LabelSheet } from "./sheets.ts";
+export {
+  MAX_SEQUENCE,
+  sequenceHeader,
+  sequenceProblem,
+  sequenceTable,
+  sequenceValues,
+  ssccFor,
+  withSequence,
+  type Sequence,
+} from "./sequence.ts";

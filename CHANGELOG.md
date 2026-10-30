@@ -107,4 +107,6 @@
 - Several keys in one symbol (item 1.12): another key in the list says so and has its check digit checked; links add
   the pairings of the General Specifications (an SSCC with the GTIN it contains and its count, with a GTIN, the
   transport keys; a GTIN with a GRAI or GIAI); the other keys go to the URI's query string.
+- Sequences made in the studio (item 2.3): serial numbers with a prefix and zeros in front, or SSCCs from an extension
+  digit, a company prefix and a first serial reference, as rows or as a column added to a file's rows.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

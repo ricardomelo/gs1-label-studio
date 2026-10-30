@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17 and 1.12 too): 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17, 1.12 and 2.3 too): 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -182,7 +182,11 @@ complete.
   skipped or all; each with its reason and its cells, the one at fault outlined and fixed in place (the file is not
   changed); a hint when Excel kept 15 digits of a code or a CSV wrote it in scientific notation; one row or every row
   in error skipped; the report and the corrected rows as CSV*
-- 2.3 Generated sequences: serial numbers, SSCCs
+- 2.3 Generated sequences: serial numbers, SSCCs — *done 30 October (mock-up A of two): "…or make a sequence" in
+  step 1 makes serial numbers (21) — a prefix, the number padded to a number of digits, a first number and a step —
+  or SSCCs (00) — the extension digit, the GS1 Company Prefix, the serial reference from a first one, the check digit —
+  as rows of their own or as a column added to the rows loaded (fixes, skipped rows and columns kept); what AI (21)
+  cannot hold, a serial reference that does not fit and more than 100,000 rows are refused before anything is made*
 - 2.4 Outputs: zip by row with a name pattern, multi-page PDF, laser label sheets (Pimaco, Avery, custom), one print
   file per printer language, CSV of what was generated — *done 30 October (mock-up A of three): "Generate in bulk"
   under the label's Export bar draws the label shown, with its options, for every row ready or fixed, in one zip: SVG,
