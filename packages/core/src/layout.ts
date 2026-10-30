@@ -45,6 +45,16 @@ export const HRI_GAP_MM = 1.02; // section 5.3.2.2: from the bearer bar to the t
 /** ITF-14's bearer bars: the frame, which suits every printing method, or bars at the top and bottom. */
 export type Bearer = "frame" | "bars";
 
+/**
+ * Where the human readable text goes (General Specifications 26.0, section 4.14, rule 1): below the symbol, or above,
+ * left or right of it where space asks; split, the key below and its attributes above (rule 1d).
+ */
+export const HRI_POSITIONS = ["below", "above", "split", "left", "right"] as const;
+export type HriPosition = (typeof HRI_POSITIONS)[number];
+/** The text's height: at least 2 mm (rule 2a iii); the GS1 Logistic Label asks 3 mm (rule 5c). */
+export const HRI_MIN_MM = 2;
+export const HRI_MAX_MM = 10;
+
 export interface LabelOptions {
   /** A 2D symbol, or an EAN/UPC alone. */
   symbology: SymbologyId;
@@ -78,6 +88,10 @@ export interface LabelOptions {
    * on each side). 2D symbols' modules are left as they are.
    */
   barWidthReduction?: number;
+  /** Where the human readable text goes; below when not given. EAN/UPC's digits stay where section 5.2.5 puts them. */
+  hriPosition?: HriPosition;
+  /** The human readable text's height in mm (its capitals'); TEXT_HEIGHT_MM when not given. */
+  hriHeightMm?: number;
 }
 
 export interface LabelText {
@@ -225,9 +239,33 @@ function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
   const modules = matrix[0]?.length ?? 0;
   const box = modules + 2 * QUIET_ZONE;
 
-  const textHeight = TEXT_HEIGHT_MM / xMm;
+  const textHeight = hriHeight(options) / xMm;
   const em = (textHeight * font.unitsPerEm) / font.capHeight;
   const lines = options.showHri ? [...options.hriLines] : [];
+  const position = options.hriPosition ?? "below";
+  if (position !== "below" && lines.length) {
+    if (options.linear && (position === "left" || position === "right")) {
+      throw new RangeError("With an EAN/UPC beside the 2D symbol, its text goes below or above it.");
+    }
+    const groups = position === "split" ? [{ lines: lines.slice(0, 1), where: "below" as const }, { lines: lines.slice(1), where: "above" as const }]
+      : [{ lines, where: position }];
+    const placed = arrange([box, box], groups, textHeight, TEXT_GAP, em, font);
+    const shiftX = MARGIN - placed.minX;
+    const shiftY = MARGIN - placed.minY;
+    const rects = qrRects(matrix, shiftX + QUIET_ZONE, shiftY + QUIET_ZONE);
+    const symbolRects = rects.length;
+    const texts = placed.texts.map((t) => ({ ...t, x: t.x + shiftX, baseline: t.baseline + shiftY }));
+    let width = MARGIN + placed.maxX - placed.minX;
+    let height = MARGIN + placed.maxY - placed.minY;
+    if (options.linear) {
+      const unit = linearXDimension(environment, options.linearSize ?? size) / xMm;
+      [width, height] = placeLinear(options.linear, unit, rects, texts, width + LINEAR_GAP, shiftY, height, font);
+    }
+    return {
+      width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version,
+      barRects: [symbolRects, rects.length],
+    };
+  }
   const widths = lines.map((line) => font.textWidth(line, em));
   const contentWidth = Math.max(box, ...widths);
 
@@ -253,6 +291,41 @@ function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
     width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version,
     barRects: [symbolRects, rects.length],
   };
+}
+
+/** The text's height in mm, checked against section 4.14's 2 mm. */
+function hriHeight(options: LabelOptions): number {
+  const mm = options.hriHeightMm ?? TEXT_HEIGHT_MM;
+  if (!(mm >= HRI_MIN_MM && mm <= HRI_MAX_MM)) {
+    throw new RangeError(`The human readable text is from ${HRI_MIN_MM} mm high (GS1 General Specifications 4.14) to ${HRI_MAX_MM} mm.`);
+  }
+  return mm;
+}
+
+/**
+ * Groups of text lines placed around a box of `size` with its top left corner at (0, 0), `gap` away from it: below or
+ * above, each line centred on the box; left or right, the block centred on the box's height, its lines aligned towards
+ * the box. Returns the texts and the extent of the box and the texts together.
+ */
+function arrange(size: [number, number], groups: { lines: string[]; where: Exclude<HriPosition, "split"> }[], textHeight: number,
+  gap: number, em: number, font: HriFont) {
+  const [w, h] = size;
+  const descent = (font.descent * em) / font.unitsPerEm;
+  const texts: LabelText[] = [];
+  let [minX, minY, maxX, maxY] = [0, 0, w, h];
+  for (const { lines, where } of groups) {
+    if (!lines.length) continue;
+    const block = textHeight + (lines.length - 1) * textHeight * LINE_SPACING + descent;
+    const top = where === "below" ? h + gap : where === "above" ? -gap - block : (h - block) / 2;
+    lines.forEach((text, index) => {
+      const width = font.textWidth(text, em);
+      const baseline = top + textHeight + index * textHeight * LINE_SPACING;
+      const x = where === "left" ? -gap - width : where === "right" ? w + gap : (w - width) / 2;
+      texts.push({ text, x, baseline, em, linear: false });
+      [minX, minY, maxX, maxY] = [Math.min(minX, x), Math.min(minY, baseline - textHeight), Math.max(maxX, x + width), Math.max(maxY, baseline + descent)];
+    });
+  }
+  return { texts, minX, minY, maxX, maxY };
 }
 
 /** The X-dimension in mm of a symbol sized by its table's row: the size is a percentage of the row's base. */
@@ -330,32 +403,56 @@ function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout 
   const boxWidth = 2 * side + quietLeft + symbolWidth + quietRight;
   const boxHeight = 2 * thickness + height;
 
-  const textHeight = TEXT_HEIGHT_MM / xMm;
+  const textHeight = hriHeight(options) / xMm;
   const em = (textHeight * font.unitsPerEm) / font.capHeight;
   const pieces = !options.showHri ? [] : symbology === "itf14" ? [options.data] : [...options.hriLines];
-  const lines: string[] = [];
-  const room = Math.max(boxWidth, ...pieces.map((piece) => font.textWidth(piece, em)));
-  for (const piece of pieces) {
-    const joined = lines.length ? lines.at(-1)! + piece : piece;
-    if (lines.length && font.textWidth(joined, em) <= room) lines[lines.length - 1] = joined;
-    else lines.push(piece);
+  // Element strings joined on as few lines as the symbol's width allows, never one broken over two (rule 1e)
+  const join = (from: string[]) => {
+    const joined: string[] = [];
+    const room = Math.max(boxWidth, ...from.map((piece) => font.textWidth(piece, em)));
+    for (const piece of from) {
+      const next = joined.length ? joined.at(-1)! + piece : piece;
+      if (joined.length && font.textWidth(next, em) <= room) joined[joined.length - 1] = next;
+      else joined.push(piece);
+    }
+    return joined;
+  };
+  const position = symbology === "itf14" && options.hriPosition === "split" ? "below" : (options.hriPosition ?? "below");
+  if (position !== "below" && pieces.length) {
+    // Beside the symbol, an element string a line
+    const groups = position === "split" ? [{ lines: join(pieces.slice(0, 1)), where: "below" as const }, { lines: join(pieces.slice(1)), where: "above" as const }]
+      : [{ lines: position === "above" ? join(pieces) : pieces, where: position }];
+    const placed = arrange([boxWidth, boxHeight], groups, textHeight, HRI_GAP_MM / xMm, em, font);
+    const shiftX = MARGIN - placed.minX;
+    const shiftY = MARGIN - placed.minY;
+    const rects = symbolBars(shiftX, shiftY);
+    return {
+      width: MARGIN + placed.maxX - placed.minX + MARGIN, height: MARGIN + placed.maxY - placed.minY + MARGIN, rects,
+      symbolRects: rects.length, texts: placed.texts.map((t) => ({ ...t, x: t.x + shiftX, baseline: t.baseline + shiftY })), xMm,
+      modules: 0, version: null, barHeight: height, barRects: [thickness ? (side ? 4 : 2) : 0, rects.length],
+    };
   }
+  /** The bearer bars and the bars, the box's top left corner at (left, top). */
+  function symbolBars(left: number, top: number): [number, number, number, number][] {
+    const out: [number, number, number, number][] = [];
+    if (thickness) {
+      out.push([left, top, boxWidth, thickness], [left, top + thickness + height, boxWidth, thickness]);
+      if (side) out.push([left, top + thickness, side, height], [left + boxWidth - side, top + thickness, side, height]);
+    }
+    let y = top + thickness;
+    for (const band of bands) {
+      for (const [start, width] of band.runs) out.push([left + side + quietLeft + start, y, width, band.height]);
+      y += band.height;
+    }
+    return out;
+  }
+  const lines = join(pieces);
   const widths = lines.map((line) => font.textWidth(line, em));
   const contentWidth = Math.max(boxWidth, ...widths);
 
   const boxX = MARGIN + (contentWidth - boxWidth) / 2;
-  const rects: [number, number, number, number][] = [];
-  if (thickness) {
-    rects.push([boxX, MARGIN, boxWidth, thickness], [boxX, MARGIN + thickness + height, boxWidth, thickness]);
-    if (side) rects.push([boxX, MARGIN + thickness, side, height], [boxX + boxWidth - side, MARGIN + thickness, side, height]);
-  }
-  const bearers = rects.length;
-  const x0 = boxX + side + quietLeft;
-  let y = MARGIN + thickness;
-  for (const band of bands) {
-    for (const [start, width] of band.runs) rects.push([x0 + start, y, width, band.height]);
-    y += band.height;
-  }
+  const rects = symbolBars(boxX, MARGIN);
+  const bearers = thickness ? (side ? 4 : 2) : 0;
   const texts: LabelText[] = [];
   const top = MARGIN + boxHeight + (lines.length ? HRI_GAP_MM / xMm : 0);
   lines.forEach((line, index) => {

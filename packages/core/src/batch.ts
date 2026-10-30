@@ -2,7 +2,7 @@ import { snapToDots } from "./dots.ts";
 import { encode, widthInModules, type SymbolGeometry } from "./encode.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
-import { labelSvg, layoutLabel, BEARER_FRAME_MM, type Bearer, type ErrorLevel, type LabelOptions, type Layout } from "./layout.ts";
+import { labelSvg, layoutLabel, BEARER_FRAME_MM, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type Layout } from "./layout.ts";
 import { symbolFor } from "./linear.ts";
 import type { SymbolSpecification } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -37,6 +37,9 @@ export interface LabelDesign {
   bearer: Bearer;
   /** Bar width reduction in mm; 0 for none. */
   reduction: number;
+  /** Where the human readable text goes and its height in mm (backlog 1.16); below and 2.2 mm when not given. */
+  hriPosition?: HriPosition;
+  hriHeightMm?: number;
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -76,6 +79,8 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     version: design.version, error: design.error, environment: design.environment, size: design.size, linear,
     linearSize: twoD ? design.linearSize : null, ...(design.spec ? { spec: design.spec, table: design.table } : {}),
     bearer: design.bearer, ...(design.reduction ? { barWidthReduction: design.reduction } : {}),
+    ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
+    ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
   };
   const layout = layoutLabel(options, font);
   const geometry = encode(symbology, data, symbology.endsWith("qrcode")

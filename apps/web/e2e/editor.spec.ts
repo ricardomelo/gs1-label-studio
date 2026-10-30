@@ -696,3 +696,25 @@ test("in bulk: SSCCs made as rows, serial numbers added as a column to a file's 
   await expect(page.locator("#map-6")).toHaveValue("21");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42/21/S-000001?17=271231&3101=000005&11=261001");
 });
+
+// Item 1.16: the human readable text's place and height (GS1 General Specifications 4.14).
+test("the human readable text above, split, left or right, and higher; the symbol still reads", async ({ page }) => {
+  const caption = page.locator(".caption");
+  const size = async () => (/label ([\d.]+) × ([\d.]+) mm/.exec((await caption.textContent())!)!).slice(1).map(Number);
+  await expect(caption).toContainText("label ");
+  const [w0, h0] = await size();
+  await page.selectOption("#opt-hri-position", "left");
+  await expect.poll(async () => (await size())[0]).toBeGreaterThan(w0! + 10);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await page.selectOption("#opt-hri-position", "split");
+  await expect.poll(async () => (await size())[0]).toBe(w0);
+  await page.selectOption("#opt-hri-height", "3");
+  await expect.poll(async () => (await size())[1]).toBeGreaterThan(h0!);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  // An EAN/UPC alone keeps its digits where section 5.2.5 puts them
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "ean13");
+  await expect(page.locator("#opt-hri-position")).toHaveCount(0);
+});

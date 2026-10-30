@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17, 1.12 and 2.3 too): 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17, 1.12, 2.3 and 1.16 too): 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -155,7 +155,13 @@ complete.
 - 1.16 The human readable text placed and sized as the General Specifications allow (section 4.14): below the symbol
   (the default) or above it, beside a 2D symbol where the standard allows it; its character height chosen within the
   standard's range for the symbol and the X-dimension; for every symbol drawn with text, in every export, the scan
-  test still reading the symbol
+  test still reading the symbol — *done 30 October: "Text position" below, above, split (the key below and its
+  attributes above, rule 1d), left or right (an element string a line, never broken, rule 1e), and "Text height" from
+  the 2 mm minimum (rule 2a iii) to 5 mm, 3 mm marked for the GS1 Logistic Label (rule 5c), for the 2D symbols, GS1-128,
+  ITF-14 and the GS1 DataBar family, in the SVG, PNG, PDF, EPS and the files made in bulk; the text clears the quiet
+  zone by a module (2D) or the bars by 1.02 mm as below; beside an EAN/UPC a 2D symbol's text goes below or above;
+  EAN/UPC's digits stay where section 5.2.5 puts them. ZPL keeps the printer's own text placement until 3.2's label
+  layout*
 - 1.17 A GS1 Digital Link URI with parameters of its own: name=value pairs in the query string after the data
   attributes, e.g. `https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3`; a name made only of
   digits is refused (digits are the AIs'), names and values percent-encoded as the GS1 Digital Link standard asks; not

@@ -123,6 +123,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   const [settings, setSettings] = useState<LabelSettings>({
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
+    hriPosition: "below", hriHeightMm: null,
     expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
@@ -244,7 +245,10 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     symbology, hri: effective.hri, version: effective.version, error: effective.error, environment: environment ?? undefined,
     size, linear: effective.linear, linearSize: effective.linearSize, ...(spec ? { spec, table } : {}),
     bearer: effective.bearer, reduction: effective.reduction, gtinOnly,
-  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly]);
+    // Beside an EAN/UPC, a 2D symbol's text stays below or above it (backlog 1.16)
+    hriPosition: effective.linear !== "none" && (effective.hriPosition === "left" || effective.hriPosition === "right") ? "below" : effective.hriPosition,
+    ...(effective.hriHeightMm ? { hriHeightMm: effective.hriHeightMm } : {}),
+  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {

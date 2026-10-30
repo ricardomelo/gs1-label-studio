@@ -9,6 +9,7 @@ import {
   xDimension,
   type Bearer,
   type ErrorLevel,
+  type HriPosition,
   type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
@@ -20,6 +21,8 @@ import {
   ENVIRONMENT_NAMES,
   ERROR_NAMES,
   HRI_CHOICES,
+  HRI_HEIGHTS,
+  HRI_POSITION_NAMES,
   LINEAR_CHOICES,
   type HriChoice,
   type LinearChoice,
@@ -44,6 +47,9 @@ export interface LabelSettings {
   bearer: Bearer;
   /** Bar width reduction in mm (0: none). */
   reduction: number;
+  /** Where the human readable text goes, and its height in mm (null: 2.2 mm) (backlog 1.16). */
+  hriPosition: HriPosition;
+  hriHeightMm: number | null;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -106,6 +112,9 @@ interface Props {
   /** In bulk: the row shown among the data rows, and a way to show another. */
   rows?: { index: number; count: number; row: number; status: RowStatus; onMove: (index: number) => void };
 }
+
+// EAN/UPC's digits are placed by section 5.2.5, not chosen (backlog 1.16).
+const LINEAR_ALONE: SymbologyId[] = ["ean13", "ean8", "upca", "upce"];
 
 // The symbols offered: not GS1 QR Code, which beside the QR code with a GS1 Digital Link URI confuses (ADR 0003).
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -363,6 +372,33 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                 ))}
               </select>
             </div>
+            {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
+              <>
+                <div>
+                  <label htmlFor="opt-hri-position">Text position</label>
+                  <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
+                    {Object.entries(HRI_POSITION_NAMES)
+                      .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
+                      .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
+                      .map(([value, text]) => (
+                        <option key={value} value={value}>
+                          {text}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="opt-hri-height">Text height</label>
+                  <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
+                    {HRI_HEIGHTS.map(([mm, text]) => (
+                      <option key={mm} value={mm === 2.2 ? "" : mm}>
+                        {text}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
             {s.symbology === "itf14" && (
               <div>
                 <label htmlFor="opt-bearer">Bearer bars</label>

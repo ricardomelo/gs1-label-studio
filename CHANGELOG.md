@@ -109,4 +109,6 @@
   transport keys; a GTIN with a GRAI or GIAI); the other keys go to the URI's query string.
 - Sequences made in the studio (item 2.3): serial numbers with a prefix and zeros in front, or SSCCs from an extension
   digit, a company prefix and a first serial reference, as rows or as a column added to a file's rows.
+- The human readable text's place and height (item 1.16, General Specifications 4.14): below, above, split with the key
+  below, left or right of the symbol; from 2 mm high, 3 mm for the GS1 Logistic Label.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -174,6 +174,19 @@ export const ENVIRONMENT_NAMES: Record<string, string> = {
 export const HRI_CHOICES = { full: "Full (every element)", key: "Identification key only", none: "None" } as const;
 export type HriChoice = keyof typeof HRI_CHOICES;
 
+// Where the human readable text goes and how high (GS1 General Specifications 4.14; backlog 1.16).
+export const HRI_POSITION_NAMES = {
+  below: "Below the symbol",
+  above: "Above it",
+  split: "Key below, attributes above",
+  left: "Left of it",
+  right: "Right of it",
+} as const;
+export const HRI_HEIGHTS: [number, string][] = [
+  [2, "2.0 mm (the minimum)"], [2.2, "2.2 mm (default)"], [2.5, "2.5 mm"], [3, "3.0 mm (GS1 Logistic Label)"], [3.5, "3.5 mm"],
+  [4, "4.0 mm"], [5, "5.0 mm"],
+];
+
 export const ERROR_NAMES = { l: "L — low (7 %)", m: "M — medium (15 %)", q: "Q — quartile (25 %)", h: "H — high (30 %)" } as const;
 
 // ITF-14's bearer bars (GS1 General Specifications 5.3.2.4).
