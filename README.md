@@ -105,7 +105,11 @@ the logistic label of phase 4.
 - 1.11 Every identifier and qualifier: every GS1 key the dictionary has (the 16 GS1 Digital Link primary keys are
   offered today) and every qualifier of each, from the current GS1 Digital Link URI syntax; the four main qualifiers
   on the screen and the rest behind "+ Add qualifier", as the attributes are; checked against the GS1 General
-  Specifications 2026 and the GS1 Digital Link standard in `references`
+  Specifications 2026 and the GS1 Digital Link standard in `references`. Beyond the Digital Link: the identification AIs a
+  GS1 Digital Link URI cannot carry — (03) MTO GTIN first (the owner, 30 October 2026), and the others the dictionary
+  marks so, such as (8014), (8040) to (8043) — offered for the element string symbols only (GS1-128, GS1 DataMatrix,
+  GS1 DataBar Expanded), with the pairs the Syntax Engine refuses ((03) not with (01), (02) or (37)). Today (03)
+  pasted is drawn in GS1 DataMatrix, but "Identifier type" shows another key: a defect this item fixes
 - 1.12 Several keys in one symbol. An element string may carry more than one key; the Syntax Engine already checks the
   pairs the General Specifications forbid (e.g. (01) with (02) or (37); (8017) with (8018)) and require ((02) needs
   (37); (8020) and (415) go together). The cases to support: a logistic unit, SSCC (00) with the content's GTIN (02)
