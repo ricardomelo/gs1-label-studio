@@ -61,16 +61,36 @@ export function pdfContent(layout: Layout, font: HriFont): { content: string; wi
 
 /** The label as a one-page PDF the size of the label: vector modules, bars and glyph outlines, no fonts. */
 export async function labelPdf(options: LabelOptions, layout: Layout, font: HriFont): Promise<Uint8Array<ArrayBuffer>> {
-  const { content, width, height } = pdfContent(layout, font);
-  const stream = await deflate(new TextEncoder().encode(content), "deflate");
+  return pdfDocument([pdfContent(layout, font)], options.data);
+}
+
+/** A page of a PDF: its size in points and its content stream. */
+export interface PdfPage {
+  content: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * A PDF of `pages`, each its own size (backlog 2.4: labels a page each, or label sheets). Objects: the catalogue, the
+ * page tree, then each page followed by its content, then the document's information, so that one page gives the
+ * bytes the resolver's render_pdf gave.
+ */
+export async function pdfDocument(pages: readonly PdfPage[], title: string): Promise<Uint8Array<ArrayBuffer>> {
   const ascii = latin1; // the structure is ASCII
+  const kids = pages.map((_, i) => `${3 + 2 * i} 0 R`).join(" ");
   const objects: Uint8Array[][] = [
     [ascii("<< /Type /Catalog /Pages 2 0 R >>")],
-    [ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>")],
-    [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(width, 3)} ${pyFixed(height, 3)}] /Contents 4 0 R /Resources << >> >>`)],
-    [ascii(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, ascii("\nendstream")],
-    [latin1(`<< /Title ${pdfText(options.data)} /Producer (GS1 Label Studio) >>`)],
+    [ascii(`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`)],
   ];
+  for (const [i, page] of pages.entries()) {
+    const stream = await deflate(new TextEncoder().encode(page.content), "deflate");
+    objects.push(
+      [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(page.width, 3)} ${pyFixed(page.height, 3)}] /Contents ${4 + 2 * i} 0 R /Resources << >> >>`)],
+      [ascii(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, ascii("\nendstream")],
+    );
+  }
+  objects.push([latin1(`<< /Title ${pdfText(title)} /Producer (GS1 Label Studio) >>`)]);
   const parts: Uint8Array[] = [Uint8Array.from([...ascii("%PDF-1.4\n%"), 0xe2, 0xe3, 0xcf, 0xd3, 0x0a])];
   let length = parts[0]!.length;
   const push = (bytes: Uint8Array) => {

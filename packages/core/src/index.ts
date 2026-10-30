@@ -173,7 +173,7 @@ export {
 } from "./epc.ts";
 export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";
 export { crc32, deflate } from "./deflate.ts";
-export { CMYK_BLACK, CMYK_WHITE, labelPdf, pdfContent } from "./pdf.ts";
+export { CMYK_BLACK, CMYK_WHITE, labelPdf, pdfContent, pdfDocument, type PdfPage } from "./pdf.ts";
 export { labelEps } from "./eps.ts";
 export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
@@ -202,3 +202,18 @@ export {
   type ReportCounts,
   type RowStatus,
 } from "./report.ts";
+export {
+  DEFAULT_PATTERN,
+  generateBatch,
+  labelFor,
+  patternName,
+  patternProblem,
+  zplOptionsFor,
+  type BatchFile,
+  type BatchRequest,
+  type BatchResult,
+  type BatchRow,
+  type DrawnLabel,
+  type LabelDesign,
+} from "./batch.ts";
+export { fitsSheet, LABEL_SHEETS, sheetCells, sheetPages, sheetProblem, type LabelSheet } from "./sheets.ts";
