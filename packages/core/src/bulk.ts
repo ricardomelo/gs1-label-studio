@@ -1,5 +1,5 @@
 import { attributeByCode, AttributeError } from "./attributes.ts";
-import { aiEntry, primaryKeys, qualifiersOf } from "./dictionary.ts";
+import { aiEntry, identifierKeys, qualifiersOf } from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
@@ -68,7 +68,7 @@ let titles: Map<string, string> | undefined;
 /** The GS1 data titles of the keys, their qualifiers and the common attributes, in plain words ("batch lot"). */
 function dataTitles(): Map<string, string> {
   titles ??= new Map(
-    [...primaryKeys().flatMap((key) => [key, ...qualifiersOf(key)]), "11", "13", "15", "16", "17", "30", "37", "422"]
+    [...identifierKeys().flatMap((key) => [key, ...qualifiersOf(key)]), "11", "13", "15", "16", "17", "30", "37", "422"]
       .map((ai) => [ai, plain(aiEntry(ai)?.title ?? "")] as [string, string])
       .filter(([, title]) => title),
   );
@@ -120,7 +120,7 @@ export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: 
     if (ai && value) pairs.push([ai, normaliseCell(ai, value)]);
   });
   for (const [ai, value] of fixed) if (ai && value.trim()) pairs.push([ai, normaliseCell(ai, value)]);
-  const keys = new Set(primaryKeys());
+  const keys = new Set(identifierKeys());
   const keyPair = pairs.find(([ai]) => keys.has(ai));
   if (!keyPair) {
     const keyColumn = mapping.findIndex((ai) => ai && keys.has(ai));
@@ -157,7 +157,7 @@ export interface CheckedRow {
 /** Every row identified and checked by the Syntax Engine, or the reason it cannot be, with the columns at fault. */
 export function checkRows(engine: SyntaxEngine, table: Table, mapping: ColumnMapping, fixed: FixedValue[] = [],
   stem: string | null = null): CheckedRow[] {
-  const keys = new Set(primaryKeys());
+  const keys = new Set(identifierKeys());
   const keyColumns = mapping.flatMap((ai, column) => (ai && keys.has(ai) ? [column] : []));
   return table.rows.map((cells, index) => {
     const row = index + 2;

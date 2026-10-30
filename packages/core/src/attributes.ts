@@ -1,4 +1,4 @@
-import { dataAttributes, formatHint, pathAis, type Attribute, type Component } from "./dictionary.ts";
+import { dataAttributes, elementStringAttributes, formatHint, pathAis, type Attribute, type Component } from "./dictionary.ts";
 
 /**
  * Data attributes — informative AIs (expiry date, net weight, price…) beside the identification (backlog item 1.9):
@@ -71,6 +71,7 @@ export function decimalFamilies(attributes: Record<string, Attribute>): Record<s
 }
 
 const ATTRIBUTES = dataAttributes();
+const ELEMENT_STRING = elementStringAttributes();
 const FAMILIES = decimalFamilies(ATTRIBUTES);
 const PATH_AIS = pathAis();
 const MEMBERS = new Set(Object.values(FAMILIES).flatMap((f) => f.members!));
@@ -87,15 +88,20 @@ export function offeredAttributes(): Offered[] {
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
-/** The attributes for a key: its own AI and its qualifiers go in the identification, so they are not offered. */
+/**
+ * The attributes for a key: its own AI and its qualifiers go in the identification, so they are not offered. Besides
+ * the resolver's (the GS1 Digital Link attributes), those of element strings only, marked so (backlog 1.11).
+ */
 export function attributesForKey(key: string): Offered[] {
   const inPath = new Set([key, ...(PATH_AIS[key] ?? [])]);
-  return offeredAttributes().filter((a) => !inPath.has(a.ai));
+  return [...offeredAttributes(), ...Object.values(ELEMENT_STRING)]
+    .filter((a) => !inPath.has(a.ai))
+    .sort((a, b) => cmp(a.ai.slice(0, 2), b.ai.slice(0, 2)) || cmp(a.ai, b.ai));
 }
 
 /** An offered AI, a decimal family ("310n") or a member of one ("3103": 3 decimals, typed in the list). */
 export function attributeByCode(code: string): Resolved | undefined {
-  const found = ATTRIBUTES[code] && !MEMBERS.has(code) ? ATTRIBUTES[code] : FAMILIES[code];
+  const found = ATTRIBUTES[code] && !MEMBERS.has(code) ? ATTRIBUTES[code] : (FAMILIES[code] ?? ELEMENT_STRING[code]);
   if (found || !/^\d{4}$/.test(code)) return found;
   const family = FAMILIES[code.slice(0, 3) + "n"];
   return family && Number(code[3]) <= family.decimals!

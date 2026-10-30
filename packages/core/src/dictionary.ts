@@ -38,6 +38,8 @@ export interface Attribute {
   ai: string;
   title: string;
   components: Component[];
+  /** Carried by element strings only: a GS1 Digital Link URI cannot (backlog 1.11). */
+  elementStringOnly?: boolean;
 }
 
 /** The AIs permitted as GS1 Digital Link data attributes (flag "?"). */
@@ -49,31 +51,75 @@ export function dataAttributes(): Record<string, Attribute> {
   return out;
 }
 
-/** For every primary key, the AIs that belong in its path (its qualifiers): {"01": {"22", "10", "21", "235"}}. */
-export function pathAis(): Record<string, Set<string>> {
-  const out: Record<string, Set<string>> = {};
+/**
+ * The AIs only element strings carry — neither a key, a qualifier nor a GS1 Digital Link attribute, such as (8014)
+ * HIDRI, (8040) IMEI or (8200) PRODUCT URL —, marked `elementStringOnly` (backlog 1.11).
+ */
+export function elementStringAttributes(): Record<string, Attribute> {
+  const out: Record<string, Attribute> = {};
+  const withKeys = new Set(identifierKeys().flatMap((key) => [key, ...qualifiersOf(key)]));
   for (const [ai, entry] of Object.entries(DICTIONARY.ais)) {
-    if (entry.dlpkey) out[ai] = new Set(entry.dlpkey.flat());
+    if (!entry.flags.includes("?") && !withKeys.has(ai)) {
+      out[ai] = { ai, title: entry.title, components: entry.components, elementStringOnly: true };
+    }
   }
   return out;
 }
 
-/** The primary keys, in the dictionary's order. */
+/**
+ * GS1 identifiers a GS1 Digital Link URI cannot carry (GS1 General Specifications 26.0, section 1.3, whose tables say
+ * "Not supported" for the Digital Link): the Made-to-Order GTIN (03), with its batch/lot (10) or serial number (21)
+ * in element strings (1.3.1.6, 1.3.1.8). Backlog 1.11. The HIDRI (8014) needs a GTIN (01) beside it, so it is an
+ * attribute of (01) rather than a key of its own.
+ */
+const ELEMENT_STRING_KEYS: Record<string, string[][]> = { "03": [["10", "21"]] };
+
+/** A key's alternative ordered sequences of qualifiers: its GS1 Digital Link path's, or its element string's. */
+function alternativesOf(key: string): string[][] {
+  return aiEntry(key)?.dlpkey ?? ELEMENT_STRING_KEYS[key] ?? [];
+}
+
+/** For every key, the AIs that belong with it (its qualifiers): {"01": {"22", "10", "21", "235"}, "03": {"10", "21"}}. */
+export function pathAis(): Record<string, Set<string>> {
+  const out: Record<string, Set<string>> = {};
+  for (const key of identifierKeys()) out[key] = new Set(alternativesOf(key).flat());
+  return out;
+}
+
+/** The primary keys of a GS1 Digital Link URI, in the dictionary's order. */
 export function primaryKeys(): string[] {
   return Object.entries(DICTIONARY.ais)
     .filter(([, entry]) => entry.dlpkey)
     .map(([ai]) => ai);
 }
 
+/** Every key the editor offers: the GS1 Digital Link primary keys, then those of element strings only ((03)). */
+export function identifierKeys(): string[] {
+  return [...primaryKeys(), ...Object.keys(ELEMENT_STRING_KEYS)];
+}
+
+/** Whether a GS1 Digital Link URI can carry the key; (03) only goes in element strings. */
+export function isDigitalLinkKey(key: string): boolean {
+  return Boolean(aiEntry(key)?.dlpkey);
+}
+
 /** The qualifiers of a key, in path order, each alternative sequence in turn (01: 22, 10, 21, then 235). */
 export function qualifiersOf(key: string): string[] {
-  return [...new Set(aiEntry(key)?.dlpkey?.flat() ?? [])];
+  return [...new Set(alternativesOf(key).flat())];
 }
 
 /** Whether two qualifiers of a key belong to different alternatives (01: 235 is not combined with 22, 10, 21). */
 export function exclusiveQualifiers(key: string, a: string, b: string): boolean {
-  const alternatives = aiEntry(key)?.dlpkey ?? [];
-  return !alternatives.some((sequence) => sequence.includes(a) && sequence.includes(b));
+  return !alternativesOf(key).some((sequence) => sequence.includes(a) && sequence.includes(b));
+}
+
+/**
+ * The qualifiers shown on the screen: the first `max` of the key's, and any other already chosen; the rest are behind
+ * "+ Add qualifier" (the owner, 29 October 2026). No key of the General Specifications 26.0 has more than four.
+ */
+export function shownQualifiers(all: string[], chosen: string[], max = 4): { shown: string[]; more: string[] } {
+  const shown = all.filter((ai, index) => index < max || chosen.includes(ai));
+  return { shown, more: all.filter((ai) => !shown.includes(ai)) };
 }
 
 const SIZE: Record<ComponentType, [string, string]> = {

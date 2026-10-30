@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AttributeError,
   DICTIONARY,
+  isDigitalLinkKey,
   offeredAttributes,
   pathAis,
   refuseDayZero,
@@ -40,7 +41,10 @@ describe("data attributes, as the resolver offered and converted them", () => {
   });
 
   it("puts the same qualifiers in each key's path", () => {
-    expect(Object.fromEntries(Object.entries(pathAis()).map(([k, v]) => [k, [...v].sort()]))).toEqual(reference.pathAis);
+    const digitalLink = Object.entries(pathAis()).filter(([key]) => isDigitalLinkKey(key));
+    expect(Object.fromEntries(digitalLink.map(([k, v]) => [k, [...v].sort()]))).toEqual(reference.pathAis);
+    // Beyond the resolver: the Made-to-Order GTIN's batch/lot and serial number, in element strings only (1.11).
+    expect([...pathAis()["03"]!]).toEqual(["10", "21"]);
   });
 
   it.each(reference.decimals)("decimal family %s with %j", (ai, value, expected) => {
