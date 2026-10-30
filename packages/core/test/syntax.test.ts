@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   dataFor,
+  encodedCount,
   encode,
   InputError,
   syntaxEngine,
@@ -110,5 +111,28 @@ describe("what each symbol carries", () => {
     expect(zeroSuppress("012345000065")).toBe("01234565");
     expect(zeroSuppress("012345000066")).toBeNull();
     expect(zeroSuppress("614141000036")).toBeNull();
+  });
+});
+
+// The caption's count of encoded characters (the owner, 30 October 2026): FNC1 and group separators included.
+describe("the characters a symbol encodes", () => {
+  it("counts an element string's FNC1 and the separators after fields of no predefined length", async () => {
+    const engine = await syntaxEngine();
+    const batchThenExpiry = engine.parse("(01)09506000134376(10)B42(17)271231");
+    expect(batchThenExpiry.dataStr).toBe("^010950600013437610B42^17271231");
+    expect(encodedCount("gs1-datamatrix", batchThenExpiry, batchThenExpiry.elementString)).toEqual({ characters: 31, fnc1: 1, separators: 1 });
+    // The batch last: no separator after it.
+    const expiryThenBatch = engine.parse("(01)09506000134376(17)271231(10)B42");
+    expect(encodedCount("gs1-128", expiryThenBatch, expiryThenBatch.elementString)).toEqual({ characters: 30, fnc1: 1, separators: 0 });
+    const two = engine.parse("(01)09506000134376(10)B42(21)S1(17)271231");
+    expect(encodedCount("gs1-datamatrix", two, two.elementString)).toEqual({ characters: 36, fnc1: 1, separators: 2 });
+  });
+
+  it("counts a GS1 Digital Link URI's characters and a GTIN's digits, with no FNC1", async () => {
+    const engine = await syntaxEngine();
+    const input = engine.parse("(01)09506000134376(10)B42");
+    expect(encodedCount("dl-qrcode", input, input.digitalLinkUri)).toEqual({ characters: 43, fnc1: 0, separators: 0 });
+    expect(encodedCount("ean13", input, "9506000134376")).toEqual({ characters: 13, fnc1: 0, separators: 0 });
+    expect(encodedCount("databar-omni", input, "(01)09506000134376")).toEqual({ characters: 14, fnc1: 0, separators: 0 });
   });
 });

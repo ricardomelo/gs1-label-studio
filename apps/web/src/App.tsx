@@ -13,6 +13,7 @@ import {
   parseTableFile,
   baseX,
   dataFor,
+  encodedCount,
   encode,
   expectedReads,
   ENVIRONMENTS,
@@ -22,6 +23,7 @@ import {
   HriFont,
   identify,
   InputError,
+  ITF14_RATIO,
   labelEps,
   labelPdf,
   labelPng,
@@ -271,10 +273,27 @@ export function App() {
       const geometry = encode(symbology, data, symbology.endsWith("qrcode") ? { eclevel: effective.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) } : {});
       const wMm = layout.width * layout.xMm;
       const hMm = layout.height * layout.xMm;
+      // The modules in all (a matrix's rows times its columns, a linear symbol's width) and the characters encoded,
+      // FNC1 and group separators included (the owner's request of 30 October 2026), at the end of the caption.
+      const matrix = geometry.kind === "matrix"
+        ? `${geometry.rows} × ${geometry.cols} = ${(geometry.rows * geometry.cols).toLocaleString("en-GB")} modules`
+        : "";
+      const count = encodedCount(symbology, identified, data);
+      const marks = [count.fnc1 ? "FNC1" : "", count.separators ? `${count.separators} group separator${count.separators === 1 ? "" : "s"}` : ""]
+        .filter(Boolean).join(" and ");
+      const tail = [
+        // From the first bar to the last (bwip-js may end the widths with a space); ITF-14 as the layout draws it, its
+        // wide bars at the ratio 2.5 (bwip-js gives 2)
+        geometry.kind === "linear"
+          ? `${geometry.widths.slice(0, geometry.widths.length % 2 ? undefined : -1)
+            .reduce((sum, w) => sum + (symbology === "itf14" && w > 1 ? ITF14_RATIO : w), 0)} modules wide`
+          : "",
+        `${count.characters} characters encoded${marks ? ` (${marks} included)` : ""}`,
+      ].filter(Boolean).join(" · ");
       const symbolPart = layout.version
-        ? `QR code version ${layout.version} · ${layout.modules} × ${layout.modules} modules · correction ${effective.error.toUpperCase()}`
+        ? `QR code version ${layout.version} · ${matrix} · correction ${effective.error.toUpperCase()}`
         : layout.modules
-          ? `${SYMBOLOGIES[symbology].name} · ${layout.modules} × ${layout.modules} modules`
+          ? `${SYMBOLOGIES[symbology].name} · ${matrix}`
           : layout.barHeight !== undefined
             ? `${SYMBOLOGIES[symbology].name} · bars ${(layout.barHeight * layout.xMm).toFixed(2)} mm`
             : SYMBOLOGIES[symbology].name;
@@ -284,7 +303,7 @@ export function App() {
           widthMm: wMm, heightMm: hMm, expected: expectedReads(options),
           pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
           hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
-          caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 %`,
+          caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 % · ${tail}`,
         },
         data, geometry, options, layout,
       };

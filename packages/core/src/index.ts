@@ -21,6 +21,8 @@ export {
 } from "./zpl.ts";
 export {
   dataFor,
+  encodedCount,
+  type EncodedCount,
   InputError,
   syntaxEngine,
   SyntaxEngine,

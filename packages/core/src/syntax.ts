@@ -27,6 +27,11 @@ export interface ParsedInput {
   digitalLinkUri: string;
   /** Why there is no GS1 Digital Link URI (no primary key, an AI that is not a data attribute…), in the engine's words. */
   digitalLinkError?: string;
+  /**
+   * The element string as a symbol carries it, in the engine's notation: "^" for FNC1 first, then "^" for each group
+   * separator after a field whose length is not predefined ("^010950600013437610B42^17271231").
+   */
+  dataStr: string;
 }
 
 export class InputError extends Error {
@@ -115,7 +120,8 @@ export class SyntaxEngine {
       // No primary key, or an AI a GS1 Digital Link URI cannot carry: the element string symbols still can.
       digitalLinkError = error instanceof Error ? error.message : String(error);
     }
-    return { kind, elementString, elements, digitalLinkUri, ...(digitalLinkError ? { digitalLinkError } : {}) };
+    const dataStr = gs.dataStr;
+    return { kind, elementString, elements, digitalLinkUri, ...(digitalLinkError ? { digitalLinkError } : {}), dataStr };
   }
 
   free(): void {
@@ -203,4 +209,24 @@ export function zeroSuppress(gtin12: string): string | null {
   if (!body) return null;
   if (String(checkDigit(gtin12.slice(0, 11))) !== check) return null;
   return `0${body}${check}`;
+}
+
+/** How many characters a symbol encodes, with the FNC1 and the group separators an element string needs. */
+export interface EncodedCount {
+  characters: number;
+  fnc1: number;
+  separators: number;
+}
+
+/**
+ * The characters `data` puts in the symbol (backlog: the caption, the owner's request of 30 October 2026): a GS1
+ * Digital Link URI's characters; a GTIN's digits; an element string's AIs and values with its FNC1 and the group
+ * separators after fields of no predefined length, as the Syntax Engine writes them.
+ */
+export function encodedCount(symbology: SymbologyId, input: ParsedInput, data: string): EncodedCount {
+  const kind = SYMBOLOGIES[symbology].data;
+  if (kind === "uri") return { characters: data.length, fnc1: 0, separators: 0 };
+  if (kind === "gtin") return { characters: data.replace(/^\(01\)/, "").length, fnc1: 0, separators: 0 };
+  const marks = (input.dataStr.match(/\^/g) ?? []).length;
+  return { characters: input.dataStr.length, fnc1: Math.min(marks, 1), separators: Math.max(marks - 1, 0) };
 }

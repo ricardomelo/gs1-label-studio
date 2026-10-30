@@ -165,7 +165,7 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await expect(step).toContainText("The SSCC already answers 5 questions of the tree: not an asset, document or location; " +
     "not a service relationship (GSRN); not sold at a retail till; not sold in a pharmacy; a logistic unit.");
   await expect(step.getByRole("radio", { checked: true })).toContainText("GS1-128");
-  await expect(page.locator(".caption")).toHaveText("GS1-128 · bars 31.75 mm · X 0.495 mm · label 89.1 × 37.6 mm at 100 %");
+  await expect(page.locator(".caption")).toHaveText("GS1-128 · bars 31.75 mm · X 0.495 mm · label 89.1 × 37.6 mm at 100 % · 156 modules wide · 21 characters encoded (FNC1 included)");
   await expect(page.locator("#opt-size option")).toHaveText([
     "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
   ]);
@@ -200,7 +200,7 @@ test("a case in general distribution: ITF-14 with its bearer bars and digits, at
   await answer(page, "Is it a tobacco product under the EU traceability regulation?", "No");
   await answer(page, "Is it a regulated healthcare item not sold at retail?", "No");
   await expect(page.locator(".chosen")).toContainText("ITF-14 · table 2");
-  await expect(page.locator(".caption")).toHaveText("ITF-14 · bars 31.75 mm · X 0.495 mm · label 81.2 × 47.3 mm at 100 %");
+  await expect(page.locator(".caption")).toHaveText("ITF-14 · bars 31.75 mm · X 0.495 mm · label 81.2 × 47.3 mm at 100 % · 120.5 modules wide · 14 characters encoded");
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "19506000134373");
   await expect(page.locator("#opt-bearer option")).toHaveText([
     "A frame, 4.83 mm (any printing; needed with printing plates)", "Top and bottom, 2X (printing without plates: thermal, laser)",
@@ -499,3 +499,13 @@ test("zoom in and out on the label's canvas, back to 100 % on a click or a chang
   await page.getByRole("button", { name: "Fit" }).click();
   await expect(page.locator(".zoom-value")).toHaveText("100 %");
 });
+
+// The caption's modules and encoded characters (the owner, 30 October 2026).
+test("the caption counts the modules and the characters encoded, FNC1 and group separators included", async ({ page }) => {
+  await expect(page.locator(".caption")).toContainText("QR code version 4 · 33 × 33 = 1,089 modules · correction M");
+  await expect(page.locator(".caption")).toContainText("· 53 characters encoded");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await expect(page.locator(".caption")).toContainText("31 characters encoded (FNC1 and 1 group separator included)");
+});
+

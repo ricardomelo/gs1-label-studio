@@ -87,4 +87,6 @@
   below it, the options below them in as many columns as fit.
 - Zoom at the label canvas's lower right corner (the owner's request): −, the percentage (a click goes back to 100 %)
   and +, from 25 % to 400 % of the fitted label or of the real size, rulers included; Fit and Real size start at 100 %.
+- The caption counts the modules (a 2D symbol's rows × columns and their total, a linear symbol's width from its first
+  bar to its last) and the characters encoded, the FNC1 and the group separators included (the owner's request).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
