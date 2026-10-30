@@ -39,10 +39,14 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 ## Backlog
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
-request before 2.4): 2.4 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
-editor's corrections (1.10) came first, being small and seen every day; several keys (1.12) before the
-generated SSCCs (2.3), which a logistic unit's label needs; GS1-128 over several symbols (1.13) after them, opening
-the logistic label of phase 4.
+request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least): 2.4 → 1.15 → 1.17
+→ 1.12 → 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
+(1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
+several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
+sized (1.16) before GS1-128 over several symbols (1.13), whose stacked symbols each carry it, opening the logistic
+label of phase 4; signatures and verifiable credentials (1.18) and writing NFC tags (1.19) after the symbols are
+complete.
 
 **Phase 0 — setting up**
 
@@ -134,6 +138,29 @@ the logistic label of phase 4.
   18004 defines them, alphanumeric only when the data allow it (upper case: a GS1 Digital Link URI's scheme and domain
   may be upper case, its path and values are case-sensitive). bwip-js has no option for it: an encoder that takes
   segments is needed (to choose), and every mode read back by ZXing
+
+*The owner's ideas of 30 October 2026 added items 1.15 to 1.19.*
+
+- 1.15 Qualifiers and data attributes in one block: every qualifier the key has, and every attribute, added one at a
+  time with "+ Add attributes" (an AI chosen from the whole list, the qualifiers of the key first), each row checked as
+  today; the qualifiers still go to the GS1 Digital Link URI's path in the order its syntax asks, whatever order they
+  were added in
+- 1.16 The human readable text placed and sized as the General Specifications allow (section 4.15): below the symbol
+  (the default) or above it, beside a 2D symbol where the standard allows it; its character height chosen within the
+  standard's range for the symbol and the X-dimension; for every symbol drawn with text, in every export, the scan
+  test still reading the symbol
+- 1.17 A GS1 Digital Link URI with parameters of its own: name=value pairs in the query string after the data
+  attributes, e.g. `https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3`; a name made only of
+  digits is refused (digits are the AIs'), names and values percent-encoded as the GS1 Digital Link standard asks; not
+  in element strings, which have no place for them
+- 1.18 Verifiable credentials and digital signatures as GS1 defines them: the GS1 Digital Signatures Technical
+  Implementation Guideline 1.1.0 (January 2026: the digital signature AI (8030) over the symbol's data) and the GS1
+  Verifiable Credentials data model (ref.gs1.org/gs1/vc: the credentials and their JSON-LD contexts); the keys stay in
+  the browser; the guideline and the data model are in `references`. What to sign and how the keys are held to be
+  decided with mock-ups
+- 1.19 Writing NFC tags: the GS1 Digital Link URI (or the EPC section's NFC links) written to an NFC tag as an NDEF URI
+  record through Web NFC, where the browser has it (Chrome on Android); read back from the tag to check it; where it
+  is missing, the NDEF message as a file for a tag writer
 
 **Phase 2 — in bulk**
 
