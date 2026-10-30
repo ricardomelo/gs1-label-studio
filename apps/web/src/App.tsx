@@ -21,8 +21,11 @@ import {
   HriFont,
   identify,
   InputError,
+  generateBatch,
   labelFor,
+  patternName,
   zplOptionsFor,
+  type BatchRow,
   type LabelDesign,
   isDigitalLinkKey,
   ITF14_RATIO,
@@ -64,6 +67,7 @@ import {
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
+import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
@@ -133,6 +137,9 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   // The validation report (backlog 2.2): values fixed in the studio and rows skipped, until another file is taken.
   const [edits, setEdits] = useState<CellEdits>({});
   const [skipped, setSkipped] = useState<ReadonlySet<number>>(new Set());
+  // Generating every row (backlog 2.4): its progress while it runs, then what was made.
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [generated, setGenerated] = useState<{ result: string | null; error: string | null }>({ result: null, error: null });
 
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
@@ -162,6 +169,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     setRowIndex(0);
     setEdits({});
     setSkipped(new Set());
+    setGenerated({ result: null, error: null });
     setTableError(null);
     setFileError(null);
   }
@@ -348,6 +356,33 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     }
   }
 
+  // In bulk: every row ready or fixed drawn with the label's design, in one zip (backlog 2.4).
+  const batchRows: BatchRow[] = rows.map((row, index) => ({
+    row: row.row, ...(row.identified ? { identified: row.identified } : {}), ...(row.error ? { error: row.error } : {}),
+    ...(skipped.has(index) ? { skipped: true } : {}),
+  }));
+  const readyRows = batchRows.filter((row) => row.identified && !row.skipped);
+  async function generate(choice: GenerateChoice) {
+    if (!font) return;
+    setGenerated({ result: null, error: null });
+    setProgress({ done: 0, total: readyRows.length });
+    try {
+      const result = await generateBatch(batchRows, { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText },
+        font, (done, total) => setProgress({ done, total }));
+      const stem = source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows";
+      download(`${stem}_labels.zip`, result.zip, "application/zip");
+      setGenerated({
+        result: `${result.generated} ${result.generated === 1 ? "label" : "labels"} generated` +
+          (result.left ? `; ${result.left} ${result.left === 1 ? "row" : "rows"} left out, each with its reason in generated.csv.` : "."),
+        error: null,
+      });
+    } catch (error) {
+      setGenerated({ result: null, error: errorText(error) });
+    } finally {
+      setProgress(null);
+    }
+  }
+
   return (
     <>
       <header className="top">
@@ -491,6 +526,21 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               }
             : undefined}
           fileError={fileError}
+          generate={bulk && rows.length
+            ? (
+                <GeneratePanel
+                  ready={blocked || !font ? 0 : readyRows.length}
+                  left={batchRows.length - readyRows.length}
+                  example={(pattern) => readyRows[0] ? patternName(pattern, readyRows[0].row, symbology, readyRows[0].identified!) : null}
+                  dpi={settings.dpi}
+                  {...(view.widthMm && view.heightMm ? { labelMm: [view.widthMm, view.heightMm] as const } : {})}
+                  progress={progress}
+                  result={generated.result}
+                  error={blocked ?? generated.error}
+                  onGenerate={(choice) => void generate(choice)}
+                />
+              )
+            : undefined}
         >
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
         </LabelCard>

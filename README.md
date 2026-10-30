@@ -39,7 +39,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 ## Backlog
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
-request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least): 2.4 → 1.15 → 1.17
+request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
+day): 1.15 → 1.17
 → 1.12 → 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
@@ -174,7 +175,14 @@ complete.
   in error skipped; the report and the corrected rows as CSV*
 - 2.3 Generated sequences: serial numbers, SSCCs
 - 2.4 Outputs: zip by row with a name pattern, multi-page PDF, laser label sheets (Pimaco, Avery, custom), one print
-  file per printer language, CSV of what was generated
+  file per printer language, CSV of what was generated — *done 30 October (mock-up A of three): "Generate in bulk"
+  under the label's Export bar draws the label shown, with its options, for every row ready or fixed, in one zip: SVG,
+  PNG, PDF or EPS for each row, named by a pattern ({row}, {symbol}, {key}, any AI such as {10}; a name repeated is
+  numbered); one PDF a label a page; label sheets (Avery L7160, L7163, L7651, 5160 or a custom sheet), each label at
+  100 % centred in its place, from any place of the first sheet, a label larger than the sheet's refused and said
+  before generating; one ZPL file with the printer's own commands; generated.csv with every row, its files or why
+  none. Pimaco's sheets wait: its 2026 catalogue gives their label sizes and counts but not their margins or pitch
+  (a custom sheet takes one meanwhile). The printer languages after ZPL come with phase 3*
 - 2.5 Web Workers with progress and cancel; a measured performance target
 
 **Phase 3 — printers** (ADR 0002)

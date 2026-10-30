@@ -96,4 +96,8 @@
 - An attribute's AI is typed or picked from a list whose arrow shows every AI even once one is chosen (a browser's
   datalist showed the chosen one alone); "Start over" in the header clears the data and every choice, asking first
   when rows are loaded.
+- Generating in bulk (item 2.4): "Generate N labels" draws the label shown for every row ready or fixed, in one zip —
+  a file a row (SVG, PNG, PDF, EPS) named by a pattern, one PDF a label a page, Avery label sheets or a custom sheet
+  (labels at 100 %, centred, refused when larger), one ZPL file, and generated.csv listing every row and what was made
+  of it or why nothing was.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

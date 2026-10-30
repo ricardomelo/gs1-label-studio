@@ -95,6 +95,8 @@ const REDUCTIONS = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05];
 interface Props {
   /** Shown below the options: the EPC section. */
   children?: React.ReactNode;
+  /** In bulk, under the Export bar: generating every row (backlog 2.4). */
+  generate?: React.ReactNode;
   settings: LabelSettings;
   onChange: (settings: LabelSettings) => void;
   view: LabelView;
@@ -137,7 +139,7 @@ const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 const step = (zoom: number, by: 1 | -1) =>
   by > 0 ? (ZOOMS.find((z) => z > zoom) ?? zoom) : ([...ZOOMS].reverse().find((z) => z < zoom) ?? zoom);
 
-export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
+export function LabelCard({ children, generate, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const [real, setReal] = useState(false);
   // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
@@ -298,6 +300,7 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               </button>
             </div>
           </div>
+          {generate}
         </div>
 
         <div>

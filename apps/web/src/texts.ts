@@ -230,3 +230,12 @@ export const BULK_TEXTS = {
     "A value fixed here is checked at once; the file itself is not changed: download the corrected rows to fix it at " +
     "its source. Skipped rows are left out of what is generated.",
 } as const;
+
+// In bulk, generating every row (backlog 2.4).
+export const GENERATE_TEXTS = {
+  intro: "The label above, with its options, drawn for every row ready or fixed.",
+  pattern: "{row}, {symbol}, {key} (the key's value) or an AI such as {01} or {10}; a name repeated is numbered.",
+  sheet: "Labels are printed at 100 %, centred in their place; a label larger than the sheet's is left out.",
+  zip: "One zip: the files chosen and generated.csv, which lists every row and what was made of it.",
+  nothing: "Choose at least one file to generate.",
+} as const;

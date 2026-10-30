@@ -225,3 +225,18 @@ table.mapping th:nth-child(2) { width: 30%; }
 .combo-list li[aria-selected="true"] { background: var(--soft); color: var(--navy); }
 .combo-list .note { color: var(--muted); font-size: 12px; }
 
+
+/* In bulk, generating every row (backlog 2.4, mock-up A) */
+.generate { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 10px; }
+.generate-head { display: flex; gap: 6px 10px; align-items: baseline; flex-wrap: wrap; }
+.generate-head .hint { margin: 0; }
+.generate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 8px; }
+.generate fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px 10px; min-width: 0; }
+.generate legend { font-size: 13px; font-weight: 700; padding: 0 4px; }
+.generate .checks { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.generate label.check { display: inline-flex; gap: 6px; align-items: center; font-weight: 400; margin: 8px 16px 0 0; }
+.generate label.check input { width: auto; }
+.generate input.start { width: 64px; padding: 2px 6px; }
+.sheet-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.generate-go { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.generate-go .hint { margin: 0; }

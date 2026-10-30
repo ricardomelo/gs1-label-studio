@@ -561,3 +561,42 @@ test("Start over clears the data and every choice, as on a first visit", async (
   await expect(page.getByRole("button", { name: "One code" })).toHaveAttribute("aria-pressed", "true");
 });
 
+
+// Item 2.4 (mock-up A of three, 30 October 2026): in bulk, the label shown drawn for every row ready or fixed, in one zip.
+test("in bulk: Generate N labels makes each row's files, a PDF and label sheets, and the CSV of what was generated", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.locator("#rows-file").setInputFiles(new URL("../../../packages/core/test/fixtures/bulk/products.xlsx", import.meta.url).pathname);
+  await expect(page.locator(".summary")).toContainText("2 rows ready · 2 with errors");
+  const panel = page.locator(".generate");
+  await expect(panel).toContainText("2 rows left out (errors or skipped) are named in the CSV.");
+  await page.locator("#gen-pattern").fill("{01}_{lot}");
+  await expect(panel.locator(".error")).toContainText("Not a name the pattern knows: {lot}.");
+  await expect(page.getByRole("button", { name: "Generate 2 labels" })).toBeDisabled();
+  await page.locator("#gen-pattern").fill("{01}_{10}");
+  await expect(panel).toContainText("First: 09506000134376_B42.svg");
+  // A sheet whose labels are smaller than the label shown: said before anything is generated
+  await page.selectOption("#gen-sheet", "avery-l7651");
+  await expect(panel).toContainText("is larger than the sheet's labels (38.1 × 21.2 mm); it is never scaled.");
+  // A custom sheet described wrongly, then rightly
+  await page.selectOption("#gen-sheet", "custom");
+  await page.locator("#gen-xp").fill("60");
+  await expect(panel.locator(".error")).toHaveText("The labels overlap: the pitch must be at least the label's size.");
+  await page.locator("#gen-xp").fill("70");
+  await page.locator("#gen-lh").fill("50");
+  await page.locator("#gen-yp").fill("50");
+  await page.locator("#gen-rows").fill("5");
+  await expect(panel).toContainText("2 labels on 1 sheet.");
+  await page.locator(".generate label.check", { hasText: "PNG" }).locator("input").check();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
+  expect(download.suggestedFilename()).toBe("products_labels.zip");
+  const path = (await download.path())!;
+  expect(execFileSync("unzip", ["-tq", path], { encoding: "utf8" })).toContain("No errors");
+  expect(execFileSync("unzip", ["-Z1", path], { encoding: "utf8" }).split("\n").filter(Boolean)).toEqual([
+    "09506000134376_B42.svg", "09506000134376_B42.png", "09506000134352_L-7.svg", "09506000134352_L-7.png",
+    "labels_dl-qrcode.pdf", "labels_dl-qrcode_custom.pdf", "generated.csv",
+  ]);
+  const csv = execFileSync("unzip", ["-p", path, "generated.csv"], { encoding: "utf8" }).split("\r\n");
+  expect(csv[1]).toMatch(/^2,generated,09506000134376_B42.svg; 09506000134376_B42.png; labels_dl-qrcode.pdf; labels_dl-qrcode_custom.pdf,/);
+  expect(csv[3]).toBe("4,error,,,,The check digit does not match: it should be 2.");
+  await expect(panel).toContainText("2 labels generated; 2 rows left out, each with its reason in generated.csv.");
+});
