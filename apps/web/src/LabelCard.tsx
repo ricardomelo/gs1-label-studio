@@ -10,6 +10,7 @@ import {
   type Bearer,
   type ErrorLevel,
   type HriPosition,
+  type QrMode,
   type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
@@ -23,6 +24,7 @@ import {
   HRI_CHOICES,
   HRI_HEIGHTS,
   HRI_POSITION_NAMES,
+  QR_MODE_NAMES,
   LINEAR_CHOICES,
   type HriChoice,
   type LinearChoice,
@@ -52,6 +54,9 @@ export interface LabelSettings {
   hriHeightMm: number | null;
   /** GS1-128 over several symbols (backlog 1.13): the element strings that start a symbol; null: as many as fit. */
   gs1128Starts: number[] | null;
+  /** A QR code's encoding mode, automatic or one for the whole data, and the URI's domain in capitals (backlog 1.14). */
+  qrMode: QrMode | "auto";
+  qrUpperDomain: boolean;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -430,6 +435,23 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                         {v} ({17 + 4 * v} × {17 + 4 * v} modules)
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="opt-qr-mode">Encoding mode</label>
+                  <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
+                    {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
+                      <option key={value} value={value}>
+                        {text}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="opt-qr-upper">Scheme and domain</label>
+                  <select id="opt-qr-upper" value={s.qrUpperDomain ? "upper" : "as"} onChange={(e) => set("qrUpperDomain", e.target.value === "upper")}>
+                    <option value="as">As typed (https://id.gs1.org)</option>
+                    <option value="upper">In capitals (HTTPS://ID.GS1.ORG)</option>
                   </select>
                 </div>
                 <div>

@@ -1,5 +1,5 @@
 import { snapToDots } from "./dots.ts";
-import { encode, widthInModules, type SymbolGeometry } from "./encode.ts";
+import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
 import { labelSvg, layoutLabel, BEARER_FRAME_MM, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type Layout } from "./layout.ts";
@@ -42,6 +42,9 @@ export interface LabelDesign {
   hriHeightMm?: number;
   /** GS1-128 over several symbols: the element strings that start a symbol; as many as fit in each when not given. */
   gs1128Starts?: readonly number[];
+  /** A QR code's one encoding mode (backlog 1.14), and its URI's scheme and domain in capitals for alphanumeric mode. */
+  qrMode?: QrMode;
+  qrUpperDomain?: boolean;
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -59,7 +62,9 @@ export interface DrawnLabel {
 export function labelFor(identified: Identified, design: LabelDesign, font: HriFont): DrawnLabel {
   const { symbology } = design;
   const shown = design.gtinOnly ? { ...identified, elements: identified.elements.filter((e) => e.ai === "01") } : identified;
-  const data = dataFor(symbology, shown);
+  const encoded = dataFor(symbology, shown);
+  // A URI's scheme and domain are not case-sensitive (RFC 3986), its path and query are: capitals only there
+  const data = design.qrUpperDomain && symbology === "dl-qrcode" ? upperCaseDomain(encoded) : encoded;
   const lines = shown.elements.map((e) => `(${e.ai})${e.value}`);
   const twoD = TWO_D.includes(symbology);
   let linear: LabelOptions["linear"] = null;
@@ -81,6 +86,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     version: design.version, error: design.error, environment: design.environment, size: design.size, linear,
     linearSize: twoD ? design.linearSize : null, ...(design.spec ? { spec: design.spec, table: design.table } : {}),
     ...(design.gs1128Starts ? { gs1128Starts: design.gs1128Starts } : {}),
+    ...(design.qrMode && symbology === "dl-qrcode" ? { qrMode: design.qrMode } : {}),
     bearer: design.bearer, ...(design.reduction ? { barWidthReduction: design.reduction } : {}),
     ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
     ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
@@ -88,7 +94,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
   const layout = layoutLabel(options, font);
   // GS1-128 over several symbols: the first one's geometry
   const geometry = encode(symbology, layout.parts?.[0] ?? data, symbology.endsWith("qrcode")
-    ? { eclevel: design.error.toUpperCase() as "M", ...(design.version ? { version: design.version } : {}) }
+    ? { eclevel: design.error.toUpperCase() as "M", ...(design.version ? { version: design.version } : {}), ...(options.qrMode ? { mode: options.qrMode } : {}) }
     : {});
   return { data, options, layout, geometry };
 }
@@ -100,6 +106,9 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
+  if (design.qrMode && design.symbology === "dl-qrcode") {
+    throw new ZplUnsupportedError("ZPL writes the QR code with the printer's automatic mode; one mode for the whole data comes with phase 3.");
+  }
   if (layout.parts && layout.parts.length > 1) {
     throw new ZplUnsupportedError(`GS1-128 in ${layout.parts.length} symbols is not written in ZPL yet: it comes with the label layout of 3.2.`);
   }
@@ -294,4 +303,9 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
   ]);
   files.push({ name: "generated.csv", bytes: utf8(csv) });
   return { zip: await zipArchive(files), generated: ready.length, left: drawn.length - ready.length, csv };
+}
+
+/** A URI with its scheme and domain in capitals, which a QR code's alphanumeric mode can encode (backlog 1.14). */
+export function upperCaseDomain(uri: string): string {
+  return uri.replace(/^([a-z][a-z0-9+.-]*:\/\/[^/?#]*)/i, (stem) => stem.toUpperCase());
 }

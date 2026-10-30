@@ -124,7 +124,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   const [settings, setSettings] = useState<LabelSettings>({
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
-    hriPosition: "below", hriHeightMm: null, gs1128Starts: null,
+    hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
     expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
@@ -250,7 +250,9 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     hriPosition: effective.linear !== "none" && (effective.hriPosition === "left" || effective.hriPosition === "right") ? "below" : effective.hriPosition,
     ...(effective.hriHeightMm ? { hriHeightMm: effective.hriHeightMm } : {}),
     ...(effective.gs1128Starts ? { gs1128Starts: effective.gs1128Starts } : {}),
-  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts]);
+    ...(effective.qrMode !== "auto" ? { qrMode: effective.qrMode } : {}),
+    ...(effective.qrUpperDomain ? { qrUpperDomain: true } : {}),
+  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -298,7 +300,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
           })()
         : undefined;
       const symbolPart = layout.version
-        ? `QR code version ${layout.version} · ${matrix} · correction ${effective.error.toUpperCase()}`
+        ? `QR code version ${layout.version} · ${matrix} · correction ${effective.error.toUpperCase()}${options.qrMode ? ` · ${options.qrMode} mode` : ""}`
         : layout.modules
           ? `${SYMBOLOGIES[symbology].name} · ${matrix}`
           : layout.barHeight !== undefined
@@ -341,8 +343,8 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   function downloadZpl(template: boolean) {
     const { geometry, data, options, layout } = label;
     if (!geometry || !data || !options || !layout) return;
-    const zplOptions = zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi);
     try {
+      const zplOptions = zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi);
       const zpl = template ? zplTemplate(symbology, data, zplOptions).zpl : zplLabel(symbology, data, zplOptions);
       download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
       setFileError(null);

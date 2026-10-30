@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17, 1.12, 2.3, 1.16, 1.13 and 2.5 too): 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17, 1.12, 2.3, 1.16, 1.13, 2.5 and 1.14 too): 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -147,7 +147,11 @@ complete.
   smallest symbol). Offer automatic (as today) or one mode for the whole data — numeric, alphanumeric, byte — as ISO/IEC
   18004 defines them, alphanumeric only when the data allow it (upper case: a GS1 Digital Link URI's scheme and domain
   may be upper case, its path and values are case-sensitive). bwip-js has no option for it: an encoder that takes
-  segments is needed (to choose), and every mode read back by ZXing
+  segments is needed (to choose), and every mode read back by ZXing — *done 30 October: "Encoding mode" for the QR code
+  with a GS1 Digital Link URI — automatic (bwip-js, as before), numeric, alphanumeric or byte through node-qrcode,
+  which takes segments — and "Scheme and domain" in capitals (HTTPS://ID.GS1.ORG; RFC 3986 makes them case-insensitive,
+  the path and query stay as typed); a character a mode cannot take is named; each mode read back by ZXing at the
+  version its capacity gives. ZPL keeps the printer's automatic mode until phase 3*
 
 *The owner's ideas of 30 October 2026 added items 1.15 to 1.19.*
 

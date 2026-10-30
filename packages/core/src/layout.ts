@@ -1,6 +1,6 @@
 import { parseElementString } from "./elementString.ts";
 import { GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
-import { encode, EncodeError, widthInModules } from "./encode.ts";
+import { encode, EncodeError, widthInModules, type QrMode } from "./encode.ts";
 import {
   checkEnvironment,
   ENVIRONMENTS,
@@ -99,6 +99,8 @@ export interface LabelOptions {
    * fit in each when not given.
    */
   gs1128Starts?: readonly number[];
+  /** A QR code's one encoding mode for the whole data (backlog 1.14); the encoder mixes modes when not given. */
+  qrMode?: QrMode;
 }
 
 export interface LabelText {
@@ -156,7 +158,7 @@ export function symbolMatrix(options: LabelOptions): Matrix {
   const error = options.error ?? "m";
   const isQr = options.symbology === "dl-qrcode" || options.symbology === "gs1-qrcode";
   const qrOptions = (level: string, version?: number | null) =>
-    isQr ? { eclevel: level.toUpperCase() as "L" | "M" | "Q" | "H", ...(version ? { version } : {}) } : {};
+    isQr ? { eclevel: level.toUpperCase() as "L" | "M" | "Q" | "H", ...(version ? { version } : {}), ...(options.qrMode ? { mode: options.qrMode } : {}) } : {};
   const fits = (level: string, version?: number | null) => {
     try {
       return encode(options.symbology, options.data, qrOptions(level, version));

@@ -182,6 +182,15 @@ export const HRI_POSITION_NAMES = {
   left: "Left of it",
   right: "Right of it",
 } as const;
+// QR Code's encoding modes (ISO/IEC 18004; backlog 1.14). Alphanumeric takes capitals only: a GS1 Digital Link URI
+// without a query string, its scheme and domain in capitals.
+export const QR_MODE_NAMES = {
+  auto: "Automatic (modes mixed, the smallest symbol)",
+  numeric: "Numeric (digits only)",
+  alphanumeric: "Alphanumeric (capitals, digits, $ % * + - . / :)",
+  byte: "Byte (any character)",
+} as const;
+
 export const HRI_HEIGHTS: [number, string][] = [
   [2, "2.0 mm (the minimum)"], [2.2, "2.2 mm (default)"], [2.5, "2.5 mm"], [3, "3.0 mm (GS1 Logistic Label)"], [3.5, "3.5 mm"],
   [4, "4.0 mm"], [5, "5.0 mm"],

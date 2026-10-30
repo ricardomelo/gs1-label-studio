@@ -758,3 +758,21 @@ test("in bulk: generating thousands of labels shows its progress and can be canc
   await expect(page.locator(".generate-go .hint")).toHaveText("Stopped: nothing was downloaded.");
   await expect(page.locator(".generate progress")).toHaveCount(0);
 });
+
+// Item 1.14: QR Code's encoding modes, one for the whole data (ISO/IEC 18004).
+test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; each read back", async ({ page }) => {
+  await page.selectOption("#opt-qr-mode", "alphanumeric");
+  await expect(page.locator(".preview .error")).toContainText("alphanumeric mode cannot encode “h”");
+  await page.selectOption("#opt-qr-upper", "upper");
+  await expect(page.locator(".preview .error")).toContainText("cannot encode “?”"); // the query string of (17)
+  await page.locator(".attr").nth(1).getByRole("button", { name: "Remove attribute" }).click();
+  await expect(page.locator(".caption")).toContainText("QR code version 3 · 29 × 29 = 841 modules · correction M · alphanumeric mode");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
+  await page.selectOption("#opt-qr-mode", "byte");
+  await expect(page.locator(".caption")).toContainText("QR code version 4 · 33 × 33 = 1,089 modules · correction M · byte mode");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code with the printer's automatic mode");
+});

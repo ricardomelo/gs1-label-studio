@@ -115,4 +115,6 @@
   key in the first, each with its text; where a symbol starts can be chosen.
 - Generating in bulk runs in a Web Worker with its progress and Cancel (item 2.5); labels are drawn about three times
   faster, with the same files out.
+- QR Code's encoding mode (item 1.14): automatic, numeric, alphanumeric or byte for the whole data, and the URI's scheme
+  and domain in capitals for alphanumeric mode.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

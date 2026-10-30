@@ -1,6 +1,6 @@
 export { checkDigit, hasValidCheckDigit } from "./checkDigit.ts";
 export { DATABAR, SYMBOLOGIES, type Symbology, type SymbologyId } from "./symbologies.ts";
-export { encode, EncodeError, stackedRows, widthInModules, type EncodeOptions, type SymbolGeometry } from "./encode.ts";
+export { encode, EncodeError, QR_MODES, qrModeProblem, stackedRows, widthInModules, type EncodeOptions, type QrMode, type SymbolGeometry } from "./encode.ts";
 export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
@@ -220,6 +220,7 @@ export {
   labelFor,
   patternName,
   patternProblem,
+  upperCaseDomain,
   zplOptionsFor,
   type BatchFile,
   type BatchRequest,

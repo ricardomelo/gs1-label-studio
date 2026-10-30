@@ -1,4 +1,5 @@
 import bwipjs from "bwip-js";
+import { create as createQr, type QRCodeSegment } from "qrcode";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 
 /**
@@ -15,10 +16,28 @@ export type SymbolGeometry =
 
 export class EncodeError extends Error {}
 
-/** QR code options: the error correction level, exactly as chosen (never raised), and a version (1–40). */
+/** QR Code's encoding modes (ISO/IEC 18004), for the whole data (backlog 1.14). */
+export const QR_MODES = ["numeric", "alphanumeric", "byte"] as const;
+export type QrMode = (typeof QR_MODES)[number];
+
+/** Each mode's characters: digits; digits, upper case letters, space and $ % * + - . / :; any byte. */
+const QR_MODE_CHARACTERS: Record<QrMode, RegExp> = { numeric: /^[0-9]*$/, alphanumeric: /^[0-9A-Z $%*+\-./:]*$/, byte: /^/ };
+
+/**
+ * QR code options: the error correction level, exactly as chosen (never raised), a version (1–40), and one encoding
+ * mode for the whole data; without one the encoder mixes modes for the smallest symbol.
+ */
 export interface EncodeOptions {
   eclevel?: "L" | "M" | "Q" | "H";
   version?: number;
+  mode?: QrMode;
+}
+
+/** The first character a mode cannot encode, or null. */
+export function qrModeProblem(data: string, mode: QrMode): string | null {
+  if (QR_MODE_CHARACTERS[mode].test(data)) return null;
+  const bad = [...data].find((char) => !QR_MODE_CHARACTERS[mode].test(char))!;
+  return `QR Code's ${mode} mode cannot encode “${bad}”: it takes ${mode === "numeric" ? "digits only" : "digits, capital letters, space and $ % * + - . / : only"}.`;
 }
 
 // The last symbols encoded, by symbology, data and options: a label encodes its symbol once to lay it out and once more
@@ -28,7 +47,7 @@ const RECENT_MAX = 32;
 
 /** Encodes `data` (see `Symbology.data`) and checks it on the way: GS1 syntax, check digits, lengths. */
 export function encode(symbology: SymbologyId, data: string, options: EncodeOptions = {}): SymbolGeometry {
-  const key = `${symbology}\u0000${data}\u0000${options.eclevel ?? ""}\u0000${options.version ?? ""}`;
+  const key = `${symbology}\u0000${data}\u0000${options.eclevel ?? ""}\u0000${options.version ?? ""}\u0000${options.mode ?? ""}`;
   let geometry = RECENT.get(key);
   if (!geometry) {
     geometry = encodeNow(symbology, data, options);
@@ -39,6 +58,7 @@ export function encode(symbology: SymbologyId, data: string, options: EncodeOpti
 }
 
 function encodeNow(symbology: SymbologyId, data: string, options: EncodeOptions): SymbolGeometry {
+  if (options.mode) return encodeQrMode(symbology, data, options);
   const { bcid, kind } = SYMBOLOGIES[symbology];
   const extra: Record<string, string> = {};
   if (options.eclevel) extra.eclevel = options.eclevel;
@@ -62,6 +82,26 @@ function encodeNow(symbology: SymbologyId, data: string, options: EncodeOptions)
   const rows = heights.flatMap((height, row) => Array.from({ length: height }, () => dark.slice(row * raw.pixx, (row + 1) * raw.pixx)));
   if (rows.length !== raw.pixy) throw new EncodeError(`${symbology}: ${rows.length} rows of modules, the encoder says ${raw.pixy}`);
   return { kind: "matrix", symbology, rows: rows.length, cols: raw.pixx, dark: rows.flat() };
+}
+
+/**
+ * A QR code with a GS1 Digital Link URI in one encoding mode (backlog 1.14), through node-qrcode, which takes segments
+ * (bwip-js chooses its own). Not for GS1 QR Code, whose FNC1 node-qrcode does not write.
+ */
+function encodeQrMode(symbology: SymbologyId, data: string, options: EncodeOptions): SymbolGeometry {
+  if (symbology !== "dl-qrcode") throw new EncodeError(`an encoding mode is chosen for a QR code with a GS1 Digital Link URI only, not ${symbology}`);
+  const mode = options.mode!;
+  const problem = qrModeProblem(data, mode);
+  if (problem) throw new EncodeError(problem);
+  let qr;
+  try {
+    qr = createQr([{ data, mode } as QRCodeSegment], { errorCorrectionLevel: options.eclevel ?? "M", ...(options.version ? { version: options.version } : {}) });
+  } catch (error) {
+    // Worded so that the layout knows the data does not fit, as with bwip-js
+    throw new EncodeError(`data too long: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const size = qr.modules.size;
+  return { kind: "matrix", symbology, rows: size, cols: size, dark: Array.from(qr.modules.data, (dark) => dark === 1) };
 }
 
 /**
