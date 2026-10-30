@@ -11,6 +11,8 @@ import {
   identify,
   InputError,
   qualifiersOf,
+  rowsOf,
+  splitRows,
   syntaxEngine,
   type Identification,
   type SyntaxEngine,
@@ -98,5 +100,24 @@ describe("the editor's identification", () => {
     expect(offered).toContain("310n");
     expect(attributeHint(attributeByCode("17")!)).toBe("6 digits · date YYMMDD");
     expect(attributeHint(attributeByCode("3103")!)).toBe("3 decimal places: type with a comma or point (e.g. 1.5) or the digits only");
+  });
+});
+
+describe("qualifiers and attributes as one list (backlog 1.15)", () => {
+  it("sends a row with a qualifier's AI to the path, in the path's order whatever the row's place; the rest are attributes", () => {
+    const split = splitRows("01", [["17", "271231"], ["21", "S1"], ["10", "B42"], ["3103", "000500"]]);
+    expect(split).toEqual({ qualifiers: { "21": "S1", "10": "B42" }, attributes: [["17", "271231"], ["3103", "000500"]] });
+    const id = { ...BASE, ...split };
+    expect(identify(engine, id, "https://id.gs1.org").digitalLinkUri)
+      .toBe("https://id.gs1.org/01/09506000134376/10/B42/21/S1?17=271231&3103=000500");
+    expect(rowsOf(id)).toEqual([["10", "B42"], ["21", "S1"], ["17", "271231"], ["3103", "000500"]]);
+  });
+
+  it("keeps a qualifier given twice as an attribute, refused there; another key's qualifier is an attribute too", () => {
+    const split = splitRows("01", [["10", "B1"], ["10", "B2"]]);
+    expect(split).toEqual({ qualifiers: { "10": "B1" }, attributes: [["10", "B2"]] });
+    expect(() => identify(engine, { ...BASE, ...split })).toThrow(AttributeError);
+    expect(splitRows("414", [["10", "B1"], ["254", "X"]])).toEqual({ qualifiers: { "254": "X" }, attributes: [["10", "B1"]] });
+    expect(splitRows("01", [["", ""]])).toEqual({ qualifiers: {}, attributes: [["", ""]] });
   });
 });

@@ -115,3 +115,28 @@ export function fieldsOf(parsed: ParsedInput): Identification {
   }
   return id;
 }
+
+/**
+ * The qualifiers and the data attributes as one list of rows, [AI, value] in the order shown (backlog 1.15, the owner's
+ * idea of 30 October 2026): the key's qualifiers first, in the order of its GS1 Digital Link path, then the attributes.
+ */
+export function rowsOf(id: Identification): [string, string][] {
+  const qualifiers = qualifiersOf(id.key).filter((ai) => ai in id.qualifiers).map((ai) => [ai, id.qualifiers[ai]!] as [string, string]);
+  return [...qualifiers, ...id.attributes];
+}
+
+/**
+ * Rows of the one list as the identification's qualifiers and attributes: a row whose AI is a qualifier of the key is
+ * that qualifier, which the path places in its own order whatever the row's place; any other row, and a qualifier given
+ * a second time, is an attribute (refused there with its reason).
+ */
+export function splitRows(key: string, rows: readonly (readonly [string, string])[]): Pick<Identification, "qualifiers" | "attributes"> {
+  const own = new Set(qualifiersOf(key));
+  const qualifiers: Record<string, string> = {};
+  const attributes: [string, string][] = [];
+  for (const [ai, value] of rows) {
+    if (own.has(ai) && !(ai in qualifiers)) qualifiers[ai] = value;
+    else attributes.push([ai, value]);
+  }
+  return { qualifiers, attributes };
+}

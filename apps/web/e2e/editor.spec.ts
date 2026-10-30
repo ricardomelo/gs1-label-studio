@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // The editor (ADR 0004, mock-ups of 28 October 2026): what the code identifies on the left, the label redrawn beside
 // it as anything changes.
@@ -15,23 +15,36 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(".preview .symbol svg")).toBeVisible();
 });
 
+/** A qualifier's value: its row added from the key's qualifiers first if it is not in the list yet (backlog 1.15). */
+async function qualifier(page: Page, ai: string, value: string) {
+  if (!(await page.locator(`#q-${ai}`).count())) await page.locator(".add-rows button.link", { hasText: new RegExp(`^\\+ \\(${ai}\\) `) }).click();
+  await page.fill(`#q-${ai}`, value);
+}
+
 test.afterEach(() => {
   expect(errors, "errors in the page").toEqual([]);
 });
 
 test("qualifiers and a decimal attribute go into the URI as typed", async ({ page }) => {
-  await page.fill("#q-22", "V1");
-  await page.fill("#q-21", "S1001");
-  await page.getByRole("button", { name: "+ Add attribute" }).click();
-  const row = page.locator(".attr").nth(1);
+  await qualifier(page, "22", "V1");
+  await qualifier(page, "21", "S1001");
+  await page.getByRole("button", { name: "+ Add attributes" }).click();
+  const row = page.locator(".attr").last();
   await row.getByLabel("Attribute (AI)").fill("(3103) NET WEIGHT (kg)");
   await row.getByLabel("Attribute value").fill("0,5");
   await expect(row.locator(".hint")).toContainText("→ In the code: (3103) 000500");
   await expect(page.locator(".uri")).toHaveText(
     "https://id.gs1.org/01/09506000134376/22/V1/10/B42/21/S1001?17=271231&3103=000500",
   );
-  await expect(page.locator("#q-235")).toBeDisabled();
   await expect(page.locator(".caption")).toContainText("QR code version");
+  // The rows' order does not change the path's; (235) is not taken with (21)
+  await page.locator(".attr").first().getByRole("button", { name: "Move down" }).click();
+  await expect(page.locator(".uri")).toHaveText(
+    "https://id.gs1.org/01/09506000134376/22/V1/10/B42/21/S1001?17=271231&3103=000500",
+  );
+  await qualifier(page, "235", "X1");
+  await expect(page.locator(".attr.qualifier", { has: page.locator("#q-235") }).locator(".hint")).toHaveText("Not with (22), (10) and (21): the key takes one or the other.");
+  await expect(page.locator(".preview .error")).toContainText("Qualifiers (22) and (235) cannot be used together");
 });
 
 test("a wrong check digit says which it should be", async ({ page }) => {
@@ -65,7 +78,7 @@ test("the page fits the screen's width", async ({ page }) => {
 test("the EPC asks for a serial number, then writes every format", async ({ page }) => {
   const section = page.locator("details.epc");
   await expect(section.locator(".epc-message")).toHaveText("This key's EPC needs its qualifier (21), such as the serial number.");
-  await page.fill("#q-21", "S1001");
+  await qualifier(page, "21", "S1001");
   await page.selectOption("#epc-prefix", "7");
   const kv = section.locator(".kv");
   await expect(kv).toContainText("SGTIN-198");
@@ -78,7 +91,7 @@ test("the EPC asks for a serial number, then writes every format", async ({ page
 });
 
 test("GS1's GCP length table gives the prefix's length and stays in the browser", async ({ page }) => {
-  await page.fill("#q-21", "S1001");
+  await qualifier(page, "21", "S1001");
   await expect(page.locator("details.epc .epc-message")).toHaveText(
     "Choose the company prefix length, or load GS1's GCP length table.",
   );
@@ -227,7 +240,7 @@ test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch,
   // ^BR prints it 33 modules high; table 1 asks for 46: the ZPL is refused, with the reason.
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("^BR prints GS1 DataBar Omnidirectional 33 modules high");
-  await page.fill("#q-10", "B42");
+  await qualifier(page, "10", "B42");
   const step = page.locator("section[aria-labelledby='scan-title']");
   await expect(step).toContainText(
     "This data needs two symbols: GS1 DataBar Omnidirectional with a QR code (GS1 Digital Link) beside it.");
@@ -329,7 +342,7 @@ test("works offline once loaded, the scan test too", async ({ page, context }) =
     await page.reload();
     await expect(page.locator(".preview .symbol svg")).toBeVisible();
     // The GS1 Barcode Syntax Engine and the encoder still answer…
-    await page.fill("#q-21", "S1");
+    await qualifier(page, "21", "S1");
     await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42/21/S1?17=271231");
     // …and ZXing's WebAssembly, never loaded before, comes from the cache.
     await page.getByRole("button", { name: "Scan test" }).click();
@@ -449,10 +462,14 @@ test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async
   expect(keys.slice(0, 4)).toEqual(["(00) SSCC Logistic unit", "(01) GTIN Product", "(253) GDTI Document", "(255) GCN Coupon"]);
   expect(keys.at(-1)).toBe("(8018) GSRN Service recipient");
   expect(keys).toEqual([...keys].sort());
-  await expect(page.locator("label[for='q-10']")).toHaveText("(10) Batch/lot optional");
-  await expect(page.locator("label[for='q-235']")).toHaveText("(235) TPX Third-party serialised extension optional");
-  await page.locator(".attr .combo-arrow").first().click();
-  const attributes = (await page.locator(".combo-list li").allInnerTexts()).map((text) => text.replace(/ · element strings only$/, ""));
+  await expect(page.locator("#q-10")).toHaveAccessibleName("(10) Batch/lot value");
+  await expect(page.locator(".add-rows button.link")).toHaveText([/^\+ \(22\) /, /^\+ \(21\) /, "+ (235) TPX Third-party serialised extension"]);
+  await page.locator(".attr .combo-arrow").nth(1).click();
+  const items = await page.locator(".combo-list li").allInnerTexts();
+  // The key's qualifiers not yet given first, then the attributes
+  expect(items.slice(0, 3).map((text) => text.slice(0, text.indexOf(")") + 1))).toEqual(["(22)", "(21)", "(235)"]);
+  expect(items.slice(0, 3).every((text) => text.endsWith(" · qualifier · in the URI's path"))).toBe(true);
+  const attributes = items.slice(3).map((text) => text.replace(/ · element strings only$/, ""));
   expect(attributes.slice(0, 3)).toEqual(["(00) SSCC Logistic unit", "(02) CONTENT", "(11) PROD DATE"]); // (01) and its qualifiers are not attributes
   await page.keyboard.press("Escape");
   expect(attributes).toEqual([...attributes].sort());
@@ -517,7 +534,8 @@ test("the Made-to-Order GTIN (03): its own group, its batch and serial, drawn in
   await page.fill("#paste", "(03)09506000134376(10)B1(17)271231");
   await page.getByRole("button", { name: "Fill in" }).click();
   await expect(page.locator("#key")).toHaveValue("03");
-  await expect(page.locator(".qual label")).toHaveText(["(10) Batch/lot optional", "(21) Serial number optional"]);
+  await expect(page.locator(".attr.qualifier .kind")).toHaveText(["qualifier · in the URI's path"]);
+  await expect(page.locator(".add-rows button.link")).toHaveText([/^\+ \(21\) /]);
   await expect(page.locator("#q-10")).toHaveValue("B1");
   await expect(page.locator(".caption")).toContainText("GS1 DataMatrix");
   await expect(page.locator(".uri")).toHaveCount(0);
@@ -527,9 +545,10 @@ test("the Made-to-Order GTIN (03): its own group, its batch and serial, drawn in
 
 // The attribute's AI field (the owner's report of 30 October 2026): once an AI is chosen, the arrow still lists them all.
 test("an attribute's AI: the arrow lists every AI even after one is chosen; typing filters", async ({ page }) => {
-  const row = page.locator(".attr").first();
+  const row = page.locator(".attr").nth(1);
   await expect(row.getByRole("combobox")).toHaveValue("(17) USE BY or EXPIRY");
-  await row.locator(".combo-arrow").click();
+  // Clicked without moving the pointer, which on a phone's narrow screen would rest on an option of the list as it opens
+  await row.locator(".combo-arrow").dispatchEvent("click");
   expect(await page.locator(".combo-list li").count()).toBeGreaterThan(200);
   await expect(page.locator(".combo-list li[aria-selected='true']")).toHaveText("(17) USE BY or EXPIRY");
   await page.keyboard.press("Escape");
@@ -541,12 +560,12 @@ test("an attribute's AI: the arrow lists every AI even after one is chosen; typi
 
 // "Start over" (the owner, 30 October 2026): every field and choice as on a first visit.
 test("Start over clears the data and every choice, as on a first visit", async ({ page }) => {
-  await page.fill("#q-21", "S1");
+  await qualifier(page, "21", "S1");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await page.getByRole("button", { name: "Real size" }).click();
   await page.getByRole("button", { name: "Start over" }).click();
-  await expect(page.locator("#q-21")).toHaveValue("");
+  await expect(page.locator("#q-21")).toHaveCount(0);
   await expect(page.locator(".caption")).toContainText("QR code version 4");
   await expect(page.getByRole("button", { name: "Fit" })).toHaveAttribute("aria-pressed", "true");
   // In bulk, with rows loaded, it asks first.

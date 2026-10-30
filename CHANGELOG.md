@@ -100,4 +100,6 @@
   a file a row (SVG, PNG, PDF, EPS) named by a pattern, one PDF a label a page, Avery label sheets or a custom sheet
   (labels at 100 %, centred, refused when larger), one ZPL file, and generated.csv listing every row and what was made
   of it or why nothing was.
+- Qualifiers and data attributes in one list (item 1.15): "+ Add attributes" adds a row whose AI may be one of the
+  key's qualifiers or any attribute; the qualifiers still go to the GS1 Digital Link URI's path in its own order.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -40,8 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day): 1.15 → 1.17
-→ 1.12 → 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15 too): 1.17 → 1.12 → 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -145,7 +144,10 @@ complete.
 - 1.15 Qualifiers and data attributes in one block: every qualifier the key has, and every attribute, added one at a
   time with "+ Add attributes" (an AI chosen from the whole list, the qualifiers of the key first), each row checked as
   today; the qualifiers still go to the GS1 Digital Link URI's path in the order its syntax asks, whatever order they
-  were added in
+  were added in — *done 30 October (mock-up B of three): one list under the key, "+ Add attributes" adding a row whose
+  AI field lists the key's qualifiers not yet given first, then every attribute; links beside it add a qualifier of
+  the key straight away; each row says whether it goes to the URI's path or its query string, a qualifier at its
+  left edge in the qualifiers' colour; two qualifiers the key does not take together are said on the row*
 - 1.16 The human readable text placed and sized as the General Specifications allow (section 4.15): below the symbol
   (the default) or above it, beside a 2D symbol where the standard allows it; its character height chosen within the
   standard's range for the symbol and the X-dimension; for every symbol drawn with text, in every export, the scan

@@ -12,15 +12,17 @@ import {
   isDigitalLinkKey,
   normaliseKeyValue,
   qualifiersOf,
-  shownQualifiers,
   resolveDecimal,
+  rowsOf,
+  splitRows,
   type Identification,
 } from "@gs1-label-studio/core";
 import { AiCombo } from "./AiCombo.tsx";
 import { aiText, byAi, KEY_TEXTS } from "./texts.ts";
 
-// Step 1 of the editor, as the resolver's (ADR 0004): what the code identifies — a key, its qualifiers, data
-// attributes — or anything pasted, which fills the fields in.
+// Step 1 of the editor, as the resolver's (ADR 0004): what the code identifies — a key, then its qualifiers and data
+// attributes in one list (backlog 1.15, mock-up B of three, 30 October 2026) — or anything pasted, which fills the
+// fields in.
 
 interface Props {
   id: Identification;
@@ -37,6 +39,13 @@ function attributeCode(text: string): string {
   return match ? match[1]!.toLowerCase() : "";
 }
 
+interface Row {
+  ai: string;
+  value: string;
+  /** The AI field as typed. */
+  typed: string;
+}
+
 function Markup({ text }: { text: string }) {
   return (
     <code className="markup">
@@ -48,42 +57,44 @@ function Markup({ text }: { text: string }) {
 export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
   const [pasted, setPasted] = useState("");
   const [pasteError, setPasteError] = useState<string | null>(null);
-  // The AI fields as typed, so that a half-typed AI is not lost while it does not yet name one.
-  const [typedAis, setTypedAis] = useState<string[]>(id.attributes.map(([ai]) => label(ai)));
-  // Qualifiers beyond the first four, opened with "+ Add qualifier" (backlog 1.11).
-  const [added, setAdded] = useState<string[]>([]);
+  // The rows of qualifiers and attributes, in the order shown, with their AI fields as typed, so that a half-typed AI
+  // is not lost while it does not yet name one.
+  const [rows, setRows] = useState<Row[]>(() => rowsFor(id));
 
   const keyText = KEY_TEXTS[id.key];
   const keyProblem = id.value ? checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) : null;
-  const { shown: qualifiers, more } = shownQualifiers(
-    qualifiersOf(id.key),
-    [...added, ...Object.keys(id.qualifiers).filter((ai) => id.qualifiers[ai])],
-  );
-  const offered = attributesForKey(id.key);
-  const choices = offered.map((a) => ({ value: aiText(a.ai, a.title), ...(a.elementStringOnly ? { note: "element strings only" } : {}) }));
+  const ownQualifiers = qualifiersOf(id.key);
+  const used = new Set(rows.map((row) => row.ai));
+  // The AIs offered: the key's qualifiers not yet given first, then every attribute.
+  const choices = [
+    ...ownQualifiers.filter((ai) => !used.has(ai)).map((ai) => ({ value: label(ai), note: "qualifier · in the URI's path" })),
+    ...attributesForKey(id.key).map((a) => ({ value: aiText(a.ai, a.title), ...(a.elementStringOnly ? { note: "element strings only" } : {}) })),
+  ];
 
   function label(ai: string): string {
     const attribute = attributeByCode(ai);
     return ai ? aiText(ai, attribute?.title ?? aiEntry(ai)?.title) : "";
   }
 
-  const setAttributes = (attributes: [string, string][], typed: string[]) => {
-    setTypedAis(typed);
-    onChange({ ...id, attributes });
+  function rowsFor(identification: Identification): Row[] {
+    return rowsOf(identification).map(([ai, value]) => ({ ai, value, typed: label(ai) }));
+  }
+
+  const setAll = (next: Row[]) => {
+    setRows(next);
+    onChange({ ...id, ...splitRows(id.key, next.map((row) => [row.ai, row.value] as const)) });
   };
 
   const move = (index: number, by: number) => {
-    const attributes = [...id.attributes];
-    const typed = [...typedAis];
-    [attributes[index], attributes[index + by]] = [attributes[index + by]!, attributes[index]!];
-    [typed[index], typed[index + by]] = [typed[index + by]!, typed[index]!];
-    setAttributes(attributes, typed);
+    const next = [...rows];
+    [next[index], next[index + by]] = [next[index + by]!, next[index]!];
+    setAll(next);
   };
 
   function fill() {
     try {
       const fields = onPaste(pasted);
-      setTypedAis(fields.attributes.map(([ai]) => label(ai)));
+      setRows(rowsFor(fields));
       setPasteError(null);
       setPasted("");
     } catch (error) {
@@ -123,8 +134,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         id="key"
         value={id.key}
         onChange={(event) => {
-          setTypedAis([]);
-          setAdded([]);
+          setRows([]);
           onChange({ key: event.target.value, value: "", qualifiers: {}, attributes: [] });
         }}
       >
@@ -154,61 +164,23 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         {keyProblem ?? (id.value ? "✓ Valid identifier." : keyText?.hint)}
       </div>
 
-      {qualifiers.length > 0 && (
-        <>
-          <h3>
-            Qualifiers <span className="opt">— narrow the code to one variant, batch or unit</span>
-          </h3>
-          <div className="qual">
-            {qualifiers.map((ai) => {
-              const blockedBy = qualifiers.find((other) => other !== ai && id.qualifiers[other] && exclusiveQualifiers(id.key, ai, other));
-              return (
-                <div key={ai}>
-                  <label htmlFor={`q-${ai}`}>
-                    {aiText(ai, aiEntry(ai)?.title)} <span className="opt">optional</span>
-                  </label>
-                  <input
-                    id={`q-${ai}`}
-                    className="mono"
-                    value={id.qualifiers[ai] ?? ""}
-                    disabled={Boolean(blockedBy)}
-                    onChange={(event) => onChange({ ...id, qualifiers: { ...id.qualifiers, [ai]: event.target.value } })}
-                    spellCheck={false}
-                  />
-                  <div className="hint">
-                    {blockedBy ? `Not with (${blockedBy})` : formatHint(aiEntry(ai)?.components ?? [])}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {more.length > 0 && (
-            <div className="add">
-              <select
-                aria-label="Add a qualifier"
-                value=""
-                onChange={(event) => event.target.value && setAdded([...added, event.target.value])}
-              >
-                <option value="">+ Add qualifier</option>
-                {more.map((ai) => (
-                  <option key={ai} value={ai}>
-                    {aiText(ai, aiEntry(ai)?.title)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </>
-      )}
-
       <h3>
-        Data attributes <span className="opt">— expiry, weight, price…</span>
+        Qualifiers and data attributes <span className="opt">— batch, serial, expiry, weight, price…</span>
       </h3>
-      {id.attributes.map(([ai, value], index) => {
-        const attribute = ai ? attributeByCode(ai) : undefined;
+      {rows.map(({ ai, value, typed }, index) => {
+        const qualifier = ownQualifiers.includes(ai) && rows.findIndex((row) => row.ai === ai) === index;
+        const attribute = ai && !qualifier ? attributeByCode(ai) : undefined;
         let converted: string | null = null;
         let problem: string | null = null;
-        if (attribute && value.trim()) {
+        if (qualifier) {
+          const others = ownQualifiers.filter((q) => q !== ai && rows.some((row) => row.ai === q && row.value.trim()) && exclusiveQualifiers(id.key, ai, q));
+          if (others.length && value.trim()) {
+            const names = others.map((q) => `(${q})`);
+            problem = `Not with ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]}: the key takes one or the other.`;
+          }
+        } else if (ownQualifiers.includes(ai)) {
+          problem = `(${ai}) is given already.`;
+        } else if (attribute && value.trim()) {
           try {
             const [code, digits] = resolveDecimal(ai, value.trim());
             if (code !== ai || digits !== value.trim()) converted = `→ In the code: (${code}) ${digits}`;
@@ -216,21 +188,22 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
             problem = error instanceof AttributeError ? error.message : String(error);
           }
         }
-        const hint = problem ?? (attribute ? [attributeHint(attribute), converted].filter(Boolean).join(" ") : ai ? "" : "Pick from the list or type, e.g. 17");
+        const hint = problem ?? (qualifier
+          ? formatHint(aiEntry(ai)?.components ?? [])
+          : attribute ? [attributeHint(attribute), converted].filter(Boolean).join(" ") : ai ? "" : "Pick from the list or type, e.g. 17");
+        const kind = qualifier ? "Qualifier" : "Attribute";
         return (
-          <div className="attr" key={index}>
+          <div className={qualifier ? "attr qualifier" : "attr"} key={index}>
             <div className="row">
               <AiCombo
-                label="Attribute (AI)"
+                label={`${kind} (AI)`}
                 placeholder="Pick from the list or type, e.g. 17"
-                value={typedAis[index] ?? label(ai)}
+                value={typed}
                 options={choices}
                 onChange={(text) => {
-                  const typed = [...typedAis];
-                  typed[index] = text;
-                  const attributes = [...id.attributes];
-                  attributes[index] = [attributeCode(text), value];
-                  setAttributes(attributes, typed);
+                  const next = [...rows];
+                  next[index] = { ai: attributeCode(text), value, typed: text };
+                  setAll(next);
                 }}
               />
               <button type="button" className="ibtn" aria-label="Move up" disabled={index === 0} onClick={() => move(index, -1)}>
@@ -240,7 +213,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
                 type="button"
                 className="ibtn"
                 aria-label="Move down"
-                disabled={index === id.attributes.length - 1}
+                disabled={index === rows.length - 1}
                 onClick={() => move(index, 1)}
               >
                 ↓
@@ -248,35 +221,49 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               <button
                 type="button"
                 className="ibtn"
-                aria-label="Remove attribute"
-                onClick={() =>
-                  setAttributes(id.attributes.filter((_, i) => i !== index), typedAis.filter((_, i) => i !== index))
-                }
+                aria-label={qualifier ? "Remove qualifier" : "Remove attribute"}
+                onClick={() => setAll(rows.filter((_, i) => i !== index))}
               >
                 ×
               </button>
             </div>
+            <span className="kind">{qualifier ? "qualifier · in the URI's path" : ai ? "data attribute · in the query string" : ""}</span>
             <input
               className="mono"
-              aria-label="Attribute value"
+              {...(qualifier ? { id: `q-${ai}` } : {})}
+              aria-label={qualifier ? `${label(ai)} value` : "Attribute value"}
               placeholder="Value"
               value={value}
               onChange={(event) => {
-                const attributes = [...id.attributes];
-                attributes[index] = [ai, event.target.value];
-                setAttributes(attributes, typedAis);
+                const next = [...rows];
+                next[index] = { ai, value: event.target.value, typed };
+                setAll(next);
               }}
               spellCheck={false}
+              aria-invalid={Boolean(problem)}
             />
             <div className={problem ? "hint error" : "hint"}>{hint}</div>
           </div>
         );
       })}
-      <div className="add">
-        <button type="button" className="btn" onClick={() => setAttributes([...id.attributes, ["", ""]], [...typedAis, ""])}>
-          + Add attribute
+      <div className="add add-rows">
+        <button type="button" className="btn" onClick={() => setAll([...rows, { ai: "", value: "", typed: "" }])}>
+          + Add attributes
         </button>
+        {ownQualifiers.some((ai) => !used.has(ai)) && (
+          <span className="hint">
+            or a qualifier of the {keyText?.short ?? `(${id.key})`}:{" "}
+            {ownQualifiers.filter((ai) => !used.has(ai)).map((ai) => (
+              <button key={ai} type="button" className="link" onClick={() => setAll([...rows, { ai, value: "", typed: label(ai) }])}>
+                + {label(ai)}
+              </button>
+            ))}
+          </span>
+        )}
       </div>
+      {ownQualifiers.length > 0 && (
+        <div className="hint">Qualifiers go to the GS1 Digital Link URI's path in the order its syntax asks, whatever their order here.</div>
+      )}
 
       <div className={status.error ? "status error" : "status ok"} aria-live="polite">
         {status.error ? (

@@ -150,6 +150,8 @@ export {
   elementStringOf,
   fieldsOf,
   identify,
+  rowsOf,
+  splitRows,
   normaliseKeyValue,
   type Identification,
   type Identified,

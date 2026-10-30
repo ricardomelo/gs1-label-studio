@@ -240,3 +240,9 @@ table.mapping th:nth-child(2) { width: 30%; }
 .sheet-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 .generate-go { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .generate-go .hint { margin: 0; }
+
+/* Qualifiers and data attributes in one list (backlog 1.15, mock-up B) */
+.attr.qualifier { border-left: 3px solid var(--q); }
+.attr .kind { display: block; font-size: 11px; color: var(--muted); margin: -2px 0 4px; }
+.add-rows { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.add-rows .hint { margin: 0; display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
