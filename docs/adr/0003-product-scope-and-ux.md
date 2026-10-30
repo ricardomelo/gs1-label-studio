@@ -53,7 +53,9 @@
    the label panel, sticky, with the preview beside its options (step 3; step 2, "Where is it scanned?", sits under the
    identification since 29 October 2026 and chooses the symbol), the GS1 Digital Link URI coloured by part, the element
    string and the downloads, redrawn as anything changes; RFID and NFC (EPC) below the options. On a phone the fields
-   come first, with a small live preview fixed at the top.
+   come first, with a small live preview fixed at the top. *Since 30 October 2026 (the owner's request, mock-up B of three): the page
+   takes the screen's whole width, and step 3 shows the label in its own area across the step, its tools over it and
+   an Export bar below it, the options below them; the label designer of phase 4 grows from that area.*
 2. **In bulk** — a wizard: upload CSV or Excel (or paste), map columns to AIs (remembered by header), fixed values for
    the columns that do not change, validation with a report of the rows in error (fix or skip), preview of the first
    labels, generate. *Since 29 October 2026 (item 2.1, mock-up A of three, the recommended one, taken under the owner's

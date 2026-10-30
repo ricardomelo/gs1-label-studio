@@ -40,9 +40,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; }
 header.top { background: #002c6c; color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
 header.top h1 { margin: 0; font-size: 20px; }
 header.top span { opacity: 0.85; font-size: 13px; }
-main.editor { display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 20px; padding: 20px; max-width: 1400px; margin: 0 auto; align-items: start; }
+main.editor { display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 20px; padding: 20px; align-items: start; } /* the whole width (1.10 a) */
 .card { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 20px; min-width: 0; }
-.label-card { position: sticky; top: 16px; }
 h2 { font-size: 17px; color: var(--navy); margin: 0 0 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 h2 .n { background: #002c6c; color: #fff; border-radius: 50%; width: 26px; height: 26px; display: inline-grid; place-items: center; font-size: 14px; }
 h3 { font-size: 14px; margin: 18px 0 6px; }
@@ -71,7 +70,20 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .btn:disabled { opacity: 0.45; cursor: default; }
 .link { border: 0; background: none; color: #1a6b8a; font: inherit; font-size: 12px; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0 4px; }
 .badge { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: #e2f3e8; color: #1b7a3e; font-weight: 600; }
-.panel { display: grid; grid-template-columns: minmax(240px, 300px) 1fr; gap: 20px; }
+.panel { display: grid; grid-template-columns: 1fr; gap: 14px; }
+/* The label's area (mock-up B of 30 October 2026): its tools over it, the label on a canvas, its exports below. */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.toolbar .view-bar { margin: 0; }
+.toolbar .scan { margin: 0; }
+.stage > .caption { text-align: right; margin: 4px 0 6px; }
+.stage > .calibration { margin: 8px 0 0; }
+.canvas { background: color-mix(in srgb, var(--line) 70%, var(--bg)); border: 1px solid var(--line); border-radius: 8px; padding: 24px; display: grid; place-items: center; min-height: 260px; overflow: auto; }
+.canvas .preview { border: 0; border-radius: 2px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); min-height: 0; padding: 14px; width: min(100%, 420px); }
+.canvas .preview .symbol { width: 100%; }
+.canvas .real { max-width: 100%; }
+.exportbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+.exportbar > b { font-size: 13px; margin-right: 6px; }
+.exportbar .downloads { display: flex; flex-wrap: wrap; gap: 8px; }
 .preview { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; place-items: center; background: #fff; min-height: 160px; }
 .preview .symbol svg { width: 100%; height: auto; display: block; }
 .preview .error { color: #b3261e; font-size: 13px; }
@@ -79,6 +91,7 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .downloads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .downloads .primary, .downloads .wide { grid-column: 1 / -1; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.label-card .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .uri { background: var(--soft); border-radius: 8px; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; margin-top: 14px; word-break: break-all; }
 .uri .d { color: var(--dom); }
 .uri .k { color: var(--navy); font-weight: 700; }
@@ -92,7 +105,6 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .mini { display: none; }
 @media (max-width: 900px) {
   main.editor { grid-template-columns: 1fr; padding: 12px; }
-  .label-card { position: static; }
   .panel, .grid, .qual { grid-template-columns: 1fr; }
   .mini { display: flex; position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 12px; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); text-decoration: none; }
   .mini svg { height: 64px; width: auto; background: #fff; }

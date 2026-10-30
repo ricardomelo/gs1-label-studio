@@ -460,3 +460,20 @@ test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async
   await expect(page.locator("#map-0 optgroup[label='Keys'] option").first()).toHaveText("(00) SSCC Logistic unit");
   await expect(page.locator("#map-0 optgroup[label='Qualifiers'] option").first()).toHaveText("(10) Batch/lot");
 });
+
+// The label's area across step 3, its exports below it and the options below them; the page the whole width
+// (mock-up B of 30 October 2026; backlog 1.10 a).
+test("the label in its own area across step 3, exports below it, options below them", async ({ page }) => {
+  const card = (await page.locator(".label-card").boundingBox())!;
+  const canvas = (await page.locator(".canvas").boundingBox())!;
+  const exports = (await page.locator(".exportbar").boundingBox())!;
+  const options = (await page.locator("#opt-size").boundingBox())!;
+  expect(canvas.width).toBeGreaterThan(card.width * 0.85);
+  expect(exports.y).toBeGreaterThan(canvas.y + canvas.height - 1);
+  expect(options.y).toBeGreaterThan(exports.y + exports.height - 1);
+  if (page.viewportSize()!.width > 900) {
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    const main = (await page.locator("main.editor").boundingBox())!;
+    expect(main.width).toBeGreaterThan(1900); // no longer stopped at 1 400 pixels
+  }
+});

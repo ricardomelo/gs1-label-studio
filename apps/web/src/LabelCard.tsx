@@ -157,10 +157,10 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
       <h2 id="label-title">
         <span className="n">3</span> Label <span className="badge">updates as you type</span>
       </h2>
-      {/* Across the whole card, so that the bar has room up to the slider's maximum (backlog 1.10 c). */}
-      {real && calibrating && view.svg && view.widthMm && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
+      {/* The label above, in its own area, with its tools over it and its exports below; the options under them
+          (the owner's request of 30 October 2026, mock-up B of three): room for the label designer of phase 4. */}
       <div className="panel">
-        <div>
+        <div className="stage">
           {rows && (
             <div className="row-nav">
               <button type="button" aria-label="Previous row" disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>
@@ -180,82 +180,91 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
               </button>
             </div>
           )}
-          {view.svg && view.widthMm && (
-            <div className="view-bar">
-              <span className="seg" role="group" aria-label="Preview size">
-                <button type="button" aria-pressed={!real} onClick={() => setReal(false)}>
-                  Fit
+          <div className="toolbar">
+            {view.svg && view.widthMm && (
+              <div className="view-bar">
+                <span className="seg" role="group" aria-label="Preview size">
+                  <button type="button" aria-pressed={!real} onClick={() => setReal(false)}>
+                    Fit
+                  </button>
+                  <button type="button" aria-pressed={real} onClick={() => setReal(true)}>
+                    Real size
+                  </button>
+                </span>
+                {real && (
+                  <button type="button" className="link" aria-expanded={calibrating} onClick={() => setCalibrating(!calibrating)}>
+                    Calibrate the screen
+                  </button>
+                )}
+              </div>
+            )}
+            {view.svg && (
+              <div className="scan">
+                <button type="button" className="btn" disabled={scan?.status === "reading"} onClick={runScan}>
+                  Scan test
                 </button>
-                <button type="button" aria-pressed={real} onClick={() => setReal(true)}>
-                  Real size
-                </button>
-              </span>
-              {real && (
-                <button type="button" className="link" aria-expanded={calibrating} onClick={() => setCalibrating(!calibrating)}>
-                  Calibrate the screen
-                </button>
-              )}
-            </div>
-          )}
-          {real && view.svg && view.widthMm && view.heightMm ? (
-            <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm} />
-          ) : (
-            <div className="preview" aria-live="polite">
-              {view.svg ? (
-                <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
-              ) : (
-                <p className="error">{view.error ?? "Loading…"}</p>
-              )}
-            </div>
-          )}
+                <span className={`scan-result ${scan?.status ?? ""}`} aria-live="polite">
+                  {!scan
+                    ? "Reads the label back with ZXing, here in the browser."
+                    : scan.status === "reading"
+                      ? "Reading…"
+                      : scan.status === "error"
+                        ? `The test could not run: ${scan.message}`
+                        : scan.status === "ok"
+                          ? `✓ Read as intended: ${scan.reads.join(" and ")}`
+                          : `✗ Read ${scan.reads.join(" and ") || "nothing"}; expected ${expected.join(" and ")}.`}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Across the whole card, so that the bar has room up to the slider's maximum (backlog 1.10 c). */}
+          {real && calibrating && view.svg && view.widthMm && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
           {view.caption && <div className="caption">{view.caption}</div>}
-          {view.svg && (
-            <div className="scan">
-              <button type="button" className="btn" disabled={scan?.status === "reading"} onClick={runScan}>
-                Scan test
-              </button>
-              <span className={`scan-result ${scan?.status ?? ""}`} aria-live="polite">
-                {!scan
-                  ? "Reads the label back with ZXing, here in the browser."
-                  : scan.status === "reading"
-                    ? "Reading…"
-                    : scan.status === "error"
-                      ? `The test could not run: ${scan.message}`
-                      : scan.status === "ok"
-                        ? `✓ Read as intended: ${scan.reads.join(" and ")}`
-                        : `✗ Read ${scan.reads.join(" and ") || "nothing"}; expected ${expected.join(" and ")}.`}
-              </span>
-            </div>
-          )}
+          <div className="canvas">
+            {real && view.svg && view.widthMm && view.heightMm ? (
+              <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm} />
+            ) : (
+              <div className="preview" aria-live="polite">
+                {view.svg ? (
+                  <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
+                ) : (
+                  <p className="error">{view.error ?? "Loading…"}</p>
+                )}
+              </div>
+            )}
+          </div>
           {fileError && <p className="error small">{fileError}</p>}
-          <div className="downloads">
-            <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
-              Download SVG
-            </button>
-            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
-              PNG{s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
-            </button>
-            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("pdf")}>
-              PDF
-            </button>
-            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("eps")}>
-              EPS
-            </button>
-            <button
-              type="button"
-              className="btn"
-              disabled={!view.svg}
-              title="SVG, PNG, PDF, EPS and a README"
-              onClick={() => onDownload("zip")}
-            >
-              Zip of all
-            </button>
-            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
-              ZPL ({s.dpi} dpi)
-            </button>
-            <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
-              ZPL template
-            </button>
+          <div className="exportbar">
+            <b>Export</b>
+            <div className="downloads">
+              <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
+                Download SVG
+              </button>
+              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
+                PNG{s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
+              </button>
+              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("pdf")}>
+                PDF
+              </button>
+              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("eps")}>
+                EPS
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={!view.svg}
+                title="SVG, PNG, PDF, EPS and a README"
+                onClick={() => onDownload("zip")}
+              >
+                Zip of all
+              </button>
+              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
+                ZPL ({s.dpi} dpi)
+              </button>
+              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
+                ZPL template
+              </button>
+            </div>
           </div>
         </div>
 
