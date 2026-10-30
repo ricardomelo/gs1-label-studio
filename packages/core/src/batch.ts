@@ -88,7 +88,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
   const layout = layoutLabel(options, font);
   // GS1-128 over several symbols: the first one's geometry
   const geometry = encode(symbology, layout.parts?.[0] ?? data, symbology.endsWith("qrcode")
-    ? { eclevel: design.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) }
+    ? { eclevel: design.error.toUpperCase() as "M", ...(design.version ? { version: design.version } : {}) }
     : {});
   return { data, options, layout, geometry };
 }

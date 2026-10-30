@@ -60,13 +60,19 @@ function fillOutlines(grey: Uint8Array, width: number, height: number, contours:
   if (!edges.length) return;
   const top = Math.max(0, Math.floor(Math.min(...edges.map((e) => e.y0))));
   const bottom = Math.min(height, Math.ceil(Math.max(...edges.map((e) => e.y1))));
+  // Each row's edges, in their order, so that a row looks only at the edges that cross it (backlog 2.5)
+  const byRow: Edge[][] = Array.from({ length: Math.max(0, bottom - top) }, () => []);
+  for (const e of edges) {
+    for (let row = Math.max(top, Math.floor(e.y0)); row < Math.min(bottom, Math.ceil(e.y1)); row++) byRow[row - top]!.push(e);
+  }
   const coverage = new Float64Array(width);
   for (let row = top; row < bottom; row++) {
     coverage.fill(0);
+    const crossing = byRow[row - top]!;
     for (let s = 0; s < SUBSCANLINES; s++) {
       const y = row + (s + 0.5) / SUBSCANLINES;
       const crossings: [number, number][] = [];
-      for (const e of edges) {
+      for (const e of crossing) {
         if (y < e.y0 || y >= e.y1) continue;
         crossings.push([e.x0 + ((y - e.y0) / (e.y1 - e.y0)) * (e.x1 - e.x0), e.winding]);
       }

@@ -21,8 +21,24 @@ export interface EncodeOptions {
   version?: number;
 }
 
+// The last symbols encoded, by symbology, data and options: a label encodes its symbol once to lay it out and once more
+// for its files, and bulk generation does so for every row (backlog 2.5). Each caller gets its own copy.
+const RECENT = new Map<string, SymbolGeometry>();
+const RECENT_MAX = 32;
+
 /** Encodes `data` (see `Symbology.data`) and checks it on the way: GS1 syntax, check digits, lengths. */
 export function encode(symbology: SymbologyId, data: string, options: EncodeOptions = {}): SymbolGeometry {
+  const key = `${symbology}\u0000${data}\u0000${options.eclevel ?? ""}\u0000${options.version ?? ""}`;
+  let geometry = RECENT.get(key);
+  if (!geometry) {
+    geometry = encodeNow(symbology, data, options);
+    RECENT.set(key, geometry);
+    if (RECENT.size > RECENT_MAX) RECENT.delete(RECENT.keys().next().value!);
+  }
+  return geometry.kind === "linear" ? { ...geometry, widths: [...geometry.widths] } : { ...geometry, dark: [...geometry.dark] };
+}
+
+function encodeNow(symbology: SymbologyId, data: string, options: EncodeOptions): SymbolGeometry {
   const { bcid, kind } = SYMBOLOGIES[symbology];
   const extra: Record<string, string> = {};
   if (options.eclevel) extra.eclevel = options.eclevel;

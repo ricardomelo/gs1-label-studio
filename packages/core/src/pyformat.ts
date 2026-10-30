@@ -5,7 +5,16 @@
  */
 export function pyFixed(value: number, decimals: number): string {
   const sign = value < 0 || Object.is(value, -0) ? "-" : "";
-  const exact = Math.abs(value).toFixed(Math.min(100, decimals + 60));
+  // toFixed() rounds the exact binary value too: only an exact tie can differ, so far from one it is Python's answer
+  // (the slow expansion below is what took most of the time of a label's SVG and PDF, backlog 2.5).
+  const scaled = Math.abs(value) * 10 ** decimals;
+  if (decimals <= 20 && scaled < 1e9 && Math.abs(scaled - Math.floor(scaled) - 0.5) > 1e-6) return sign + Math.abs(value).toFixed(decimals);
+  return sign + pyFixedExact(Math.abs(value), decimals);
+}
+
+/** The exact decimal expansion, rounded half to even. */
+function pyFixedExact(value: number, decimals: number): string {
+  const exact = value.toFixed(Math.min(100, decimals + 60));
   const [whole, fraction = ""] = exact.split(".");
   const kept = fraction.slice(0, decimals);
   const dropped = fraction.slice(decimals);
@@ -13,6 +22,5 @@ export function pyFixed(value: number, decimals: number): string {
   const half = "5".padEnd(dropped.length, "0");
   if (dropped > half || (dropped === half && digits % 2n === 1n)) digits += 1n;
   const text = digits.toString().padStart(decimals + 1, "0");
-  const result = decimals ? `${text.slice(0, -decimals)}.${text.slice(-decimals)}` : text;
-  return sign + result;
+  return decimals ? `${text.slice(0, -decimals)}.${text.slice(-decimals)}` : text;
 }

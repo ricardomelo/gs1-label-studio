@@ -42,6 +42,19 @@ export class HriFont {
   /** Below the baseline, positive. */
   readonly descent: number;
 
+  /** Each character's glyph points and advance, read once: opentype.js builds a glyph's points again on each access. */
+  private readonly glyphs = new Map<string, { points: GlyphPoint[]; advance: number }>();
+
+  private glyph(char: string): { points: GlyphPoint[]; advance: number } {
+    let glyph = this.glyphs.get(char);
+    if (!glyph) {
+      const g = this.font.charToGlyph(char);
+      glyph = { points: g.points ?? [], advance: g.advanceWidth ?? 0 };
+      this.glyphs.set(char, glyph);
+    }
+    return glyph;
+  }
+
   constructor(private readonly font: Font) {
     this.unitsPerEm = font.unitsPerEm;
     this.capHeight = font.tables.os2.sCapHeight;
@@ -55,7 +68,7 @@ export class HriFont {
   /** Advance width of `text` at an em size given in the layout's units. */
   textWidth(text: string, em: number): number {
     let units = 0;
-    for (const char of text) units += this.font.charToGlyph(char).advanceWidth ?? 0;
+    for (const char of text) units += this.glyph(char).advance;
     return (units * em) / this.unitsPerEm;
   }
 
@@ -70,8 +83,7 @@ export class HriFont {
     const scale = em / this.unitsPerEm;
     let cursor = x;
     for (const char of text) {
-      const glyph = this.font.charToGlyph(char);
-      const points = glyph.points ?? [];
+      const { points, advance } = this.glyph(char);
       const at = (p: GlyphPoint): [number, number] => [scale * p.x + cursor, -scale * p.y + baseline];
       let contour: GlyphPoint[] = [];
       for (const point of points) {
@@ -80,7 +92,7 @@ export class HriFont {
         drawContour(contour, at, out);
         contour = [];
       }
-      cursor += (glyph.advanceWidth ?? 0) * scale;
+      cursor += advance * scale;
     }
     return out;
   }
