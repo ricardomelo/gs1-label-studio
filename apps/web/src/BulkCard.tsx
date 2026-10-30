@@ -14,7 +14,7 @@ import {
   type RowStatus,
   type Table,
 } from "@gs1-label-studio/core";
-import { BULK_TEXTS, KEY_TEXTS } from "./texts.ts";
+import { aiText, byAi, BULK_TEXTS } from "./texts.ts";
 
 // Step 1 in bulk (backlog 2.1, mock-up A of 29 October 2026): rows from a file or pasted, each column's AI — guessed
 // from its header, remembered for files with the same headers —, values the same on every row, and how many rows the
@@ -48,11 +48,11 @@ interface Props {
 const CHOICES: { group: string; options: [string, string][] }[] = (() => {
   const seen = new Set<string>();
   const options = (list: [string, string | undefined][]) =>
-    list.filter(([ai]) => !seen.has(ai) && seen.add(ai)).map(([ai, title]) => [ai, `(${ai}) ${title ?? ""}`.trim()] as [string, string]);
-  const keys = primaryKeys();
+    list.filter(([ai]) => !seen.has(ai) && seen.add(ai)).map(([ai, title]) => [ai, aiText(ai, title)] as [string, string]);
+  const keys = primaryKeys().sort(byAi);
   return [
-    { group: "Keys", options: options(keys.map((key) => [key, KEY_TEXTS[key]?.name.replace(/\s*\(\d+\)$/, "") ?? aiEntry(key)?.title])) },
-    { group: "Qualifiers", options: options(keys.flatMap((key) => qualifiersOf(key)).map((ai) => [ai, aiEntry(ai)?.title])) },
+    { group: "Keys", options: options(keys.map((key) => [key, aiEntry(key)?.title])) },
+    { group: "Qualifiers", options: options(keys.flatMap((key) => qualifiersOf(key)).sort(byAi).map((ai) => [ai, aiEntry(ai)?.title])) },
     { group: "Data attributes", options: options(offeredAttributes().map((a) => [a.ai, a.title])) },
   ];
 })();

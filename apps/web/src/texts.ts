@@ -2,6 +2,7 @@
 // environment texts are the resolver's English ones (portal/static/i18n.js, ADR 0004).
 
 export interface KeyText {
+  /** What the key identifies, shown after the AI and the key's abbreviation: "(01) GTIN Product". */
   name: string;
   short: string;
   label: string;
@@ -11,112 +12,112 @@ export interface KeyText {
 
 export const KEY_TEXTS: Record<string, KeyText> = {
   "01": {
-    "name": "Product (GTIN) (01)",
+    "name": "Product",
     "short": "GTIN",
     "label": "GTIN",
     "placeholder": "e.g. 9506000134376",
     "hint": "8, 12, 13 or 14 digits, the last one being the check digit."
   },
   "00": {
-    "name": "Logistic unit (SSCC) (00)",
+    "name": "Logistic unit",
     "short": "SSCC",
     "label": "SSCC number",
     "placeholder": "e.g. 095060001343520000",
     "hint": "18 digits, the last one being the check digit."
   },
   "414": {
-    "name": "Physical location (GLN) (414)",
+    "name": "Physical location",
     "short": "GLN",
     "label": "GLN number",
     "placeholder": "e.g. 9506000134376",
     "hint": "13 digits, the last one being the check digit."
   },
   "417": {
-    "name": "Party (GLN) (417)",
+    "name": "Party",
     "short": "GLN",
     "label": "GLN number",
     "placeholder": "e.g. 9506000134376",
     "hint": "13 digits, the last one being the check digit."
   },
   "415": {
-    "name": "Invoicing party (GLN) (415)",
+    "name": "Invoicing party",
     "short": "GLN",
     "label": "GLN number",
     "placeholder": "e.g. 9506000134376",
     "hint": "13 digits, the last one being the check digit. Requires the payment reference (8020)."
   },
   "8006": {
-    "name": "Individual trade item piece (ITIP) (8006)",
+    "name": "Individual trade item piece",
     "short": "ITIP",
     "label": "ITIP number",
     "placeholder": "e.g. 095060001343520102",
     "hint": "18 digits: the GTIN (14 digits) + the piece number (2) + the total number of pieces (2)."
   },
   "8010": {
-    "name": "Component/Part Identifier (CPID) (8010)",
+    "name": "Component/part",
     "short": "CPID",
     "label": "CPID number",
     "placeholder": "e.g. 9506000ABC-1",
     "hint": "Up to 30 characters (digits, capital letters and hyphen), starting with the GS1 Company Prefix."
   },
   "8013": {
-    "name": "Global Model Number (GMN) (8013)",
+    "name": "Model",
     "short": "GMN",
     "label": "GMN number",
     "placeholder": "e.g. 1987654Ad4X4bL5ttr2310c2K",
     "hint": "Up to 25 characters: starts with the GS1 Company Prefix and ends with the check-character pair."
   },
   "253": {
-    "name": "Document (GDTI) (253)",
+    "name": "Document",
     "short": "GDTI",
     "label": "GDTI number",
     "placeholder": "e.g. 9506000134376ABC",
     "hint": "13 digits (the last one is the check digit), optionally followed by up to 17 serial characters."
   },
   "255": {
-    "name": "Global Coupon Number (GCN) (255)",
+    "name": "Coupon",
     "short": "GCN",
     "label": "GCN number",
     "placeholder": "e.g. 95060001343761234",
     "hint": "13 digits (the last one is the check digit), optionally followed by up to 12 serial digits."
   },
   "401": {
-    "name": "Consignment (GINC) (401)",
+    "name": "Consignment",
     "short": "GINC",
     "label": "GINC number",
     "placeholder": "e.g. 9506000ABC",
     "hint": "Up to 30 characters (unaccented letters, digits, full stop and hyphen), starting with the GS1 Company Prefix."
   },
   "402": {
-    "name": "Shipment (GSIN) (402)",
+    "name": "Shipment",
     "short": "GSIN",
     "label": "GSIN number",
     "placeholder": "e.g. 95060001343760123",
     "hint": "17 digits, the last one being the check digit."
   },
   "8003": {
-    "name": "Returnable asset (GRAI) (8003)",
+    "name": "Returnable asset",
     "short": "GRAI",
     "label": "GRAI number",
     "placeholder": "e.g. 09506000134352ABC",
     "hint": "0 + 13 digits (the last one is the check digit), optionally followed by up to 16 serial characters."
   },
   "8004": {
-    "name": "Individual asset (GIAI) (8004)",
+    "name": "Individual asset",
     "short": "GIAI",
     "label": "GIAI number",
     "placeholder": "e.g. 9506000ABC123",
     "hint": "Up to 30 characters (unaccented letters, digits, full stop and hyphen), starting with the GS1 Company Prefix."
   },
   "8017": {
-    "name": "Service provider (GSRN) (8017)",
+    "name": "Service provider",
     "short": "GSRN",
     "label": "GSRN number",
     "placeholder": "e.g. 950600013437612342",
     "hint": "18 digits, the last one being the check digit."
   },
   "8018": {
-    "name": "Service recipient (GSRN) (8018)",
+    "name": "Service recipient",
     "short": "GSRN",
     "label": "GSRN number",
     "placeholder": "e.g. 950600013437612342",
@@ -124,17 +125,30 @@ export const KEY_TEXTS: Record<string, KeyText> = {
   }
 };
 
+/** The qualifiers' names, shown after the AI as every AI choice is: "(10) Batch/lot" (the owner, 30 October 2026). */
 export const QUALIFIER_LABELS: Record<string, string> = {
-  "22": "Product variant (22)",
-  "10": "Batch/lot (10)",
-  "21": "Serial number (21)",
-  "235": "Third-party serialised extension — TPX (235)",
-  "8011": "Component serial number (8011)",
-  "254": "GLN extension (254)",
-  "7040": "UIC with extension and importer index (7040)",
-  "8020": "Payment reference number (8020)",
-  "8019": "Service relation instance number (8019)"
+  "22": "Product variant",
+  "10": "Batch/lot",
+  "21": "Serial number",
+  "235": "TPX Third-party serialised extension",
+  "8011": "Component serial number",
+  "254": "GLN extension",
+  "7040": "UIC with extension and importer index",
+  "8020": "Payment reference number",
+  "8019": "SRIN Service relation instance number"
 };
+
+/** An AI as every choice of one shows it: the AI, the key's abbreviation, its name — "(01) GTIN Product". */
+export function aiText(ai: string, title?: string): string {
+  const key = KEY_TEXTS[ai];
+  return `(${ai}) ${key ? `${key.short} ${key.name}` : (QUALIFIER_LABELS[ai] ?? title ?? "")}`.trim();
+}
+
+/**
+ * AIs in the order of the text shown, which starts with the AI: character by character, as the GS1 General
+ * Specifications list them ("(00)", "(01)", "(10)", "(235)", "(30)", "(8003)", "(90)").
+ */
+export const byAi = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 export const ENVIRONMENT_NAMES: Record<string, string> = {
   "retail": "Retail point of sale (table 1)",

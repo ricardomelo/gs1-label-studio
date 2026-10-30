@@ -5,7 +5,6 @@ import {
   attributesForKey,
   AttributeError,
   checkKeyValue,
-  COMMON_ATTRIBUTES,
   exclusiveQualifiers,
   formatHint,
   aiEntry,
@@ -15,7 +14,7 @@ import {
   resolveDecimal,
   type Identification,
 } from "@gs1-label-studio/core";
-import { KEY_TEXTS, QUALIFIER_LABELS } from "./texts.ts";
+import { aiText, byAi, KEY_TEXTS } from "./texts.ts";
 
 // Step 1 of the editor, as the resolver's (ADR 0004): what the code identifies — a key, its qualifiers, data
 // attributes — or anything pasted, which fills the fields in.
@@ -53,11 +52,10 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
   const keyProblem = id.value ? checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) : null;
   const qualifiers = qualifiersOf(id.key);
   const offered = attributesForKey(id.key);
-  const common = COMMON_ATTRIBUTES.map((code) => offered.find((a) => a.ai === code)).filter((a) => a !== undefined);
 
   function label(ai: string): string {
     const attribute = attributeByCode(ai);
-    return attribute ? `(${ai}) ${attribute.title}` : ai ? `(${ai}) ${aiEntry(ai)?.title ?? ""}`.trim() : "";
+    return ai ? aiText(ai, attribute?.title ?? aiEntry(ai)?.title) : "";
   }
 
   const setAttributes = (attributes: [string, string][], typed: string[]) => {
@@ -120,9 +118,9 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           onChange({ key: event.target.value, value: "", qualifiers: {}, attributes: [] });
         }}
       >
-        {primaryKeys().map((key) => (
+        {primaryKeys().sort(byAi).map((key) => (
           <option key={key} value={key}>
-            {KEY_TEXTS[key]?.name ?? `${aiEntry(key)?.title} (${key})`}
+            {aiText(key, aiEntry(key)?.title)}
           </option>
         ))}
       </select>
@@ -153,7 +151,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               return (
                 <div key={ai}>
                   <label htmlFor={`q-${ai}`}>
-                    {QUALIFIER_LABELS[ai] ?? `${aiEntry(ai)?.title} (${ai})`} <span className="opt">optional</span>
+                    {aiText(ai, aiEntry(ai)?.title)} <span className="opt">optional</span>
                   </label>
                   <input
                     id={`q-${ai}`}
@@ -177,8 +175,8 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         Data attributes <span className="opt">— expiry, weight, price…</span>
       </h3>
       <datalist id="attribute-list">
-        {[...common, ...offered.filter((a) => !common.includes(a))].map((a) => (
-          <option key={a.ai} value={`(${a.ai}) ${a.title}`} />
+        {offered.map((a) => (
+          <option key={a.ai} value={aiText(a.ai, a.title)} />
         ))}
       </datalist>
       {id.attributes.map(([ai, value], index) => {

@@ -430,3 +430,21 @@ test("in bulk: the validation report, a cell fixed in place, rows skipped, the r
   await expect(page.locator("#cell-1-2")).toHaveValue("31/02/2028");
   await expect(report).toContainText("1 row ready · 2 with errors · 1 skipped");
 });
+
+// Every AI choice as "(AI) abbreviation name", in the order of that text (the owner, 30 October 2026; backlog 1.10).
+test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async ({ page }) => {
+  const keys = await page.locator("#key option").allTextContents();
+  expect(keys.slice(0, 4)).toEqual(["(00) SSCC Logistic unit", "(01) GTIN Product", "(253) GDTI Document", "(255) GCN Coupon"]);
+  expect(keys.at(-1)).toBe("(8018) GSRN Service recipient");
+  expect(keys).toEqual([...keys].sort());
+  await expect(page.locator("label[for='q-10']")).toHaveText("(10) Batch/lot optional");
+  await expect(page.locator("label[for='q-235']")).toHaveText("(235) TPX Third-party serialised extension optional");
+  const attributes = await page.locator("#attribute-list option").evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
+  expect(attributes.slice(0, 3)).toEqual(["(00) SSCC Logistic unit", "(02) CONTENT", "(11) PROD DATE"]); // (01) and its qualifiers are not attributes
+  expect(attributes).toEqual([...attributes].sort());
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\n9506000134376\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator("#map-0 optgroup[label='Keys'] option").first()).toHaveText("(00) SSCC Logistic unit");
+  await expect(page.locator("#map-0 optgroup[label='Qualifiers'] option").first()).toHaveText("(10) Batch/lot");
+});

@@ -93,8 +93,9 @@ the logistic label of phase 4.
 *The owner's review of 29 October 2026 added items 1.10 to 1.14.*
 
 - 1.10 The editor, corrected: (a) it takes the whole width of the screen (today at most 1 400 px, centred); (b) every
-  list of AIs in alphabetical order of the name it shows — the identifier types (today in the dictionary's order,
-  GDTI first), the attributes (today the common ones first, then by AI) and the bulk columns' AIs; (c) the screen's
+  list of AIs in alphabetical order of the name it shows — the identifier types, the attributes and the bulk columns'
+  AIs — *done 30 October: every AI choice reads "(AI) abbreviation name", "(01) GTIN Product", "(10) Batch/lot", so
+  the order of the text shown is the AI's, as the General Specifications list them (the owner's request)*; (c) the screen's
   calibration (1.6) usable at its whole range: the bar outgrows the options column near the slider's maximum, so it
   cannot be measured, and the slider is coarse — the bar where there is room, and a fine adjustment
 - 1.11 Every identifier and qualifier: every GS1 key the dictionary has (the 16 GS1 Digital Link primary keys are

@@ -77,4 +77,7 @@
   rows as CSV.
 - Headers written as AIs work for every AI (the owner's suggestion): "(01) GTIN", "(21) Número de série", "AI (17)",
   "(3103)" and decimal families such as "(310n)" go to that AI, whatever words follow the brackets.
+- Every AI choice reads "(AI) abbreviation name" — identifier types ("(01) GTIN Product"), qualifiers ("(10)
+  Batch/lot", "(235) TPX Third-party serialised extension"), attributes and the bulk columns — and the lists follow the
+  order of that text, the AI's (item 1.10 b, the owner's request).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
