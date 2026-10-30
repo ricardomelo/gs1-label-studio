@@ -38,7 +38,8 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 ## Backlog
 
-**Order from here** (29 October 2026; 2.2 done the same day, 1.10 on 30 October): 2.4 → 1.11 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
+**Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
+request before 2.4): 2.4 → 1.12 → 2.3 → 1.13 → 2.5 → 1.14 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; several keys (1.12) before the
 generated SSCCs (2.3), which a logistic unit's label needs; GS1-128 over several symbols (1.13) after them, opening
 the logistic label of phase 4.
