@@ -1,3 +1,4 @@
+import { splitGs1128 } from "./gs1128.ts";
 import bwipjs from "bwip-js";
 import { hasPredefinedLength } from "./elementString.ts";
 import { ENVIRONMENTS } from "./environments.ts";
@@ -354,8 +355,15 @@ export function carries(symbol: SpecSymbol, input: ParsedInput, leaf?: Leaf): { 
       if (gtin && !/^[01]/.test(gtin)) return { carries: "no", reason: "carries a GTIN starting with 0 or 1" };
       return gtinOnly();
     case "gs1-128": {
+      // Beyond 48 data characters, in several symbols (backlog 1.13), unless one element string alone is too long
       const count = gs1128DataCharacters(input);
-      if (count > 48) return { carries: "no", reason: `carries at most 48 data characters; this data has ${count}` };
+      if (count > 48) {
+        try {
+          return { carries: "all", reason: `in ${splitGs1128(input.elementString).length} symbols: ${count} data characters, 48 at most in each` };
+        } catch (error) {
+          return { carries: "no", reason: error instanceof Error ? error.message : String(error) };
+        }
+      }
       return { carries: "all" };
     }
     case "databar-expanded":

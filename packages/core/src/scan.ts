@@ -1,3 +1,4 @@
+import { splitGs1128 } from "./gs1128.ts";
 import type { LabelOptions } from "./layout.ts";
 import type { SymbologyId } from "./symbologies.ts";
 import { upcaManufacturerAndProduct } from "./zpl.ts";
@@ -9,8 +10,11 @@ import { upcaManufacturerAndProduct } from "./zpl.ts";
  *
  * EAN/UPC symbols read as the GTIN-13 they are: a UPC-A with a leading zero, a UPC-E expanded to its UPC-A first.
  */
-export function expectedReads(options: Pick<LabelOptions, "symbology" | "data" | "linear">): string[] {
-  const reads = [expectedRead(options.symbology, options.data)];
+export function expectedReads(options: Pick<LabelOptions, "symbology" | "data" | "linear" | "gs1128Starts">): string[] {
+  // GS1-128 over several symbols (backlog 1.13): a read for each
+  const reads = options.symbology === "gs1-128"
+    ? splitGs1128(options.data, options.gs1128Starts).map((part) => expectedRead("gs1-128", part))
+    : [expectedRead(options.symbology, options.data)];
   if (options.linear) reads.push(expectedRead(options.linear[0], options.linear[1]));
   return reads.sort();
 }

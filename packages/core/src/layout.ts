@@ -1,4 +1,6 @@
-import { encode, EncodeError } from "./encode.ts";
+import { parseElementString } from "./elementString.ts";
+import { GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
+import { encode, EncodeError, widthInModules } from "./encode.ts";
 import {
   checkEnvironment,
   ENVIRONMENTS,
@@ -92,6 +94,11 @@ export interface LabelOptions {
   hriPosition?: HriPosition;
   /** The human readable text's height in mm (its capitals'); TEXT_HEIGHT_MM when not given. */
   hriHeightMm?: number;
+  /**
+   * GS1-128 over several symbols (backlog 1.13): the element strings, by index, that start a new symbol; as many as
+   * fit in each when not given.
+   */
+  gs1128Starts?: readonly number[];
 }
 
 export interface LabelText {
@@ -121,6 +128,8 @@ export interface Layout {
   barHeight?: number;
   /** Which of `rects` are a linear symbol's bars, [from, to): what a bar width reduction narrows. */
   barRects?: readonly [number, number];
+  /** GS1-128 over several symbols: the element string each symbol carries, from the top. */
+  parts?: string[];
 }
 
 /** The data does not fit the QR version chosen at the level chosen. */
@@ -219,6 +228,13 @@ function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
   if (options.linearSize != null && !(SIZES as readonly number[]).includes(options.linearSize)) {
     throw new Error(`linear size ${options.linearSize} is not one of ${SIZES.join(", ")}`);
   }
+  if (options.symbology === "gs1-128") {
+    const xMm = options.spec ? specX(options.spec, size) : 0;
+    const [quietLeft, quietRight] = typeof options.spec?.quietZone === "number" ? [options.spec.quietZone, options.spec.quietZone] : (options.spec?.quietZone ?? [10, 10]);
+    const fits = (part: string) => xMm > 0 && (quietLeft + widthInModules(encode("gs1-128", part)) + quietRight) * xMm <= GS1_128_MAX_MM + 1e-9;
+    const parts = splitGs1128(options.data, options.gs1128Starts, fits);
+    if (parts.length > 1) return layoutGs1128Stack(options, parts, font, size);
+  }
   if (BARS.includes(options.symbology)) return layoutBars(options, font, size);
   if (LINEAR_ALONE.includes(options.symbology)) return layoutLinearAlone(options, font, environment, size);
   const symbol = RESOLVER_SYMBOL_OF[options.symbology];
@@ -290,6 +306,32 @@ function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
   return {
     width: width + MARGIN, height: height + MARGIN, rects, symbolRects, texts, xMm, modules, version,
     barRects: [symbolRects, rects.length],
+  };
+}
+
+/** Between stacked GS1-128 symbols, beyond each one's margin: with the margins, a quiet zone's 10X. */
+const STACK_GAP = 10 - 2 * MARGIN;
+
+/**
+ * GS1-128 over several symbols (backlog 1.13): each laid out as one symbol is, with the text of its own element strings,
+ * stacked from the top and aligned on the left, as the GS1 Logistic Label stacks them.
+ */
+function layoutGs1128Stack(options: LabelOptions, parts: string[], font: HriFont, size: number): Layout {
+  const layouts = parts.map((part) => {
+    const lines = parseElementString(part).map((e) => `(${e.ai})${e.value}`).filter((line) => options.hriLines.includes(line));
+    return layoutBars({ ...options, data: part, hriLines: lines }, font, size);
+  });
+  const rects: [number, number, number, number][] = [];
+  const texts: LabelText[] = [];
+  let y = 0;
+  for (const layout of layouts) {
+    for (const [rx, ry, rw, rh] of layout.rects) rects.push([rx, ry + y, rw, rh]);
+    for (const t of layout.texts) texts.push({ ...t, baseline: t.baseline + y });
+    y += layout.height + STACK_GAP;
+  }
+  return {
+    width: Math.max(...layouts.map((l) => l.width)), height: y - STACK_GAP, rects, symbolRects: rects.length, texts,
+    xMm: layouts[0]!.xMm, modules: 0, version: null, barHeight: layouts[0]!.barHeight, barRects: [0, rects.length], parts,
   };
 }
 
@@ -401,6 +443,10 @@ function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout 
   }
   const height = bands.reduce((sum, band) => sum + band.height, 0);
   const boxWidth = 2 * side + quietLeft + symbolWidth + quietRight;
+  if (symbology === "gs1-128" && boxWidth * xMm > GS1_128_MAX_MM + 1e-9) {
+    throw new RangeError(`A GS1-128 symbol is at most ${GS1_128_MAX_MM.toFixed(2)} mm long with its quiet zones (GS1 General ` +
+      `Specifications 5.4.4.3); this one is ${(boxWidth * xMm).toFixed(1)} mm. Choose a smaller size, or start another symbol.`);
+  }
   const boxHeight = 2 * thickness + height;
 
   const textHeight = hriHeight(options) / xMm;

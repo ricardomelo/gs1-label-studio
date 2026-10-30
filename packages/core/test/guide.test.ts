@@ -157,11 +157,10 @@ describe("the symbols a leaf allows, and the one recommended", () => {
     expect(itf.recommended).toEqual({ symbol: "itf14" });
     expect(itf.options.find((o) => o.symbol === "itf14")!.specs[0]!.x).toEqual([0.495, 0.495, 1.016]);
     expect(at("01", DISTRIBUTION, `(01)${CASE}(10)B42(17)271231`).recommended).toEqual({ symbol: "gs1-128" });
+    // Beyond 48 characters GS1-128 carries it all in two symbols (backlog 1.13)
     const long = at("01", DISTRIBUTION, `(01)${CASE}(10)ABCDEFGHIJKLMNOPQRST(21)ABCDEFGHIJKL`);
-    expect(long.options.find((o) => o.symbol === "gs1-128")).toMatchObject({ carries: "no" });
-    // An ITF-14 with a GS1 DataMatrix beside it: two symbols the label does not lay out together yet (phase 4).
-    expect(long.recommended).toBeNull();
-    expect(long.together).toEqual({ symbol: "itf14", with: "gs1-datamatrix" });
+    expect(long.options.find((o) => o.symbol === "gs1-128")).toMatchObject({ carries: "all", reason: "in 2 symbols: 53 data characters, 48 at most in each" });
+    expect(long.recommended).toEqual({ symbol: "gs1-128" });
   });
 
   it("a logistic unit: GS1-128 (section 2.2.1), table 5", () => {
@@ -223,8 +222,12 @@ describe("GS1-128's data characters (section 5.4.4.3)", () => {
       tobacco: false, "healthcare-non-retail": false }).leaf!, engine.parse(data)).options.find((o) => o.symbol === "gs1-128")!;
     // 16 + (10) and 9 characters + FNC1 + (21) and 18 characters = 48
     expect(at(`(01)${GTIN13}(10)ABCDEFGHI(21)ABCDEFGHIJKLMNOPQR`).carries).toBe("all");
+    // Beyond, in several symbols (backlog 1.13), unless one element string alone has more than 48
     expect(at(`(01)${GTIN13}(10)ABCDEFGHI(21)ABCDEFGHIJKLMNOPQRS`)).toMatchObject({
-      carries: "no", reason: "carries at most 48 data characters; this data has 49",
+      carries: "all", reason: "in 2 symbols: 49 data characters, 48 at most in each",
+    });
+    expect(at(`(01)${GTIN13}(8200)https://example.com/a-very-long-product-page-address-0001`)).toMatchObject({
+      carries: "no", reason: expect.stringMatching(/at most 48 data characters .*\(8200\)https:.* has 61/),
     });
   });
 });

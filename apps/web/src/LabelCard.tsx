@@ -50,6 +50,8 @@ export interface LabelSettings {
   /** Where the human readable text goes, and its height in mm (null: 2.2 mm) (backlog 1.16). */
   hriPosition: HriPosition;
   hriHeightMm: number | null;
+  /** GS1-128 over several symbols (backlog 1.13): the element strings that start a symbol; null: as many as fit. */
+  gs1128Starts: number[] | null;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -86,6 +88,8 @@ export interface LabelView {
   heightMm?: number;
   /** What a reader should give back for the symbols on the label (`expectedReads()`), for the scan test. */
   expected?: string[];
+  /** GS1-128: its element strings and the index of each that starts a symbol (the first always). */
+  gs1128?: { elements: string[]; starts: number[] };
 }
 
 type Scan =
@@ -529,6 +533,42 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
             </div>
           </div>
+          {view.gs1128 && view.gs1128.elements.length > 1 && (
+            <div className="gs1128">
+              <div className="gs1128-head">
+                <b>GS1-128 symbols</b>{" "}
+                <span className="hint">
+                  {view.gs1128.starts.length > 1 ? `${view.gs1128.starts.length} symbols, ` : "one symbol, "}
+                  {s.gs1128Starts ? "split where you chose" : "as many element strings as fit in each (48 data characters, 165.10 mm)"}
+                </span>
+                {s.gs1128Starts && (
+                  <button type="button" className="link" onClick={() => set("gs1128Starts", null)}>
+                    Automatic
+                  </button>
+                )}
+              </div>
+              <ol className="gs1128-list">
+                {view.gs1128.elements.map((element, index) => (
+                  <li key={index} className={view.gs1128!.starts.includes(index) ? "starts" : ""}>
+                    {index > 0 && (
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={view.gs1128!.starts.includes(index)}
+                          onChange={(e) => {
+                            const starts = view.gs1128!.starts.filter((i) => i > 0 && i !== index);
+                            set("gs1128Starts", e.target.checked ? [...starts, index].sort((a, b) => a - b) : starts);
+                          }}
+                        />
+                        new symbol
+                      </label>
+                    )}
+                    <code>{element}</code>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
           {view.guided && (
             <div className="hint">
               Sizes within table {view.guided.table}'s ranges (GS1 General Specifications 5.12.3.{view.guided.table})

@@ -718,3 +718,23 @@ test("the human readable text above, split, left or right, and higher; the symbo
   await page.selectOption("#opt-symbol", "ean13");
   await expect(page.locator("#opt-hri-position")).toHaveCount(0);
 });
+
+// Item 1.13: GS1-128 over several symbols (General Specifications 5.4.4.3), split automatically or where the person chooses.
+test("GS1-128 beyond 48 data characters in several symbols, each read back; the person moves where one starts", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABCDEFGHIJ(15)271231(3102)001250");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "gs1-128");
+  await expect(page.locator(".caption")).toContainText("GS1-128 in 2 symbols");
+  await expect(page.locator(".gs1128-head")).toContainText("2 symbols, as many element strings as fit in each");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]C1 (00)106141411234567897(02)09506000134376(37)24 and ]C1 (10)ABCDEFGHIJ(15)271231(3102)001250", { timeout: 30_000 });
+  await page.locator(".gs1128-list li").nth(5).getByRole("checkbox").check();
+  await expect(page.locator(".caption")).toContainText("GS1-128 in 3 symbols");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await expect(page.locator(".scan-result")).toContainText("]C1 (3102)001250");
+  await page.locator(".gs1128-head").getByRole("button", { name: "Automatic" }).click();
+  await expect(page.locator(".caption")).toContainText("GS1-128 in 2 symbols");
+});

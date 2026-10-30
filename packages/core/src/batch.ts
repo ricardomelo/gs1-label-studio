@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { zplLabel, type ZplLabelOptions } from "./zpl.ts";
+import { zplLabel, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -40,6 +40,8 @@ export interface LabelDesign {
   /** Where the human readable text goes and its height in mm (backlog 1.16); below and 2.2 mm when not given. */
   hriPosition?: HriPosition;
   hriHeightMm?: number;
+  /** GS1-128 over several symbols: the element strings that start a symbol; as many as fit in each when not given. */
+  gs1128Starts?: readonly number[];
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -78,12 +80,14 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     symbology, data, showHri: design.hri !== "none", hriLines: design.hri === "key" ? lines.slice(0, 1) : lines,
     version: design.version, error: design.error, environment: design.environment, size: design.size, linear,
     linearSize: twoD ? design.linearSize : null, ...(design.spec ? { spec: design.spec, table: design.table } : {}),
+    ...(design.gs1128Starts ? { gs1128Starts: design.gs1128Starts } : {}),
     bearer: design.bearer, ...(design.reduction ? { barWidthReduction: design.reduction } : {}),
     ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
     ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
   };
   const layout = layoutLabel(options, font);
-  const geometry = encode(symbology, data, symbology.endsWith("qrcode")
+  // GS1-128 over several symbols: the first one's geometry
+  const geometry = encode(symbology, layout.parts?.[0] ?? data, symbology.endsWith("qrcode")
     ? { eclevel: design.error.toUpperCase() as "M", ...(layout.version ? { version: layout.version } : {}) }
     : {});
   return { data, options, layout, geometry };
@@ -96,6 +100,9 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
+  if (layout.parts && layout.parts.length > 1) {
+    throw new ZplUnsupportedError(`GS1-128 in ${layout.parts.length} symbols is not written in ZPL yet: it comes with the label layout of 3.2.`);
+  }
   const d = snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
   const quietZone = design.spec && typeof design.spec.quietZone !== "number"

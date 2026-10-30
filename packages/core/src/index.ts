@@ -239,3 +239,4 @@ export {
   withSequence,
   type Sequence,
 } from "./sequence.ts";
+export { dataCharacters, GS1_128_MAX_DATA, GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
