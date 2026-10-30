@@ -16,6 +16,11 @@ export interface Identification {
   qualifiers: Record<string, string>;
   /** [AI as chosen (e.g. "310n"), value as typed (e.g. "0,5")], in order. */
   attributes: [string, string][];
+  /**
+   * The GS1 Digital Link URI's own parameters, [name, value] after the data attributes in its query string (backlog
+   * 1.17); never in element strings. A name made only of digits is refused: those are AIs.
+   */
+  parameters?: [string, string][];
 }
 
 export interface Identified extends ParsedInput {
@@ -97,7 +102,58 @@ export function identify(engine: SyntaxEngine, id: Identification, stem: string 
   const keyProblem = checkKeyValue(id.key, value);
   if (keyProblem) throw new InputError(keyProblem);
   const { elementString, resolved } = elementStringOf({ ...id, value });
-  return { ...engine.parse(elementString, stem), resolvedAttributes: resolved };
+  const parsed = engine.parse(elementString, stem);
+  const parameters = (id.parameters ?? []).filter(([name, v]) => name || v);
+  if (parameters.length) {
+    const problem = parametersProblem(parameters);
+    if (problem) throw new InputError(problem);
+    if (parsed.digitalLinkUri) parsed.digitalLinkUri = withParameters(parsed.digitalLinkUri, parameters);
+  }
+  return { ...parsed, resolvedAttributes: resolved };
+}
+
+/** What is wrong with the URI's own parameters, or null: a name missing, made only of digits, or given twice. */
+export function parametersProblem(parameters: readonly (readonly [string, string])[]): string | null {
+  const seen = new Set<string>();
+  for (const [raw] of parameters) {
+    const name = raw.trim();
+    if (!name) return "A parameter of the URI needs a name.";
+    if (/^\d+$/.test(name)) return `The parameter "${name}" is made of digits only: such names are GS1 Application Identifiers. Add it as a data attribute, or choose a name with a letter.`;
+    if (seen.has(name)) return `The parameter "${name}" is given twice.`;
+    seen.add(name);
+  }
+  return null;
+}
+
+/**
+ * The URI with its own parameters after the data attributes, names and values percent-encoded (RFC 3986, as the GS1
+ * Digital Link standard asks of the query string).
+ */
+export function withParameters(uri: string, parameters: readonly (readonly [string, string])[]): string {
+  const query = parameters.map(([name, value]) => `${encodeURIComponent(name.trim())}=${encodeURIComponent(value)}`).join("&");
+  return query ? `${uri}${uri.includes("?") ? "&" : "?"}${query}` : uri;
+}
+
+/**
+ * The parameters of a pasted GS1 Digital Link URI that are not AIs, decoded, in order: the Syntax Engine leaves them
+ * out, so the editor takes them from the text itself.
+ */
+export function uriParameters(text: string): [string, string][] {
+  const trimmed = text.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return [];
+  const at = trimmed.indexOf("?");
+  if (at < 0) return [];
+  const decode = (part: string) => {
+    try {
+      return decodeURIComponent(part.replace(/\+/g, " "));
+    } catch {
+      return part;
+    }
+  };
+  return trimmed.slice(at + 1).split("#")[0]!.split("&").filter(Boolean).map((pair) => {
+    const eq = pair.indexOf("=");
+    return [decode(eq < 0 ? pair : pair.slice(0, eq)), eq < 0 ? "" : decode(pair.slice(eq + 1))] as [string, string];
+  }).filter(([name]) => name && !/^\d+$/.test(name));
 }
 
 /**

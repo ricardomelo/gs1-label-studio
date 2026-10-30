@@ -10,10 +10,12 @@ import {
   fieldsOf,
   identify,
   InputError,
+  parametersProblem,
   qualifiersOf,
   rowsOf,
   splitRows,
   syntaxEngine,
+  uriParameters,
   type Identification,
   type SyntaxEngine,
 } from "../src/index.ts";
@@ -119,5 +121,34 @@ describe("qualifiers and attributes as one list (backlog 1.15)", () => {
     expect(() => identify(engine, { ...BASE, ...split })).toThrow(AttributeError);
     expect(splitRows("414", [["10", "B1"], ["254", "X"]])).toEqual({ qualifiers: { "254": "X" }, attributes: [["10", "B1"]] });
     expect(splitRows("01", [["", ""]])).toEqual({ qualifiers: {}, attributes: [["", ""]] });
+  });
+});
+
+describe("the GS1 Digital Link URI's own parameters (backlog 1.17)", () => {
+  const ID: Identification = { ...BASE, qualifiers: { "10": "B42" }, attributes: [["17", "271231"], ["20", "12"]] };
+
+  it("follow the data attributes in the query string, percent-encoded; the element string has none", () => {
+    const identified = identify(engine, { ...ID, parameters: [["a", "1"], ["b", "2"], ["c", "3"]] }, "https://id.gs1.org");
+    expect(identified.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3");
+    expect(identified.elementString).toBe("(01)09506000134376(10)B42(17)271231(20)12");
+    expect(dataFor("dl-qrcode", identified)).toBe(identified.digitalLinkUri);
+    expect(identify(engine, { ...BASE, parameters: [["utm source", "a&b=c é"]] }, "https://id.gs1.org").digitalLinkUri)
+      .toBe("https://id.gs1.org/01/09506000134376?utm%20source=a%26b%3Dc%20%C3%A9");
+    expect(identify(engine, { ...BASE, parameters: [["", ""]] }, "https://id.gs1.org").digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376");
+  });
+
+  it("refuses a name made of digits only, a missing name and a name given twice", () => {
+    expect(() => identify(engine, { ...ID, parameters: [["99", "x"]] })).toThrow(/digits only: such names are GS1 Application Identifiers/);
+    expect(parametersProblem([["", "x"]])).toMatch(/needs a name/);
+    expect(parametersProblem([["a", "1"], ["a", "2"]])).toMatch(/given twice/);
+    expect(parametersProblem([["17a", "1"], ["a1", "2"]])).toBeNull();
+  });
+
+  it("are taken from a pasted URI, which the Syntax Engine reads without them", () => {
+    const text = "https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3";
+    expect(uriParameters(text)).toEqual([["a", "1"], ["b", "2"], ["c", "3"]]);
+    expect(fieldsOf(engine.parse(text))).toEqual({ ...ID });
+    expect(uriParameters("https://example.com/01/09506000134376?utm%20source=a%26b&flag#top")).toEqual([["utm source", "a&b"], ["flag", ""]]);
+    expect(uriParameters("(01)09506000134376")).toEqual([]);
   });
 });

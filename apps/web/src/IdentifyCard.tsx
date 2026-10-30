@@ -11,6 +11,7 @@ import {
   identifierKeys,
   isDigitalLinkKey,
   normaliseKeyValue,
+  parametersProblem,
   qualifiersOf,
   resolveDecimal,
   rowsOf,
@@ -135,7 +136,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         value={id.key}
         onChange={(event) => {
           setRows([]);
-          onChange({ key: event.target.value, value: "", qualifiers: {}, attributes: [] });
+          onChange({ key: event.target.value, value: "", qualifiers: {}, attributes: [], ...(id.parameters ? { parameters: id.parameters } : {}) });
         }}
       >
         {[true, false].map((digitalLink) => (
@@ -264,6 +265,41 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
       {ownQualifiers.length > 0 && (
         <div className="hint">Qualifiers go to the GS1 Digital Link URI's path in the order its syntax asks, whatever their order here.</div>
       )}
+
+      <h3>
+        Parameters of the URI <span className="opt">— your own, not GS1: campaign, language, version…</span>
+      </h3>
+      {(id.parameters ?? []).map(([name, value], index) => {
+        const parameters = id.parameters ?? [];
+        const set = (next: [string, string]) => onChange({ ...id, parameters: parameters.map((p, i) => (i === index ? next : p)) });
+        // This row's own fault: no name, digits only, or a name an earlier row has
+        const own = !name && !value ? null
+          : parametersProblem([[name, value]])
+            ?? (parameters.slice(0, index).some(([n]) => n.trim() === name.trim()) ? `The parameter "${name.trim()}" is given twice.` : null);
+        return (
+          <div className="param" key={index}>
+            <input className="mono" aria-label="Parameter name" placeholder="name" value={name} spellCheck={false}
+              aria-invalid={Boolean(own)} onChange={(event) => set([event.target.value, value])} />
+            <span>=</span>
+            <input className="mono" aria-label="Parameter value" placeholder="value" value={value} spellCheck={false}
+              onChange={(event) => set([name, event.target.value])} />
+            <button type="button" className="ibtn" aria-label="Remove parameter"
+              onClick={() => onChange({ ...id, parameters: parameters.filter((_, i) => i !== index) })}>
+              ×
+            </button>
+            {own && <div className="hint error">{own}</div>}
+          </div>
+        );
+      })}
+      <div className="add">
+        <button type="button" className="btn" onClick={() => onChange({ ...id, parameters: [...(id.parameters ?? []), ["", ""]] })}>
+          + Add parameter
+        </button>
+      </div>
+      <div className="hint">
+        After the data attributes in the GS1 Digital Link URI's query string, as name=value; a name of digits only is an
+        AI, so it is refused here. Element strings have no place for them.
+      </div>
 
       <div className={status.error ? "status error" : "status ok"} aria-live="polite">
         {status.error ? (

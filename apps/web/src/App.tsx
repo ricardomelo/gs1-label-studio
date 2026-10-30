@@ -25,6 +25,7 @@ import {
   labelFor,
   patternName,
   zplOptionsFor,
+  uriParameters,
   type BatchRow,
   type LabelDesign,
   isDigitalLinkKey,
@@ -480,7 +481,9 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
             }}
             onPaste={(text) => {
               if (!engine) throw new Error("The GS1 Barcode Syntax Engine is still loading.");
-              const fields = fieldsOf(engine.parse(text));
+              // The URI's own parameters, which the engine leaves out (backlog 1.17)
+              const parameters = uriParameters(text);
+              const fields = { ...fieldsOf(engine.parse(text)), ...(parameters.length ? { parameters } : {}) };
               setId(fields);
               return fields;
             }}

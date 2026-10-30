@@ -619,3 +619,26 @@ test("in bulk: Generate N labels makes each row's files, a PDF and label sheets,
   expect(csv[3]).toBe("4,error,,,,The check digit does not match: it should be 2.");
   await expect(panel).toContainText("2 labels generated; 2 rows left out, each with its reason in generated.csv.");
 });
+
+// Item 1.17 (the owner's idea of 30 October 2026): the URI's own parameters, after the data attributes.
+test("the GS1 Digital Link URI's own parameters: after the attributes, a name of digits refused, taken from a pasted URI", async ({ page }) => {
+  await page.getByRole("button", { name: "+ Add parameter" }).click();
+  await page.getByLabel("Parameter name").fill("20");
+  await page.getByLabel("Parameter value").fill("12");
+  await expect(page.locator(".param .hint")).toContainText('The parameter "20" is made of digits only');
+  await expect(page.locator(".preview .error")).toContainText("such names are GS1 Application Identifiers");
+  await page.getByLabel("Parameter name").fill("lang");
+  await page.getByLabel("Parameter value").fill("pt BR");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&lang=pt%20BR");
+  await page.fill("#paste", "https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3");
+  await expect(page.getByLabel("Parameter name")).toHaveCount(3);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3", { timeout: 30_000 });
+  // Element strings have no place for them
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231(20)12", { timeout: 30_000 });
+});

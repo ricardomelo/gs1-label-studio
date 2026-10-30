@@ -102,4 +102,6 @@
   of it or why nothing was.
 - Qualifiers and data attributes in one list (item 1.15): "+ Add attributes" adds a row whose AI may be one of the
   key's qualifiers or any attribute; the qualifiers still go to the GS1 Digital Link URI's path in its own order.
+- The GS1 Digital Link URI's own parameters (item 1.17): name=value pairs after the data attributes, percent-encoded;
+  names of digits only are refused (they are AIs); kept when a URI is pasted.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
