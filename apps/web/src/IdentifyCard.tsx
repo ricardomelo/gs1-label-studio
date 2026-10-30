@@ -4,11 +4,14 @@ import {
   attributeHint,
   attributesForKey,
   AttributeError,
+  checkDigitProblem,
   checkKeyValue,
   exclusiveQualifiers,
   formatHint,
   aiEntry,
   identifierKeys,
+  isKey,
+  OTHER_KEYS,
   isDigitalLinkKey,
   normaliseKeyValue,
   parametersProblem,
@@ -181,6 +184,8 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           }
         } else if (ownQualifiers.includes(ai)) {
           problem = `(${ai}) is given already.`;
+        } else if (checkDigitProblem(ai, value)) {
+          problem = checkDigitProblem(ai, value);
         } else if (attribute && value.trim()) {
           try {
             const [code, digits] = resolveDecimal(ai, value.trim());
@@ -228,7 +233,9 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
                 ×
               </button>
             </div>
-            <span className="kind">{qualifier ? "qualifier · in the URI's path" : ai ? "data attribute · in the query string" : ""}</span>
+            <span className="kind">
+              {qualifier ? "qualifier · in the URI's path" : !ai ? "" : isKey(ai) ? "another key · in the URI's query string" : "data attribute · in the query string"}
+            </span>
             <input
               className="mono"
               {...(qualifier ? { id: `q-${ai}` } : {})}
@@ -262,6 +269,22 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           </span>
         )}
       </div>
+      {(OTHER_KEYS[id.key] ?? []).some(({ ais }) => ais.some((ai) => !used.has(ai))) && (
+        <div className="hint other-keys">
+          Other keys with the {keyText?.short ?? `(${id.key})`} (GS1 General Specifications 4.13):{" "}
+          {(OTHER_KEYS[id.key] ?? []).filter(({ ais }) => ais.some((ai) => !used.has(ai))).map(({ ais, what }) => (
+            <button
+              key={ais.join("+")}
+              type="button"
+              className="link"
+              title={what}
+              onClick={() => setAll([...rows, ...ais.filter((ai) => !used.has(ai)).map((ai) => ({ ai, value: "", typed: label(ai) }))])}
+            >
+              + {ais.map((ai) => `(${ai})`).join(" and ")} {what}
+            </button>
+          ))}
+        </div>
+      )}
       {ownQualifiers.length > 0 && (
         <div className="hint">Qualifiers go to the GS1 Digital Link URI's path in the order its syntax asks, whatever their order here.</div>
       )}

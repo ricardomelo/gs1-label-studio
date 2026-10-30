@@ -104,4 +104,7 @@
   key's qualifiers or any attribute; the qualifiers still go to the GS1 Digital Link URI's path in its own order.
 - The GS1 Digital Link URI's own parameters (item 1.17): name=value pairs after the data attributes, percent-encoded;
   names of digits only are refused (they are AIs); kept when a URI is pasted.
+- Several keys in one symbol (item 1.12): another key in the list says so and has its check digit checked; links add
+  the pairings of the General Specifications (an SSCC with the GTIN it contains and its count, with a GTIN, the
+  transport keys; a GTIN with a GRAI or GIAI); the other keys go to the URI's query string.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

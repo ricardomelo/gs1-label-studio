@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15 and 1.17 too): 1.12 → 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17 and 1.12 too): 2.3 → 1.16 → 1.13 → 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -128,7 +128,11 @@ complete.
   also an asset (GTIN with GRAI (8003) or GIAI (8004), e.g. a returnable keg). Today another key can only be added as
   a data attribute. To do: the cases confirmed against sections 3 and 4.13–4.14 of the General Specifications, the
   editor's "other keys" with their check digits, the GS1 Digital Link URI with one key in its path and the others in
-  its query string, and the HRI
+  its query string, and the HRI — *done 30 October: checked against sections 4.13.1 and 4.13.2 (tables 4-4 and 4-5),
+  which the Syntax Engine enforces, and which already put one key in the URI's path and the others in its query string
+  and every element string in the HRI; in the list of 1.15, a row of another key says so and has its check digit
+  checked on the row; links under the list add the pairings of the General Specifications for the key chosen — an SSCC
+  with (02) and (37), with (01), with (8026) and (37), with (401), (402), (403) or (410); a GTIN with (8003) or (8004)*
 - 1.13 GS1-128 over several symbols: when the data passes 48 characters (section 5.4.4.3), split it into as many
   GS1-128 symbols as needed, the key in the first and the rest in data-only symbols without a key, in the
   standard's order, stacked as the GS1 Logistic Label stacks them; the person can also move element strings between
@@ -148,7 +152,7 @@ complete.
   AI field lists the key's qualifiers not yet given first, then every attribute; links beside it add a qualifier of
   the key straight away; each row says whether it goes to the URI's path or its query string, a qualifier at its
   left edge in the qualifiers' colour; two qualifiers the key does not take together are said on the row*
-- 1.16 The human readable text placed and sized as the General Specifications allow (section 4.15): below the symbol
+- 1.16 The human readable text placed and sized as the General Specifications allow (section 4.14): below the symbol
   (the default) or above it, beside a 2D symbol where the standard allows it; its character height chosen within the
   standard's range for the symbol and the X-dimension; for every symbol drawn with text, in every export, the scan
   test still reading the symbol

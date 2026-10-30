@@ -196,3 +196,42 @@ export function splitRows(key: string, rows: readonly (readonly [string, string]
   }
   return { qualifiers, attributes };
 }
+
+/**
+ * Other keys carried beside a key in one element string (backlog 1.12), as the GS1 General Specifications 26.0 pair
+ * them: a logistic unit's SSCC with what it contains (section 3.2's (02) and (37); table 4-5: (02) needs (00) and (37))
+ * or with the GTIN of the unit when it is itself a trade item, and with the transport keys of section 3.9; a trade item
+ * that is also an asset, such as a returnable keg. The Syntax Engine checks the pairs (tables 4-4 and 4-5); in a GS1
+ * Digital Link URI the other keys go to the query string.
+ */
+export const OTHER_KEYS: Readonly<Record<string, readonly { ais: readonly string[]; what: string }[]>> = {
+  "00": [
+    { ais: ["02", "37"], what: "the GTIN of the trade items it contains, and their count" },
+    { ais: ["01"], what: "a GTIN, when the logistic unit is itself a trade item" },
+    { ais: ["8026", "37"], what: "the ITIP of the trade item pieces it contains, and their count" },
+    { ais: ["401"], what: "the consignment (GINC)" },
+    { ais: ["402"], what: "the shipment (GSIN)" },
+    { ais: ["403"], what: "a routing code" },
+    { ais: ["410"], what: "the ship-to location (GLN)" },
+  ],
+  "01": [
+    { ais: ["8003"], what: "a GRAI, when the trade item is also a returnable asset, such as a keg" },
+    { ais: ["8004"], what: "a GIAI, when the trade item is also an individual asset" },
+  ],
+};
+
+/** Whether an AI is a GS1 key (a GS1 Digital Link primary key, or a key of element strings only such as (02) or (03)). */
+export function isKey(ai: string): boolean {
+  return Boolean(aiEntry(ai)?.dlpkey) || ["02", "03", "8026"].includes(ai);
+}
+
+/**
+ * A row's check digit, for an AI made of one fixed run of digits ending in a check digit ((02), (410), (8017)…):
+ * the reason when it does not match, null when it does or the AI has none.
+ */
+export function checkDigitProblem(ai: string, value: string): string | null {
+  const entry = aiEntry(ai);
+  const only = entry?.components.length === 1 ? entry.components[0] : undefined;
+  if (!value.trim() || !only || only.type !== "N" || !only.linters.includes("csum")) return null;
+  return checkKeyValue(ai, value.trim());
+}

@@ -4,12 +4,15 @@ import {
   attributeHint,
   attributeByCode,
   attributesForKey,
+  checkDigitProblem,
   checkKeyValue,
   dataFor,
   exclusiveQualifiers,
   fieldsOf,
   identify,
   InputError,
+  isKey,
+  OTHER_KEYS,
   parametersProblem,
   qualifiersOf,
   rowsOf,
@@ -150,5 +153,37 @@ describe("the GS1 Digital Link URI's own parameters (backlog 1.17)", () => {
     expect(fieldsOf(engine.parse(text))).toEqual({ ...ID });
     expect(uriParameters("https://example.com/01/09506000134376?utm%20source=a%26b&flag#top")).toEqual([["utm source", "a&b"], ["flag", ""]]);
     expect(uriParameters("(01)09506000134376")).toEqual([]);
+  });
+});
+
+describe("several keys in one symbol (backlog 1.12)", () => {
+  const SSCC = "106141411234567897";
+  const values: Record<string, string> = {
+    "02": "09506000134376", "37": "10", "01": "09506000134376", "8026": "095060001343760102", "401": "9506000134376ABC",
+    "402": "95060001343760000", "403": "ROUTE1", "410": "9506000134376", "8003": "09506000134376123", "8004": "9506000134376KEG1",
+  };
+
+  it("draws each pairing the General Specifications give: one key in the URI's path, the others in its query string", () => {
+    for (const [key, pairs] of Object.entries(OTHER_KEYS)) {
+      for (const { ais } of pairs) {
+        const value = key === "00" ? SSCC : "09506000134376";
+        const id: Identification = { key, value, qualifiers: {}, attributes: ais.map((ai) => [ai, values[ai]!]) };
+        const identified = identify(engine, id, "https://id.gs1.org");
+        expect(identified.elementString, ais.join("+")).toBe(`(${key})${value}${ais.map((ai) => `(${ai})${values[ai]}`).join("")}`);
+        expect(identified.digitalLinkUri).toBe(`https://id.gs1.org/${key}/${value}?${ais.map((ai) => `${ai}=${values[ai]}`).join("&")}`);
+      }
+    }
+  });
+
+  it("knows the keys and checks a row's check digit; the engine refuses the pairs the tables forbid", () => {
+    expect(["00", "01", "02", "8003", "8026", "414"].every(isKey)).toBe(true);
+    expect(["37", "10", "403", "410"].some(isKey)).toBe(false);
+    expect(checkDigitProblem("02", "09506000134377")).toBe("The check digit does not match: it should be 6.");
+    expect(checkDigitProblem("410", "9506000134376")).toBeNull();
+    expect(checkDigitProblem("8003", "09506000134376123")).toBeNull(); // more than the digits: the engine checks it
+    expect(checkDigitProblem("10", "B1")).toBeNull();
+    expect(() => identify(engine, { ...BASE, attributes: [["02", "09506000134376"]] })).toThrow(/invalid to pair AI \(02\) with AI \(01\)/);
+    expect(() => identify(engine, { key: "00", value: SSCC, qualifiers: {}, attributes: [["02", "09506000134376"]] }))
+      .toThrow(/Required AIs for AI \(02\) are not satisfied: 37/);
   });
 });

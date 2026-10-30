@@ -642,3 +642,29 @@ test("the GS1 Digital Link URI's own parameters: after the attributes, a name of
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231(20)12", { timeout: 30_000 });
 });
+
+// Item 1.12: several keys in one symbol, as the General Specifications pair them (4.13).
+test("several keys: an SSCC with the GTIN it contains and their count, each check digit checked, the others in the query string", async ({ page }) => {
+  await page.selectOption("#key", "00");
+  await page.fill("#key-value", "106141411234567897");
+  const links = page.locator(".other-keys button.link");
+  await expect(links.first()).toHaveText("+ (02) and (37) the GTIN of the trade items it contains, and their count");
+  await links.first().click();
+  const rows = page.locator(".attr");
+  await expect(rows.nth(0).locator(".kind")).toHaveText("another key · in the URI's query string");
+  await rows.nth(0).getByLabel("Attribute value").fill("09506000134377");
+  await expect(rows.nth(0).locator(".hint")).toHaveText("The check digit does not match: it should be 6.");
+  await rows.nth(0).getByLabel("Attribute value").fill("09506000134376");
+  await rows.nth(1).getByLabel("Attribute value").fill("10");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/00/106141411234567897?02=09506000134376&37=10");
+  await expect(links.first()).toHaveText("+ (01) a GTIN, when the logistic unit is itself a trade item");
+  // (01) beside (02) is a pair the General Specifications forbid (table 4-4)
+  await links.first().click();
+  await rows.nth(2).getByLabel("Attribute value").fill("09506000134376");
+  await expect(page.locator(".preview .error")).toContainText("It is invalid to pair AI (01) with AI (37)");
+  await rows.nth(2).getByRole("button", { name: "Remove attribute" }).click();
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (00)106141411234567897(02)09506000134376(37)10", { timeout: 30_000 });
+});
