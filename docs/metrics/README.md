@@ -35,6 +35,26 @@ Defined once in `scripts/metrics.mjs` and not changed without a note here, so th
 Changes to the categories: 28 October 2026 — licence texts of third-party assets (the font's `OFL.txt`) are excluded
 like `LICENSE`; they had counted as code in the snapshot taken with item 1.4 before this change.
 
+## Performance targets (backlog 2.5)
+
+Measured in Node 22 in the session's container on 30 October 2026 (`generateBatch` and `checkRows` over rows of a GTIN,
+a batch, a serial number and an expiry date, drawn as QR codes with every element string as text):
+
+| What | Before | After | Target |
+|---|---|---|---|
+| Checking rows (Syntax Engine) | 10,000 in 0.64 s | the same (on the page's thread) | 10,000 within 1 s |
+| Laying out a label (`labelFor`) | 8.8 ms | 4.7 ms (the QR encoder's 4.4 ms) | — |
+| A label's SVG / PDF page | 7.1 ms / 11.3 ms | 1.9 ms / 1.2 ms | — |
+| 1,000 labels: SVG each and one PDF | 32.6 s | 10.7 s | within 15 s |
+| 1,000 labels: SVG, PNG, PDF, EPS each and one PDF | 73 s (without EPS) | 33 s | — |
+
+The gains, with the same bytes out (the resolver's fixtures and a test of 200,000 values against the exact
+formatting): glyph points read once per character (opentype.js built them again on every access); Python's number
+formatting through `toFixed()` except at an exact tie; the symbol encoded once per label rather than twice; the PNG's
+text filled row by row from the edges that cross each row. The generation runs in a Web Worker, with its progress and
+a Cancel button, so the page never waits for it; a browser is slower than Node by a factor to be measured on the
+owner's computer.
+
 ## The owner's time sheet
 
 A spreadsheet in the owner's Google Drive (`ClaudeAI/gs1-label-studio/Owner time sheet — gs1-label-studio`), easier

@@ -738,3 +738,23 @@ test("GS1-128 beyond 48 data characters in several symbols, each read back; the 
   await page.locator(".gs1128-head").getByRole("button", { name: "Automatic" }).click();
   await expect(page.locator(".caption")).toContainText("GS1-128 in 2 symbols");
 });
+
+// Item 2.5: the generation runs in a worker, with its progress and a way to stop it.
+test("in bulk: generating thousands of labels shows its progress and can be cancelled; the page stays usable", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.selectOption("#seq-kind", "sscc");
+  await page.fill("#seq-count", "3000");
+  await page.fill("#seq-first", "1");
+  await page.fill("#seq-gcp", "0614141");
+  await page.getByRole("button", { name: "Make 3,000 rows" }).click();
+  await expect(page.locator(".summary")).toContainText("3000 rows ready");
+  await page.getByRole("button", { name: "Generate 3000 labels" }).click();
+  await expect(page.locator(".generate progress")).toBeVisible();
+  await expect(page.locator(".generate-go .hint")).toContainText(/Drawing \d+ of 3000/);
+  // The page answers while the worker draws
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator(".row-nav")).toContainText("2 of 3000");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator(".generate-go .hint")).toHaveText("Stopped: nothing was downloaded.");
+  await expect(page.locator(".generate progress")).toHaveCount(0);
+});

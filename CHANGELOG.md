@@ -113,4 +113,6 @@
   below, left or right of the symbol; from 2 mm high, 3 mm for the GS1 Logistic Label.
 - GS1-128 over several symbols (item 1.13): beyond 48 data characters or 165.10 mm, stacked symbols in order with the
   key in the first, each with its text; where a symbol starts can be chosen.
+- Generating in bulk runs in a Web Worker with its progress and Cancel (item 2.5); labels are drawn about three times
+  faster, with the same files out.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

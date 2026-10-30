@@ -31,6 +31,8 @@ interface Props {
   result: string | null;
   error: string | null;
   onGenerate: (choice: GenerateChoice) => void;
+  /** Stops a generation running. */
+  onCancel: () => void;
 }
 
 const FILES: BatchFile[] = ["svg", "png", "pdf", "eps"];
@@ -68,7 +70,7 @@ function Num({ id, label, value, onChange }: { id: string; label: string; value:
   );
 }
 
-export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, result, error, onGenerate }: Props) {
+export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, result, error, onGenerate, onCancel }: Props) {
   const [choice, setChoice] = useState<Kept>(kept);
   const [start, setStart] = useState(1);
   const update = (next: Partial<Kept>) => {
@@ -181,9 +183,17 @@ export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, re
         >
           Generate {ready} {ready === 1 ? "label" : "labels"}
         </button>
+        {progress && (
+          <>
+            <progress max={progress.total || 1} value={progress.done} aria-label="Labels drawn" />
+            <button type="button" className="btn" onClick={onCancel}>
+              Cancel
+            </button>
+          </>
+        )}
         <span className="hint" aria-live="polite">
           {progress
-            ? `Drawing ${progress.done} of ${progress.total}…`
+            ? progress.done === progress.total && progress.total ? "Writing the zip…" : `Drawing ${progress.done} of ${progress.total}…`
             : result ?? (nothing ? GENERATE_TEXTS.nothing : GENERATE_TEXTS.zip)}
         </span>
       </div>

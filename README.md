@@ -40,7 +40,7 @@ Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first
 
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17, 1.12, 2.3, 1.16 and 1.13 too): 2.5 → 1.14 → 1.18 → 1.19 → phase 3. The
+day, 1.15, 1.17, 1.12, 2.3, 1.16, 1.13 and 2.5 too): 1.14 → 1.18 → 1.19 → phase 3. The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -208,7 +208,10 @@ complete.
   before generating; one ZPL file with the printer's own commands; generated.csv with every row, its files or why
   none. Pimaco's sheets wait: its 2026 catalogue gives their label sizes and counts but not their margins or pitch
   (a custom sheet takes one meanwhile). The printer languages after ZPL come with phase 3*
-- 2.5 Web Workers with progress and cancel; a measured performance target
+- 2.5 Web Workers with progress and cancel; a measured performance target — *done 30 October: the generation runs in
+  a Web Worker, a progress bar and Cancel beside "Generate N labels", the page usable meanwhile; checking stays on the
+  page (10,000 rows in 0.64 s, within the target of 1 s); 1,000 QR labels as SVG and one PDF in 10.7 s instead of
+  32.6 s (target 15 s), with the same bytes out (docs/metrics, "Performance targets")*
 
 **Phase 3 — printers** (ADR 0002)
 

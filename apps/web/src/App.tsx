@@ -21,7 +21,6 @@ import {
   HriFont,
   identify,
   InputError,
-  generateBatch,
   labelFor,
   patternName,
   zplOptionsFor,
@@ -71,6 +70,7 @@ import {
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
+import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
@@ -380,25 +380,46 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     ...(skipped.has(index) ? { skipped: true } : {}),
   }));
   const readyRows = batchRows.filter((row) => row.identified && !row.skipped);
-  async function generate(choice: GenerateChoice) {
-    if (!font) return;
+  // Generated in a worker (backlog 2.5): the page stays usable, the progress shows, and Cancel ends the worker.
+  const [worker, setWorker] = useState<Worker | null>(null);
+  function generate(choice: GenerateChoice) {
     setGenerated({ result: null, error: null });
     setProgress({ done: 0, total: readyRows.length });
-    try {
-      const result = await generateBatch(batchRows, { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText },
-        font, (done, total) => setProgress({ done, total }));
-      const stem = source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows";
-      download(`${stem}_labels.zip`, result.zip, "application/zip");
-      setGenerated({
-        result: `${result.generated} ${result.generated === 1 ? "label" : "labels"} generated` +
-          (result.left ? `; ${result.left} ${result.left === 1 ? "row" : "rows"} left out, each with its reason in generated.csv.` : "."),
-        error: null,
-      });
-    } catch (error) {
-      setGenerated({ result: null, error: errorText(error) });
-    } finally {
+    const running = new Worker(new URL("./generate.worker.ts", import.meta.url), { type: "module" });
+    setWorker(running);
+    const finish = () => {
+      running.terminate();
+      setWorker(null);
       setProgress(null);
-    }
+    };
+    running.onmessage = (event: MessageEvent<GenerateMessage>) => {
+      const message = event.data;
+      if (message.type === "progress") setProgress({ done: message.done, total: message.total });
+      else if (message.type === "error") {
+        setGenerated({ result: null, error: message.message });
+        finish();
+      } else {
+        const stem = source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows";
+        download(`${stem}_labels.zip`, message.zip, "application/zip");
+        setGenerated({
+          result: `${message.generated} ${message.generated === 1 ? "label" : "labels"} generated` +
+            (message.left ? `; ${message.left} ${message.left === 1 ? "row" : "rows"} left out, each with its reason in generated.csv.` : "."),
+          error: null,
+        });
+        finish();
+      }
+    };
+    running.onerror = (event) => {
+      setGenerated({ result: null, error: event.message || "The generation stopped." });
+      finish();
+    };
+    running.postMessage({ rows: batchRows, request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText } });
+  }
+  function cancelGeneration() {
+    worker?.terminate();
+    setWorker(null);
+    setProgress(null);
+    setGenerated({ result: "Stopped: nothing was downloaded.", error: null });
   }
 
   return (
@@ -575,7 +596,8 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
                   progress={progress}
                   result={generated.result}
                   error={blocked ?? generated.error}
-                  onGenerate={(choice) => void generate(choice)}
+                  onGenerate={generate}
+                  onCancel={cancelGeneration}
                 />
               )
             : undefined}

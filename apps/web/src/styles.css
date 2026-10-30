@@ -267,3 +267,4 @@ table.mapping th:nth-child(2) { width: 30%; }
 .gs1128-list li.starts:not(:first-child) { border-top: 1px dashed var(--line); padding-top: 4px; }
 .gs1128-list label.check { display: inline-flex; gap: 4px; align-items: center; font-weight: 400; margin: 0; white-space: nowrap; }
 .gs1128-list label.check input { width: auto; }
+.generate-go progress { width: 160px; }
