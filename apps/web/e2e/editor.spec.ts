@@ -477,3 +477,25 @@ test("the label in its own area across step 3, exports below it, options below t
     expect(main.width).toBeGreaterThan(1900); // no longer stopped at 1 400 pixels
   }
 });
+
+// Zoom at the canvas's corner (the owner, 30 October 2026): of the fitted label, or of the real size.
+test("zoom in and out on the label's canvas, back to 100 % on a click or a change of view", async ({ page }) => {
+  const width = async () => (await page.locator(".canvas .preview").boundingBox())!.width;
+  const fitted = await width();
+  await page.getByRole("button", { name: "Zoom in" }).click();
+  await expect(page.locator(".zoom-value")).toHaveText("150 %");
+  expect(await width()).toBeCloseTo(fitted * 1.5, 0);
+  await page.getByRole("button", { name: "Zoom out" }).click();
+  await page.getByRole("button", { name: "Zoom out" }).click();
+  await expect(page.locator(".zoom-value")).toHaveText("75 %");
+  await page.locator(".zoom-value").click();
+  await expect(page.locator(".zoom-value")).toHaveText("100 %");
+  // At real size the zoom enlarges the label and its rulers together: 32.6 mm at twice 96 pixels an inch.
+  await page.getByRole("button", { name: "Real size" }).click();
+  await page.getByRole("button", { name: "Zoom in" }).click();
+  await page.getByRole("button", { name: "Zoom in" }).click();
+  await expect(page.locator(".zoom-value")).toHaveText("200 %");
+  expect((await page.locator(".real .symbol").boundingBox())!.width).toBeCloseTo(((32.6 * 96) / 25.4) * 2, 0);
+  await page.getByRole("button", { name: "Fit" }).click();
+  await expect(page.locator(".zoom-value")).toHaveText("100 %");
+});

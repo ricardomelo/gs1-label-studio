@@ -131,9 +131,22 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
   );
 }
 
+/** The fitted label's widest, in CSS pixels (narrower where the canvas is); the zoom's steps, of that width. */
+const FIT_PX = 420;
+const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+const step = (zoom: number, by: 1 | -1) =>
+  by > 0 ? (ZOOMS.find((z) => z > zoom) ?? zoom) : ([...ZOOMS].reverse().find((z) => z < zoom) ?? zoom);
+
 export function LabelCard({ children, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const [real, setReal] = useState(false);
+  // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
+  // view changes.
+  const [zoom, setZoom] = useState(1);
+  const showReal = (next: boolean) => {
+    setReal(next);
+    setZoom(1);
+  };
   const [calibrating, setCalibrating] = useState(false);
   const [pxPerMm, setPxPerMm] = useState(keptScale);
   const [scanned, setScanned] = useState<Scan | null>(null);
@@ -184,10 +197,10 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
             {view.svg && view.widthMm && (
               <div className="view-bar">
                 <span className="seg" role="group" aria-label="Preview size">
-                  <button type="button" aria-pressed={!real} onClick={() => setReal(false)}>
+                  <button type="button" aria-pressed={!real} onClick={() => showReal(false)}>
                     Fit
                   </button>
-                  <button type="button" aria-pressed={real} onClick={() => setReal(true)}>
+                  <button type="button" aria-pressed={real} onClick={() => showReal(true)}>
                     Real size
                   </button>
                 </span>
@@ -220,16 +233,35 @@ export function LabelCard({ children, settings: s, onChange, view, onDownload, o
           {/* Across the whole card, so that the bar has room up to the slider's maximum (backlog 1.10 c). */}
           {real && calibrating && view.svg && view.widthMm && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
           {view.caption && <div className="caption">{view.caption}</div>}
-          <div className="canvas">
-            {real && view.svg && view.widthMm && view.heightMm ? (
-              <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm} />
-            ) : (
-              <div className="preview" aria-live="polite">
-                {view.svg ? (
-                  <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
-                ) : (
-                  <p className="error">{view.error ?? "Loading…"}</p>
-                )}
+          <div className="canvas-frame">
+            <div className="canvas">
+              {real && view.svg && view.widthMm && view.heightMm ? (
+                <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm * zoom} />
+              ) : (
+                <div
+                  className="preview"
+                  aria-live="polite"
+                  style={zoom === 1 ? undefined : { width: `calc(min(100%, ${FIT_PX}px) * ${zoom})` }}
+                >
+                  {view.svg ? (
+                    <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
+                  ) : (
+                    <p className="error">{view.error ?? "Loading…"}</p>
+                  )}
+                </div>
+              )}
+            </div>
+            {view.svg && (
+              <div className="zoom" role="group" aria-label="Zoom">
+                <button type="button" aria-label="Zoom out" disabled={zoom <= ZOOMS[0]!} onClick={() => setZoom(step(zoom, -1))}>
+                  −
+                </button>
+                <button type="button" className="zoom-value" title="Back to 100 %" onClick={() => setZoom(1)}>
+                  {Math.round(zoom * 100)} %
+                </button>
+                <button type="button" aria-label="Zoom in" disabled={zoom >= ZOOMS.at(-1)!} onClick={() => setZoom(step(zoom, 1))}>
+                  +
+                </button>
               </div>
             )}
           </div>

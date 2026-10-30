@@ -85,4 +85,6 @@
 - The editor takes the whole width of the screen, and step 3 is rearranged (item 1.10 a, mock-up B of three, the
   owner's request): the label in its own area across the step, Fit, Real size and the scan test over it, an Export bar
   below it, the options below them in as many columns as fit.
+- Zoom at the label canvas's lower right corner (the owner's request): −, the percentage (a click goes back to 100 %)
+  and +, from 25 % to 400 % of the fitted label or of the real size, rulers included; Fit and Real size start at 100 %.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
