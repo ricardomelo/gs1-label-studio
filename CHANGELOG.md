@@ -89,4 +89,11 @@
   and +, from 25 % to 400 % of the fitted label or of the real size, rulers included; Fit and Real size start at 100 %.
 - The caption counts the modules (a 2D symbol's rows × columns and their total, a linear symbol's width from its first
   bar to its last) and the characters encoded, the FNC1 and the group separators included (the owner's request).
+- Every GS1 identifier (item 1.11, General Specifications 26.0, section 1.3): the Made-to-Order GTIN (03), with its
+  batch/lot or serial number, in a group of its own for element strings only, drawn in GS1 DataMatrix rather than a
+  symbol for a URI; the attributes only element strings carry ((8014) HIDRI, (8040) IMEI, (8200) PRODUCT URL…), marked
+  so; "+ Add qualifier" beyond the first four.
+- An attribute's AI is typed or picked from a list whose arrow shows every AI even once one is chosen (a browser's
+  datalist showed the chosen one alone); "Start over" in the header clears the data and every choice, asking first
+  when rows are loaded.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

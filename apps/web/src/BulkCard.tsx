@@ -6,7 +6,7 @@ import {
   rowStatus,
   type CellEdits,
   offeredAttributes,
-  primaryKeys,
+  identifierKeys,
   qualifiersOf,
   type CheckedRow,
   type ColumnMapping,
@@ -49,7 +49,7 @@ const CHOICES: { group: string; options: [string, string][] }[] = (() => {
   const seen = new Set<string>();
   const options = (list: [string, string | undefined][]) =>
     list.filter(([ai]) => !seen.has(ai) && seen.add(ai)).map(([ai, title]) => [ai, aiText(ai, title)] as [string, string]);
-  const keys = primaryKeys().sort(byAi);
+  const keys = identifierKeys().sort(byAi);
   return [
     { group: "Keys", options: options(keys.map((key) => [key, aiEntry(key)?.title])) },
     { group: "Qualifiers", options: options(keys.flatMap((key) => qualifiersOf(key)).sort(byAi).map((ai) => [ai, aiEntry(ai)?.title])) },

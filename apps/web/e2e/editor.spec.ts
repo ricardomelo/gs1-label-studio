@@ -445,14 +445,16 @@ test("in bulk: the validation report, a cell fixed in place, rows skipped, the r
 
 // Every AI choice as "(AI) abbreviation name", in the order of that text (the owner, 30 October 2026; backlog 1.10).
 test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async ({ page }) => {
-  const keys = await page.locator("#key option").allTextContents();
+  const keys = await page.locator("#key optgroup[label='GS1 Digital Link keys'] option").allTextContents();
   expect(keys.slice(0, 4)).toEqual(["(00) SSCC Logistic unit", "(01) GTIN Product", "(253) GDTI Document", "(255) GCN Coupon"]);
   expect(keys.at(-1)).toBe("(8018) GSRN Service recipient");
   expect(keys).toEqual([...keys].sort());
   await expect(page.locator("label[for='q-10']")).toHaveText("(10) Batch/lot optional");
   await expect(page.locator("label[for='q-235']")).toHaveText("(235) TPX Third-party serialised extension optional");
-  const attributes = await page.locator("#attribute-list option").evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
+  await page.locator(".attr .combo-arrow").first().click();
+  const attributes = (await page.locator(".combo-list li").allInnerTexts()).map((text) => text.replace(/ · element strings only$/, ""));
   expect(attributes.slice(0, 3)).toEqual(["(00) SSCC Logistic unit", "(02) CONTENT", "(11) PROD DATE"]); // (01) and its qualifiers are not attributes
+  await page.keyboard.press("Escape");
   expect(attributes).toEqual([...attributes].sort());
   await page.getByRole("button", { name: "In bulk" }).click();
   await page.fill("#rows-paste", "GTIN\n9506000134376\n");
@@ -507,5 +509,55 @@ test("the caption counts the modules and the characters encoded, FNC1 and group 
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await expect(page.locator(".caption")).toContainText("31 characters encoded (FNC1 and 1 group separator included)");
+});
+
+// Item 1.11: the Made-to-Order GTIN (03), a key of element strings only (GS1 General Specifications 26.0, 1.3.1.6).
+test("the Made-to-Order GTIN (03): its own group, its batch and serial, drawn in GS1 DataMatrix, never in a URI", async ({ page }) => {
+  await expect(page.locator("#key optgroup[label='In element strings only'] option")).toHaveText(["(03) MtO GTIN Made-to-order product"]);
+  await page.fill("#paste", "(03)09506000134376(10)B1(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator("#key")).toHaveValue("03");
+  await expect(page.locator(".qual label")).toHaveText(["(10) Batch/lot optional", "(21) Serial number optional"]);
+  await expect(page.locator("#q-10")).toHaveValue("B1");
+  await expect(page.locator(".caption")).toContainText("GS1 DataMatrix");
+  await expect(page.locator(".uri")).toHaveCount(0);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (03)09506000134376(10)B1(17)271231", { timeout: 30_000 });
+});
+
+// The attribute's AI field (the owner's report of 30 October 2026): once an AI is chosen, the arrow still lists them all.
+test("an attribute's AI: the arrow lists every AI even after one is chosen; typing filters", async ({ page }) => {
+  const row = page.locator(".attr").first();
+  await expect(row.getByRole("combobox")).toHaveValue("(17) USE BY or EXPIRY");
+  await row.locator(".combo-arrow").click();
+  expect(await page.locator(".combo-list li").count()).toBeGreaterThan(200);
+  await expect(page.locator(".combo-list li[aria-selected='true']")).toHaveText("(17) USE BY or EXPIRY");
+  await page.keyboard.press("Escape");
+  await row.getByRole("combobox").fill("imei");
+  await expect(page.locator(".combo-list li")).toHaveText(["(8040) IMEI · element strings only", "(8041) IMEI2 · element strings only"]);
+  await page.keyboard.press("Enter");
+  await expect(row.getByRole("combobox")).toHaveValue("(8040) IMEI");
+});
+
+// "Start over" (the owner, 30 October 2026): every field and choice as on a first visit.
+test("Start over clears the data and every choice, as on a first visit", async ({ page }) => {
+  await page.fill("#q-21", "S1");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await page.getByRole("button", { name: "Real size" }).click();
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.locator("#q-21")).toHaveValue("");
+  await expect(page.locator(".caption")).toContainText("QR code version 4");
+  await expect(page.getByRole("button", { name: "Fit" })).toHaveAttribute("aria-pressed", "true");
+  // In bulk, with rows loaded, it asks first.
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\n9506000134376\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  page.once("dialog", (dialog) => void dialog.dismiss());
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.locator(".source")).toContainText("Pasted rows");
+  page.once("dialog", (dialog) => void dialog.accept());
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.getByRole("button", { name: "One code" })).toHaveAttribute("aria-pressed", "true");
 });
 

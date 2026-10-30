@@ -23,6 +23,7 @@ import {
   HriFont,
   identify,
   InputError,
+  isDigitalLinkKey,
   ITF14_RATIO,
   labelEps,
   labelPdf,
@@ -111,7 +112,7 @@ function rememberColumns(headers: string[], mapping: ColumnMapping, fixed: Fixed
   }
 }
 
-export function App() {
+export function App({ onStartOver }: { onStartOver?: () => void }) {
   const [engine, setEngine] = useState<SyntaxEngine | null>(null);
   const [font, setFont] = useState<HriFont | null>(null);
   const [id, setId] = useState<Identification>(START);
@@ -191,7 +192,9 @@ export function App() {
   const guide = walked.leaf && checked.identified ? guidance(walked.leaf, checked.identified) : null;
   const guided = guide !== null && !settings.expert;
   const choice = guided ? chosen(guide, picked) : null;
-  const symbology = choice ? (choice.with ?? choice.symbol) : settings.symbology;
+  const chosenSymbol = choice ? (choice.with ?? choice.symbol) : settings.symbology;
+  // A key a GS1 Digital Link URI cannot carry ((03), backlog 1.11) is drawn in GS1 DataMatrix, not a symbol for a URI.
+  const symbology = !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
   // A symbol chosen alone that carries the GTIN alone (an EAN-13 alone, with a batch typed): it draws the GTIN.
   const gtinOnly = Boolean(choice && !choice.with && guide?.options.find((o) => o.symbol === choice.symbol)?.carries === "key");
 
@@ -398,6 +401,17 @@ export function App() {
           </button>
         </span>
         <span>Everything stays in your browser, and it works offline.</span>
+        <button
+          type="button"
+          className="start-over"
+          title="Clears the data and every choice, as on a first visit"
+          onClick={() => {
+            if (dataTable && !window.confirm("Clear the rows, the fixes and every choice, and start over?")) return;
+            onStartOver?.();
+          }}
+        >
+          Start over
+        </button>
       </header>
       {view.svg && (
         <a className="mini" href="#label-title" aria-label="Live preview: go to the label">

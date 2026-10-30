@@ -8,12 +8,15 @@ import {
   exclusiveQualifiers,
   formatHint,
   aiEntry,
+  identifierKeys,
+  isDigitalLinkKey,
   normaliseKeyValue,
-  primaryKeys,
   qualifiersOf,
+  shownQualifiers,
   resolveDecimal,
   type Identification,
 } from "@gs1-label-studio/core";
+import { AiCombo } from "./AiCombo.tsx";
 import { aiText, byAi, KEY_TEXTS } from "./texts.ts";
 
 // Step 1 of the editor, as the resolver's (ADR 0004): what the code identifies — a key, its qualifiers, data
@@ -47,11 +50,17 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
   const [pasteError, setPasteError] = useState<string | null>(null);
   // The AI fields as typed, so that a half-typed AI is not lost while it does not yet name one.
   const [typedAis, setTypedAis] = useState<string[]>(id.attributes.map(([ai]) => label(ai)));
+  // Qualifiers beyond the first four, opened with "+ Add qualifier" (backlog 1.11).
+  const [added, setAdded] = useState<string[]>([]);
 
   const keyText = KEY_TEXTS[id.key];
   const keyProblem = id.value ? checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) : null;
-  const qualifiers = qualifiersOf(id.key);
+  const { shown: qualifiers, more } = shownQualifiers(
+    qualifiersOf(id.key),
+    [...added, ...Object.keys(id.qualifiers).filter((ai) => id.qualifiers[ai])],
+  );
   const offered = attributesForKey(id.key);
+  const choices = offered.map((a) => ({ value: aiText(a.ai, a.title), ...(a.elementStringOnly ? { note: "element strings only" } : {}) }));
 
   function label(ai: string): string {
     const attribute = attributeByCode(ai);
@@ -115,13 +124,18 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         value={id.key}
         onChange={(event) => {
           setTypedAis([]);
+          setAdded([]);
           onChange({ key: event.target.value, value: "", qualifiers: {}, attributes: [] });
         }}
       >
-        {primaryKeys().sort(byAi).map((key) => (
-          <option key={key} value={key}>
-            {aiText(key, aiEntry(key)?.title)}
-          </option>
+        {[true, false].map((digitalLink) => (
+          <optgroup key={String(digitalLink)} label={digitalLink ? "GS1 Digital Link keys" : "In element strings only"}>
+            {identifierKeys().filter((key) => isDigitalLinkKey(key) === digitalLink).sort(byAi).map((key) => (
+              <option key={key} value={key}>
+                {aiText(key, aiEntry(key)?.title)}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
 
@@ -168,17 +182,28 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               );
             })}
           </div>
+          {more.length > 0 && (
+            <div className="add">
+              <select
+                aria-label="Add a qualifier"
+                value=""
+                onChange={(event) => event.target.value && setAdded([...added, event.target.value])}
+              >
+                <option value="">+ Add qualifier</option>
+                {more.map((ai) => (
+                  <option key={ai} value={ai}>
+                    {aiText(ai, aiEntry(ai)?.title)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </>
       )}
 
       <h3>
         Data attributes <span className="opt">— expiry, weight, price…</span>
       </h3>
-      <datalist id="attribute-list">
-        {offered.map((a) => (
-          <option key={a.ai} value={aiText(a.ai, a.title)} />
-        ))}
-      </datalist>
       {id.attributes.map(([ai, value], index) => {
         const attribute = ai ? attributeByCode(ai) : undefined;
         let converted: string | null = null;
@@ -195,16 +220,16 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
         return (
           <div className="attr" key={index}>
             <div className="row">
-              <input
-                list="attribute-list"
-                aria-label="Attribute (AI)"
+              <AiCombo
+                label="Attribute (AI)"
                 placeholder="Pick from the list or type, e.g. 17"
                 value={typedAis[index] ?? label(ai)}
-                onChange={(event) => {
+                options={choices}
+                onChange={(text) => {
                   const typed = [...typedAis];
-                  typed[index] = event.target.value;
+                  typed[index] = text;
                   const attributes = [...id.attributes];
-                  attributes[index] = [attributeCode(event.target.value), value];
+                  attributes[index] = [attributeCode(text), value];
                   setAttributes(attributes, typed);
                 }}
               />

@@ -122,6 +122,13 @@ export const KEY_TEXTS: Record<string, KeyText> = {
     "label": "GSRN number",
     "placeholder": "e.g. 950600013437612342",
     "hint": "18 digits, the last one being the check digit."
+  },
+  "03": {
+    "name": "Made-to-order product",
+    "short": "MtO GTIN",
+    "label": "Made-to-Order GTIN",
+    "placeholder": "e.g. 09506000134376",
+    "hint": "14 digits, the last one being the check digit. In GS1-128, GS1 DataMatrix and GS1 DataBar Expanded only: a GS1 Digital Link URI cannot carry it (GS1 General Specifications 1.3.1.6)."
   }
 };
 

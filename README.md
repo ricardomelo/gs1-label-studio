@@ -106,10 +106,15 @@ the logistic label of phase 4.
   offered today) and every qualifier of each, from the current GS1 Digital Link URI syntax; the four main qualifiers
   on the screen and the rest behind "+ Add qualifier", as the attributes are; checked against the GS1 General
   Specifications 2026 and the GS1 Digital Link standard in `references`. Beyond the Digital Link: the identification AIs a
-  GS1 Digital Link URI cannot carry — (03) MTO GTIN first (the owner, 30 October 2026), and the others the dictionary
-  marks so, such as (8014), (8040) to (8043) — offered for the element string symbols only (GS1-128, GS1 DataMatrix,
-  GS1 DataBar Expanded), with the pairs the Syntax Engine refuses ((03) not with (01), (02) or (37)). Today (03)
-  pasted is drawn in GS1 DataMatrix, but "Identifier type" shows another key: a defect this item fixes
+  GS1 Digital Link URI cannot carry — (03) MTO GTIN first (the owner, 30 October 2026) — offered for the element
+  string symbols only (GS1-128, GS1 DataMatrix, GS1 DataBar Expanded), with the pairs the Syntax Engine refuses ((03)
+  not with (01), (02) or (37)) — *done 30 October, from the General Specifications 26.0, section 1.3 (each GS1
+  identifier with its element string and Digital Link qualifiers): the 16 Digital Link keys and the Made-to-Order GTIN
+  (03) with its batch/lot (10) or serial (21), grouped as "GS1 Digital Link keys" and "In element strings only", (03)
+  drawn in GS1 DataMatrix when a URI symbol was chosen; the HIDRI (8014) needs a GTIN beside it, so it is an
+  attribute; the attributes of element strings only — (8014), (8040) to (8043), (8200)… — offered and marked so;
+  "+ Add qualifier" beyond the first four, though no key of 26.0 has more; the attribute's AI field lists every AI
+  from its arrow even once one is chosen (the owner's report); "Start over" in the header*
 - 1.12 Several keys in one symbol. An element string may carry more than one key; the Syntax Engine already checks the
   pairs the General Specifications forbid (e.g. (01) with (02) or (37); (8017) with (8018)) and require ((02) needs
   (37); (8020) and (415) go together). The cases to support: a logistic unit, SSCC (00) with the content's GTIN (02)

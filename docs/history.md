@@ -128,3 +128,13 @@ Two details came from using it: a row fixed while its value is typed would vanis
 first valid character, so a row touched stays until another filter is chosen; and the report's class names first met
 the page's own `.error` and `.fixed`, painting labels red. The hint about Excel's 15 digits needed a second test
 after its mutation to 16 digits went unnoticed.
+
+On 30 October the owner tested the published tool and wrote on the test plan; each comment became a change pushed the
+same hour: headers written as AIs, every AI choice as "(AI) abbreviation name", the calibration across step 3, the
+whole width with the label on its own canvas (mock-up B), zoom, and the caption's modules and characters encoded.
+Item 1.11 then took its list from the General Specifications 26.0 rather than from the Digital Link dictionary:
+section 1.3 gives every GS1 identifier with the AIs that qualify it in element strings and in the Digital Link, which
+named the Made-to-Order GTIN (03) as the one key of element strings only and showed the HIDRI (8014) to be an
+attribute of a GTIN. An earlier answer to the owner had counted (8040) to (8043) among the identifiers; the section
+corrected it.
+

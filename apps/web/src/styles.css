@@ -173,6 +173,8 @@ details.epc summary { font-weight: 600; cursor: pointer; }
 header.top .mode { display: inline-flex; border: 1.5px solid #fff; border-radius: 6px; overflow: hidden; margin-left: 8px; }
 header.top .mode button { border: 0; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 4px 12px; cursor: pointer; }
 header.top .mode button[aria-pressed="true"] { background: #fff; color: #002c6c; }
+header.top .start-over { margin-left: auto; border: 1.5px solid #fff; border-radius: 6px; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 4px 12px; cursor: pointer; }
+header.top .start-over:hover { background: rgba(255, 255, 255, 0.15); }
 .drop { border: 1.5px dashed #9fb0c6; border-radius: 8px; padding: 12px; background: var(--soft); font-size: 13px; color: var(--muted); display: grid; gap: 8px; }
 .drop.over { border-color: var(--navy); background: var(--card); }
 .drop textarea { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; padding: 6px 8px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); box-sizing: border-box; }
@@ -214,3 +216,12 @@ table.mapping select { padding: 4px 6px; font-size: 13px; }
 .row-nav button:disabled { opacity: 0.35; cursor: default; }
 table.mapping th:first-child { width: 26%; }
 table.mapping th:nth-child(2) { width: 30%; }
+/* A field for an AI, typed or picked from the whole list (AiCombo, the owner's report of 30 October 2026). */
+.combo { position: relative; }
+.combo input { padding-right: 32px; }
+.combo-arrow { position: absolute; right: 2px; top: 2px; bottom: 2px; width: 28px; border: 0; background: transparent; color: var(--ink); font-size: 14px; cursor: pointer; }
+.combo-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 2px); margin: 0; padding: 4px 0; list-style: none; max-height: 280px; overflow: auto; background: var(--card); color: var(--ink); border: 1px solid var(--field-line); border-radius: 6px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); font-size: 13px; }
+.combo-list li { padding: 5px 10px; cursor: pointer; }
+.combo-list li[aria-selected="true"] { background: var(--soft); color: var(--navy); }
+.combo-list .note { color: var(--muted); font-size: 12px; }
+
