@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   AttributeError,
   applyEdits,
@@ -74,6 +74,7 @@ import {
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
+import { About } from "./About.tsx";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
@@ -85,6 +86,8 @@ import { kept } from "./keep.ts";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
+import { TabBar } from "./TabBar.tsx";
+import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
@@ -489,6 +492,69 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
     });
   }
+  // The destination shown on a phone or a tablet (backlog 1.21, layout.ts); a computer shows them all. Each keeps
+  // where it was scrolled to, as the tabs of phone apps do; a link to a part of another destination opens it.
+  const phone = useMedia(PHONE_QUERY);
+  const tablet = useMedia(TABLET_QUERY);
+  const tabbed = phone || tablet;
+  const [tab, setTab] = useState<Pane>("data");
+  const scrolled = useRef<Partial<Record<Pane, number>>>({});
+  const goTo = useRef<string | null>(null);
+  function showPane(next: Pane, target?: string) {
+    if (!tabbed) return;
+    scrolled.current[tab] = window.scrollY;
+    goTo.current = target ?? null;
+    setTab(next);
+  }
+  useLayoutEffect(() => {
+    if (!tabbed) return;
+    const target = goTo.current ? document.getElementById(goTo.current) : null;
+    goTo.current = null;
+    if (target) target.scrollIntoView({ block: "start" });
+    else window.scrollTo(0, scrolled.current[tab] ?? 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+  useEffect(() => {
+    if (!tabbed) return;
+    const follow = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a[href^='#']");
+      const id = link?.getAttribute("href")?.slice(1);
+      const pane = id ? paneOf(document.getElementById(id)) : null;
+      if (!id || !pane) return;
+      event.preventDefault();
+      if (pane === tab) document.getElementById(id)!.scrollIntoView({ block: "start" });
+      else showPane(pane, id);
+    };
+    document.addEventListener("click", follow);
+    return () => document.removeEventListener("click", follow);
+  });
+
+  const languageMenu = (
+    <label className="lang">
+      <span>{t("Language")}</span>
+      <select id="language" value={lang} onChange={(e) => onLocale?.(e.target.value as Locale)}>
+        {LOCALES.map((l) => (
+          <option key={l.tag} value={l.tag} lang={l.tag}>
+            {l.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const startOver = (
+    <button
+      type="button"
+      className="start-over"
+      title={t("Clears the data and every choice, as on a first visit")}
+      onClick={() => {
+        if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
+        onStartOver?.();
+      }}
+    >
+      {t("Start over")}
+    </button>
+  );
+
   function cancelGeneration() {
     worker?.terminate();
     setWorker(null);
@@ -497,7 +563,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   }
 
   return (
-    <>
+    <div className="app" data-tab={tab}>
       <header className="top">
         <h1>GS1 Label Studio</h1>
         <span className="mode" role="group" aria-label={t("Mode")}>
@@ -508,37 +574,20 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             {t("In bulk")}
           </button>
         </span>
-        <span>{t("Everything stays in your browser, and it works offline.")}</span>
-        <label className="lang">
-          <span>{t("Language")}</span>
-          <select id="language" value={lang} onChange={(e) => onLocale?.(e.target.value as Locale)}>
-            {LOCALES.map((l) => (
-              <option key={l.tag} value={l.tag} lang={l.tag}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          className="start-over"
-          title={t("Clears the data and every choice, as on a first visit")}
-          onClick={() => {
-            if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
-            onStartOver?.();
-          }}
-        >
-          {t("Start over")}
-        </button>
+        <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
+        {/* On a phone the language and Start over are in "More", leaving the header to the name and the mode */}
+        {!phone && languageMenu}
+        {!phone && startOver}
       </header>
       {view.svg && (
-        <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")}>
+        <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")} data-pane="data scan export more">
           <span dangerouslySetInnerHTML={{ __html: view.svg }} />
           <span>{t("Live preview · tap to go to the label")}</span>
         </a>
       )}
       <main className="editor">
-        <div className="steps">
+        <div className="steps" data-pane="data scan">
+          <div data-pane="data">
           {bulk ? (
             <BulkCard
               table={dataTable}
@@ -590,6 +639,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               onShow={(index) => {
                 setRowIndex(index);
                 setFileError(null);
+                if (phone) showPane("label"); // beside the rows already on a tablet
               }}
               onEdit={(index, column, value) => dataTable && setEdits(editCell(edits, dataTable, index, column, value))}
               onUndo={(index) => {
@@ -630,6 +680,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
           />
           )}
+          </div>
+          <div data-pane="scan">
           <ScanCard
             identifierKey={active.key}
             walked={walked}
@@ -648,6 +700,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               setSettings(expert ? { ...settings, expert, symbology, linear: linearChoice, environment: environment ?? settings.environment } : { ...settings, expert })
             }
           />
+          </div>
         </div>
         <LabelCard
           settings={effective}
@@ -685,7 +738,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
                 />
               )
             : undefined}
-        >
+          printer={
           <PrinterSection
             profiles={profiles}
             profile={profile}
@@ -702,10 +755,24 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             widthProblem={zplWidthProblem}
             onTestPrint={testPrint}
           />
+          }
+        >
+          {phone && (
+            <div className="settings">
+              {languageMenu}
+              {startOver}
+            </div>
+          )}
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
       </main>
-    </>
+      <About />
+      <TabBar
+        tab={tab}
+        onTab={(next) => showPane(next)}
+        alerts={{ data: Boolean(bulk ? tableError : checked.error), label: Boolean(view.error && !checked.error) }}
+      />
+    </div>
   );
 }

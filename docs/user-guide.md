@@ -58,7 +58,7 @@ The studio speaks English, Brazilian Portuguese and Spanish (section 2); this gu
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
 - The header: **One code** or **In bulk** (section 13), **Language**, and **Start over**, which clears every field and
-  choice as on a first visit.
+  choice as on a first visit (on a phone, Language and Start over are under **More**).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
@@ -66,10 +66,42 @@ The studio speaks English, Brazilian Portuguese and Spanish (section 2); this gu
   GS1 Digital Link URI and the element string, and the sections *Printer (ZPL)*, *RFID and NFC (EPC)* and *Digital
   signature (GS1, JWS)*.
 
-The page takes the screen's whole width. On a phone the fields come first, with a small live preview fixed at the top;
-tap it to go to the label.
+On a computer the page takes the screen's whole width, as above. At its foot, **About GS1 Label Studio**: the
+repository on GitHub, the licence (Apache 2.0), links to this guide and the printing guide, the version published (the
+commit it was built from, with its date — the way to tell whether the page shows the latest work), and the software it
+is made with, each linked to its repository.
 
-![On a phone: the live preview at the top, the fields below](images/guide/phone.png)
+### On a phone
+
+A phone — and a tablet held upright, or a narrow window — shows one column and one part at a time, chosen in the tab
+bar at the bottom, as phone apps do:
+
+| Tab | What it shows |
+|---|---|
+| **Data** | step 1 (or the rows, in bulk), with a small live preview at the top: tap it to open the label |
+| **Scan** | step 2, where the code is scanned |
+| **Label** | the label, its tools and its options |
+| **Export** | the downloads, *Generate in bulk* and *Printer (ZPL)* |
+| **More** | **Language** and **Start over**, *RFID and NFC (EPC)*, *Digital signature* and About |
+
+Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
+live preview — opens its tab. A red dot on **Data** says the data has an error; on **Label**, that the label cannot be
+drawn. The header keeps the name and **One code / In bulk**.
+
+<p>
+  <img src="images/guide/phone-data.png" alt="On a phone: Data, step 1 with the live preview at the top and the tab bar at the bottom" width="200">
+  <img src="images/guide/phone-label.png" alt="On a phone: Label, the label and its options" width="200">
+  <img src="images/guide/phone-export.png" alt="On a phone: Export, the downloads in two columns and the printer profiles" width="200">
+  <img src="images/guide/phone-more.png" alt="On a phone: More, the language, Start over and the EPC section" width="200">
+</p>
+
+### On a tablet held horizontally
+
+A rail on the left holds the same five parts; the part chosen is on the left and the label, with its tools and the
+**Export** bar, always on the right, redrawn as you type. Turning the tablet changes the layout and keeps what you
+typed.
+
+![On a tablet held horizontally: the rail, step 1 and the label beside it](images/guide/tablet.png)
 
 The page follows the system's light or dark theme.
 

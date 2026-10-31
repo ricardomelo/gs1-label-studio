@@ -164,7 +164,7 @@ complete.
   the path and query stay as typed); a character a mode cannot take is named; each mode read back by ZXing at the
   version its capacity gives. ZPL keeps the printer's automatic mode until phase 3*
 
-*The owner's ideas of 30 October 2026 added items 1.15 to 1.19; the request of 31 October, item 1.20.*
+*The owner's ideas of 30 October 2026 added items 1.15 to 1.19; the requests of 31 October, items 1.20 and 1.21.*
 
 - 1.15 Qualifiers and data attributes in one block: every qualifier the key has, and every attribute, added one at a
   time with "+ Add attributes" (an AI chosen from the whole list, the qualifiers of the key first), each row checked as
@@ -218,6 +218,15 @@ complete.
   text of the page and every message of the core and of the GS1 Barcode Syntax Engine in each language, the engine's
   and the keys' texts from the resolver's catalogues; a test refuses a text without its translation. Drafts by
   Claude, to be reviewed by native speakers; the files made stay in English*
+- 1.21 A design for phones and tablets, the computer's left as it is, and About at the foot of the page (the owner,
+  31 October 2026) — *done 31 October (mock-up A of three: B was one long column with step chips and a floating
+  download button, C a drawer menu): on a phone, a tablet held upright or a narrow window, one column and one
+  destination at a time — Data, Scan, Label, Export, More — chosen in a tab bar at the bottom as phone apps do, each
+  keeping its scroll, a link to another destination opening it, a dot where there is an error; on a tablet held
+  horizontally a navigation rail, the destination on the left and the label with its exports always on the right; the
+  same page in every layout, so turning the device keeps what was typed. About: the repository, the Apache 2.0
+  licence, the manuals, the version published (its commit and date) and the software of others it is made with, each
+  linked to its repository. The browser tests run on a phone and a tablet besides the desktop*
 
 **Phase 2 — in bulk**
 

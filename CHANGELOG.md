@@ -135,4 +135,11 @@
   every feature in `docs/features.md` with the commit that brought it and the tests that prove it; the inventory of
   every test (`docs/test-inventory.md`), drawn from a run; a test that keeps them in step, also run when only documents
   change.
+- A design for phones and tablets (backlog 1.21, mock-up A of three), the computer's left as it was: on a phone, a
+  tablet held upright or a narrow window, one destination at a time — Data, Scan, Label, Export, More — in a tab bar at
+  the bottom, each keeping its scroll, a link to another opening it, a dot where there is an error; on a tablet held
+  horizontally a navigation rail, the destination on the left and the label always on the right. About at the foot of
+  the page: the repository, the Apache 2.0 licence, the manuals, the version (commit and date) and the software it is
+  made with, each linked to its repository. The browser tests also run on a phone and a tablet. The README opens with
+  a tour of the studio in screenshots and the manuals chapter by chapter.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

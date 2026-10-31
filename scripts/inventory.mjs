@@ -26,7 +26,7 @@ export const AREAS = [
   ["RFID, NFC and digital signatures", ["epc", "ndef", "sign"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish", ["i18n"]],
   ["The documents", ["docs"]],
-  ["The editor in the browser (Playwright, desktop and phone)", ["editor"]],
+  ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts"]],
 ];
 
 const programOf = (file) => basename(file).replace(/\.(test|spec)\.tsx?$/, "");
@@ -141,7 +141,8 @@ md.push(
     ? `${fmt(skipped)} tests were skipped in the run that wrote this file (the ZPL printed by Labelary, which CI runs with \`LABELARY=1\`).`
     : "Every unit test ran and passed in the run that wrote this file, the ZPL printed by Labelary included (`LABELARY=1`), but " +
         "the documents' own test (`docs`), which checks this file and runs right after it is written. The browser tests are " +
-        "listed by Playwright and run by CI against the built application, each at a desktop and a phone width.",
+        "listed by Playwright and run by CI against the built application, on a desktop, a phone and a tablet held horizontally " +
+        "(a test about one layout is skipped in the others).",
   "",
 );
 md.push("| Area | Files | Tests |", "|---|---|---:|");

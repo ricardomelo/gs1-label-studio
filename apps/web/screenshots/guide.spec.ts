@@ -23,7 +23,7 @@ async function paste(page: Page, data: string) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".preview .symbol svg")).toBeVisible();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached(); // behind another destination on a phone
 });
 
 test("the editor at a glance", async ({ page }) => {
@@ -139,11 +139,25 @@ test("in bulk", async ({ page }) => {
   await shot(page.locator(".sequence"), "sequence");
 });
 
+// The layouts of backlog 1.21: a destination at a time on a phone, a rail and the label beside on a tablet.
 test.describe("on a phone", () => {
-  test.use({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-  test("the fields first, the label fixed at the top", async ({ page }) => {
-    await page.locator("#key-value").scrollIntoViewIfNeeded();
-    await shot(page, "phone");
+  test.use({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  test("one destination at a time, chosen in the tab bar", async ({ page }) => {
+    const bar = page.getByRole("navigation", { name: "Sections" });
+    await shot(page, "phone-data");
+    await bar.getByRole("button", { name: "Label" }).click();
+    await shot(page, "phone-label");
+    await bar.getByRole("button", { name: "Export" }).click();
+    await shot(page, "phone-export");
+    await bar.getByRole("button", { name: "More" }).click();
+    await shot(page, "phone-more");
+  });
+});
+
+test.describe("on a tablet held horizontally", () => {
+  test.use({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  test("the rail, the destination and the label beside it", async ({ page }) => {
+    await shot(page, "tablet");
   });
 });
 

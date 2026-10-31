@@ -9,6 +9,8 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1400, height: 950 } } },
     { name: "phone", use: { ...devices["Pixel 7"] } },
+    // A tablet held horizontally (backlog 1.21): a touch screen, so the navigation rail and the label beside
+    { name: "tablet", use: { viewport: { width: 1180, height: 820 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
   ],
   webServer: { command: "pnpm exec vite preview --port 4173 --strictPort", url: "http://localhost:4173", reuseExistingServer: !process.env.CI },
 });

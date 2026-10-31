@@ -195,7 +195,10 @@ Each module, in the order of the flow above.
 | File | What it does |
 |---|---|
 | `src/main.tsx` | Registers the service worker; `Root` remounts `App` for *Start over* |
-| `src/App.tsx` | The state of the editor (identification, answers, settings, bulk rows, edits, printer) and the label memo through `labelFor`; downloads |
+| `src/App.tsx` | The state of the editor (identification, answers, settings, bulk rows, edits, printer) and the label memo through `labelFor`; downloads; the destination shown on a phone or a tablet, each keeping its scroll, a link to another destination opening it |
+| `src/layout.ts` | The layouts (backlog 1.21): the destinations (`Pane`), the phone's and the tablet's media queries, `useMedia`, `paneOf` |
+| `src/TabBar.tsx` | The destinations' bar: at the bottom on a phone, a rail on a tablet held horizontally, hidden on a computer; a dot where something needs attention |
+| `src/About.tsx` | About, at the foot of the page: the repository, the licence, the manuals, the version (`__BUILD__`, the commit the build was made from, set in `vite.config.ts`), the software it is made with |
 | `src/IdentifyCard.tsx` | Step 1: paste box, key, the list of qualifiers and attributes (`AiCombo`), other keys, parameters |
 | `src/AiCombo.tsx` | The AI field: every AI from its arrow, filtered by typing |
 | `src/ScanCard.tsx` | Step 2: the tree's questions, the table, the recommended and allowed symbols, *Choose a symbol yourself* |
@@ -214,7 +217,7 @@ Each module, in the order of the flow above.
 | `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
 | `src/locales/` | `pt-BR.json`, `es.json` (the page), `pt-BR.messages.json`, `es.messages.json` (the core and the Syntax Engine), `ai-titles.pt-BR.json` (the AIs' Portuguese names, the resolver's) |
 | `test/i18n.test.ts`, `test/texts.ts` | Every text in each language: the page's `t()`/`en()` literals and texts.ts, the core's messages found in its sources, the engine's (`test/engine-messages.json`, release 1.4.1) |
-| `src/styles.css` | Light and dark, desktop and phone |
+| `src/styles.css` | Light and dark; the computer's layout, the phone's (one destination, a tab bar) and the tablet's (a rail, the label beside), by `data-pane` and `data-beside` |
 | `offline.ts` | The Vite plugin writing `sw.js` with every built file: pages network-first, hashed files cache-first |
 
 ## 7. What the browser keeps
@@ -236,7 +239,7 @@ A signing key is never kept: the person saves it as a JWK and loads it again.
 
 - **`ci.yml`** on every push to `main` (except documents) and every pull request: install, typecheck, install poppler
   and Ghostscript, the core's tests with `LABELARY=1` (failures also as annotations, for environments that cannot read
-  the logs), build, then the browser tests against the build at desktop and phone widths.
+  the logs), build, then the browser tests against the build on a desktop, a phone and a tablet held horizontally.
 - **`docs.yml`** when only documents change: the documents' test (`packages/core/test/docs.test.ts`).
 - **`pages.yml`** on every push to `main`: builds with `BASE_PATH=/gs1-label-studio/` and publishes to GitHub Pages.
 - After a push that changes code, read the run (`gh run list`, `gh run view --log-failed`, or the check run's
@@ -287,10 +290,11 @@ that say what is true; together they are the [inventory of features](test-invent
 | `table` | CSV and Excel read without a library | 9 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 15 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop and phone (Playwright) | 44 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 44 |
+| `layouts` | the computer's, the phone's and the tablet's layouts, About (Playwright) | 5 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
-`pnpm build`, each at a desktop and a phone width.
+`pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).
 
 ## 10. Documents and indicators
 

@@ -14,6 +14,8 @@
   --dom: #5b6575;
   --field: #ffffff;
   --field-line: #b9c2cf;
+  --link: #1a6b8a;
+  --indicator: #d6e2f5;
   color-scheme: light dark;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -33,6 +35,8 @@
     --dom: #9aa0a6;
     --field: #15171b;
     --field-line: #5f6368;
+    --link: #8ab4f8;
+    --indicator: #2b3a55;
   }
 }
 * { box-sizing: border-box; }
@@ -83,7 +87,7 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .zoom button { border: 0; background: transparent; color: var(--navy); font: inherit; font-weight: 700; font-size: 18px; width: 36px; height: 32px; cursor: pointer; }
 .zoom button:disabled { opacity: 0.35; cursor: default; }
 .zoom .zoom-value { width: auto; padding: 0 8px; font-size: 13px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
-.canvas .preview { border: 0; border-radius: 2px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); min-height: 0; padding: 14px; width: min(100%, 420px); max-width: none; }
+.canvas .preview { border: 0; border-radius: 2px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); min-height: 0; padding: 14px; width: min(100%, var(--fit, 420px)); max-width: none; }
 .canvas .preview .symbol { width: 100%; }
 .canvas .real { max-width: 100%; }
 .exportbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
@@ -288,3 +292,75 @@ header.top .lang { margin-left: auto; display: inline-flex; align-items: center;
 header.top .lang span { opacity: 0.85; }
 header.top .lang select { font: inherit; font-size: 13px; font-weight: 600; background: #002c6c; color: #fff; border: 1.5px solid #fff; border-radius: 6px; padding: 3px 8px; }
 header.top .lang + .start-over { margin-left: 8px; }
+
+/* About, at the foot of the page (the owner, 31 October 2026) */
+footer.about { margin: 4px 20px 24px; padding: 16px 4px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
+footer.about h2 { font-size: 15px; margin: 0 0 6px; }
+footer.about h3 { font-size: 13px; color: var(--ink); margin: 12px 0 4px; }
+footer.about p { margin: 4px 0; }
+footer.about ul { margin: 4px 0; padding-left: 18px; }
+footer.about .made-with { columns: 2 320px; column-gap: 32px; }
+footer.about a { color: var(--link); }
+footer.about .hint { margin-top: 12px; }
+
+/* The layouts (backlog 1.21, mock-up A of three; layout.ts). On a computer the destinations' bar and their titles are
+   not shown, and the page is as it was. */
+.tabs, .pane-title { display: none; }
+.tabs button { border: 0; background: none; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; padding: 0; display: grid; justify-items: center; gap: 3px; }
+.tabs .icon { position: relative; display: grid; place-items: center; width: 56px; height: 30px; border-radius: 15px; transition: background-color 0.15s; }
+.tabs button[aria-current="page"] { color: var(--navy); }
+.tabs button[aria-current="page"] .icon { background: var(--indicator); }
+.tabs .alert { position: absolute; top: 3px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--error); border: 1.5px solid var(--card); }
+.tabs button:focus-visible { outline: none; }
+.tabs button:focus-visible .icon { outline: 2px solid var(--navy); outline-offset: 2px; }
+
+/* A phone, a tablet held upright, a narrow window: one column, one destination at a time, a tab bar at the bottom. */
+@media (max-width: 900px) {
+  .app { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .app[data-tab="data"] [data-pane]:not([data-pane~="data"]),
+  .app[data-tab="scan"] [data-pane]:not([data-pane~="scan"]),
+  .app[data-tab="label"] [data-pane]:not([data-pane~="label"]),
+  .app[data-tab="export"] [data-pane]:not([data-pane~="export"]),
+  .app[data-tab="more"] [data-pane]:not([data-pane~="more"]) { display: none !important; }
+  header.top { padding: 10px 14px; gap: 10px; align-items: center; flex-wrap: nowrap; }
+  header.top h1 { font-size: 17px; white-space: nowrap; }
+  header.top .tagline { display: none; }
+  header.top .mode { margin-left: auto; }
+  main.editor { max-width: 760px; margin: 0 auto; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); padding: 6px 2px calc(6px + env(safe-area-inset-bottom)); }
+  .tabs button { font-size: 11px; }
+  .pane-title { display: flex; }
+  .label-card .exportbar { margin-top: 0; padding: 10px; }
+  .label-card .exportbar > b { display: none; }
+  .label-card .exportbar .downloads { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .label-card .exportbar .downloads .primary { grid-column: 1 / -1; padding: 12px; font-size: 15px; }
+  .label-card .canvas { max-height: 62vh; }
+  .settings { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .settings .lang { display: flex; align-items: center; gap: 8px; margin: 0; flex: 1 1 220px; }
+  .settings .lang select { flex: 1; }
+  .settings .start-over { border: 1.5px solid var(--navy); color: var(--navy); background: transparent; border-radius: 6px; padding: 8px 12px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; }
+  footer.about { max-width: 760px; margin: 0 auto 12px; background: var(--card); border: 0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 18px 20px; }
+  @media (min-width: 601px) { footer.about { width: calc(100% - 24px); } }
+  @media (max-width: 600px) { footer.about { margin: 0 12px 12px; } }
+}
+
+/* A tablet held horizontally: a navigation rail, the destination on the left, the label always on the right. */
+@media (min-width: 901px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse) {
+  .app { padding-left: 88px; }
+  .app[data-tab="data"] main [data-pane]:not([data-pane~="data"]):not([data-beside]),
+  .app[data-tab="scan"] main [data-pane]:not([data-pane~="scan"]):not([data-beside]),
+  .app[data-tab="label"] main [data-pane]:not([data-pane~="label"]):not([data-beside]),
+  .app[data-tab="export"] main [data-pane]:not([data-pane~="export"]):not([data-beside]),
+  .app[data-tab="more"] main [data-pane]:not([data-pane~="more"]):not([data-beside]) { display: none !important; }
+  .tabs { display: flex; flex-direction: column; align-items: center; gap: 16px; position: fixed; left: 0; top: 0; bottom: 0; width: 88px; z-index: 30; background: var(--card); border-right: 1px solid var(--line); padding-top: 76px; }
+  .tabs button { font-size: 12px; width: 100%; }
+  main.editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .label-card, .label-card > .panel { display: contents; }
+  .steps, .side { grid-column: 1; grid-row: 1; }
+  .stage, .side { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 20px; min-width: 0; }
+  .stage { grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
+  .stage .pane-title, .mini { display: none; }
+  .extras .pane-title { display: flex; }
+  .label-card .canvas { max-height: 56vh; min-height: 200px; padding: 16px 16px 52px; }
+  .label-card .canvas { --fit: 340px; }
+}

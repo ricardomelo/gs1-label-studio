@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 // The editor (ADR 0004, mock-ups of 28 October 2026): what the code identifies on the left, the label redrawn beside
-// it as anything changes.
+// it as anything changes. On a phone and a tablet (backlog 1.21) the same tests move between the destinations as a
+// person would, through the tab bar or the rail (on()).
 
 let errors: string[] = [];
 
@@ -12,11 +13,23 @@ test.beforeEach(async ({ page }) => {
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
   await page.goto("/");
-  await expect(page.locator(".preview .symbol svg")).toBeVisible();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached(); // behind another destination on a phone
 });
+
+const PANES = ["data", "scan", "label", "export", "more"] as const;
+/**
+ * On a phone or a tablet, the destination that holds what the test does next, tapped in the tab bar or the rail as a
+ * person would (backlog 1.21); a computer shows every destination at once. By position: the names change with the
+ * language.
+ */
+async function on(page: Page, pane: (typeof PANES)[number]) {
+  const bar = page.locator("nav.tabs");
+  if (await bar.isVisible()) await bar.locator("button").nth(PANES.indexOf(pane)).click();
+}
 
 /** A qualifier's value: its row added from the key's qualifiers first if it is not in the list yet (backlog 1.15). */
 async function qualifier(page: Page, ai: string, value: string) {
+  await on(page, "data");
   if (!(await page.locator(`#q-${ai}`).count())) await page.locator(".add-rows button.link", { hasText: new RegExp(`^\\+ \\(${ai}\\) `) }).click();
   await page.fill(`#q-${ai}`, value);
 }
@@ -50,6 +63,7 @@ test("qualifiers and a decimal attribute go into the URI as typed", async ({ pag
 test("a wrong check digit says which it should be", async ({ page }) => {
   await page.fill("#key-value", "09506000134377");
   await expect(page.locator("#key-hint")).toHaveText("The check digit does not match: it should be 6.");
+  await on(page, "label");
   await expect(page.locator(".preview .error")).toBeVisible();
 });
 
@@ -79,6 +93,7 @@ test("the EPC asks for a serial number, then writes every format", async ({ page
   const section = page.locator("details.epc");
   await expect(section.locator(".epc-message")).toHaveText("This key's EPC needs its qualifier (21), such as the serial number.");
   await qualifier(page, "21", "S1001");
+  await on(page, "more");
   await page.selectOption("#epc-prefix", "7");
   const kv = section.locator(".kv");
   await expect(kv).toContainText("SGTIN-198");
@@ -95,6 +110,7 @@ test("GS1's GCP length table gives the prefix's length and stays in the browser"
   await expect(page.locator("details.epc .epc-message")).toHaveText(
     "Choose the company prefix length, or load GS1's GCP length table.",
   );
+  await on(page, "more");
   await page.setInputFiles("#gcp-file", {
     name: "GCPPrefixFormatList.xml",
     mimeType: "application/xml",
@@ -119,6 +135,7 @@ test("the label downloads as SVG, PNG, PDF, EPS and zip, named after the key", a
     [/^EPS$/, `${name}.eps`, [0x25, 0x21, 0x50, 0x53]], // %!PS
     [/^Zip of all$/, `${name}.zip`, [0x50, 0x4b, 0x03, 0x04]],
   ];
+  await on(page, "export");
   for (const [button, file, signature] of files) {
     const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: button }).click()]);
     expect(download.suggestedFilename()).toBe(file);
@@ -143,8 +160,10 @@ test("GS1 QR Code is not offered beside the QR code with a GS1 Digital Link URI"
 
 // Step 2, where the code is scanned (backlog 1.2, mock-up B of 29 October 2026): the decision tree's questions, the
 // table they lead to, and the symbols it allows for the data, the recommended one drawn.
-const answer = (page: import("@playwright/test").Page, question: string, value: "Yes" | "No") =>
-  page.getByRole("group", { name: question }).getByRole("button", { name: value }).click();
+async function answer(page: Page, question: string, value: "Yes" | "No") {
+  await on(page, "scan");
+  await page.getByRole("group", { name: question }).getByRole("button", { name: value }).click();
+}
 
 test("at a retail till, a batch and a date: the EAN-13 with a QR code beside it, from table 1", async ({ page }) => {
   const step = page.locator("section[aria-labelledby='scan-title']");
@@ -182,12 +201,15 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await expect(page.locator("#opt-size option")).toHaveText([
     "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
   ]);
+  await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
   expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
+  await on(page, "label");
   await page.selectOption("#opt-size", "150");
   await expect(page.locator(".caption")).toContainText("GS1-128 · bars 31.75 mm · X 0.743 mm");
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(00)106141411234567897");
   // Wider than a four-inch printer prints (backlog 3.1)
+  await on(page, "export");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("mm wide; Any ZPL printer, 203 dpi, 104 mm prints 104 mm");
 });
@@ -221,8 +243,10 @@ test("a case in general distribution: ITF-14 with its bearer bars and digits, at
   await expect(page.locator("#opt-bearer option")).toHaveText([
     "A frame, 4.83 mm (any printing; needed with printing plates)", "Top and bottom, 2X (printing without plates: thermal, laser)",
   ]);
+  await on(page, "label");
   await page.selectOption("#opt-bearer", "bars");
   await expect(page.locator(".caption")).toContainText("label 71.5 × 39.6 mm at 100 %");
+  await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(download.suggestedFilename()).toBe("itf14_01_19506000134373.pdf");
   // The ZPL draws the same bearer bars with ^GB, and the digits below them.
@@ -241,6 +265,7 @@ test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch,
   await expect(page.locator(".chosen")).toContainText("GS1 DataBar Omnidirectional · table 1");
   await expect(page.locator(".caption")).toContainText("GS1 DataBar Omnidirectional · bars 15.19 mm · X 0.330 mm");
   // ^BR prints it 33 modules high; table 1 asks for 46: the ZPL is refused, with the reason.
+  await on(page, "export");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("^BR prints GS1 DataBar Omnidirectional 33 modules high");
   await qualifier(page, "10", "B42");
@@ -248,12 +273,15 @@ test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch,
   await expect(step).toContainText(
     "This data needs two symbols: GS1 DataBar Omnidirectional with a QR code (GS1 Digital Link) beside it.");
   await expect(page.locator(".preview .error")).toContainText("This data needs two symbols");
+  await on(page, "scan");
   await step.getByRole("radio", { name: /^GS1 DataBar Stacked Omnidirectional/ }).click();
   await expect(page.locator(".caption")).toContainText("GS1 DataBar Stacked Omnidirectional · bars 31.37 mm");
 });
 
 test("choosing ITF-14 yourself offers the key's scanning environments whose table allows it", async ({ page }) => {
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "itf14");
   const environments = await page.locator("#opt-env").evaluate((select: HTMLSelectElement) => [...select.options].map((o) => o.value));
   expect(environments).toEqual(["distribution", "pharmacy", "pharmacy-gd", "healthcare", "other"]);
@@ -264,10 +292,12 @@ test("choosing ITF-14 yourself offers the key's scanning environments whose tabl
 test("the scan test reads the label back as intended, with ZXing in the browser", async ({ page }) => {
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText(
     "✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 });
   // An ITF-14 with its bearer bars, from step 2.
+  await on(page, "data");
   await page.fill("#paste", "(01)19506000134373");
   await page.getByRole("button", { name: "Fill in" }).click();
   await expect(page.locator(".scan-result")).toHaveText("Reads the label back with ZXing, here in the browser.");
@@ -276,6 +306,7 @@ test("the scan test reads the label back as intended, with ZXing in the browser"
   await answer(page, "Is it scanned in general distribution?", "Yes");
   await answer(page, "Is it a tobacco product under the EU traceability regulation?", "No");
   await answer(page, "Is it a regulated healthcare item not sold at retail?", "No");
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]I1 19506000134373", { timeout: 30_000 });
   // Nothing leaves the browser: the reader and its WebAssembly come from the application.
@@ -283,6 +314,7 @@ test("the scan test reads the label back as intended, with ZXing in the browser"
 });
 
 test("at real size the label is drawn between rulers in millimetres, at the screen's calibration", async ({ page }) => {
+  await on(page, "label");
   await page.getByRole("button", { name: "Real size" }).click();
   const symbol = page.locator(".real .symbol");
   // 32.6 mm wide at 96 CSS pixels an inch.
@@ -307,6 +339,7 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
   expect((await symbol.boundingBox())!.width).toBeCloseTo(32.6 * 5, 0);
   // Kept in this browser.
   await page.reload();
+  await on(page, "label");
   await page.getByRole("button", { name: "Real size" }).click();
   expect((await page.locator(".real .symbol").boundingBox())!.width).toBeCloseTo(32.6 * 5, 0);
   await page.getByRole("button", { name: "Calibrate the screen" }).click();
@@ -319,6 +352,7 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
 // The rest of item 1.5: prepress.
 test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution", async ({ page }) => {
   await expect(page.locator("#opt-reduction")).toHaveCount(0); // a QR code alone has no bars
+  await on(page, "label");
   await page.selectOption("#opt-linear", "auto");
   await page.selectOption("#opt-reduction", "0.02");
   await expect(page.locator(".preview svg desc")).toContainText("bars reduced by 0.020 mm (bar width reduction)");
@@ -326,6 +360,7 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
   await expect(page.locator("#opt-png option").nth(1)).toHaveText("300 dpi — 6 pixels a module, X 0.508 mm");
   await page.selectOption("#opt-png", "300");
+  await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG (300 dpi)" }).click()]);
   const png = readFileSync((await download.path())!);
   // pHYs: 11811 pixels a metre, 300 dpi.
@@ -343,11 +378,13 @@ test("works offline once loaded, the scan test too", async ({ page, context }) =
   await context.setOffline(true);
   try {
     await page.reload();
+    await on(page, "label");
     await expect(page.locator(".preview .symbol svg")).toBeVisible();
     // The GS1 Barcode Syntax Engine and the encoder still answer…
     await qualifier(page, "21", "S1");
     await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42/21/S1?17=271231");
     // …and ZXing's WebAssembly, never loaded before, comes from the cache.
+    await on(page, "label");
     await page.getByRole("button", { name: "Scan test" }).click();
     await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
   } finally {
@@ -366,6 +403,7 @@ test("tobacco unit packs: GS1 DotCode named but not drawn, GS1 DataMatrix at tab
   await expect(step).toContainText("GS1 DotCode");
   await expect(step).toContainText("none reads GS1 DotCode yet");
   await expect(page.locator(".caption")).toContainText("X 0.380 mm");
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231", { timeout: 30_000 });
 });
@@ -382,15 +420,20 @@ test("in bulk: an Excel workbook's rows, columns guessed from their headers, eac
   await expect(page.locator(".summary")).toContainText("2 rows ready · 2 with errors");
   await expect(page.locator(".rrow[data-row='4'] .why")).toHaveText("The check digit does not match: it should be 2.");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&3101=000005&11=261001");
+  await on(page, "label");
   await page.getByRole("button", { name: "Next row" }).click();
   await expect(page.locator(".row-nav")).toContainText("Row 3 · 2 of 4 · ready");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125&11=261001");
+  await on(page, "data");
   await page.locator(".rrow[data-row='5']").getByRole("button", { name: "Show" }).click();
   await expect(page.locator(".row-nav")).toContainText("Row 5 · 4 of 4 · error");
+  if (page.viewportSize()!.width <= 900) await expect(page.locator(".row-nav")).toBeVisible(); // a phone opens the row's label
   await expect(page.locator(".preview .error")).toHaveText("Row 5: The key's column is empty on this row.");
   // A column left out: the production date goes.
+  await on(page, "label");
   await page.getByRole("button", { name: "Previous row" }).click();
   await page.getByRole("button", { name: "Previous row" }).click();
+  await on(page, "data");
   await page.selectOption("#map-5", "");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125");
 });
@@ -437,6 +480,7 @@ test("in bulk: the validation report, a cell fixed in place, rows skipped, the r
   await expect(page.locator(".row-nav")).toContainText("Row 3 · 2 of 4 · fixed");
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/A2?17=280228");
   // The rows still in error skipped together; one of them included again.
+  await on(page, "data"); // a phone showed the row's label
   await page.getByRole("button", { name: "Skip the 2 rows with errors" }).click();
   await expect(report).toContainText("1 row ready · 1 fixed · 2 skipped");
   await report.getByRole("button", { name: "Skipped (2)" }).click();
@@ -486,6 +530,7 @@ test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async
 // The label's area across step 3, its exports below it and the options below them; the page the whole width
 // (mock-up B of 30 October 2026; backlog 1.10 a).
 test("the label in its own area across step 3, exports below it, options below them", async ({ page }) => {
+  test.skip(await page.locator("nav.tabs").isVisible(), "a phone and a tablet show them in destinations of their own");
   const card = (await page.locator(".label-card").boundingBox())!;
   const canvas = (await page.locator(".canvas").boundingBox())!;
   const exports = (await page.locator(".exportbar").boundingBox())!;
@@ -502,6 +547,7 @@ test("the label in its own area across step 3, exports below it, options below t
 
 // Zoom at the canvas's corner (the owner, 30 October 2026): of the fitted label, or of the real size.
 test("zoom in and out on the label's canvas, back to 100 % on a click or a change of view", async ({ page }) => {
+  await on(page, "label");
   const width = async () => (await page.locator(".canvas .preview").boundingBox())!.width;
   const fitted = await width();
   await page.getByRole("button", { name: "Zoom in" }).click();
@@ -513,6 +559,7 @@ test("zoom in and out on the label's canvas, back to 100 % on a click or a chang
   await page.locator(".zoom-value").click();
   await expect(page.locator(".zoom-value")).toHaveText("100 %");
   // At real size the zoom enlarges the label and its rulers together: 32.6 mm at twice 96 pixels an inch.
+  await on(page, "label");
   await page.getByRole("button", { name: "Real size" }).click();
   await page.getByRole("button", { name: "Zoom in" }).click();
   await page.getByRole("button", { name: "Zoom in" }).click();
@@ -526,7 +573,9 @@ test("zoom in and out on the label's canvas, back to 100 % on a click or a chang
 test("the caption counts the modules and the characters encoded, FNC1 and group separators included", async ({ page }) => {
   await expect(page.locator(".caption")).toContainText("QR code version 4 · 33 × 33 = 1,089 modules · correction M");
   await expect(page.locator(".caption")).toContainText("· 53 characters encoded");
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await expect(page.locator(".caption")).toContainText("31 characters encoded (FNC1 and 1 group separator included)");
 });
@@ -542,6 +591,7 @@ test("the Made-to-Order GTIN (03): its own group, its batch and serial, drawn in
   await expect(page.locator("#q-10")).toHaveValue("B1");
   await expect(page.locator(".caption")).toContainText("GS1 DataMatrix");
   await expect(page.locator(".uri")).toHaveCount(0);
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (03)09506000134376(10)B1(17)271231", { timeout: 30_000 });
 });
@@ -564,18 +614,24 @@ test("an attribute's AI: the arrow lists every AI even after one is chosen; typi
 // "Start over" (the owner, 30 October 2026): every field and choice as on a first visit.
 test("Start over clears the data and every choice, as on a first visit", async ({ page }) => {
   await qualifier(page, "21", "S1");
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await page.getByRole("button", { name: "Real size" }).click();
+  await on(page, "more");
   await page.getByRole("button", { name: "Start over" }).click();
   await expect(page.locator("#q-21")).toHaveCount(0);
   await expect(page.locator(".caption")).toContainText("QR code version 4");
+  await on(page, "label");
   await expect(page.getByRole("button", { name: "Fit" })).toHaveAttribute("aria-pressed", "true");
   // In bulk, with rows loaded, it asks first.
   await page.getByRole("button", { name: "In bulk" }).click();
+  await on(page, "data");
   await page.fill("#rows-paste", "GTIN\n9506000134376\n");
   await page.getByRole("button", { name: "Use the pasted rows" }).click();
   page.once("dialog", (dialog) => void dialog.dismiss());
+  await on(page, "more");
   await page.getByRole("button", { name: "Start over" }).click();
   await expect(page.locator(".source")).toContainText("Pasted rows");
   page.once("dialog", (dialog) => void dialog.accept());
@@ -591,6 +647,7 @@ test("in bulk: Generate N labels makes each row's files, a PDF and label sheets,
   await expect(page.locator(".summary")).toContainText("2 rows ready · 2 with errors");
   const panel = page.locator(".generate");
   await expect(panel).toContainText("2 rows left out (errors or skipped) are named in the CSV.");
+  await on(page, "export");
   await page.locator("#gen-pattern").fill("{01}_{lot}");
   await expect(panel.locator(".error")).toContainText("Not a name the pattern knows: {lot}.");
   await expect(page.getByRole("button", { name: "Generate 2 labels" })).toBeDisabled();
@@ -637,10 +694,13 @@ test("the GS1 Digital Link URI's own parameters: after the attributes, a name of
   await page.getByRole("button", { name: "Fill in" }).click();
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3");
   await expect(page.getByLabel("Parameter name")).toHaveCount(3);
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3", { timeout: 30_000 });
   // Element strings have no place for them
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231(20)12", { timeout: 30_000 });
@@ -666,7 +726,9 @@ test("several keys: an SSCC with the GTIN it contains and their count, each chec
   await rows.nth(2).getByLabel("Attribute value").fill("09506000134376");
   await expect(page.locator(".preview .error")).toContainText("It is invalid to pair AI (01) with AI (37)");
   await rows.nth(2).getByRole("button", { name: "Remove attribute" }).click();
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (00)106141411234567897(02)09506000134376(37)10", { timeout: 30_000 });
@@ -706,6 +768,7 @@ test("the human readable text above, split, left or right, and higher; the symbo
   const size = async () => (/label ([\d.]+) × ([\d.]+) mm/.exec((await caption.textContent())!)!).slice(1).map(Number);
   await expect(caption).toContainText("label ");
   const [w0, h0] = await size();
+  await on(page, "label");
   await page.selectOption("#opt-hri-position", "left");
   await expect.poll(async () => (await size())[0]).toBeGreaterThan(w0! + 10);
   await page.getByRole("button", { name: "Scan test" }).click();
@@ -717,7 +780,9 @@ test("the human readable text above, split, left or right, and higher; the symbo
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
   // An EAN/UPC alone keeps its digits where section 5.2.5 puts them
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "ean13");
   await expect(page.locator("#opt-hri-position")).toHaveCount(0);
 });
@@ -726,7 +791,9 @@ test("the human readable text above, split, left or right, and higher; the symbo
 test("GS1-128 beyond 48 data characters in several symbols, each read back; the person moves where one starts", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABCDEFGHIJ(15)271231(3102)001250");
   await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-128");
   await expect(page.locator(".caption")).toContainText("GS1-128 in 2 symbols");
   await expect(page.locator(".gs1128-head")).toContainText("2 symbols, as many element strings as fit in each");
@@ -751,12 +818,15 @@ test("in bulk: generating thousands of labels shows its progress and can be canc
   await page.fill("#seq-gcp", "0614141");
   await page.getByRole("button", { name: "Make 3,000 rows" }).click();
   await expect(page.locator(".summary")).toContainText("3000 rows ready");
+  await on(page, "export");
   await page.getByRole("button", { name: "Generate 3000 labels" }).click();
   await expect(page.locator(".generate progress")).toBeVisible();
   await expect(page.locator(".generate-go .hint")).toContainText(/Drawing \d+ of 3000/);
   // The page answers while the worker draws
+  await on(page, "label");
   await page.getByRole("button", { name: "Next row" }).click();
   await expect(page.locator(".row-nav")).toContainText("2 of 3000");
+  await on(page, "export");
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.locator(".generate-go .hint")).toHaveText("Stopped: nothing was downloaded.");
   await expect(page.locator(".generate progress")).toHaveCount(0);
@@ -764,24 +834,29 @@ test("in bulk: generating thousands of labels shows its progress and can be canc
 
 // Item 1.14: QR Code's encoding modes, one for the whole data (ISO/IEC 18004).
 test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; each read back", async ({ page }) => {
+  await on(page, "label");
   await page.selectOption("#opt-qr-mode", "alphanumeric");
   await expect(page.locator(".preview .error")).toContainText("alphanumeric mode cannot encode “h”");
   await page.selectOption("#opt-qr-upper", "upper");
   await expect(page.locator(".preview .error")).toContainText("cannot encode “?”"); // the query string of (17)
+  await on(page, "data");
   await page.locator(".attr").nth(1).getByRole("button", { name: "Remove attribute" }).click();
   await expect(page.locator(".caption")).toContainText("QR code version 3 · 29 × 29 = 841 modules · correction M · alphanumeric mode");
+  await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
   await page.selectOption("#opt-qr-mode", "byte");
   await expect(page.locator(".caption")).toContainText("QR code version 4 · 33 × 33 = 1,089 modules · correction M · byte mode");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
+  await on(page, "export");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code in the printer's automatic mode");
 });
 
 // Item 1.18 (mock-up A of two, 31 October 2026): a JWS of the code's data, a security marking's code read from the marking.
 test("digital signature: a key made here, a JWS with the marking's code taken out, verified; credentials need an issuer", async ({ page }) => {
+  await on(page, "more");
   await page.locator("details.sign summary").click();
   await page.fill("#sig-name", "Finest Truffle Tapenade");
   await page.fill("#sig-brand", "Dal Giardino");
@@ -816,6 +891,7 @@ test("digital signature: a key made here, a JWS with the marking's code taken ou
 
 // Item 1.19: writing an NFC tag through Web NFC, read back; elsewhere the NDEF message as a file.
 test("NFC: without Web NFC, the NDEF file; with it, the URI written to a tag and read back", async ({ page }) => {
+  await on(page, "more");
   const nfc = page.locator(".nfc");
   await expect(nfc.getByRole("button", { name: "Write to an NFC tag" })).toBeDisabled();
   await expect(nfc).toContainText("This browser cannot write NFC tags");
@@ -838,23 +914,27 @@ test("NFC: without Web NFC, the NDEF file; with it, the URI written to a tag and
     };
   });
   await page.reload();
+  await on(page, "more");
   await nfc.getByRole("button", { name: "Write to an NFC tag" }).click();
   await expect(nfc.locator(".hint")).toHaveText("✓ Written. Read the tag back to check it.");
   await nfc.getByRole("button", { name: "Read the tag back" }).click();
   await expect(nfc.locator(".hint")).toHaveText("✓ The tag holds https://id.gs1.org/01/09506000134376/10/B42?17=271231");
   // With a serial number the key has an EPC, and its link for NFC is offered too
   await qualifier(page, "21", "S1001");
+  await on(page, "more");
   await page.selectOption("#epc-prefix", "7");
   await expect(nfc.getByLabel("What to write on the NFC tag").locator("option")).toHaveText(["The GS1 Digital Link URI", "The link for NFC (EPC, hexadecimal)"]);
 });
 
 // Item 3.1 (mock-up A of two, 31 October 2026): printer profiles, the module in whole dots within the table's range, a test label.
 test("printer profiles: a profile of one's own, the module's dots within the range, the width checked, a test print", async ({ page }) => {
+  await on(page, "export");
   const section = page.locator("details.printer");
   await section.locator("summary").click();
   await expect(section.locator(".hint.ok")).toContainText("✓ X 0.500 mm (4 dots at 203 dpi) is within the table's 0.396 to 0.990 mm.");
   await page.selectOption("#prn-module", "6");
   await expect(section.locator(".hint.ok")).toContainText("X 0.751 mm (6 dots at 203 dpi)");
+  await on(page, "export");
   const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^BQN,2,6^FD");
   // A narrow printer of one's own: the label no longer fits
@@ -876,6 +956,7 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   expect(text).toContain("^FDPrinter: Desk printer^FS");
   // Kept in this browser
   await page.reload();
+  await on(page, "export");
   await page.locator("details.printer summary").click();
   await expect(page.locator("#prn-profile option", { hasText: "Desk printer" })).toHaveCount(1);
 });
@@ -885,6 +966,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await expect(page.locator("#opt-logistic")).toHaveCount(0); // a GTIN: no logistic label
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
   await page.selectOption("#opt-logistic", "a6");
   await expect(page.locator(".preview .error")).toContainText("the A6 label is 148 mm high");
   await page.selectOption("#opt-logistic", "a5");
@@ -895,6 +977,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText(
     "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24(10)ABC123", { timeout: 30_000 });
+  await on(page, "export");
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
@@ -905,23 +988,28 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
 // language chosen kept for the next visit; the core's and the Syntax Engine's messages translated too.
 test("the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await on(page, "more");
   await page.selectOption("#language", "pt-BR");
   await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
   await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
   await expect(page.locator("#scan-title")).toHaveText("2 Onde é lido?");
+  await on(page, "scan");
   await expect(page.getByRole("group", { name: "É lido num ponto de venda do varejo geral?" })).toBeVisible();
+  await on(page, "data");
   await expect(page.locator(".attr").first().getByRole("combobox")).toHaveValue("(10) Lote");
   // What was typed stays; a core message and an engine message in Portuguese
   await expect(page.locator("#key-value")).toHaveValue("09506000134376");
   await page.fill("#key-value", "09506000134377");
   await expect(page.locator("#key-hint")).toHaveText("O dígito verificador não confere: deveria ser 6.");
   await page.fill("#key-value", "09506000134376");
+  await on(page, "data");
   await page.fill("#paste", "(01)09506000134352(17)271331");
   await page.getByRole("button", { name: "Preencher" }).click();
   await expect(page.locator(".paste .hint")).toContainText("A data tem um mês inválido.");
   // Kept for the next visit
   await page.reload();
   await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
+  await on(page, "more");
   await page.selectOption("#language", "es");
   await expect(page.locator("#identify-title")).toHaveText("1 ¿Qué identifica el código?");
   await expect(page.getByRole("button", { name: "Empezar de nuevo" })).toBeVisible();

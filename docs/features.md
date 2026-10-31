@@ -2,7 +2,7 @@
 
 Every feature of GS1 Label Studio, grouped by area, with what it does, the commit that brought it (oldest first in
 [history.md](history.md)) and the tests that prove it: `file` names a test file — `packages/core/test/<file>.test.ts`
-or, for `editor`, the browser tests `apps/web/e2e/editor.spec.ts` — and the words after it are found in the name of one
+or, for `editor` and `layouts`, the browser tests `apps/web/e2e/<file>.spec.ts` — and the words after it are found in the name of one
 of its tests, listed in the [inventory of features](test-inventory.md)
 ([ADR 0005](adr/0005-documentation-and-feature-inventory.md); `packages/core/test/docs.test.ts` fails when a feature
 names no test, or a test that does not exist).
@@ -185,7 +185,9 @@ Which standard each follows: [conformance](conformance.md).
 |---|---|---|---|
 | Everything in the browser | No server; the engine, the encoder and the reader run in the page; no request leaves it | `5d0566f` | `editor`: the scan test reads the label back as intended |
 | Offline | A service worker the build writes keeps every file; installable | `4ea0174` | `editor`: works offline once loaded |
-| Phone and desktop | The whole width; on a phone the fields first and a live preview fixed at the top | `87a745d`, `9aa4493` | `editor`: the page fits the screen's width |
+| A computer, a phone, a tablet | On a computer the steps on the left and the label beside them, the whole width. On a phone (and a tablet held upright) one column and one destination at a time — Data, Scan, Label, Export, More — chosen in a tab bar at the bottom, a live preview at the top that opens the label. On a tablet held horizontally a navigation rail, the destination on the left and the label always on the right. The same page, so what is typed stays when the device is turned (backlog 1.21) | `87a745d`, `9aa4493`, this delivery | `layouts`: a computer shows every step at once · `layouts`: a phone shows one destination at a time · `layouts`: a tablet held horizontally · `editor`: the page fits the screen's width |
+| Destinations that remember | Each destination keeps where it was scrolled to; a link to a part of another one opens it; a dot on a tab whose destination has an error | this delivery | `layouts`: on a phone each destination keeps where it was scrolled to |
+| About | At the foot of the page (in More on a phone): the repository, the Apache 2.0 licence, the manuals, the version published, and the software it is made with, each linked to its repository | this delivery | `layouts`: About: the repository, the licence, the version |
 | One code or in bulk | A mode of the editor; steps 2 and 3 shared | `0911949` | `editor`: in bulk: pasted rows |
 | Start over | Clears the data and every choice, as on a first visit | `b8caad3` | `editor`: Start over clears the data |
 | Three languages | English, Brazilian Portuguese and Spanish from a menu in the header, the browser's language on a first visit, the choice kept; the page redrawn in place, what was typed kept (ADR 0003) | `04f4973` | `editor`: the interface in Brazilian Portuguese and Spanish · `editor`: a browser in Portuguese opens the studio in Portuguese · `i18n`: chooses the browser's language |

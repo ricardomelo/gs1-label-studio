@@ -117,8 +117,10 @@ export type FileKind = "svg" | "png" | "pdf" | "eps" | "zip";
 const REDUCTIONS = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05];
 
 interface Props {
-  /** Shown below the options: the EPC section. */
+  /** Shown below the options: the EPC and signature sections ("More" on a phone or a tablet). */
   children?: React.ReactNode;
+  /** Below the options too, but with the exports on a phone or a tablet: the printer profiles. */
+  printer?: React.ReactNode;
   /** In bulk, under the Export bar: generating every row (backlog 2.4). */
   generate?: React.ReactNode;
   settings: LabelSettings;
@@ -160,13 +162,13 @@ function ColouredUri({ uri, stem }: { uri: string; stem: string }) {
   );
 }
 
-/** The fitted label's widest, in CSS pixels (narrower where the canvas is); the zoom's steps, of that width. */
+/** The fitted label's widest, in CSS pixels (narrower where the canvas is, or a layout sets --fit); the zoom's steps, of that width. */
 const FIT_PX = 420;
 const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 const step = (zoom: number, by: 1 | -1) =>
   by > 0 ? (ZOOMS.find((z) => z > zoom) ?? zoom) : ([...ZOOMS].reverse().find((z) => z < zoom) ?? zoom);
 
-export function LabelCard({ children, generate, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
+export function LabelCard({ children, generate, printer, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const [real, setReal] = useState(false);
   // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
@@ -195,16 +197,18 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
   const target = view.sizeBase ?? (view.twoD ? ENVIRONMENTS[s.environment]?.["2d"][1] : ENVIRONMENTS[s.environment]?.linear?.[1]);
 
   return (
-    <section className="card label-card" aria-labelledby="label-title">
-      <h2 id="label-title">
-        <span className="n">3</span> {t("Label")} <span className="badge">{t("updates as you type")}</span>
-      </h2>
+    <section className="card label-card" aria-labelledby="label-title" data-pane="label export more" data-beside="">
       {/* The label above, in its own area, with its tools over it and its exports below; the options under them
-          (the owner's request of 30 October 2026, mock-up B of three): room for the label designer of phase 4. */}
+          (the owner's request of 30 October 2026, mock-up B of three): room for the label designer of phase 4.
+          Each part marked with its destination on a phone or a tablet (backlog 1.21, layout.ts); data-beside, what a
+          tablet held horizontally keeps beside every destination. */}
       <div className="panel">
-        <div className="stage">
+        <div className="stage" data-pane="label export" data-beside="">
+          <h2 id="label-title" data-pane="label" data-beside="">
+            <span className="n">3</span> {t("Label")} <span className="badge">{t("updates as you type")}</span>
+          </h2>
           {rows && (
-            <div className="row-nav">
+            <div className="row-nav" data-pane="label" data-beside="">
               <button type="button" aria-label={t("Previous row")} disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>
                 ‹
               </button>
@@ -222,7 +226,7 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               </button>
             </div>
           )}
-          <div className="toolbar">
+          <div className="toolbar" data-pane="label" data-beside="">
             {view.svg && view.widthMm && (
               <div className="view-bar">
                 <span className="seg" role="group" aria-label={t("Preview size")}>
@@ -260,9 +264,17 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             )}
           </div>
           {/* Across the whole card, so that the bar has room up to the slider's maximum (backlog 1.10 c). */}
-          {real && calibrating && view.svg && view.widthMm && <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />}
-          {view.caption && <div className="caption">{view.caption}</div>}
-          <div className="canvas-frame">
+          {real && calibrating && view.svg && view.widthMm && (
+            <div data-pane="label" data-beside="">
+              <Calibration pxPerMm={pxPerMm} onChange={setPxPerMm} />
+            </div>
+          )}
+          {view.caption && (
+            <div className="caption" data-pane="label" data-beside="">
+              {view.caption}
+            </div>
+          )}
+          <div className="canvas-frame" data-pane="label" data-beside="">
             <div className="canvas">
               {real && view.svg && view.widthMm && view.heightMm ? (
                 <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm * zoom} />
@@ -270,7 +282,7 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                 <div
                   className="preview"
                   aria-live="polite"
-                  style={zoom === 1 ? undefined : { width: `calc(min(100%, ${FIT_PX}px) * ${zoom})` }}
+                  style={zoom === 1 ? undefined : { width: `calc(min(100%, var(--fit, ${FIT_PX}px)) * ${zoom})` }}
                 >
                   {view.svg ? (
                     <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
@@ -294,8 +306,15 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               </div>
             )}
           </div>
-          {fileError && <p className="error small">{fileError}</p>}
-          <div className="exportbar">
+          {fileError && (
+            <p className="error small" data-pane="label export" data-beside="">
+              {fileError}
+            </p>
+          )}
+          <h2 className="pane-title" data-pane="export">
+            {t("Export")}
+          </h2>
+          <div className="exportbar" data-pane="export" data-beside="">
             <b>{t("Export")}</b>
             <div className="downloads">
               <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
@@ -327,348 +346,354 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               </button>
             </div>
           </div>
-          {generate}
+          {generate && <div data-pane="export">{generate}</div>}
         </div>
 
-        <div>
-          {view.logisticPossible && (
-            <div className="grid logistic">
-              <div>
-                <label htmlFor="opt-logistic">{t("Label")}</label>
-                <select id="opt-logistic" value={s.logistic} onChange={(e) => set("logistic", e.target.value as "none" | LogisticSize)}>
-                  <option value="none">{t("The symbol alone")}</option>
-                  {Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
-                    <option key={id} value={id}>
-                      {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {s.logistic !== "none" && (
-                <>
-                  <div>
-                    <label htmlFor="opt-from">{t("From")}</label>
-                    <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
-                  </div>
-                  <div>
-                    <label htmlFor="opt-to">{t("To")}</label>
-                    <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          <div className="grid">
-            {view.guided ? (
-              <div className="chosen">
-                <span>
-                  <b>{view.guided.summary}</b> · {t("table {n}", { n: view.guided.table })}, {view.guided.application.toLowerCase()}
-                </span>
-                <a className="link" href="#scan-title">
-                  {t("Change in step 2")}
-                </a>
-              </div>
-            ) : (
-              <div>
-                <label htmlFor="opt-symbol">{t("Symbol")}</label>
-                <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
-                  {OFFERED.map((symbology) => (
-                    <option key={symbology.id} value={symbology.id}>
-                      {tm(symbology.name)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {!view.guided && (
-              <div>
-                <label htmlFor="opt-env">{t("Scanning environment")}</label>
-                <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
-                  {view.environments.map((name) => (
-                    <option key={name} value={name}>
-                      {ENVIRONMENT_NAMES[name] ? t(ENVIRONMENT_NAMES[name]) : name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div>
-              <label htmlFor="opt-size">{t("Size")}</label>
-              <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
-                {view.sizes.map((size) => {
-                  const x = view.sizeBase
-                    ? (view.sizeBase * size) / 100
-                    : view.twoD ? xDimension(s.environment, size) : linearXDimension(s.environment, size);
-                  return (
-                    <option key={size} value={size}>
-                      {size === 100 ? t("{size} % (X {x} mm, recommended)", { size, x: formatNumber(x, 3) }) : t("{size} % (X {x} mm)", { size, x: formatNumber(x, 3) })}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="opt-hri">{t("Human readable text")}</label>
-              <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
-                {Object.entries(HRI_CHOICES).map(([value, text]) => (
-                  <option key={value} value={value}>
-                    {t(text)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
-              <>
+        <div className="side" data-pane="label export more">
+          <div className="options" data-pane="label">
+            {view.logisticPossible && (
+              <div className="grid logistic">
                 <div>
-                  <label htmlFor="opt-hri-position">{t("Text position")}</label>
-                  <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
-                    {Object.entries(HRI_POSITION_NAMES)
-                      .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
-                      .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
-                      .map(([value, text]) => (
-                        <option key={value} value={value}>
-                          {t(text)}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="opt-hri-height">{t("Text height")}</label>
-                  <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
-                    {HRI_HEIGHTS.map(([mm, text]) => (
-                      <option key={mm} value={mm === 2.2 ? "" : mm}>
-                        {t(text)}
+                  <label htmlFor="opt-logistic">{t("Label")}</label>
+                  <select id="opt-logistic" value={s.logistic} onChange={(e) => set("logistic", e.target.value as "none" | LogisticSize)}>
+                    <option value="none">{t("The symbol alone")}</option>
+                    {Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
+                      <option key={id} value={id}>
+                        {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
                       </option>
                     ))}
                   </select>
                 </div>
-              </>
+                {s.logistic !== "none" && (
+                  <>
+                    <div>
+                      <label htmlFor="opt-from">{t("From")}</label>
+                      <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
+                    </div>
+                    <div>
+                      <label htmlFor="opt-to">{t("To")}</label>
+                      <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
+                    </div>
+                  </>
+                )}
+              </div>
             )}
-            {s.symbology === "itf14" && (
+            <div className="grid">
+              {view.guided ? (
+                <div className="chosen">
+                  <span>
+                    <b>{view.guided.summary}</b> · {t("table {n}", { n: view.guided.table })}, {view.guided.application.toLowerCase()}
+                  </span>
+                  <a className="link" href="#scan-title">
+                    {t("Change in step 2")}
+                  </a>
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="opt-symbol">{t("Symbol")}</label>
+                  <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
+                    {OFFERED.map((symbology) => (
+                      <option key={symbology.id} value={symbology.id}>
+                        {tm(symbology.name)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {!view.guided && (
+                <div>
+                  <label htmlFor="opt-env">{t("Scanning environment")}</label>
+                  <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
+                    {view.environments.map((name) => (
+                      <option key={name} value={name}>
+                        {ENVIRONMENT_NAMES[name] ? t(ENVIRONMENT_NAMES[name]) : name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
-                <label htmlFor="opt-bearer">{t("Bearer bars")}</label>
-                <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
-                  {Object.entries(BEARER_CHOICES).map(([value, text]) => (
+                <label htmlFor="opt-size">{t("Size")}</label>
+                <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
+                  {view.sizes.map((size) => {
+                    const x = view.sizeBase
+                      ? (view.sizeBase * size) / 100
+                      : view.twoD ? xDimension(s.environment, size) : linearXDimension(s.environment, size);
+                    return (
+                      <option key={size} value={size}>
+                        {size === 100 ? t("{size} % (X {x} mm, recommended)", { size, x: formatNumber(x, 3) }) : t("{size} % (X {x} mm)", { size, x: formatNumber(x, 3) })}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="opt-hri">{t("Human readable text")}</label>
+                <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
+                  {Object.entries(HRI_CHOICES).map(([value, text]) => (
                     <option key={value} value={value}>
                       {t(text)}
                     </option>
                   ))}
                 </select>
               </div>
-            )}
-            {view.isQr && (
-              <>
+              {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
+                <>
+                  <div>
+                    <label htmlFor="opt-hri-position">{t("Text position")}</label>
+                    <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
+                      {Object.entries(HRI_POSITION_NAMES)
+                        .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
+                        .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
+                        .map(([value, text]) => (
+                          <option key={value} value={value}>
+                            {t(text)}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="opt-hri-height">{t("Text height")}</label>
+                    <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
+                      {HRI_HEIGHTS.map(([mm, text]) => (
+                        <option key={mm} value={mm === 2.2 ? "" : mm}>
+                          {t(text)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              {s.symbology === "itf14" && (
                 <div>
-                  <label htmlFor="opt-version">{t("QR code version")}</label>
-                  <select
-                    id="opt-version"
-                    value={s.version ?? ""}
-                    onChange={(e) => set("version", e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">{t("Automatic (smallest that fits)")}</option>
-                    {Array.from({ length: 40 }, (_, i) => i + 1).map((v) => (
-                      <option key={v} value={v}>
-                        {t("{v} ({n} × {n} modules)", { v, n: 17 + 4 * v })}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="opt-qr-mode">{t("Encoding mode")}</label>
-                  <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
-                    {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
+                  <label htmlFor="opt-bearer">{t("Bearer bars")}</label>
+                  <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
+                    {Object.entries(BEARER_CHOICES).map(([value, text]) => (
                       <option key={value} value={value}>
                         {t(text)}
                       </option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label htmlFor="opt-qr-upper">{t("Scheme and domain")}</label>
-                  <select id="opt-qr-upper" value={s.qrUpperDomain ? "upper" : "as"} onChange={(e) => set("qrUpperDomain", e.target.value === "upper")}>
-                    <option value="as">{t("As typed (https://id.gs1.org)")}</option>
-                    <option value="upper">{t("In capitals (HTTPS://ID.GS1.ORG)")}</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="opt-ecl">{t("Error correction")}</label>
-                  <select id="opt-ecl" value={s.error} onChange={(e) => set("error", e.target.value as ErrorLevel)}>
-                    {ERROR_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {t(ERROR_NAMES[level])}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
-            {(view.linearPossible || (view.guided && view.twoD && s.linear !== "none")) && (
-              <>
-                {view.linearPossible && (
+              )}
+              {view.isQr && (
+                <>
                   <div>
-                    <label htmlFor="opt-linear">{t("Linear barcode beside it")}</label>
-                    <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
-                      {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
+                    <label htmlFor="opt-version">{t("QR code version")}</label>
+                    <select
+                      id="opt-version"
+                      value={s.version ?? ""}
+                      onChange={(e) => set("version", e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">{t("Automatic (smallest that fits)")}</option>
+                      {Array.from({ length: 40 }, (_, i) => i + 1).map((v) => (
+                        <option key={v} value={v}>
+                          {t("{v} ({n} × {n} modules)", { v, n: 17 + 4 * v })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="opt-qr-mode">{t("Encoding mode")}</label>
+                    <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
+                      {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
                         <option key={value} value={value}>
                           {t(text)}
                         </option>
                       ))}
                     </select>
                   </div>
-                )}
-                {s.linear !== "none" && (
                   <div>
-                    <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
-                    <select
-                      id="opt-linear-size"
-                      value={s.linearSize ?? ""}
-                      onChange={(e) => set("linearSize", e.target.value ? Number(e.target.value) : null)}
-                    >
-                      <option value="">{t("As the 2D symbol: {size} %", { size: s.size })}</option>
-                      {linearSizesFor(s.environment).map((size) => (
-                        <option key={size} value={size}>
-                          {t("{size} % (X {x} mm)", { size, x: formatNumber(linearXDimension(s.environment, size), 3) })}
+                    <label htmlFor="opt-qr-upper">{t("Scheme and domain")}</label>
+                    <select id="opt-qr-upper" value={s.qrUpperDomain ? "upper" : "as"} onChange={(e) => set("qrUpperDomain", e.target.value === "upper")}>
+                      <option value="as">{t("As typed (https://id.gs1.org)")}</option>
+                      <option value="upper">{t("In capitals (HTTPS://ID.GS1.ORG)")}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="opt-ecl">{t("Error correction")}</label>
+                    <select id="opt-ecl" value={s.error} onChange={(e) => set("error", e.target.value as ErrorLevel)}>
+                      {ERROR_LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {t(ERROR_NAMES[level])}
                         </option>
                       ))}
                     </select>
                   </div>
-                )}
-              </>
-            )}
-            {view.hasBars && (
+                </>
+              )}
+              {(view.linearPossible || (view.guided && view.twoD && s.linear !== "none")) && (
+                <>
+                  {view.linearPossible && (
+                    <div>
+                      <label htmlFor="opt-linear">{t("Linear barcode beside it")}</label>
+                      <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
+                        {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
+                          <option key={value} value={value}>
+                            {t(text)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {s.linear !== "none" && (
+                    <div>
+                      <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
+                      <select
+                        id="opt-linear-size"
+                        value={s.linearSize ?? ""}
+                        onChange={(e) => set("linearSize", e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">{t("As the 2D symbol: {size} %", { size: s.size })}</option>
+                        {linearSizesFor(s.environment).map((size) => (
+                          <option key={size} value={size}>
+                            {t("{size} % (X {x} mm)", { size, x: formatNumber(linearXDimension(s.environment, size), 3) })}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
+              {view.hasBars && (
+                <div>
+                  <label htmlFor="opt-reduction">{t("Bar width reduction")}</label>
+                  <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
+                    {REDUCTIONS.map((mm) => (
+                      <option key={mm} value={mm}>
+                        {mm ? `${formatNumber(mm, 3)} mm` : t("None")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
-                <label htmlFor="opt-reduction">{t("Bar width reduction")}</label>
-                <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
-                  {REDUCTIONS.map((mm) => (
-                    <option key={mm} value={mm}>
-                      {mm ? `${formatNumber(mm, 3)} mm` : t("None")}
+                <label htmlFor="opt-png">{t("PNG resolution")}</label>
+                <select
+                  id="opt-png"
+                  value={s.pngResolution ?? ""}
+                  onChange={(e) => set("pngResolution", e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">{view.pngDpi ? t("At the label's size ({dpi} dpi)", { dpi: Math.round(view.pngDpi) }) : t("At the label's size")}</option>
+                  {(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => (
+                    <option key={dpi} value={dpi}>
+                      {pixelsPerModule === 1
+                        ? t("{dpi} dpi — 1 pixel a module, X {x} mm", { dpi, x: formatNumber(xMm, 3) })
+                        : t("{dpi} dpi — {n} pixels a module, X {x} mm", { dpi, n: pixelsPerModule, x: formatNumber(xMm, 3) })}
                     </option>
                   ))}
                 </select>
               </div>
+              <div>
+                <label htmlFor="opt-hritext">{t("Text in the SVG")}</label>
+                <select
+                  id="opt-hritext"
+                  value={s.hriAsText ? "text" : "outline"}
+                  onChange={(e) => set("hriAsText", e.target.value === "text")}
+                >
+                  <option value="outline">{t("Outlines, no font needed")}</option>
+                  <option value="text">{t("Text, editable (needs the fonts)")}</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="opt-stem">{t("Domain in the GS1 Digital Link URI")}</label>
+                <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
+              </div>
+            </div>
+            {view.gs1128 && view.gs1128.elements.length > 1 && (
+              <div className="gs1128">
+                <div className="gs1128-head">
+                  <b>{t("GS1-128 symbols")}</b>{" "}
+                  <span className="hint">
+                    {view.gs1128.starts.length > 1 ? t("{n} symbols, ", { n: view.gs1128.starts.length }) : t("one symbol, ")}
+                    {s.gs1128Starts ? t("split where you chose") : t("as many element strings as fit in each (48 data characters, 165.10 mm)")}
+                  </span>
+                  {s.gs1128Starts && (
+                    <button type="button" className="link" onClick={() => set("gs1128Starts", null)}>
+                      {t("Automatic")}
+                    </button>
+                  )}
+                </div>
+                <ol className="gs1128-list">
+                  {view.gs1128.elements.map((element, index) => (
+                    <li key={index} className={view.gs1128!.starts.includes(index) ? "starts" : ""}>
+                      {index > 0 && (
+                        <label className="check">
+                          <input
+                            type="checkbox"
+                            checked={view.gs1128!.starts.includes(index)}
+                            onChange={(e) => {
+                              const starts = view.gs1128!.starts.filter((i) => i > 0 && i !== index);
+                              set("gs1128Starts", e.target.checked ? [...starts, index].sort((a, b) => a - b) : starts);
+                            }}
+                          />
+                          {t("new symbol")}
+                        </label>
+                      )}
+                      <code>{element}</code>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             )}
-            <div>
-              <label htmlFor="opt-png">{t("PNG resolution")}</label>
-              <select
-                id="opt-png"
-                value={s.pngResolution ?? ""}
-                onChange={(e) => set("pngResolution", e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">{view.pngDpi ? t("At the label's size ({dpi} dpi)", { dpi: Math.round(view.pngDpi) }) : t("At the label's size")}</option>
-                {(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => (
-                  <option key={dpi} value={dpi}>
-                    {pixelsPerModule === 1
-                      ? t("{dpi} dpi — 1 pixel a module, X {x} mm", { dpi, x: formatNumber(xMm, 3) })
-                      : t("{dpi} dpi — {n} pixels a module, X {x} mm", { dpi, n: pixelsPerModule, x: formatNumber(xMm, 3) })}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="opt-hritext">{t("Text in the SVG")}</label>
-              <select
-                id="opt-hritext"
-                value={s.hriAsText ? "text" : "outline"}
-                onChange={(e) => set("hriAsText", e.target.value === "text")}
-              >
-                <option value="outline">{t("Outlines, no font needed")}</option>
-                <option value="text">{t("Text, editable (needs the fonts)")}</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="opt-stem">{t("Domain in the GS1 Digital Link URI")}</label>
-              <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
-            </div>
-          </div>
-          {view.gs1128 && view.gs1128.elements.length > 1 && (
-            <div className="gs1128">
-              <div className="gs1128-head">
-                <b>{t("GS1-128 symbols")}</b>{" "}
-                <span className="hint">
-                  {view.gs1128.starts.length > 1 ? t("{n} symbols, ", { n: view.gs1128.starts.length }) : t("one symbol, ")}
-                  {s.gs1128Starts ? t("split where you chose") : t("as many element strings as fit in each (48 data characters, 165.10 mm)")}
-                </span>
-                {s.gs1128Starts && (
-                  <button type="button" className="link" onClick={() => set("gs1128Starts", null)}>
-                    {t("Automatic")}
-                  </button>
-                )}
+            {view.guided && (
+              <div className="hint">
+                {t("Sizes within table {n}'s ranges (GS1 General Specifications 5.12.3.{n})", { n: view.guided.table })}
+                {view.bars ? t("; bars as high as the table asks at this X-dimension") : ""}.{" "}
+                {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
               </div>
-              <ol className="gs1128-list">
-                {view.gs1128.elements.map((element, index) => (
-                  <li key={index} className={view.gs1128!.starts.includes(index) ? "starts" : ""}>
-                    {index > 0 && (
-                      <label className="check">
-                        <input
-                          type="checkbox"
-                          checked={view.gs1128!.starts.includes(index)}
-                          onChange={(e) => {
-                            const starts = view.gs1128!.starts.filter((i) => i > 0 && i !== index);
-                            set("gs1128Starts", e.target.checked ? [...starts, index].sort((a, b) => a - b) : starts);
-                          }}
-                        />
-                        {t("new symbol")}
-                      </label>
-                    )}
-                    <code>{element}</code>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-          {view.guided && (
-            <div className="hint">
-              {t("Sizes within table {n}'s ranges (GS1 General Specifications 5.12.3.{n})", { n: view.guided.table })}
-              {view.bars ? t("; bars as high as the table asks at this X-dimension") : ""}.{" "}
-              {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
-            </div>
-          )}
-          {!view.guided && (
-            <div className="hint">
-              {target
-                ? t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3; target X {x} mm).", { x: formatNumber(target, 3) })
-                : t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3).")}{" "}
-              {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
-            </div>
-          )}
+            )}
+            {!view.guided && (
+              <div className="hint">
+                {target
+                  ? t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3; target X {x} mm).", { x: formatNumber(target, 3) })
+                  : t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3).")}{" "}
+                {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
+              </div>
+            )}
 
-          {view.uri ? (
-            <>
-              <div className="uri">
-                <ColouredUri uri={view.uri} stem={s.stem} />
-              </div>
-              <div className="legend">
-                <span>
-                  <span className="sw" style={{ background: "var(--dom)" }} />
-                  <b>{t("Domain")}</b>
-                </span>
-                <span>
-                  <span className="sw" style={{ background: "var(--navy)" }} />
-                  <b>{t("Key")}</b>
-                </span>
-                <span>
-                  <span className="sw" style={{ background: "var(--q)" }} />
-                  <b>{t("Qualifiers")}</b>
-                </span>
-                <span>
-                  <span className="sw" style={{ background: "var(--attr)" }} />
-                  <b>{t("Data attributes")}</b>
-                </span>
-                <button type="button" className="link" onClick={() => copy(view.uri)}>
-                  {t("Copy URI")}
+            {view.uri ? (
+              <>
+                <div className="uri">
+                  <ColouredUri uri={view.uri} stem={s.stem} />
+                </div>
+                <div className="legend">
+                  <span>
+                    <span className="sw" style={{ background: "var(--dom)" }} />
+                    <b>{t("Domain")}</b>
+                  </span>
+                  <span>
+                    <span className="sw" style={{ background: "var(--navy)" }} />
+                    <b>{t("Key")}</b>
+                  </span>
+                  <span>
+                    <span className="sw" style={{ background: "var(--q)" }} />
+                    <b>{t("Qualifiers")}</b>
+                  </span>
+                  <span>
+                    <span className="sw" style={{ background: "var(--attr)" }} />
+                    <b>{t("Data attributes")}</b>
+                  </span>
+                  <button type="button" className="link" onClick={() => copy(view.uri)}>
+                    {t("Copy URI")}
+                  </button>
+                </div>
+              </>
+            ) : null}
+            {view.elementString && (
+              <div className="hint es">
+                {t("Element string")} <code>{view.elementString}</code>{" "}
+                <button type="button" className="link" onClick={() => copy(view.elementString)}>
+                  {t("Copy")}
                 </button>
               </div>
-            </>
-          ) : null}
-          {view.elementString && (
-            <div className="hint es">
-              {t("Element string")} <code>{view.elementString}</code>{" "}
-              <button type="button" className="link" onClick={() => copy(view.elementString)}>
-                {t("Copy")}
-              </button>
-            </div>
-          )}
-          {children}
+            )}
+          </div>
+          {printer && <div data-pane="export">{printer}</div>}
+          <div className="extras" data-pane="more">
+            <h2 className="pane-title">{t("More")}</h2>
+            {children}
+          </div>
         </div>
       </div>
     </section>

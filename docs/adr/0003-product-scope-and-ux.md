@@ -66,7 +66,16 @@
    string and the downloads, redrawn as anything changes; RFID and NFC (EPC) below the options. On a phone the fields
    come first, with a small live preview fixed at the top. *Since 30 October 2026 (the owner's request, mock-up B of three): the page
    takes the screen's whole width, and step 3 shows the label in its own area across the step, its tools over it and
-   an Export bar below it, the options below them; the label designer of phase 4 grows from that area.*
+   an Export bar below it, the options below them; the label designer of phase 4 grows from that area.* *Since 31
+   October 2026 (the owner's request, backlog 1.21, mock-up A of three, taken under the owner's rule): the computer's
+   layout stays as it is; a phone, a tablet held upright or a narrow window (900 pixels or less) shows one column and
+   one destination at a time — Data, Scan, Label, Export, More — in a tab bar at the bottom, as phone apps do, the
+   language and Start over under More; a touch screen held horizontally up to 1,366 pixels shows a navigation rail, the
+   destination on the left and the label with its tools and Export bar always on the right. One page serves them all:
+   its parts are marked with their destination (`data-pane`) and the styles hide the others, so turning a device keeps
+   what was typed. The alternatives were one long column with step chips and a floating download button (B) and a
+   drawer menu (C), which hides the destinations behind a button. About sits at the foot of the page (under More on a
+   phone): the repository, the licence, the manuals, the version published and the software it is made with.*
 2. **In bulk** — a wizard: upload CSV or Excel (or paste), map columns to AIs (remembered by header), fixed values for
    the columns that do not change, validation with a report of the rows in error (fix or skip), preview of the first
    labels, generate. *Since 29 October 2026 (item 2.1, mock-up A of three, the recommended one, taken under the owner's

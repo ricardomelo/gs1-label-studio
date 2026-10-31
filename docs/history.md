@@ -169,3 +169,14 @@ matched a hint ("up to 20 characters" became "up a 20 characters"), so the core'
 own; and two values of one name in a message ("({label} × {label} mm)") were told apart by numbering them. A test now
 refuses a text without its translation, and the documentation stays in English.
 
+## Session 7 — 31 October 2026: phones, tablets and About
+
+The owner asked for a design for phones — one column — and, where possible, a horizontal one for tablets, the
+computer's left as it was; an app-style menu if it helped; About at the foot of the page with the repository, the
+licence and the software of others; and a README that presents the tool and makes the manuals easy to find. Three
+mock-ups were drawn over the real application: a tab bar at the bottom with one destination a screen, one long column
+with step chips and a floating download button, and a drawer menu. The tab bar was taken, with a navigation rail for a
+tablet held horizontally and the label always beside the destination. One page serves every layout: its parts carry
+the destination they belong to, and the styles hide the others, so turning a device keeps what was typed. The browser
+tests run on a phone and a tablet as well as a desktop, moving between the destinations as a person would; on the
+desktop the page is pixel for pixel what it was.
