@@ -114,8 +114,8 @@ input[aria-invalid="true"] { border-color: var(--error); }
   .mini { display: flex; position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 12px; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); text-decoration: none; }
   .mini svg { height: 64px; width: auto; background: #fff; }
 }
-details.epc { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; }
-details.epc summary { font-weight: 600; cursor: pointer; }
+details.epc, details.sign { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; }
+details.epc summary, details.sign summary { font-weight: 600; cursor: pointer; }
 .gcp input[type="file"] { padding: 6px; }
 .kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 12px; font-size: 13px; margin-top: 10px; }
 .kv code { font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
@@ -268,3 +268,9 @@ table.mapping th:nth-child(2) { width: 30%; }
 .gs1128-list label.check { display: inline-flex; gap: 4px; align-items: center; font-weight: 400; margin: 0; white-space: nowrap; }
 .gs1128-list label.check input { width: auto; }
 .generate-go progress { width: 160px; }
+
+/* A digital signature over the Web (backlog 1.18) */
+.sign-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.sign-row .hint { margin: 0; }
+.sign-row label.btn { margin: 0; font-size: 13px; }
+.uri.jws { font-size: 11px; word-break: break-all; max-height: 7em; overflow: auto; }

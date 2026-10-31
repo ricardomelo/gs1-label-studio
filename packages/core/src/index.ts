@@ -241,3 +241,23 @@ export {
   type Sequence,
 } from "./sequence.ts";
 export { dataCharacters, GS1_128_MAX_DATA, GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
+export {
+  authenticityProblem,
+  base64url,
+  generateSigningKey,
+  hideAuthenticationCode,
+  isoDate,
+  jwkThumbprint,
+  keyCredential,
+  productDataCredential,
+  signCredential,
+  signedPayload,
+  signingKeyFrom,
+  signJws,
+  verifyJws,
+  type AuthenticityDetails,
+  type CredentialOptions,
+  type SignedDetails,
+  type Jwk,
+  type SigningKey,
+} from "./sign.ts";

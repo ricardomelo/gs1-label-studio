@@ -117,4 +117,7 @@
   faster, with the same files out.
 - QR Code's encoding mode (item 1.14): automatic, numeric, alphanumeric or byte for the whole data, and the URI's scheme
   and domain in capitals for alphanumeric mode.
+- Digital signatures over the Web (item 1.18, GS1 Digital Signatures guideline 1.1.0, section 4): a JWS (ES256) of the
+  code's data in JSON-LD, a security marking's code shown or to be read from the marking, the key made in the browser;
+  GS1 product data and key credentials (data model 1.2.1) as JWTs.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -269,3 +269,27 @@ export const SEQUENCE_TEXTS = {
     "Each SSCC is the extension digit, your company prefix, the serial reference and the check digit; one is not used " +
     "again within a year of its shipment (GS1 General Specifications 2.2.1).",
 } as const;
+
+// A digital signature over the Web (backlog 1.18): the GS1 Web Vocabulary's security markings (gs1:SecurityMarking,
+// vocabulary 1.18) and the section's texts.
+export const SECURITY_MARKINGS: [string, string][] = [
+  ["gs1:SecurityMarking-HOLOGRAM", "Hologram"],
+  ["gs1:SecurityMarking-MICROPRINTING", "Microprinting"],
+  ["gs1:SecurityMarking-UVINK", "Ultra-violet fluorescent ink"],
+  ["gs1:SecurityMarking-WATERMARK", "Watermark"],
+];
+export const SIGN_TEXTS = {
+  intro:
+    "A JSON Web Signature of this code's data, as the GS1 Digital Signatures Technical Implementation Guideline 1.1.0 " +
+    "(section 4) describes it: publish it where your resolver's link type gs1:jws points, with your public key. The " +
+    "key is made here and kept in this page only; save it to sign again later.",
+  noUri: "A digital signature over the Web is about a GS1 Digital Link URI: this key has none.",
+  noKey: "none yet",
+  saveKey: "Anyone with this file can sign as you: keep it private.",
+  verified: "✓ Verified here with the public key.",
+  notVerified: "✗ It did not verify with the public key.",
+  hidden: "The code is taken out of the payload: a verifier puts back the code read from the marking.",
+  notDigSig:
+    "The DigSig of ISO/IEC 20248 in AI (8030), the guideline's section 3, is not offered: its encoding is defined by " +
+    "the ISO standard itself.",
+} as const;

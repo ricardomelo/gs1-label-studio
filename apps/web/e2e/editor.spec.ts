@@ -776,3 +776,37 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code with the printer's automatic mode");
 });
+
+// Item 1.18 (mock-up A of two, 31 October 2026): a JWS of the code's data, a security marking's code read from the marking.
+test("digital signature: a key made here, a JWS with the marking's code taken out, verified; credentials need an issuer", async ({ page }) => {
+  await page.locator("details.sign summary").click();
+  await page.fill("#sig-name", "Finest Truffle Tapenade");
+  await page.fill("#sig-brand", "Dal Giardino");
+  await page.selectOption("#sig-marking", "gs1:SecurityMarking-UVINK");
+  await page.fill("#sig-pattern", "[A-Z0-9]{11}");
+  await page.fill("#sig-code", "uv389");
+  await expect(page.locator("details.sign .error")).toContainText("does not match [A-Z0-9]{11}");
+  await page.fill("#sig-code", "UV389JKG4M2");
+  await page.fill("#sig-where", "look on side of pack");
+  await page.selectOption("#sig-hidden", "hidden");
+  await expect(page.getByRole("button", { name: "Sign", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "New key" }).click();
+  await expect(page.locator("details.sign .sign-row .hint").first()).toContainText("ECDSA P-256 · kid");
+  await page.getByRole("button", { name: "Sign", exact: true }).click();
+  await expect(page.locator("details.sign .hint.ok")).toContainText("✓ Verified here with the public key. The code is taken out of the payload");
+  const [jws] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "JWS", exact: true }).click()]);
+  const parts = readFileSync((await jws.path())!, "utf8").split(".");
+  expect(parts).toHaveLength(3);
+  expect(JSON.parse(Buffer.from(parts[0]!, "base64url").toString())).toMatchObject({ alg: "ES256", typ: "JOSE" });
+  const payload = JSON.parse(Buffer.from(parts[1]!, "base64url").toString());
+  expect(payload).toMatchObject({
+    id: "https://id.gs1.org/01/09506000134376/10/B42?17=271231", "gs1:gtin": "09506000134376", "gs1:hasBatchLotNumber": "B42",
+    "gs1:authenticity": { "gs1:authenticitySecurityFeatureType": "gs1:SecurityMarking-UVINK", "gs1:authenticitySecurityFeatureValue": "" },
+  });
+  await expect(page.getByRole("button", { name: "Product data credential" })).toBeDisabled();
+  await page.fill("#sig-issuer", "did:web:dalgiardino.com");
+  const [vc] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Product data credential" }).click()]);
+  expect(vc.suggestedFilename()).toMatch(/-product-credential\.jwt$/);
+  const claims = JSON.parse(Buffer.from(readFileSync((await vc.path())!, "utf8").split(".")[1]!, "base64url").toString());
+  expect(claims).toMatchObject({ iss: "did:web:dalgiardino.com", sub: payload.id, vc: { type: ["VerifiableCredential", "ProductDataCredential"] } });
+});

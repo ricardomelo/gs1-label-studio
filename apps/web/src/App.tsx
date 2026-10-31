@@ -70,6 +70,7 @@ import {
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
+import { SignSection } from "./SignSection.tsx";
 import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
@@ -605,6 +606,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
             : undefined}
         >
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
+          <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
       </main>
     </>
