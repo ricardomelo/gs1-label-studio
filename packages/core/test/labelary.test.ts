@@ -31,7 +31,8 @@ beforeAll(async () => {
   await prepareZXingModule({ overrides: { wasmBinary }, fireImmediately: true });
 });
 
-async function print(zpl: string, dpi: number, widthDots: number, heightDots: number) {
+/** Labelary's PNG of the ZPL, at the printer's resolution, trying again while it asks to slow down (HTTP 429). */
+async function labelaryPng(zpl: string, dpi: number, widthDots: number, heightDots: number): Promise<Uint8Array<ArrayBuffer>> {
   const inches = (dots: number) => Math.ceil((dots / dpi) * 100) / 100;
   const url = `https://api.labelary.com/v1/printers/${DPMM[dpi]}/labels/${inches(widthDots)}x${inches(heightDots)}/0/`;
   for (let attempt = 0; ; attempt++) {
@@ -40,16 +41,20 @@ async function print(zpl: string, dpi: number, widthDots: number, heightDots: nu
       headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" },
       body: zpl,
     });
-    if (response.status === 429 && attempt < 3) {
+    if (response.status === 429 && attempt < 5) {
       await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
       continue;
     }
     expect(response.status, await response.clone().text().catch(() => "")).toBe(200);
-    const [result] = await readBarcodes(new Blob([await response.arrayBuffer()], { type: "image/png" }), {
-      formats: [], textMode: "HRI", tryHarder: true,
-    });
-    return result;
+    return new Uint8Array(await response.arrayBuffer());
   }
+}
+
+async function print(zpl: string, dpi: number, widthDots: number, heightDots: number) {
+  const [result] = await readBarcodes(new Blob([await labelaryPng(zpl, dpi, widthDots, heightDots)], { type: "image/png" }), {
+    formats: [], textMode: "HRI", tryHarder: true,
+  });
+  return result;
 }
 
 function options(xMm: number, dpi: number) {
@@ -128,12 +133,7 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const o = { ...options(0.495, 203), parts, widthDots: Math.round(8 * 203), heightDots: Math.round(3 * 203) };
     const zpl = zplLabel("gs1-128", data, o);
     expect(zpl.match(/\^BCN/g)).toHaveLength(2);
-    const inches = (dots: number) => Math.ceil((dots / 203) * 100) / 100;
-    const response = await fetch(`https://api.labelary.com/v1/printers/8dpmm/labels/${inches(o.widthDots)}x${inches(o.heightDots)}/0/`, {
-      method: "POST", headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" }, body: zpl,
-    });
-    expect(response.status).toBe(200);
-    const results = await readBarcodes(new Blob([await response.arrayBuffer()], { type: "image/png" }), {
+    const results = await readBarcodes(new Blob([await labelaryPng(zpl, 203, o.widthDots, o.heightDots)], { type: "image/png" }), {
       formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4,
     });
     expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(parts.map((p) => `]C1 ${p}`).sort());
@@ -164,11 +164,7 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const o = { ...options(0.33, 203), heightDots: 400 };
     const zpl = zplTestLabel("gs1-128", "(01)09506000134352(10)ABC", o, ["Printer: any ZPL printer, 203 dpi", "Module: 3 dots, X 0.375 mm"]);
     const height = o.heightDots + zplTestAreaDots(203, 2);
-    const inches = (dots: number) => Math.ceil((dots / 203) * 100) / 100;
-    const response = await fetch(`https://api.labelary.com/v1/printers/8dpmm/labels/${inches(o.widthDots)}x${inches(height)}/0/`, {
-      method: "POST", headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" }, body: zpl,
-    });
-    const png = new Uint8Array(await response.arrayBuffer());
+    const png = await labelaryPng(zpl, 203, o.widthDots, height);
     const [result] = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
     expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe("]C1 (01)09506000134352(10)ABC");
     // The ruler's line: the longest run of black on a row below the label
