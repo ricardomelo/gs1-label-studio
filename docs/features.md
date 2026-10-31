@@ -188,8 +188,8 @@ Which standard each follows: [conformance](conformance.md).
 | Phone and desktop | The whole width; on a phone the fields first and a live preview fixed at the top | `87a745d`, `9aa4493` | `editor`: the page fits the screen's width |
 | One code or in bulk | A mode of the editor; steps 2 and 3 shared | `0911949` | `editor`: in bulk: pasted rows |
 | Start over | Clears the data and every choice, as on a first visit | `b8caad3` | `editor`: Start over clears the data |
-| Three languages | English, Brazilian Portuguese and Spanish from a menu in the header, the browser's language on a first visit, the choice kept; the page redrawn in place, what was typed kept (ADR 0003) | this delivery | `editor`: the interface in Brazilian Portuguese and Spanish · `editor`: a browser in Portuguese opens the studio in Portuguese · `i18n`: chooses the browser's language |
-| Every text translated | Every text of the page and every message of the core and of the Syntax Engine in each language, with the same placeholders; messages translated by template where they are shown; the engine's and the keys' texts from the resolver | this delivery | `i18n`: every text of the page · `i18n`: every message of the core and of the Syntax Engine · `i18n`: translates a core or engine message by its template |
+| Three languages | English, Brazilian Portuguese and Spanish from a menu in the header, the browser's language on a first visit, the choice kept; the page redrawn in place, what was typed kept (ADR 0003) | `04f4973` | `editor`: the interface in Brazilian Portuguese and Spanish · `editor`: a browser in Portuguese opens the studio in Portuguese · `i18n`: chooses the browser's language |
+| Every text translated | Every text of the page and every message of the core and of the Syntax Engine in each language, with the same placeholders; messages translated by template where they are shown; the engine's and the keys' texts from the resolver | `04f4973` | `i18n`: every text of the page · `i18n`: every message of the core and of the Syntax Engine · `i18n`: translates a core or engine message by its template |
 
 ## Tests, indicators and documents
 
