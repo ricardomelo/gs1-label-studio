@@ -18,9 +18,10 @@ what the software does.
 
 ## 2. Decision
 
-1. **The inventory is drawn from the tests**: `node scripts/inventory.mjs` runs the core's tests with Vitest's JSON
-   reporter (refusing to write when one fails; with `LABELARY=1` the ZPL through Labelary runs too) and lists the
-   browser tests with `playwright test --list`; it writes `docs/test-inventory.md` (every test by area and file, with
+1. **The inventory is drawn from the tests**: `node scripts/inventory.mjs` runs the core's and the web application's
+   unit tests with Vitest's JSON reporter (refusing to write when one fails; with `LABELARY=1` the ZPL through Labelary
+   runs too), lists the documents' own test — which checks the inventory, so it runs after it is written — and lists
+   the browser tests with `playwright test --list`; it writes `docs/test-inventory.md` (every test by area and file, with
    counts) and `docs/test-inventory.json` (the same, for the documents' test), and brings the developer guide's counts
    up to date. It is run by the delivery that changes the tests.
 2. **Every feature names the tests that prove it**: `docs/features.md`, one table an area, with *Since* (the commit)
