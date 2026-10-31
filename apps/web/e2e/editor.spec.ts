@@ -774,7 +774,7 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code with the printer's automatic mode");
+  await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code in the printer's automatic mode");
 });
 
 // Item 1.18 (mock-up A of two, 31 October 2026): a JWS of the code's data, a security marking's code read from the marking.

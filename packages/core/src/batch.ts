@@ -106,9 +106,6 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
-  if (design.qrMode && design.symbology === "dl-qrcode") {
-    throw new ZplUnsupportedError("ZPL writes the QR code with the printer's automatic mode; one mode for the whole data comes with phase 3.");
-  }
   if (layout.parts && layout.parts.length > 1) {
     throw new ZplUnsupportedError(`GS1-128 in ${layout.parts.length} symbols is not written in ZPL yet: it comes with the label layout of 3.2.`);
   }
@@ -132,6 +129,7 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
     widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
     heightDots: symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
     ...(bearer ? { bearer } : {}),
+    ...(design.symbology === "dl-qrcode" ? { qrError: design.error.toUpperCase() as "L" | "M" | "Q" | "H", ...(design.qrMode ? { qrMode: design.qrMode } : {}) } : {}),
   };
 }
 

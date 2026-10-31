@@ -43,6 +43,13 @@ describe("ZPL with the printer's commands", () => {
     expect(zplLabel("gs1-128", "(00)106141411234567897", at203)).toContain("^BCN,120,N,N,N,N^FD>;>800106141411234567897^FS");
   });
 
+  it("writes ^BQ at the error correction level chosen, M when none; refuses one mode for the data (ADR 0002)", () => {
+    const uri = "https://id.gs1.org/01/09506000134352";
+    expect(zplLabel("dl-qrcode", uri, at203)).toContain(`^FDMA,${uri}^FS`);
+    expect(zplLabel("dl-qrcode", uri, { ...at203, qrError: "H" })).toContain(`^FDHA,${uri}^FS`);
+    expect(() => zplLabel("dl-qrcode", uri.toUpperCase(), { ...at203, qrMode: "alphanumeric" })).toThrow(ZplUnsupportedError);
+  });
+
   it("writes reserved characters through ^FH", () => {
     expect(zplLabel("dl-qrcode", "https://example.com/01/09506000134352?x=~", at203))
       .toContain("^BQN,2,3^FH\\^FDMA,https://example.com/01/09506000134352?x=\\7E^FS");

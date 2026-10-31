@@ -103,6 +103,19 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     },
   );
 
+  // ^BQ's error correction level as the label has it, a minimum: Labelary raised M to Q where the version had room
+  // (31 October 2026). Its manual input in one mode is not offered: Labelary printed the same symbol for any mode.
+  const LEVELS = "LMQH";
+  it.each([["L", 203], ["M", 300], ["Q", 203], ["H", 300]] as const)("a QR code at level %s or above, %i dpi", { timeout: 30000 }, async (level, dpi) => {
+    const o = { ...options(0.495, dpi), qrError: level };
+    const data = "https://id.gs1.org/01/09506000134352/10/ABC123";
+    const zpl = zplLabel("dl-qrcode", data, o);
+    expect(zpl).toContain(`^FD${level}A,${data}^FS`);
+    const result = await print(zpl, dpi, o.widthDots, o.heightDots);
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`]Q1 ${data}`);
+    expect(LEVELS.indexOf(result!.ecLevel)).toBeGreaterThanOrEqual(LEVELS.indexOf(level));
+  });
+
   // Item 3.2 with the layouts of item 1.3. GS1 DataBar through ^BR at the height it prints each symbol at.
   const GTIN = "(01)09506000134352";
   const BARS: [SymbologyId, string, number, number][] = [

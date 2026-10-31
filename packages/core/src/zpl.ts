@@ -1,5 +1,5 @@
 import { MM_PER_INCH } from "./dots.ts";
-import { encode, widthInModules, type SymbolGeometry } from "./encode.ts";
+import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 import type { Bitmap } from "./raster.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -29,6 +29,9 @@ export interface ZplSymbolOptions {
    * bars at the top and bottom; `thicknessDots` thick. `x` and `y` stay the symbol's corner.
    */
   bearer?: { kind: "frame" | "bars"; thicknessDots: number };
+  /** A QR code's error correction level (M when not given) and one encoding mode for its data (backlog 1.14). */
+  qrError?: "L" | "M" | "Q" | "H";
+  qrMode?: QrMode;
 }
 
 export interface ZplLabelOptions extends ZplSymbolOptions {
@@ -226,9 +229,14 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
       return { commands: [`${at}^BXN,${d},200,${matrixSize},6,_${fieldData(uri)}`], placeholders };
     }
     case "dl-qrcode": {
-      // Model 2, error correction M, automatic data input.
+      // Model 2, the error correction level chosen, automatic data input. ^BQ's manual input (one mode for the data) is
+      // not used: Labelary prints the same symbol whatever mode it is given (31 October 2026), so nothing shows that a
+      // printer would honour it (ADR 0002). The level is a minimum there: Labelary raised M to Q where the version had room.
+      if (options.qrMode) {
+        throw new ZplUnsupportedError("ZPL writes the QR code in the printer's automatic mode: one mode for the whole data could not be shown to print (ADR 0002).");
+      }
       const uri = value("URI", data, "the GS1 Digital Link URI.");
-      return { commands: [`${at}^BQN,2,${d}${fieldData(`MA,${uri}`)}`], placeholders };
+      return { commands: [`${at}^BQN,2,${d}${fieldData(`${options.qrError ?? "M"}A,${uri}`)}`], placeholders };
     }
     case "gs1-qrcode":
       throw new ZplUnsupportedError(
