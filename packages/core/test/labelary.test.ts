@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
+import { decodePng } from "./png.ts";
 import {
   encode,
   fillTemplate,
@@ -9,6 +10,8 @@ import {
   snapToDots,
   splitGs1128,
   zplLabel,
+  zplTestAreaDots,
+  zplTestLabel,
   zplTemplate,
   graphicFields,
   type SymbologyId,
@@ -154,6 +157,31 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     if (position === "split") expect(textYs.some((ty) => ty > 200)).toBe(true);
     const result = await print(zpl, 203, o.widthDots, o.heightDots);
     expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`${identifier} ${data}`);
+  });
+
+  // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.
+  it("a test label: the symbol reads and the ruler is 50 mm", { timeout: 30000 }, async () => {
+    const o = { ...options(0.33, 203), heightDots: 400 };
+    const zpl = zplTestLabel("gs1-128", "(01)09506000134352(10)ABC", o, ["Printer: any ZPL printer, 203 dpi", "Module: 3 dots, X 0.375 mm"]);
+    const height = o.heightDots + zplTestAreaDots(203, 2);
+    const inches = (dots: number) => Math.ceil((dots / 203) * 100) / 100;
+    const response = await fetch(`https://api.labelary.com/v1/printers/8dpmm/labels/${inches(o.widthDots)}x${inches(height)}/0/`, {
+      method: "POST", headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" }, body: zpl,
+    });
+    const png = new Uint8Array(await response.arrayBuffer());
+    const [result] = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe("]C1 (01)09506000134352(10)ABC");
+    // The ruler's line: the longest run of black on a row below the label
+    const { grey, width } = decodePng(png);
+    let longest = 0;
+    for (let row = o.heightDots; row < grey.length / width; row++) {
+      let run = 0;
+      for (let col = 0; col < width; col++) {
+        run = grey[row * width + col]! < 128 ? run + 1 : 0;
+        longest = Math.max(longest, run);
+      }
+    }
+    expect(Math.abs(longest - 400)).toBeLessThanOrEqual(2);
   });
 
   // Item 3.2 with the layouts of item 1.3. GS1 DataBar through ^BR at the height it prints each symbol at.

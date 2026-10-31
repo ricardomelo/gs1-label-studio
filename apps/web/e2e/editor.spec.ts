@@ -182,11 +182,14 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await expect(page.locator("#opt-size option")).toHaveText([
     "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
   ]);
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
   await page.selectOption("#opt-size", "150");
   await expect(page.locator(".caption")).toContainText("GS1-128 · bars 31.75 mm · X 0.743 mm");
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(00)106141411234567897");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
-  expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
+  // Wider than a four-inch printer prints (backlog 3.1)
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("mm wide; Any ZPL printer, 203 dpi, 104 mm prints 104 mm");
 });
 
 test("choosing the symbol yourself starts from the guided choice and can go back", async ({ page }) => {
@@ -843,4 +846,36 @@ test("NFC: without Web NFC, the NDEF file; with it, the URI written to a tag and
   await qualifier(page, "21", "S1001");
   await page.selectOption("#epc-prefix", "7");
   await expect(nfc.getByLabel("What to write on the NFC tag").locator("option")).toHaveText(["The GS1 Digital Link URI", "The link for NFC (EPC, hexadecimal)"]);
+});
+
+// Item 3.1 (mock-up A of two, 31 October 2026): printer profiles, the module in whole dots within the table's range, a test label.
+test("printer profiles: a profile of one's own, the module's dots within the range, the width checked, a test print", async ({ page }) => {
+  const section = page.locator("details.printer");
+  await section.locator("summary").click();
+  await expect(section.locator(".hint.ok")).toContainText("✓ X 0.500 mm (4 dots at 203 dpi) is within the table's 0.396 to 0.990 mm.");
+  await page.selectOption("#prn-module", "6");
+  await expect(section.locator(".hint.ok")).toContainText("X 0.751 mm (6 dots at 203 dpi)");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toContain("^BQN,2,6^FD");
+  // A narrow printer of one's own: the label no longer fits
+  await page.selectOption("#prn-profile", "new");
+  await page.fill("#prn-name", "Desk printer");
+  await page.fill("#prn-dpi", "300");
+  await page.fill("#prn-width", "15");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.locator("#prn-profile")).toHaveValue(/^own-/);
+  await expect(page.getByRole("button", { name: "ZPL (300 dpi)" })).toBeVisible();
+  await expect(section.locator(".hint.error")).toContainText("Desk printer prints 15 mm");
+  await expect(section.getByRole("button", { name: "Test print (ZPL)" })).toBeDisabled();
+  await page.getByRole("button", { name: "Edit profile" }).click();
+  await page.fill("#prn-width", "104");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  const [test] = await Promise.all([page.waitForEvent("download"), section.getByRole("button", { name: "Test print (ZPL)" }).click()]);
+  const text = readFileSync((await test.path())!, "utf8");
+  expect(text).toContain("^FD50 mm: measure this line^FS");
+  expect(text).toContain("^FDPrinter: Desk printer^FS");
+  // Kept in this browser
+  await page.reload();
+  await page.locator("details.printer summary").click();
+  await expect(page.locator("#prn-profile option", { hasText: "Desk printer" })).toHaveCount(1);
 });

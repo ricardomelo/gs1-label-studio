@@ -14,6 +14,8 @@ export {
   upcaManufacturerAndProduct,
   gs1128StackDots,
   zplTextAbove,
+  zplTestAreaDots,
+  zplTestLabel,
   zplLabel,
   zplTemplate,
   ZplUnsupportedError,
@@ -264,3 +266,4 @@ export {
   type SigningKey,
 } from "./sign.ts";
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
+export { GENERIC_PROFILES, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";

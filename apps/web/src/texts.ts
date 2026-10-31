@@ -309,3 +309,13 @@ export const NFC_TEXTS = {
   unreadable: "✗ The tag could not be read; hold it still and try again.",
   notAllowed: "NFC was not allowed: turn NFC on and allow this page to use it.",
 } as const;
+
+// Printer profiles (backlog 3.1).
+export const PRINTER_TEXTS = {
+  intro: "For the ZPL files: the printer's resolution and print width, and how many whole dots each module takes.",
+  testPrint: "The test print adds a 50 mm ruler and the settings under the label: measure the ruler to check the printer's scale.",
+  outOfRange: (dots: number, xMm: number, dpi: number, range: readonly [number, number] | null) =>
+    `✗ At ${dpi} dpi no whole number of dots gives an X-dimension within the table's ` +
+    `${range ? `${range[0].toFixed(3)} to ${range[1].toFixed(3)} mm` : "range"}: the nearest, ${dots} ` +
+    `${dots === 1 ? "dot" : "dots"}, prints ${xMm.toFixed(3)} mm. Choose a printer with another resolution.`,
+} as const;

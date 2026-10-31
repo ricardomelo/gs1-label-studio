@@ -104,9 +104,10 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  * symbol, its quiet zones (the table's row's; GS1 DataBar has none, so two modules) and text; ITF-14's bearer bars as
  * the label has them, printed at ratio 3 (135 modules).
  */
-export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number): ZplLabelOptions {
+export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
-  const d = snapToDots(layout.xMm, dpi).dots;
+  // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
+  const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
   const quietZone = design.spec && typeof design.spec.quietZone !== "number"
     ? Math.max(2, ...design.spec.quietZone)
@@ -166,8 +167,9 @@ export interface BatchRequest {
   pdf: boolean;
   /** One PDF of label sheets, from the place `start` of the first sheet. */
   sheet?: { sheet: LabelSheet; start: number };
-  /** One ZPL file with every label, at this printer resolution. */
+  /** One ZPL file with every label, at this printer resolution, a module this many whole dots (the nearest when not given). */
   zplDpi?: number;
+  zplDots?: number;
   /** The PNG's resolution; none: the one at which it prints at the label's size. */
   pngResolution?: number | null;
   /** The SVG's text as text rather than outlines. */
@@ -272,7 +274,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     }
     if (request.zplDpi) {
       try {
-        zpl.push(zplLabel(design.symbology, d.label!.data, zplOptionsFor(d.label!, design, request.zplDpi)));
+        zpl.push(zplLabel(design.symbology, d.label!.data, zplOptionsFor(d.label!, design, request.zplDpi, request.zplDots)));
       } catch (error) {
         note(d.row, `ZPL: ${error instanceof Error ? error.message : String(error)}`);
       }

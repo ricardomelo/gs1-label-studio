@@ -1,5 +1,4 @@
 import {
-  COMMON_DPI,
   ENVIRONMENTS,
   ERROR_LEVELS,
   linearSizesFor,
@@ -535,19 +534,6 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               >
                 <option value="outline">Outlines, no font needed</option>
                 <option value="text">Text, editable (needs the fonts)</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="opt-dpi">Printer</label>
-              <select id="opt-dpi" value={s.dpi} onChange={(e) => set("dpi", Number(e.target.value))}>
-                {COMMON_DPI.map((dpi) => {
-                  const dots = snapToDots(view.xMm, dpi);
-                  return (
-                    <option key={dpi} value={dpi}>
-                      {dpi} dpi — {dots.dots} {dots.dots === 1 ? "dot" : "dots"}, X {dots.xMm.toFixed(3)} mm
-                    </option>
-                  );
-                })}
               </select>
             </div>
             <div>

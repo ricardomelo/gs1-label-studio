@@ -122,4 +122,7 @@
   GS1 product data and key credentials (data model 1.2.1) as JWTs.
 - Writing NFC tags (item 1.19): the GS1 Digital Link URI or the EPC's link for NFC written through Web NFC and read back;
   elsewhere an NDEF file for a tag writer.
+- ZPL catches up with the label (phase 3): the QR code's error correction level as chosen, GS1-128 over several
+  symbols, the text above or split at its height; printer profiles (item 3.1) with the module in whole dots within the
+  table's range, the print width checked and a test print with a 50 mm ruler.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

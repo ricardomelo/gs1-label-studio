@@ -71,6 +71,31 @@ export function zplLabel(symbology: SymbologyId, data: string, options: ZplLabel
   return document(stacked(symbology, data, options, false).commands, options, []);
 }
 
+/** Below a test label (backlog 3.1): a ruler, its ticks and the settings, this many dots high at `dpi`. */
+export function zplTestAreaDots(dpi: number, notes: number): number {
+  return Math.round((14 / MM_PER_INCH) * dpi) + notes * Math.round(hriTextDots(dpi) * 1.4);
+}
+
+/**
+ * A test label (backlog 3.1): the label, then below it a 50 mm ruler with a tick every 10 mm and the settings as text,
+ * to measure the printer's scale and see what it was given. The label is made `zplTestAreaDots()` higher.
+ */
+export function zplTestLabel(symbology: SymbologyId, data: string, options: ZplLabelOptions, notes: readonly string[]): string {
+  const { commands } = stacked(symbology, data, options, false);
+  const dpi = options.dpi;
+  const mm = (value: number) => Math.round((value / MM_PER_INCH) * dpi);
+  const top = options.heightDots + mm(2);
+  const x = Math.max(mm(2), Math.min(options.x, options.widthDots - mm(50) - mm(2)));
+  const t = hriTextDots(dpi);
+  const ruler = [
+    `^FO${x},${top + mm(3)}^GB${mm(50)},${Math.max(2, mm(0.3))},${Math.max(2, mm(0.3))}^FS`,
+    ...[0, 10, 20, 30, 40, 50].map((at) => `^FO${x + mm(at) - (at === 50 ? Math.max(2, mm(0.3)) : 0)},${top}^GB${Math.max(2, mm(0.3))},${mm(at % 50 ? 2.5 : 4)},${Math.max(2, mm(0.3))}^FS`),
+    `^FO${x},${top + mm(5)}^A0N,${t},${t}^FB${mm(50)},1,0,C${fieldData("50 mm: measure this line")}`,
+    ...notes.map((note, index) => `^FO${mm(2)},${top + mm(10) + index * Math.round(t * 1.4)}^A0N,${t},${t}${fieldData(note)}`),
+  ];
+  return document([...commands, ...ruler], { ...options, widthDots: Math.max(options.widthDots, x + mm(52)), heightDots: options.heightDots + zplTestAreaDots(dpi, notes.length) }, []);
+}
+
 /** The height a stacked GS1-128 symbol takes with its text and the gap to the next: bars, text, a quiet zone. */
 export function gs1128StackDots(options: Pick<ZplSymbolOptions, "barHeightDots" | "dotsPerModule" | "dpi" | "hriHeightMm">): number {
   return options.barHeightDots + 2 * options.dotsPerModule + hriTextDots(options.dpi, options.hriHeightMm) + 10 * options.dotsPerModule;

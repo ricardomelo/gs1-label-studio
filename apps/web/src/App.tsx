@@ -24,6 +24,11 @@ import {
   labelFor,
   patternName,
   zplOptionsFor,
+  zplTestLabel,
+  GENERIC_PROFILES,
+  moduleChoice,
+  printWidthProblem,
+  type PrinterProfile,
   uriParameters,
   parseElementString,
   sequenceTable,
@@ -71,6 +76,7 @@ import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
+import { keptProfiles, PrinterSection } from "./PrinterSection.tsx";
 import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
@@ -132,6 +138,11 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [gcp, setGcp] = useState<GcpTable | null>(null);
+  // The printer the ZPL files are for (backlog 3.1): its profile, and the module's whole dots chosen (null: the nearest
+  // within the table's range).
+  const [profiles, setProfiles] = useState<PrinterProfile[]>(keptProfiles);
+  const [profile, setProfile] = useState<PrinterProfile>(GENERIC_PROFILES.find((p) => p.dpi === 203)!);
+  const [zplDots, setZplDots] = useState<number | null>(null);
   // In bulk (backlog 2.1): the rows, each column's AI, the values every row takes, and the row shown.
   const [mode, setMode] = useState<"one" | "bulk">("one");
   const [dataTable, setDataTable] = useState<Table | null>(null);
@@ -341,13 +352,52 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   };
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
-  function downloadZpl(template: boolean) {
+  // The range of the symbol's table (section 5.12.3) the printed X-dimension must stay within (backlog 3.1).
+  const xRange: readonly [number, number] | null = spec
+    ? [spec.x[0], spec.x[2]]
+    : environment ? ((range) => (range ? [range[0], range[2]] as const : null))(twoD ? ENVIRONMENTS[environment]?.["2d"] : ENVIRONMENTS[environment]?.linear) : null;
+  const module = label.layout ? moduleChoice(label.layout.xMm, xRange, settings.dpi, zplDots) : null;
+  const zplFor = () => {
     const { geometry, data, options, layout } = label;
-    if (!geometry || !data || !options || !layout) return;
+    return geometry && data && options && layout ? zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi, module?.chosen.dots) : null;
+  };
+  const zplWidthProblem = (() => {
     try {
-      const zplOptions = zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi);
+      const o = zplFor();
+      return o ? printWidthProblem(o.widthDots, profile) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  function downloadZpl(template: boolean) {
+    const data = label.data;
+    try {
+      const zplOptions = zplFor();
+      if (!zplOptions || !data) return;
+      if (zplWidthProblem) throw new Error(zplWidthProblem);
       const zpl = template ? zplTemplate(symbology, data, zplOptions).zpl : zplLabel(symbology, data, zplOptions);
       download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
+      setFileError(null);
+    } catch (error) {
+      setFileError(errorText(error));
+    }
+  }
+
+  // A test label (backlog 3.1): the label with a 50 mm ruler and the settings below it.
+  function testPrint() {
+    const data = label.data;
+    try {
+      const zplOptions = zplFor();
+      if (!zplOptions || !data || !module) return;
+      const notes = [
+        `Printer: ${profile.name}`,
+        `Module: ${module.chosen.dots} ${module.chosen.dots === 1 ? "dot" : "dots"}, X ${module.chosen.xMm.toFixed(3)} mm` +
+          (xRange ? ` (table range ${xRange[0].toFixed(3)} to ${xRange[1].toFixed(3)} mm)` : ""),
+        `${SYMBOLOGIES[symbology].name}: ${data.length > 60 ? `${data.slice(0, 57)}...` : data}`,
+        `GS1 Label Studio, ${new Date().toISOString().slice(0, 10)}`,
+      ];
+      download(`${name}-test-${settings.dpi}dpi.zpl`, zplTestLabel(symbology, data, zplOptions, notes), "text/plain");
       setFileError(null);
     } catch (error) {
       setFileError(errorText(error));
@@ -416,7 +466,10 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       setGenerated({ result: null, error: event.message || "The generation stopped." });
       finish();
     };
-    running.postMessage({ rows: batchRows, request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText } });
+    running.postMessage({
+      rows: batchRows,
+      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
+    });
   }
   function cancelGeneration() {
     worker?.terminate();
@@ -605,6 +658,22 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               )
             : undefined}
         >
+          <PrinterSection
+            profiles={profiles}
+            profile={profile}
+            onProfiles={setProfiles}
+            onProfile={(next) => {
+              setProfile(next);
+              setZplDots(null);
+              setSettings({ ...settings, dpi: next.dpi });
+            }}
+            module={module}
+            dots={zplDots}
+            onDots={setZplDots}
+            range={xRange}
+            widthProblem={zplWidthProblem}
+            onTestPrint={testPrint}
+          />
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
