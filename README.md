@@ -115,13 +115,14 @@ each at its table's sizes and bar height, its human readable text placed and siz
 ### 5. Files for artwork, print files for label printers
 
 <p align="center">
-  <img src="docs/images/guide/printer.png" alt="Printer (ZPL): a printer profile, the module in whole dots within the table's range, a test print" width="560">
+  <img src="docs/images/guide/printer.png" alt="Printer (ZPL, TSPL, EPL2): a printer profile, the module in whole dots within the table's range, a test print" width="560">
 </p>
 
 **SVG, PNG, PDF and EPS** at real size for artwork, in process black, with a bar width reduction for the press;
 **ZPL II** for thermal printers with the printer's own barcode commands, every one checked by printing it through
-Labelary and reading it back; ZPL templates with placeholders for an ERP or a WMS; printer profiles that put each module
-on whole dots. → [Printing guide](docs/printing-guide.md)
+Labelary and reading it back; **TSPL** and **EPL2** the same way through the Labelize emulator; ZPL templates with
+placeholders for an ERP or a WMS; printer profiles that put each module on whole dots.
+→ [Printing guide](docs/printing-guide.md)
 
 ### 6. Thousands of labels from a spreadsheet
 
@@ -175,8 +176,8 @@ who print them, and people who build on the studio. The index by reader: [docs/R
 
 | Manual | For | What it holds |
 |---|---|---|
-| **[User guide](docs/user-guide.md)** | anyone making barcodes and labels | every task, step by step: [the screen](docs/user-guide.md#2-the-screen-at-a-glance) · [what the code identifies](docs/user-guide.md#3-step-1--what-the-code-identifies) · [where it is scanned](docs/user-guide.md#4-step-2--where-it-is-scanned) · [the label](docs/user-guide.md#5-step-3--the-label) and [its options](docs/user-guide.md#6-the-labels-options) · [real size and the scan test](docs/user-guide.md#7-seeing-it-at-real-size-and-the-scan-test) · [exporting](docs/user-guide.md#8-exporting-the-label) · [the GS1 Logistic Label](docs/user-guide.md#9-the-gs1-logistic-label) · [printer profiles](docs/user-guide.md#10-printer-zpl) · [RFID and NFC](docs/user-guide.md#11-rfid-and-nfc-epc-and-nfc-tags) · [digital signatures](docs/user-guide.md#12-digital-signature-gs1-jws) · [in bulk](docs/user-guide.md#13-in-bulk-rows-from-a-spreadsheet), [the validation report](docs/user-guide.md#14-in-bulk-the-validation-report), [sequences and generating](docs/user-guide.md#15-in-bulk-sequences-and-generating-every-label) · [messages and what to do](docs/user-guide.md#16-messages-and-what-to-do) · [glossary](docs/user-guide.md#17-glossary) |
-| **[Printing guide](docs/printing-guide.md)** | people who print | [which file for which printing](docs/printing-guide.md#1-which-file-for-which-printing) · [artwork and prepress](docs/printing-guide.md#2-artwork-and-prepress-svg-pdf-eps) · [laser printers and label sheets](docs/printing-guide.md#3-office-and-laser-printers-pdf-and-label-sheets) · [thermal printers and ZPL](docs/printing-guide.md#4-thermal-label-printers-zpl) · [ZPL templates for systems](docs/printing-guide.md#5-zpl-templates-for-systems) · [checking a printed symbol](docs/printing-guide.md#6-checking-a-printed-symbol) · [what ZPL refuses, and why](docs/printing-guide.md#7-what-zpl-refuses-and-why) |
+| **[User guide](docs/user-guide.md)** | anyone making barcodes and labels | every task, step by step: [the screen](docs/user-guide.md#2-the-screen-at-a-glance) · [what the code identifies](docs/user-guide.md#3-step-1--what-the-code-identifies) · [where it is scanned](docs/user-guide.md#4-step-2--where-it-is-scanned) · [the label](docs/user-guide.md#5-step-3--the-label) and [its options](docs/user-guide.md#6-the-labels-options) · [real size and the scan test](docs/user-guide.md#7-seeing-it-at-real-size-and-the-scan-test) · [exporting](docs/user-guide.md#8-exporting-the-label) · [the GS1 Logistic Label](docs/user-guide.md#9-the-gs1-logistic-label) · [printer profiles and languages](docs/user-guide.md#10-printer-zpl-tspl-epl2) · [RFID and NFC](docs/user-guide.md#11-rfid-and-nfc-epc-and-nfc-tags) · [digital signatures](docs/user-guide.md#12-digital-signature-gs1-jws) · [in bulk](docs/user-guide.md#13-in-bulk-rows-from-a-spreadsheet), [the validation report](docs/user-guide.md#14-in-bulk-the-validation-report), [sequences and generating](docs/user-guide.md#15-in-bulk-sequences-and-generating-every-label) · [messages and what to do](docs/user-guide.md#16-messages-and-what-to-do) · [glossary](docs/user-guide.md#17-glossary) |
+| **[Printing guide](docs/printing-guide.md)** | people who print | [which file for which printing](docs/printing-guide.md#1-which-file-for-which-printing) · [artwork and prepress](docs/printing-guide.md#2-artwork-and-prepress-svg-pdf-eps) · [laser printers and label sheets](docs/printing-guide.md#3-office-and-laser-printers-pdf-and-label-sheets) · [thermal printers and ZPL](docs/printing-guide.md#4-thermal-label-printers-zpl) · [ZPL templates for systems](docs/printing-guide.md#5-zpl-templates-for-systems) · [checking a printed symbol](docs/printing-guide.md#6-checking-a-printed-symbol) · [what ZPL refuses, and why](docs/printing-guide.md#7-what-zpl-refuses-and-why) · [TSPL and EPL2](docs/printing-guide.md#8-tspl-and-epl2-and-the-other-printer-languages) |
 | [Features](docs/features.md) | anyone checking what it does | every feature, the commit that brought it and the tests that prove it |
 | [Conformance](docs/conformance.md) | quality and standards people | each standard, section by section: what is done, what is not, and the evidence |
 | [Developer guide](docs/developer-guide.md) | developers | architecture, every module, the tests, how to extend |
@@ -418,7 +419,7 @@ complete.
   page (10,000 rows in 0.64 s, within the target of 1 s); 1,000 QR labels as SVG and one PDF in 10.7 s instead of
   32.6 s (target 15 s), with the same bytes out (docs/metrics, "Performance targets")*
 
-**Phase 3 — printers** (ADR 0002)
+**Phase 3 — printers** (ADR 0002; a printer profile has a language since 31 October 2026: ZPL, TSPL or EPL2)
 
 - 3.1 Printer profiles; whole-dot X-dimensions within the table's range; test print — *done 31 October (mock-up A of
   two): "Printer (ZPL)" above the EPC section, generic ZPL profiles at 152 to 600 dpi, 104 mm wide, and profiles of
@@ -429,7 +430,16 @@ complete.
 - 3.2 ZPL II with the printer's commands and templates with placeholders — *EAN/UPC, ITF-14, GS1-128, GS1 DataMatrix,
   QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); GS1 DataBar through `^BR` and
   ITF-14's bearer bars through `^GB` done, with what `^BR` cannot print refused (ADR 0002); the label layout to do*
-- 3.3 TSPL/TSPL2 · 3.4 PPLB · 3.5 PPLA · 3.6 EPL2 · 3.7 DPL
+- 3.3 TSPL/TSPL2 — *done 31 October for the symbols Labelize reads back (the owner chose it to stand in for a printer,
+  ADR 0002): EAN-13, ITF-14 with bearer bars, GS1 DataMatrix (FNC1 as `~1`), Data Matrix and QR code with a GS1 Digital
+  Link URI, text in the dot fonts, the test label; GS1-128 (the manual's `!102`, which Labelize encodes as text),
+  EAN-8, UPC-A, UPC-E and GS1 DataBar refused until a test reads them*
+- 3.4 PPLB · 3.5 PPLA — manuals to gather (Argox, Elgin); PPLB is close to EPL2
+- 3.6 EPL2 — *done 31 October through Labelize: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with bearer bars, GS1-128 (UCC/EAN
+  128, a variable-length element string last only; over several symbols too), Data Matrix with a GS1 Digital Link URI,
+  text in fonts 1 to 5, the test label; GS1 DataMatrix (no FNC1) and QR (Japanese models only) refused, as the guide
+  says; GS1 DataBar refused until a test reads it*
+- 3.7 DPL — next: Labelize renders it; the manual to gather (Honeywell's DPL Command Reference)
 - 3.8 Direct printing: WebUSB, Zebra Browser Print; a local agent for network printers
 - 3.9 Compatibility matrix from tests on physical printers
 

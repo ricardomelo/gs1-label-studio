@@ -17,6 +17,7 @@
     "qrcode": "1.5.4"
   },
   "devDependencies": {
+    "@goodboy008/labelize-wasm": "1.10.0",
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.6.5",
     "@types/qrcode": "1.5.6",

@@ -327,7 +327,7 @@ export const ROW_STATUS_NAMES = { ready: "ready", fixed: "fixed", error: "error"
 
 // Printer profiles (backlog 3.1).
 export const PRINTER_TEXTS = {
-  intro: "For the ZPL files: the printer's resolution and print width, and how many whole dots each module takes.",
+  intro: "For the print files: the printer's language, resolution and print width, and how many whole dots each module takes.",
   testPrint: "The test print adds a 50 mm ruler and the settings under the label: measure the ruler to check the printer's scale.",
   outOfRange: (dots: number, xMm: number, dpi: number, range: readonly [number, number] | null) =>
     (range

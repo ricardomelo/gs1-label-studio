@@ -15,7 +15,8 @@ import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { logisticLabel, type LogisticSize } from "./logistic.ts";
-import { gs1128StackDots, zplLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { gs1128StackDots, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { PRINTER_LANGUAGES, printLabel, type PrinterLanguage } from "./printFile.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -117,7 +118,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
-  if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label is not written in ZPL yet: its PDF prints it at its size.");
+  if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label is not written in a printer language yet: its PDF prints it at its size.");
   // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
   const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
@@ -179,9 +180,13 @@ export interface BatchRequest {
   pdf: boolean;
   /** One PDF of label sheets, from the place `start` of the first sheet. */
   sheet?: { sheet: LabelSheet; start: number };
-  /** One ZPL file with every label, at this printer resolution, a module this many whole dots (the nearest when not given). */
+  /**
+   * One print file with every label, at this printer resolution, a module this many whole dots (the nearest when not
+   * given), in the printer's language (ZPL when not given).
+   */
   zplDpi?: number;
   zplDots?: number;
+  printLanguage?: PrinterLanguage;
   /** The PNG's resolution; none: the one at which it prints at the label's size. */
   pngResolution?: number | null;
   /** The SVG's text as text rather than outlines. */
@@ -248,6 +253,8 @@ function uniqueNames(names: readonly string[]): string[] {
 export async function generateBatch(rows: readonly BatchRow[], request: BatchRequest, font: HriFont,
   onProgress?: (done: number, total: number) => void): Promise<BatchResult> {
   const { design } = request;
+  const language = request.printLanguage ?? "zpl";
+  const languageName = PRINTER_LANGUAGES[language].name;
   const drawn: { row: BatchRow; label?: DrawnLabel; error?: string; name?: string }[] = rows.map((row) => {
     if (row.skipped) return { row, error: "Skipped" };
     if (!row.identified) return { row, error: row.error ?? "Not checked" };
@@ -286,9 +293,9 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     }
     if (request.zplDpi) {
       try {
-        zpl.push(zplLabel(design.symbology, d.label!.data, zplOptionsFor(d.label!, design, request.zplDpi, request.zplDots)));
+        zpl.push(printLabel(language, design.symbology, d.label!.data, zplOptionsFor(d.label!, design, request.zplDpi, request.zplDots)));
       } catch (error) {
-        note(d.row, `ZPL: ${error instanceof Error ? error.message : String(error)}`);
+        note(d.row, `${languageName}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     made.set(d.row, own);
@@ -308,9 +315,9 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     for (const d of ready) made.get(d.row)!.push(name);
   }
   if (request.zplDpi && zpl.length) {
-    const name = `${stem}_${request.zplDpi}dpi.zpl`;
+    const name = `${stem}_${request.zplDpi}dpi.${PRINTER_LANGUAGES[language].extension}`;
     files.push({ name, bytes: utf8(zpl.join("\n")) });
-    for (const d of ready) if (!notes.get(d.row)?.some((n) => n.startsWith("ZPL:"))) made.get(d.row)!.push(name);
+    for (const d of ready) if (!notes.get(d.row)?.some((n) => n.startsWith(`${languageName}:`))) made.get(d.row)!.push(name);
   }
   const csv = toDelimited([
     ["Row", "Status", "Files", "GS1 element string", "GS1 Digital Link URI", "Reason"],

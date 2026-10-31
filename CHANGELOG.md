@@ -144,4 +144,8 @@
   a tour of the studio in screenshots and the manuals chapter by chapter.
 - Installing on a phone: *Install the app* under More (the browser's dialog, or how on an iPhone or iPad), the home
   screen's name GS1 Label Studio; on a phone Start over is a round reload icon beside the live preview.
+- TSPL and EPL2 with the printer's own commands (backlog 3.3 and 3.6), beside ZPL: a printer profile has a language;
+  the Export bar's file, the test print and the bulk print file follow it. Every symbol is rendered by Labelize, an
+  open-source emulator, and read back by ZXing in the tests; what no test reads back is refused with the reason. The
+  studio says these files are checked in an emulator, not yet on a printer.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Accepted** for ZPL (28 October 2026); the other languages follow the same principle, confirmed when each starts |
+| Status | **Accepted** for ZPL (28 October 2026); for TSPL and EPL2 (31 October 2026) with an emulator standing in for the printer, as the owner chose |
 | Languages | PDF (any printer with a driver), ZPL II, EPL2, TSPL/TSPL2, PPLA, PPLB, DPL — chosen by the owner |
 
 ## Context
@@ -33,6 +33,12 @@ Facts that shape the design:
 2. **Only what is proven.** A symbology is offered in a printer language only when a test prints it (Labelary for ZPL,
    physical printers for the others) and an independent decoder reads back the same symbology identifier and data.
    What the language cannot print correctly is refused with an explanation and an alternative, never printed wrong.
+   *For TSPL and EPL2 (the owner, 31 October 2026, of three options: an emulator, the manual alone, or the label as an
+   image): no physical printer and no simulator of the firmware exist, so the tests print them with **Labelize**, an
+   open-source emulator (MIT, `@goodboy008/labelize-wasm` 1.10.0, a test dependency only), and read every symbol back
+   with ZXing. The commands follow the manufacturer's manual; what Labelize does not print as the manual describes is
+   refused, not offered on the manual's word alone. The studio tells the person that these files are checked in an
+   emulator, not yet on a printer, and to print the test label first. A physical printer (3.9) outranks the emulator.*
 3. **Templates with placeholders**: the same label with `{{01}}`, `{{10}}`… or `{{URI}}` where the values go, each
    described at the top of the file (ZPL `^FX` comments: what it takes, how to escape, an example). The structure that
    depends on the data (FNC1 separators, code sets) is laid out so that any value of the AI's format fits.
@@ -71,6 +77,44 @@ Reserved characters (`^`, `~`, `\`) go through `^FH`. In templates, values are p
 AI's format fits: element strings of predefined length (all digits, even length) in code set C, other values in code
 set B; a Data Matrix keeps the sample's size so that the text below it stays clear.
 
+## TSPL/TSPL2: commands chosen and what Labelize showed
+
+Reference: TSC's *TSPL/TSPL2 Programming Manual*, 31-0000001-00 version 3.0 (2025). `packages/core/src/tspl.ts`;
+tests in `packages/core/test/printlangs.test.ts`.
+
+| Symbol | Command | Notes |
+|---|---|---|
+| EAN-13 | `BARCODE …,"EAN13"` | 12 digits; the printer adds the check digit and prints its interpretation line. |
+| ITF-14 | `BARCODE …,"ITF14"` | 13 digits, narrow to wide 1:3; bearer bars as `BOX` (frame) or `BAR` (bars), the 14 digits as `TEXT` below them. The manual's `"25"` (Interleaved 2 of 5) is not drawn by Labelize. Whether a TSC printer adds bearer bars of its own to ITF14 the manual does not say. |
+| GS1 DataMatrix, Data Matrix with a URI | `DMATRIX …,c126,x{dots},{rows},{cols}` | `~` declared the escape character: `~1` is FNC1, first and after each element string of no predefined length that is not the last (the manual's own GS1 example); `~` in data is `~~`. The size forced to the layout's. |
+| QR code with a URI | `QRCODE x,y,{level},{dots},A,0` | The label's error correction level, automatic mode; one mode for the data is not offered yet. |
+| Text | `TEXT` with the dot fonts 1 to 5 | The multiplier whose cell is nearest the text height; centred with alignment 2. Font "0" (scalable) is TSPL2 only and not drawn by Labelize. A double quote is written `\["]`, read back. |
+| **GS1-128** | — | The manual writes FNC1 as `!102` in a `128M` bar code (its own GS1 example), but Labelize encodes `!102` as text: not offered until a printer or the emulator shows it. |
+| **EAN-8, UPC-A, UPC-E, GS1 DataBar (`RSS`)** | — | Not drawn by Labelize: not offered yet. |
+| **GS1 QR Code** | — | `QRCODE` has no FNC1. |
+
+The file: `SIZE` in mm, `CODEPAGE UTF-8`, `CLS`, the commands, `PRINT`, each line ending CR LF. `GAP` is not sent:
+the printer keeps the gap it was calibrated for.
+
+## EPL2: commands chosen and what Labelize showed
+
+Reference: Zebra's *EPL Programming Guide*, 14245L-003 Rev. A (2013). `packages/core/src/epl.ts`; the same tests.
+
+| Symbol | Command | Notes |
+|---|---|---|
+| EAN-13, EAN-8, UPC-A, UPC-E | `B…,E30`, `E80`, `UA0`, `UE0` | 12, 7, 11 and 7 digits (UPC-E: number system and the six digits); the printer adds the check digit and its interpretation line. The guide allows a narrow bar of 2 to 4 dots only: other X-dimensions are refused. |
+| ITF-14 | `B…,2` | The 14 digits, narrow to wide 1:3; bearer bars as `X` (frame) or `LO` (bars), the digits as text below. |
+| GS1-128 | `B…,1E` (UCC/EAN 128) | The printer puts FNC1 first. No separator between element strings was read back (the guide's ASCII 06 delimiter was not), so an element string of no predefined length goes last only, as with ZPL's GS1 DataBar Expanded. Over several symbols, stacked as in ZPL. |
+| Data Matrix with a URI | `b…,D,c{cols},r{rows},h{dots}` | The guide says the printer draws a quiet zone of one module around the symbol, so the command starts a module before the layout's corner; Labelize draws none — the difference is tested in sight. |
+| Text | `A` with fonts 1 to 5 | Their cells differ at 203 and 300 dpi (the guide's table); centred by the font's pitch. |
+| **A double quote or a backslash in a symbol's data** | — | The guide escapes them with a backslash, which Labelize encodes too: refused (a URI percent-encodes them). |
+| **GS1 DataMatrix** | — | EPL2's Data Matrix has no FNC1. |
+| **QR code** | — | Japanese printer models only (the guide). |
+| **GS1 DataBar** | — | `R14` is not drawn by Labelize: not offered yet. |
+
+The file: a blank line, `N`, `q` (the print width in dots), the commands, `P`, each line ending CR LF. `Q` (label
+length and gap) is not sent: the printer keeps the length it sensed.
+
 ## References and verification
 
 - ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
@@ -79,17 +123,21 @@ set B; a Data Matrix keeps the sample's size so that the text below it stays cle
   field each (`graphicFields()`).
 - No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), which renders what
   Zebra firmware prints; emulations by other brands are proven only on their own hardware.
-- The other languages have no comparable simulator: their commands wait for manuals and physical printers.
+- TSPL and EPL2 are checked with **Labelize** (github.com/GOODBOY008/labelize), an open-source emulator that also
+  renders DPL. It is young (version 1.10.0, October 2026) and an approximation of the firmware, which it says itself;
+  where it and the manual disagree the symbol is refused, and a print from a physical printer always outranks it.
+- PPLA and PPLB have no simulator known; their manuals are still to be gathered.
 
 ## Order of work
 
-ZPL II (done for the symbols above, GS1 DataBar and ITF-14's bearer bars included; the label layout next), then TSPL,
-PPLB, PPLA, EPL2, DPL.
+ZPL II (done for the symbols above, GS1 DataBar and ITF-14's bearer bars included; the label layout next), then TSPL
+and EPL2 (31 October 2026, the symbols above), then DPL (Labelize renders it), PPLB and PPLA (manuals to gather).
 The order can change with the printers the owner has at hand for tests.
 
 ## Open points for the owner
 
 - Physical printers for tests (model, resolution, language): none for now; to be listed when available.
-- Manuals of the other languages (TSPL, PPLA, PPLB, EPL2, DPL), to be gathered before their items.
+- Manuals: TSPL's and EPL2's are the manufacturers' public PDFs (above); DPL's, PPLA's and PPLB's to be gathered before
+  their items. Copies go in the Drive `references` folder, never in this repository.
 - A printer whose ZPL emulation fails a symbol: refuse it for that printer profile, or offer the image as an exception?
   To be decided with the first such printer.

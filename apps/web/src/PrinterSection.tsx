@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { GENERIC_PROFILES, profileProblem, type ModuleChoice, type PrinterProfile } from "@gs1-label-studio/core";
+import { GENERIC_PROFILES, languageOf, PRINTER_LANGUAGES, profileProblem, type ModuleChoice, type PrinterLanguage, type PrinterProfile } from "@gs1-label-studio/core";
 import { PRINTER_TEXTS } from "./texts.ts";
 import { formatNumber, t, tm } from "./i18n.ts";
 
-// Printer profiles (backlog 3.1, mock-up A of two, 31 October 2026), above the EPC section: the printer the ZPL files are
-// for — its resolution and print width —, the whole dots a module takes within the table's range, and a test label.
+// Printer profiles (backlog 3.1, mock-up A of two, 31 October 2026), above the EPC section: the printer the print files
+// are for — its language (ZPL, TSPL or EPL2; ADR 0002), resolution and print width —, the whole dots a module takes
+// within the table's range, and a test label.
 // The person's own profiles are kept in this browser (a convenience, never needed).
 
 const KEY = "gs1-label-studio.printers";
@@ -46,6 +47,7 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
   const all = [...GENERIC_PROFILES, ...profiles];
   const own = profiles.some((p) => p.id === profile.id);
   const problem = editing ? profileProblem(editing) : null;
+  const language = PRINTER_LANGUAGES[languageOf(profile)];
 
   function save() {
     if (!editing || problem) return;
@@ -58,8 +60,11 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
 
   return (
     <details className="printer" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>{t("Printer (ZPL)")}</summary>
+      <summary>{t("Printer (ZPL, TSPL, EPL2)")}</summary>
       <p className="hint">{t(PRINTER_TEXTS.intro)}</p>
+      {language.id !== "zpl" && (
+        <p className="hint error">{t("{language} files are checked in Labelize, an emulator, not yet on a {language} printer: print the test label and scan it before a production run.", { language: language.name })}</p>
+      )}
       <div className="grid">
         <div>
           <label htmlFor="prn-profile">{t("Printer profile")}</label>
@@ -67,7 +72,7 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
             id="prn-profile"
             value={profile.id}
             onChange={(e) => {
-              if (e.target.value === "new") setEditing({ id: `own-${Date.now()}`, name: "", dpi: profile.dpi, widthMm: profile.widthMm });
+              if (e.target.value === "new") setEditing({ id: `own-${Date.now()}`, name: "", dpi: profile.dpi, widthMm: profile.widthMm, language: languageOf(profile) });
               else onProfile(all.find((p) => p.id === e.target.value) ?? profile);
             }}
           >
@@ -96,6 +101,16 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
           <div>
             <label htmlFor="prn-name">{t("Name")}</label>
             <input id="prn-name" value={editing.name} placeholder={t("e.g. Warehouse ZT411")} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+          </div>
+          <div>
+            <label htmlFor="prn-language">{t("Language")}</label>
+            <select id="prn-language" value={languageOf(editing)} onChange={(e) => setEditing({ ...editing, language: e.target.value as PrinterLanguage })}>
+              {Object.values(PRINTER_LANGUAGES).map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name} — {t(l.printers)}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="prn-dpi">{t("Resolution (dpi)")}</label>
@@ -147,7 +162,7 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
           </>
         )}
         <button type="button" className="btn primary" disabled={!module || Boolean(widthProblem)} onClick={onTestPrint}>
-          {t("Test print (ZPL)")}
+          {t("Test print ({language})", { language: language.name })}
         </button>
       </div>
       <p className="hint">{t(PRINTER_TEXTS.testPrint)}</p>

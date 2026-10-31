@@ -1,7 +1,9 @@
 import { dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
+import { PRINTER_LANGUAGES, type PrinterLanguage } from "./printFile.ts";
 
-// Printer profiles (backlog 3.1): what the ZPL files are made for — the printer's resolution, how wide it prints — and,
-// for each label, how many whole dots a module takes, within the range of the symbol's specification table.
+// Printer profiles (backlog 3.1): what the print files are made for — the printer's language and resolution, how wide
+// it prints — and, for each label, how many whole dots a module takes, within the range of the symbol's specification
+// table.
 
 export interface PrinterProfile {
   id: string;
@@ -10,16 +12,30 @@ export interface PrinterProfile {
   dpi: number;
   /** How wide the printer prints, mm: a label wider than this is refused. */
   widthMm: number;
+  /** The printer's language (ADR 0002); ZPL when not given, as profiles kept before 31 October 2026 were. */
+  language?: PrinterLanguage;
 }
 
-/** A profile for any ZPL printer at the common resolutions, four inches wide (104 mm), as most label printers are. */
-export const GENERIC_PROFILES: readonly PrinterProfile[] = [152, 203, 300, 406, 600].map((dpi) => ({
-  id: `zpl-${dpi}`, name: `Any ZPL printer, ${dpi} dpi, 104 mm`, dpi, widthMm: 104,
-}));
+/** A profile's language: ZPL unless it says otherwise. */
+export function languageOf(profile: Pick<PrinterProfile, "language">): PrinterLanguage {
+  return profile.language ?? "zpl";
+}
+
+/**
+ * A profile for any printer of each language at its common resolutions, four inches wide (104 mm), as most label
+ * printers are: ZPL at 152 to 600 dpi, TSPL and EPL2 at 203 and 300 dpi (EPL2's fonts are defined for those two).
+ */
+export const GENERIC_PROFILES: readonly PrinterProfile[] = [
+  ...[152, 203, 300, 406, 600].map((dpi) => ({ id: `zpl-${dpi}`, name: `Any ZPL printer, ${dpi} dpi, 104 mm`, dpi, widthMm: 104 })),
+  ...(["tspl", "epl2"] as const).flatMap((language) => [203, 300].map((dpi) => ({
+    id: `${language}-${dpi}`, name: `Any ${PRINTER_LANGUAGES[language].name} printer, ${dpi} dpi, 104 mm`, dpi, widthMm: 104, language,
+  }))),
+];
 
 /** What is wrong with a profile the person described, or null. */
-export function profileProblem(profile: Pick<PrinterProfile, "name" | "dpi" | "widthMm">): string | null {
+export function profileProblem(profile: Pick<PrinterProfile, "name" | "dpi" | "widthMm" | "language">): string | null {
   if (!profile.name.trim()) return "A profile needs a name.";
+  if (profile.language !== undefined && !(profile.language in PRINTER_LANGUAGES)) return "The printer's language is ZPL, TSPL or EPL2.";
   if (!Number.isFinite(profile.dpi) || profile.dpi < 100 || profile.dpi > 1200) return "The resolution is from 100 to 1200 dpi.";
   if (!Number.isFinite(profile.widthMm) || profile.widthMm < 10 || profile.widthMm > 500) return "The print width is from 10 to 500 mm.";
   return null;

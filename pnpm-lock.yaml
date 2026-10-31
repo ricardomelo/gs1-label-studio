@@ -60,6 +60,9 @@ importers:
         specifier: 1.5.4
         version: 1.5.4
     devDependencies:
+      '@goodboy008/labelize-wasm':
+        specifier: 1.10.0
+        version: 1.10.0
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2
@@ -83,6 +86,10 @@ importers:
         version: 3.1.6(@types/emscripten@1.41.6)
 
 packages:
+
+  '@goodboy008/labelize-wasm@1.10.0':
+    resolution: {integrity: sha512-xsu4FI1bRmbWAFrfRenC9xNuMuBSl9A7eOqSfkgY+uJrslBXltwfskwr1GPdqAHIzFnOwpyAWomB7ZvF9Sa56A==}
+    engines: {node: '>=20'}
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -860,6 +867,8 @@ packages:
       '@types/emscripten': '>=1.39.6'
 
 snapshots:
+
+  '@goodboy008/labelize-wasm@1.10.0': {}
 
   '@jridgewell/resolve-uri@3.1.2': {}
 

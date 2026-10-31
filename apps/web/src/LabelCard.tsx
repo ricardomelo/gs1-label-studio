@@ -12,6 +12,7 @@ import {
   type HriPosition,
   type QrMode,
   type LogisticSize,
+  type PrinterLanguageInfo,
   type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
@@ -128,6 +129,8 @@ interface Props {
   view: LabelView;
   onDownload: (kind: FileKind) => void;
   onDownloadZpl: (template: boolean) => void;
+  /** The printer profile's language, for the print file's button (ADR 0002). */
+  printLanguage: PrinterLanguageInfo;
   fileError: string | null;
   /** In bulk: the row shown among the data rows, and a way to show another. */
   rows?: { index: number; count: number; row: number; status: RowStatus; onMove: (index: number) => void };
@@ -168,7 +171,7 @@ const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 const step = (zoom: number, by: 1 | -1) =>
   by > 0 ? (ZOOMS.find((z) => z > zoom) ?? zoom) : ([...ZOOMS].reverse().find((z) => z < zoom) ?? zoom);
 
-export function LabelCard({ children, generate, printer, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
+export function LabelCard({ children, generate, printer, printLanguage, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   const [real, setReal] = useState(false);
   // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
@@ -339,11 +342,13 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 {t("Zip of all")}
               </button>
               <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
-                {t("ZPL ({dpi} dpi)", { dpi: s.dpi })}
+                {t("{language} ({dpi} dpi)", { language: printLanguage.name, dpi: s.dpi })}
               </button>
-              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
-                {t("ZPL template")}
-              </button>
+              {printLanguage.templates && (
+                <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
+                  {t("ZPL template")}
+                </button>
+              )}
             </div>
           </div>
           {generate && <div data-pane="export">{generate}</div>}

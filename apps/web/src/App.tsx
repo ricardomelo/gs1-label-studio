@@ -24,7 +24,10 @@ import {
   labelFor,
   patternName,
   zplOptionsFor,
-  zplTestLabel,
+  languageOf,
+  PRINTER_LANGUAGES,
+  printLabel,
+  printTestLabel,
   GENERIC_PROFILES,
   moduleChoice,
   printWidthProblem,
@@ -52,7 +55,6 @@ import {
   SYMBOLOGIES,
   syntaxEngine,
   xDimension,
-  zplLabel,
   zplTemplate,
   GcpTable,
   guidance,
@@ -392,14 +394,16 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     }
   })();
 
+  // The print file in the profile's language (ADR 0002): ZPL, TSPL or EPL2; templates in ZPL only
+  const language = PRINTER_LANGUAGES[languageOf(profile)];
   function downloadZpl(template: boolean) {
     const data = label.data;
     try {
       const zplOptions = zplFor();
       if (!zplOptions || !data) return;
       if (zplWidthProblem) throw new Error(zplWidthProblem);
-      const zpl = template ? zplTemplate(symbology, data, zplOptions).zpl : zplLabel(symbology, data, zplOptions);
-      download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
+      const file = template ? zplTemplate(symbology, data, zplOptions).zpl : printLabel(language.id, symbology, data, zplOptions);
+      download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, file, "text/plain");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
@@ -419,7 +423,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         `${SYMBOLOGIES[symbology].name}: ${data.length > 60 ? `${data.slice(0, 57)}...` : data}`,
         `GS1 Label Studio, ${new Date().toISOString().slice(0, 10)}`,
       ];
-      download(`${name}-test-${settings.dpi}dpi.zpl`, zplTestLabel(symbology, data, zplOptions, notes), "text/plain");
+      download(`${name}-test-${settings.dpi}dpi.${language.extension}`, printTestLabel(language.id, symbology, data, zplOptions, notes), "text/plain");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
@@ -490,7 +494,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     };
     running.postMessage({
       rows: batchRows,
-      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
+      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, ...(choice.zplDpi ? { printLanguage: language.id } : {}), ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
     });
   }
   // The destination shown on a phone or a tablet (backlog 1.21, layout.ts); a computer shows them all. Each keeps
@@ -725,6 +729,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           view={view}
           onDownload={(kind) => void downloadFile(kind)}
           onDownloadZpl={downloadZpl}
+          printLanguage={language}
           rows={bulk && rows.length
             ? {
                 index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2,
@@ -749,6 +754,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
                   error={blocked ?? generated.error}
                   onGenerate={generate}
                   onCancel={cancelGeneration}
+                  languageName={language.name}
                 />
               )
             : undefined}

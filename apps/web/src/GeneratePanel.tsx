@@ -34,6 +34,8 @@ interface Props {
   onGenerate: (choice: GenerateChoice) => void;
   /** Stops a generation running. */
   onCancel: () => void;
+  /** The printer profile's language, for the one print file (ADR 0002). */
+  languageName: string;
 }
 
 const FILES: BatchFile[] = ["svg", "png", "pdf", "eps"];
@@ -77,7 +79,7 @@ function Num({ id, label, value, onChange }: { id: string; label: string; value:
   );
 }
 
-export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, result, error, onGenerate, onCancel }: Props) {
+export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, result, error, onGenerate, onCancel, languageName }: Props) {
   const [choice, setChoice] = useState<Kept>(kept);
   const [start, setStart] = useState(1);
   const update = (next: Partial<Kept>) => {
@@ -175,7 +177,7 @@ export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, re
           {tooLarge && <p className="error small">{tm(tooLarge)}</p>}
           <label className="check">
             <input type="checkbox" checked={choice.zpl} onChange={(e) => update({ zpl: e.target.checked })} />
-            {t("One ZPL file ({dpi} dpi)", { dpi })}
+            {t("One {language} file ({dpi} dpi)", { language: languageName, dpi })}
           </label>
         </fieldset>
       </div>

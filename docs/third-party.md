@@ -55,6 +55,7 @@ themselves decide.
 | [TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev), [Vitest](https://vitest.dev), pnpm | building and testing | Apache 2.0, MIT |
 | [Playwright](https://playwright.dev) and Chromium | browser tests and the guide's screenshots | Apache 2.0; Chromium BSD-3-Clause and others |
 | [resvg-js](https://github.com/yisibl/resvg-js) | drawing the SVGs the tests read back | MPL 2.0 |
+| [Labelize](https://github.com/GOODBOY008/labelize) (`@goodboy008/labelize-wasm` 1.10.0) | rendering the TSPL and EPL2 files the tests read back (an emulator, not a printer) | MIT (its WebAssembly also BSD-3-Clause parts) |
 | [epc-tds](https://github.com/sergiss/epc-tds) | reading EPCs back | MIT |
 | poppler's `pdftoppm` | drawing the PDFs the tests read back, run as a program | GPL 2.0 |
 | Ghostscript | drawing the EPS the tests read back, run as a program | AGPL 3.0 |

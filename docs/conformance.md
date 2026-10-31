@@ -19,6 +19,7 @@ P1134473-11EN Rev A.
 4. [EPC Tag Data Standard and NFC](#4-epc-tag-data-standard-and-nfc)
 5. [GS1 Digital Signatures and Verifiable Credentials](#5-gs1-digital-signatures-and-verifiable-credentials)
 6. [ZPL II](#6-zpl-ii)
+    1. [TSPL/TSPL2 and EPL2](#6a-tspltspl2-and-epl2)
 7. [Deliberate differences and open points](#7-deliberate-differences-and-open-points)
 
 ## 1. GS1 General Specifications
@@ -108,6 +109,24 @@ back by ZXing in CI.
 
 Findings no manual showed, from Labelary: mode D joins element strings without FNC1; `^BQ` has no FNC1 (no GS1 QR
 Code); the Data Matrix escape character changed between firmware versions; `^BQ`'s manual mode was not honoured.
+
+## 6a. TSPL/TSPL2 and EPL2
+
+The printer's own commands from TSC's *TSPL/TSPL2 Programming Manual* 3.0 and Zebra's *EPL Programming Guide*
+14245L-003, each rendered by Labelize (an open-source emulator, not the printers' firmware) and read back by ZXing in
+every test run (ADR 0002).
+
+| What | What the studio does | Evidence |
+|---|---|---|
+| TSPL `DMATRIX` | `c126`: FNC1 as `~1`, `~` as `~~`, the size forced | `printlangs`: tspl gs1-datamatrix |
+| TSPL `BARCODE` | EAN13 (12 digits), ITF14 (13 digits) with bearer bars drawn | `printlangs`: tspl itf14 |
+| TSPL strings | A double quote as `\["]` | `printlangs`: TSPL quotes a double quote |
+| EPL2 `B` | EAN/UPC at 2 to 4 dots; UCC/EAN 128 with FNC1 first, a variable-length element string last only | `printlangs`: EPL2 prints EAN and UPC with a narrow bar of 2 to 4 dots only |
+| EPL2 `b` | Data Matrix with a URI, started a module early for the printer's own quiet zone | `printlangs`: epl: dl-datamatrix starts at the layout's corner |
+| Not offered | TSPL: GS1-128, EAN-8, UPC, DataBar; EPL2: GS1 DataMatrix, QR, DataBar | `printlangs`: what TSPL and EPL2 refuse, with the reason |
+
+Where Labelize and the manual differ, the symbol is refused (TSPL's `!102`) or the manual followed and the difference
+tested in sight (EPL2's Data Matrix quiet zone). A print from a physical printer outranks both (backlog 3.9).
 
 ## 7. Deliberate differences and open points
 

@@ -180,3 +180,10 @@ tablet held horizontally and the label always beside the destination. One page s
 the destination they belong to, and the styles hide the others, so turning a device keeps what was typed. The browser
 tests run on a phone and a tablet as well as a desktop, moving between the destinations as a person would; on the
 desktop the page is pixel for pixel what it was.
+
+Later that evening the owner asked for the other printer languages. None has a simulator like Labelary, and there is
+no printer at hand, so the owner chose among three ways: the manuals with an open-source emulator (Labelize, a few weeks
+old) standing in for the printer, the manuals alone, or the label as an image. With Labelize, TSPL and EPL2 came first.
+The emulator and the manuals did not always agree: TSC's own GS1-128 example writes FNC1 as `!102`, which Labelize
+prints as text, so GS1-128 waits in TSPL; Zebra's guide says EPL2 draws a Data Matrix's quiet zone itself, which
+Labelize does not, so the manual was followed and the difference kept in a test. Each refusal names its reason.

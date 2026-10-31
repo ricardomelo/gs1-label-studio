@@ -3,6 +3,7 @@ import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./enco
 import { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 import type { Bitmap } from "./raster.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
+import { hriTextDots, PrinterUnsupportedError, textLines, type PrintLabelOptions, type PrintSymbolOptions } from "./printers.ts";
 
 /**
  * ZPL II with the printer's own barcode commands (ADR 0002, decided on 28 October 2026): a few hundred bytes a label,
@@ -10,44 +11,13 @@ import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
  * for images — a logo — not for symbols. Reference: Zebra's ZPL II Programming Guide, P1134473-11EN Rev A; every
  * command here is printed through Labelary and read back by ZXing in the tests.
  */
-export class ZplUnsupportedError extends Error {}
+export class ZplUnsupportedError extends PrinterUnsupportedError {}
 
-export interface ZplSymbolOptions {
-  /** Top left corner of the symbol (not of its quiet zone), in dots. */
-  x: number;
-  y: number;
-  /** Module width in dots: a whole number (dots.ts). */
-  dotsPerModule: number;
-  /** Bar height of a linear symbol, in dots. */
-  barHeightDots: number;
-  /** The printer's resolution, for the text height. */
-  dpi: number;
-  /** Human readable text: the printer's interpretation line for linear symbols, text lines below 2D symbols. */
-  hri?: boolean;
-  /**
-   * ITF-14's bearer bars (section 5.3.2.4), drawn with ^GB: a frame around the symbol and its quiet zones of 10X, or
-   * bars at the top and bottom; `thicknessDots` thick. `x` and `y` stay the symbol's corner.
-   */
-  bearer?: { kind: "frame" | "bars"; thicknessDots: number };
-  /** A QR code's error correction level (M when not given) and one encoding mode for its data (backlog 1.14). */
-  qrError?: "L" | "M" | "Q" | "H";
-  qrMode?: QrMode;
-  /**
-   * GS1-128 over several symbols (backlog 1.13): the element strings of each, from the top; the data is then the whole
-   * element string. Each symbol and its text are stacked `stackDots` apart, from `y`.
-   */
-  parts?: readonly string[];
-  /** The human readable text's place and height in mm (backlog 1.16): below and 2.2 mm when not given. */
-  hriPosition?: "below" | "above" | "split" | "left" | "right";
-  hriHeightMm?: number;
-}
+/** Where and how the symbol is drawn, in dots (printers.ts): the same for every printer language. */
+export type ZplSymbolOptions = PrintSymbolOptions;
 
-export interface ZplLabelOptions extends ZplSymbolOptions {
-  /** Label width and height in dots. */
-  widthDots: number;
-  heightDots: number;
-  copies?: number;
-}
+/** The label: its size in dots and the copies, besides the symbol's place (printers.ts). */
+export type ZplLabelOptions = PrintLabelOptions;
 
 /** A value a system replaces in a template: `{{name}}` in the ZPL. */
 export interface ZplPlaceholder {
@@ -63,8 +33,6 @@ export interface ZplTemplate {
   zpl: string;
   placeholders: ZplPlaceholder[];
 }
-
-const HRI_TEXT_MM = 2.2;
 
 /** One label with one symbol, ready to print. */
 export function zplLabel(symbology: SymbologyId, data: string, options: ZplLabelOptions): string {
@@ -420,10 +388,6 @@ export function gs1128FieldData(elements: Element[], placeholder?: (element: Ele
   return out;
 }
 
-function hriTextDots(dpi: number, mm = HRI_TEXT_MM): number {
-  return Math.round((mm / MM_PER_INCH) * dpi);
-}
-
 /**
  * Text lines around a symbol that spans [top, bottom] from `x` over `widthDots`, `gap` away (backlog 1.16): below it,
  * above it, or split with the key's line below and the others above; one element string a line unless `join`.
@@ -431,21 +395,8 @@ function hriTextDots(dpi: number, mm = HRI_TEXT_MM): number {
  */
 function textAround(lines: string[], x: number, top: number, bottom: number, widthDots: number, gap: number,
   options: ZplSymbolOptions, join: boolean, align: "C" | "L" = "C"): string[] {
-  if (!(options.hri ?? true) || !lines.length) return [];
-  const position = options.hriPosition ?? "below";
-  if (position === "left" || position === "right") {
-    throw new ZplUnsupportedError("ZPL places the text below or above the symbol: beside it, the printer's font would set its width.");
-  }
-  const t = hriTextDots(options.dpi, options.hriHeightMm);
-  const step = Math.round(t * 1.4);
-  const joined = (from: string[]) => (join && from.length ? [from.join("")] : from);
-  const below = position === "below" ? joined(lines) : position === "split" ? [lines[0]!] : [];
-  const above = position === "above" ? joined(lines) : position === "split" ? joined(lines.slice(1)) : [];
-  const line = (text: string, y: number) => `^FO${x},${y}^A0N,${t},${t}^FB${widthDots},1,0,${align}${fieldData(text)}`;
-  return [
-    ...above.map((text, index) => line(text, top - gap - t - (above.length - 1 - index) * step)),
-    ...below.map((text, index) => line(text, bottom + gap + index * step)),
-  ];
+  return textLines(lines, x, top, bottom, widthDots, gap, options, join, "ZPL")
+    .map((line) => `^FO${line.x},${line.y}^A0N,${line.height},${line.height}^FB${line.width},1,0,${align}${fieldData(line.text)}`);
 }
 
 /** The room text above a symbol takes in ZPL (backlog 1.16), at most one line an element string. */

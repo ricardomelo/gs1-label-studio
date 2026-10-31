@@ -196,6 +196,17 @@ describe("generating every row", () => {
     expect(zpl).toContain("09506000134352");
   }, SLOW);
 
+  // The print file in the profile's language (ADR 0002): TSPL, one label after another, named .prn
+  it("writes the print file in the printer's language: TSPL, each label its own SIZE and PRINT", async () => {
+    const result = await generateBatch(batchRows([4]), { design: QR, files: [], pattern: "{01}", pdf: false, zplDpi: 300, printLanguage: "tspl" }, font);
+    const files = unzip(result.zip);
+    expect([...files.keys()]).toEqual(["labels_dl-qrcode_300dpi.prn", "generated.csv"]);
+    const tspl = new TextDecoder().decode(files.get("labels_dl-qrcode_300dpi.prn"));
+    expect(tspl.match(/^SIZE /gm)).toHaveLength(3);
+    expect(tspl.match(/^QRCODE /gm)).toHaveLength(3);
+    expect(tspl).toContain("09506000134352");
+  }, SLOW);
+
   it("names a row its design cannot draw, and a label larger than the sheet's, in the CSV", async () => {
     const rows = batchRows();
     // UPC-E beside a GTIN-13: no row can take it

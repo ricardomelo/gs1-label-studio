@@ -125,7 +125,7 @@ Which standard each follows: [conformance](conformance.md).
 | The GS1 Logistic Label | For an SSCC, General Specifications 6.6 in A6, 4 × 6 in, A5 or 6 × 8 in: free text, data titles over 7 mm contents, GS1-128 with 3 mm text, the SSCC alone lowest | `3644f13` | `logistic`: is the page's size, its SSCC alone in the lowest symbol · `logistic`: reads back every symbol · `editor`: the GS1 Logistic Label |
 | Refused when it cannot be right | Data without an SSCC, a symbol wider than the page, more than the page holds | `3644f13` | `logistic`: refuses data without an SSCC |
 
-## Printers and ZPL
+## Printers and ZPL, TSPL, EPL2
 
 | Feature | What it does | Since | Tests |
 |---|---|---|---|
@@ -141,6 +141,9 @@ Which standard each follows: [conformance](conformance.md).
 | Printer profiles | Generic profiles at 152 to 600 dpi, 104 mm, and one's own kept in the browser; a label wider than the printer refused | `a5e261d` | `printer`: checks a profile and the label's width · `editor`: printer profiles |
 | The module in whole dots | The dots within the table's range, the nearest by default; said when none fits | `a5e261d` | `printer`: offers the dots within the range · `printer`: says when no whole number of dots lies within the range |
 | Test print | A 50 mm ruler with ticks every 10 mm and the settings under the label | `a5e261d` | `printer`: adds a 50 mm ruler · `labelary`: a test label: the symbol reads and the ruler is 50 mm |
+| TSPL with the printer's own commands | `BARCODE` EAN13 and ITF14 with bearer bars as `BOX`/`BAR`, `DMATRIX` with `~1` FNC1, `QRCODE`, `TEXT` in dot fonts; each rendered by Labelize and read back; GS1-128, EAN-8, UPC and DataBar refused until a test reads them | this delivery | `printlangs`: TSPL and EPL2 rendered by Labelize and read back · `printlangs`: ITF-14 with its bearer frame · `printlangs`: tspl refuses gs1-128 |
+| EPL2 with the printer's own commands | `B` EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with bearer bars, UCC/EAN 128 (several symbols too), `b` Data Matrix with a URI, `A` text; each rendered by Labelize and read back; GS1 DataMatrix and QR refused, with the guide's reason | this delivery | `printlangs`: epl gs1-128 · `printlangs`: GS1-128 in two symbols, stacked, each read back · `printlangs`: epl refuses gs1-datamatrix |
+| The profile's language | ZPL, TSPL or EPL2 in a printer profile, generic or one's own; the Export bar's file, the test print and the bulk file in it; a note that TSPL and EPL2 are checked in an emulator | this delivery | `editor`: printer languages · `batch`: writes the print file in the printer's language · `printlangs`: a test label, the symbol read and the ruler 50 mm |
 
 ## RFID and NFC
 

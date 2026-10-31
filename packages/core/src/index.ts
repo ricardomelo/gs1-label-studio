@@ -23,6 +23,10 @@ export {
   type ZplPlaceholder,
   type ZplTemplate,
 } from "./zpl.ts";
+export { HRI_TEXT_MM, hriTextDots, PrinterUnsupportedError, type PrintLabelOptions, type PrintSymbolOptions } from "./printers.ts";
+export { tsplLabel, tsplTestLabel, TsplUnsupportedError } from "./tspl.ts";
+export { eplLabel, eplTestLabel, EplUnsupportedError } from "./epl.ts";
+export { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage, type PrinterLanguageInfo } from "./printFile.ts";
 export {
   dataFor,
   encodedCount,
@@ -266,5 +270,5 @@ export {
   type SigningKey,
 } from "./sign.ts";
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
-export { GENERIC_PROFILES, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
+export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export { LOGISTIC_SIZES, logisticLabel, type LogisticInput, type LogisticLabel, type LogisticSize } from "./logistic.ts";

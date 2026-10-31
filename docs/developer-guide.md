@@ -33,7 +33,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 │ LabelCard     step 3      │       │ specifications.ts / environments.ts  sizes by table      │
 │ BulkCard, GeneratePanel   │       │ encode.ts      bwip-js, node-qrcode → geometry           │
 │ PrinterSection, EpcSection│       │ layout.ts, gs1128.ts, logistic.ts, hri.ts  the label     │
-│ SignSection, NfcWriter    │       │ svg/png/pdf/eps/zip/zpl.ts  exporters                    │
+│ SignSection, NfcWriter    │       │ svg/png/pdf/eps/zip/zpl/tspl/epl.ts  exporters           │
 │ generate.worker.ts ───────┼──────▶│ batch.ts       every row from one design                 │
 │ scan.ts (zxing-wasm)      │       │ epc.ts, gcp.ts, ndef.ts, sign.ts  RFID, NFC, signatures  │
 └───────────────────────────┘       └──────────────────────────────────────────────────────────┘
@@ -112,8 +112,9 @@ cd packages/core && NODE_USE_ENV_PROXY=1 LABELARY=1 npx vitest run test/labelary
    stacked GS1-128 symbols (`gs1128.ts`) or the GS1 Logistic Label (`logistic.ts`). The `Layout` is
    format-independent: rectangles, modules and paths in millimetres.
 6. **Exports.** Every format draws the same `Layout`: `labelSvg`, `labelPng`/`pngAt`, `labelPdf`/`pdfDocument`,
-   `labelEps`, `labelZip`. ZPL is different — the printer draws the symbol — so `zplOptionsFor(drawn, design, dpi,
-   dots)` places it with the printer's commands and `zplLabel`/`zplTemplate`/`zplTestLabel` write it.
+   `labelEps`, `labelZip`. A printer language is different — the printer draws the symbol — so `zplOptionsFor(drawn,
+   design, dpi, dots)` places it in dots and `printLabel(language, …)` writes it with that language's commands:
+   `zplLabel`/`zplTemplate`/`zplTestLabel`, `tsplLabel`/`tsplTestLabel` or `eplLabel`/`eplTestLabel`.
 7. **Checking.** `expectedReads(options)` says what a reader should give back for each symbol; the scan test and the
    tests compare ZXing's reading with it.
 8. **In bulk.** `parseTableFile`/`parseDelimited` read the rows, `guessMapping` maps columns to AIs, `checkRows` makes
@@ -168,6 +169,9 @@ Each module, in the order of the flow above.
 | `zip.ts`, `deflate.ts` | `labelZip` with its README; deflate through Compression Streams |
 | `dots.ts` | `snapToDots`, `dotsWithin`: the printer's dot grid |
 | `zpl.ts` | `zplLabel`, `zplTemplate`, `fillTemplate`, `zplTestLabel`, `gs1128FieldData` (mode N, FNC1, code sets), graphic fields in stripes |
+| `printers.ts` | What every printer language shares: `PrintSymbolOptions`, `PrintLabelOptions`, `PrinterUnsupportedError`, the text lines around a symbol (`textLines`), the bitmap font nearest a height |
+| `tspl.ts`, `epl.ts` | TSPL/TSPL2 and EPL2 with the printer's commands (`tsplLabel`, `eplLabel` and their test labels); what Labelize does not read back refused |
+| `printFile.ts` | `PRINTER_LANGUAGES` (name, extension, printers, how checked, templates), `printLabel` and `printTestLabel` by language |
 | `printer.ts` | `GENERIC_PROFILES`, `profileProblem`, `moduleChoice`, `printWidthProblem` |
 
 ### In bulk
@@ -179,7 +183,7 @@ Each module, in the order of the flow above.
 | `report.ts` | `CellEdits`, `applyEdits`, `editCell`, `rowStatus`, `reportCounts`, `reportCsv`, `correctedCsv` |
 | `sequence.ts` | `sequenceValues`, `ssccFor`, `sequenceProblem`, `sequenceTable`, `withSequence` (at most `MAX_SEQUENCE` rows) |
 | `sheets.ts` | Avery sheets with centred margins, `sheetProblem`, `fitsSheet` |
-| `batch.ts` | `LabelDesign`, `labelFor`, `zplOptionsFor`, `patternName`, `generateBatch`, `upperCaseDomain` |
+| `batch.ts` | `LabelDesign`, `labelFor`, `zplOptionsFor`, `patternName`, `generateBatch` (its print file in the profile's language), `upperCaseDomain` |
 
 ### RFID, NFC and signatures
 
@@ -260,7 +264,7 @@ that say what is true; together they are the [inventory of features](test-invent
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 9 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 10 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 37 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
@@ -291,8 +295,9 @@ that say what is true; together they are the [inventory of features](test-invent
 | `table` | CSV and Excel read without a library | 9 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 15 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 44 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 45 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
+| `printlangs` | TSPL and EPL2 rendered by Labelize and read back; what they refuse | 41 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

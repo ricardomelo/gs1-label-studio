@@ -961,6 +961,34 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   await expect(page.locator("#prn-profile option", { hasText: "Desk printer" })).toHaveCount(1);
 });
 
+// Backlog 3.3 and 3.6 (ADR 0002): the print file in the profile's language, TSPL or EPL2 besides ZPL, checked in Labelize.
+test("printer languages: a TSPL or EPL2 profile writes its own file, says it is checked in an emulator, refuses what it cannot print", async ({ page }) => {
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "tspl-203");
+  await expect(page.locator("details.printer .hint.error")).toContainText("TSPL files are checked in Labelize, an emulator, not yet on a TSPL printer");
+  await expect(page.getByRole("button", { name: "ZPL template" })).toHaveCount(0);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  expect(tspl.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42.prn");
+  const text = readFileSync((await tspl.path())!, "utf8");
+  expect(text).toMatch(/^SIZE [\d.]+ mm,[\d.]+ mm\r\n/);
+  expect(text).toContain('QRCODE ');
+  expect(text).toContain('"https://id.gs1.org/01/09506000134376/10/B42?17=271231"');
+  const [test] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Test print (TSPL)" }).click()]);
+  expect(test.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42-test-203dpi.prn");
+  expect(readFileSync((await test.path())!, "utf8")).toContain('"50 mm: measure this line"');
+  // EPL2 has no QR code but on Japanese models: refused, with the reason
+  await page.selectOption("#prn-profile", "epl2-203");
+  await page.getByRole("button", { name: "EPL2 (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("EPL2's QR code is for Japanese printer models only");
+  // A profile of one's own in EPL2, kept
+  await page.selectOption("#prn-profile", "new");
+  await page.fill("#prn-name", "Old warehouse printer");
+  await page.selectOption("#prn-language", "epl2");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.getByRole("button", { name: "EPL2 (203 dpi)" })).toBeVisible();
+});
+
 // Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
 test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
   await expect(page.locator("#opt-logistic")).toHaveCount(0); // a GTIN: no logistic label
@@ -981,7 +1009,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is not written in ZPL yet");
+  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is not written in a printer language yet");
 });
 
 // The interface's languages (the owner, 31 October 2026; ADR 0003): English, Brazilian Portuguese and Spanish, the
