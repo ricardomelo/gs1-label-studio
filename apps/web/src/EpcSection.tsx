@@ -17,6 +17,7 @@ import {
   type Identification,
 } from "@gs1-label-studio/core";
 import { fileText, keep } from "./keep.ts";
+import { NfcWriter } from "./NfcWriter.tsx";
 
 // RFID and NFC (EPC), as the resolver's label panel had it (ADR 0004; item 1.8): the key's EPC as the EPC Tag Data
 // Standard encodes it, and the compressed GS1 Digital Link an NFC tag emits. The company prefix's length: the person's
@@ -38,6 +39,9 @@ interface Props {
   stem: string;
   gcp: GcpTable | null;
   onGcp: (table: GcpTable | null) => void;
+  /** The label's GS1 Digital Link URI, for an NFC tag (backlog 1.19). */
+  uri?: string;
+  download: (name: string, content: Uint8Array<ArrayBuffer>, type: string) => void;
 }
 
 function Copyable({ text }: { text: string }) {
@@ -51,7 +55,7 @@ function Copyable({ text }: { text: string }) {
   );
 }
 
-export function EpcSection({ id, stem, gcp, onGcp }: Props) {
+export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
   const [schemes, setSchemes] = useState<Record<string, EpcScheme> | null>(null);
   const [open, setOpen] = useState(true);
   const [prefixChoice, setPrefixChoice] = useState<number | null>(null);
@@ -196,6 +200,13 @@ export function EpcSection({ id, stem, gcp, onGcp }: Props) {
       ) : (
         <p className="hint epc-message">{result.message}</p>
       )}
+      <NfcWriter
+        choices={[
+          ...(uri ? [["The GS1 Digital Link URI", uri] as [string, string]] : []),
+          ...(result.epc ? [["The link for NFC (EPC, hexadecimal)", `${base}/eh${result.epc.linkHex}`] as [string, string]] : []),
+        ]}
+        download={download}
+      />
     </details>
   );
 }

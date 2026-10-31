@@ -120,4 +120,6 @@
 - Digital signatures over the Web (item 1.18, GS1 Digital Signatures guideline 1.1.0, section 4): a JWS (ES256) of the
   code's data in JSON-LD, a security marking's code shown or to be read from the marking, the key made in the browser;
   GS1 product data and key credentials (data model 1.2.1) as JWTs.
+- Writing NFC tags (item 1.19): the GS1 Digital Link URI or the EPC's link for NFC written through Web NFC and read back;
+  elsewhere an NDEF file for a tag writer.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

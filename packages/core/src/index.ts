@@ -261,3 +261,4 @@ export {
   type Jwk,
   type SigningKey,
 } from "./sign.ts";
+export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";

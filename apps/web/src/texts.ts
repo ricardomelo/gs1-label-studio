@@ -293,3 +293,19 @@ export const SIGN_TEXTS = {
     "The DigSig of ISO/IEC 20248 in AI (8030), the guideline's section 3, is not offered: its encoding is defined by " +
     "the ISO standard itself.",
 } as const;
+
+// Writing an NFC tag (backlog 1.19).
+export const NFC_TEXTS = {
+  ready: "Writes the URI as an NDEF URI record, which phones open without an app.",
+  unavailable:
+    "This browser cannot write NFC tags (Web NFC is in Chrome on Android): save the NDEF file and write it with a tag " +
+    "writer app.",
+  hold: "Hold the tag against the back of the phone…",
+  holdRead: "Hold the tag against the phone to read it…",
+  written: "✓ Written. Read the tag back to check it.",
+  same: "✓ The tag holds",
+  different: "✗ The tag holds another URI:",
+  noUrl: "✗ The tag holds no URI record.",
+  unreadable: "✗ The tag could not be read; hold it still and try again.",
+  notAllowed: "NFC was not allowed: turn NFC on and allow this page to use it.",
+} as const;

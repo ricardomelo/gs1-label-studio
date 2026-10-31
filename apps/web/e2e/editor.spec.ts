@@ -810,3 +810,37 @@ test("digital signature: a key made here, a JWS with the marking's code taken ou
   const claims = JSON.parse(Buffer.from(readFileSync((await vc.path())!, "utf8").split(".")[1]!, "base64url").toString());
   expect(claims).toMatchObject({ iss: "did:web:dalgiardino.com", sub: payload.id, vc: { type: ["VerifiableCredential", "ProductDataCredential"] } });
 });
+
+// Item 1.19: writing an NFC tag through Web NFC, read back; elsewhere the NDEF message as a file.
+test("NFC: without Web NFC, the NDEF file; with it, the URI written to a tag and read back", async ({ page }) => {
+  const nfc = page.locator(".nfc");
+  await expect(nfc.getByRole("button", { name: "Write to an NFC tag" })).toBeDisabled();
+  await expect(nfc).toContainText("This browser cannot write NFC tags");
+  const [file] = await Promise.all([page.waitForEvent("download"), nfc.getByRole("button", { name: "NDEF file" }).click()]);
+  const bytes = readFileSync((await file.path())!);
+  const rest = "id.gs1.org/01/09506000134376/10/B42?17=271231";
+  expect([...bytes.subarray(0, 5)]).toEqual([0xd1, 0x01, 1 + rest.length, 0x55, 0x04]);
+  expect(bytes.subarray(5).toString()).toBe(rest);
+  // A phone's Web NFC, stood in for: the tag keeps what was written
+  await page.addInitScript(() => {
+    let tag = "";
+    (window as unknown as { NDEFReader: unknown }).NDEFReader = class extends EventTarget {
+      async write(message: { records: { data: string }[] }) { tag = message.records[0]!.data; }
+      async scan() {
+        setTimeout(() => {
+          const event = Object.assign(new Event("reading"), { message: { records: [{ recordType: "url", data: new DataView(new TextEncoder().encode(tag).buffer) }] } });
+          this.dispatchEvent(event);
+        }, 10);
+      }
+    };
+  });
+  await page.reload();
+  await nfc.getByRole("button", { name: "Write to an NFC tag" }).click();
+  await expect(nfc.locator(".hint")).toHaveText("✓ Written. Read the tag back to check it.");
+  await nfc.getByRole("button", { name: "Read the tag back" }).click();
+  await expect(nfc.locator(".hint")).toHaveText("✓ The tag holds https://id.gs1.org/01/09506000134376/10/B42?17=271231");
+  // With a serial number the key has an EPC, and its link for NFC is offered too
+  await qualifier(page, "21", "S1001");
+  await page.selectOption("#epc-prefix", "7");
+  await expect(nfc.getByLabel("What to write on the NFC tag").locator("option")).toHaveText(["The GS1 Digital Link URI", "The link for NFC (EPC, hexadecimal)"]);
+});

@@ -274,3 +274,7 @@ table.mapping th:nth-child(2) { width: 30%; }
 .sign-row .hint { margin: 0; }
 .sign-row label.btn { margin: 0; font-size: 13px; }
 .uri.jws { font-size: 11px; word-break: break-all; max-height: 7em; overflow: auto; }
+
+/* Writing an NFC tag (backlog 1.19) */
+.nfc { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+.nfc select { margin-top: 6px; }

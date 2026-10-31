@@ -605,7 +605,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               )
             : undefined}
         >
-          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} />
+          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
       </main>
