@@ -1,5 +1,8 @@
 import type { Identified } from "./identify.ts";
 
+/** What a signature or a credential is about: the element strings and the GS1 Digital Link URI. */
+type Signed = Pick<Identified, "elements" | "digitalLinkUri">;
+
 // Digital signatures over the Web (backlog 1.18), as the GS1 Digital Signatures Technical Implementation Guideline 1.1.0
 // (January 2026), section 4, describes them: a JSON Web Signature (RFC 7515) whose payload is JSON-LD about the
 // physical entity, with the GS1 Web Vocabulary, its GS1 Digital Link URI as the subject (figure 4-7); optionally the
@@ -59,7 +62,7 @@ const PROPERTIES: Record<string, [string, "text" | "date"]> = {
  * Link URI as its id, the GTIN, serial and batch, the dates as xsd:date, the names in their language, and the security
  * marking when there is one. A key other than a GTIN is described by its URI alone.
  */
-export function signedPayload(identified: Identified, details: SignedDetails = {}, today = new Date()): Record<string, unknown> {
+export function signedPayload(identified: Signed, details: SignedDetails = {}, today = new Date()): Record<string, unknown> {
   const lang = details.language || "en";
   const payload: Record<string, unknown> = {
     "@context": { gs1: "https://gs1.org/voc/", id: "@id", a: "@type", lang: "@language", value: "@value", type: "@type", xsd: "http://www.w3.org/2001/XMLSchema#" },
@@ -207,7 +210,7 @@ const PRODUCT = "https://ref.gs1.org/gs1/vc/product-context/";
 const stamp = (date: Date) => date.toISOString().replace(/\.\d{3}Z$/, "Z");
 
 /** The GS1 VC data model 1.2.1's KeyCredential (section 4.4.1, example 5.5.1): the key exists and is valid. */
-export function keyCredential(identified: Identified, options: CredentialOptions): Record<string, unknown> {
+export function keyCredential(identified: Signed, options: CredentialOptions): Record<string, unknown> {
   return {
     "@context": [VC_CONTEXT, DECLARATION],
     id: options.id ?? `urn:uuid:${crypto.randomUUID()}`,
@@ -219,7 +222,7 @@ export function keyCredential(identified: Identified, options: CredentialOptions
 }
 
 /** The GS1 VC data model 1.2.1's ProductDataCredential (section 4.4.4, example 5.6.1): the product's basic data. */
-export function productDataCredential(identified: Identified, details: SignedDetails, options: CredentialOptions & { keyCredential?: string }): Record<string, unknown> {
+export function productDataCredential(identified: Signed, details: SignedDetails, options: CredentialOptions & { keyCredential?: string }): Record<string, unknown> {
   const product: Record<string, unknown> = {};
   if (details.brandName) product["gs1:brand"] = { "gs1:brandName": details.brandName };
   if (details.productName) product["gs1:productDescription"] = details.productName;
