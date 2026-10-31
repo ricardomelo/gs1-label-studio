@@ -1,23 +1,188 @@
 # GS1 Label Studio
 
-Create GS1 barcodes — and, later, whole labels — in your browser, one at a time or thousands from a spreadsheet, and
-export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
-DPL). Nothing you type or upload leaves your computer. In English, Brazilian Portuguese and Spanish.
+[![CI](https://github.com/ricardomelo/gs1-label-studio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ricardomelo/gs1-label-studio/actions/workflows/ci.yml)
+[![Published](https://github.com/ricardomelo/gs1-label-studio/actions/workflows/pages.yml/badge.svg?branch=main)](https://ricardomelo.github.io/gs1-label-studio/)
+![GS1 General Specifications 26.0](https://img.shields.io/badge/GS1%20General%20Specifications-26.0-002c6c)
+![GS1 Barcode Syntax Engine 1.4.1](https://img.shields.io/badge/GS1%20Barcode%20Syntax%20Engine-1.4.1-002c6c)
+![Every symbol read back by ZXing](https://img.shields.io/badge/every%20symbol-read%20back%20by%20ZXing-2e7d32)
+![Languages: 3](https://img.shields.io/badge/languages-3-f26334)
+![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)
 
-> **Status:** early development, published at <https://ricardomelo.github.io/gs1-label-studio/> (31 October 2026).
-> One code or thousands from a spreadsheet: what the code identifies (every GS1 key, qualifiers, data attributes,
-> several keys), where it is scanned (the GS1 decision tree, the symbol recommended), every GS1 symbol the tests can read
-> back — EAN/UPC, ITF-14, GS1-128 over several symbols, the GS1 DataBar family, GS1 DataMatrix, the QR code and Data
-> Matrix with a GS1 Digital Link URI —, laid out as the GS1 General Specifications place them, seen at real size and
-> read back in the browser; SVG, PNG, PDF and EPS for artwork, label sheets, ZPL II with the printer's own commands and
-> printer profiles; the GS1 Logistic Label; EPC for RFID and NFC tags; GS1 digital signatures. See the backlog.
+**GS1 barcodes and labels, right by construction, made in your browser.** Say what the code identifies and where it
+is scanned: the studio follows the GS1 General Specifications to the symbol, its size, its quiet zones and its human
+readable text, reads what it drew back to prove it, and exports it for artwork or for a label printer — one code at a
+time, or thousands from a spreadsheet. Nothing you type or upload leaves your computer; it works offline, on a
+computer, a tablet or a phone, in English, Brazilian Portuguese and Spanish. Free and open source.
 
-## Documentation
+<p align="center">
+  <a href="https://ricardomelo.github.io/gs1-label-studio/"><b>Open the studio → ricardomelo.github.io/gs1-label-studio</b></a>
+  &nbsp;·&nbsp; <a href="docs/user-guide.md"><b>User guide</b></a>
+  &nbsp;·&nbsp; <a href="docs/printing-guide.md"><b>Printing guide</b></a>
+  &nbsp;·&nbsp; <a href="docs/README.md"><b>All the manuals</b></a>
+</p>
 
-[docs/README.md](docs/README.md) is the index, by reader: the [user guide](docs/user-guide.md), the
-[printing guide](docs/printing-guide.md), every [feature](docs/features.md) with the tests that prove it, the
-[developer guide](docs/developer-guide.md), the [core's API reference](docs/core-api.md),
-[conformance to the standards](docs/conformance.md) and [third-party licences](docs/third-party.md).
+<p align="center">
+  <img src="docs/images/guide/editor.png" alt="The editor: what the code identifies on the left, the label redrawn beside it, its exports below" width="820">
+</p>
+
+### Why it stands out
+
+- **Right by construction.** It asks what the code identifies and where it is scanned, walks the GS1 decision tree
+  (figure 5-68) to the symbol specification table, offers only the symbols that table allows and only the sizes within
+  its range, recommends one, and computes or checks every check digit.
+- **Paste anything.** A GTIN, an element string with or without brackets, a GS1 Digital Link URI or what a scanner
+  types: GS1's own Barcode Syntax Engine reads it, names each Application Identifier and says in plain words what is
+  wrong.
+- **Proved, not assumed.** Every symbol an export makes is read back by an independent decoder (ZXing) in the tests —
+  its symbology identifier and its data —; PDFs are drawn by poppler, EPS by Ghostscript, ZPL printed by Labelary.
+  More than 700 automated tests, each feature naming the tests that prove it ([features](docs/features.md)).
+- **For artwork and for printers.** SVG, PNG, PDF and EPS at real size, process black, bar width reduction; ZPL II
+  with the printer's own barcode commands (not pictures), templates with placeholders for systems, printer profiles in
+  whole dots.
+- **Thousands at once.** Rows from Excel, CSV or a paste, each checked, fixed in place or skipped; serial numbers and
+  SSCCs made for you; a file a row, one PDF, laser label sheets, one ZPL file and a CSV of what was made.
+- **Beyond the barcode.** The GS1 Logistic Label, the EPC for RFID and NFC tags, NFC tags written from a phone, GS1
+  digital signatures and verifiable credentials.
+- **Private, offline, anywhere.** Everything runs in the page: no server, no account, no upload. After the first visit
+  it works without a connection, and installs as an application.
+
+> **Status:** early development, published at <https://ricardomelo.github.io/gs1-label-studio/> (31 October 2026); the
+> [backlog](#backlog) says what is done and what comes next. Phase 3 (more printer languages) and phase 4 (a label
+> designer) are on the way.
+
+> **Community software.** GS1 Label Studio is maintained by its community, not by GS1 or any GS1 Member Organisation;
+> GS1 is a registered trademark of GS1 AISBL. It is provided "as is", without warranties or conditions of any kind
+> (Apache License 2.0, sections 7 and 8): check a printed symbol before a production run.
+
+---
+
+## A tour of the studio
+
+### 1. Say what the code identifies — or paste what you have
+
+<p align="center">
+  <img src="docs/images/guide/identify.png" alt="Step 1: a GTIN with its batch, expiry date, serial number and net weight, each checked" width="300">
+  &nbsp;
+  <img src="docs/images/guide/identify-error.png" alt="A scanner's output pasted: the day 00 of a date explained by the Syntax Engine" width="300">
+</p>
+
+Choose the key — every GS1 identification key, GTIN, SSCC, GLN, GRAI and the rest — and add its qualifiers (batch,
+serial, variant…) and data attributes (expiry, weight, price…) from one list, each checked as you type; decimals are
+typed as decimals and written as the AI asks. Or paste anything and press **Fill in**: an element string, a GS1
+Digital Link URI, a scanner's output with its group separators. Several keys in one code (an SSCC with the GTIN it
+contains), and the GS1 Digital Link URI's own parameters, are offered as the General Specifications allow them.
+→ [User guide, step 1](docs/user-guide.md#3-step-1--what-the-code-identifies)
+
+### 2. Where is it scanned? The symbol the standard recommends
+
+<p align="center">
+  <img src="docs/images/guide/guided-choice.png" alt="Step 2: questions of the GS1 decision tree, the symbol specification table and the symbols it allows" width="300">
+  &nbsp;
+  <img src="docs/images/guide/label-ean13-qr.png" alt="The EAN-13 with a QR code carrying a GS1 Digital Link URI beside it, from table 1" width="480">
+</p>
+
+A few yes-or-no questions — a retail till? general distribution? a regulated healthcare item? — lead to the GS1 symbol
+specification table, the symbols it allows for this data, and the one it recommends, drawn at once: here an EAN-13 for
+the till with a QR code carrying a GS1 Digital Link URI beside it. **Choose a symbol yourself** offers every symbol,
+still within the tables' ranges. → [User guide, step 2](docs/user-guide.md#4-step-2--where-it-is-scanned)
+
+### 3. The label at its real size, read back in the browser
+
+<p align="center">
+  <img src="docs/images/guide/real-size.png" alt="The label at real size between rulers in millimetres" width="560">
+</p>
+
+The label is redrawn as you type, with what it is — version, modules, X-dimension, size — written under it. **Real
+size** draws it between rulers in millimetres, calibrated against a bank card on your screen; **Scan test** reads it
+back with ZXing, here in the browser, and says whether it reads as intended.
+→ [User guide, real size and the scan test](docs/user-guide.md#7-seeing-it-at-real-size-and-the-scan-test)
+
+### 4. Every GS1 symbol, laid out as the standard places it
+
+<p align="center">
+  <img src="docs/images/guide/itf14.png" alt="ITF-14 with its bearer bars and its digits, at table 2's sizes" width="400">
+  &nbsp;
+  <img src="docs/images/guide/gs1-128-stack.png" alt="GS1-128 over two symbols, each with its human readable text" width="400">
+</p>
+
+EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with its bearer bars, GS1-128 (over several symbols when the data is longer than
+one may carry), the GS1 DataBar family, GS1 DataMatrix, and the QR code and Data Matrix with a GS1 Digital Link URI —
+each at its table's sizes and bar height, its human readable text placed and sized as section 4.14 allows. And the
+**GS1 Logistic Label** for an SSCC, in A6, A5, 4 × 6 or 6 × 8 inches.
+→ [User guide, the label's options](docs/user-guide.md#6-the-labels-options) ·
+[the GS1 Logistic Label](docs/user-guide.md#9-the-gs1-logistic-label)
+
+### 5. Files for artwork, print files for label printers
+
+<p align="center">
+  <img src="docs/images/guide/printer.png" alt="Printer (ZPL): a printer profile, the module in whole dots within the table's range, a test print" width="560">
+</p>
+
+**SVG, PNG, PDF and EPS** at real size for artwork, in process black, with a bar width reduction for the press;
+**ZPL II** for thermal printers with the printer's own barcode commands, every one checked by printing it through
+Labelary and reading it back; ZPL templates with placeholders for an ERP or a WMS; printer profiles that put each module
+on whole dots. → [Printing guide](docs/printing-guide.md)
+
+### 6. Thousands of labels from a spreadsheet
+
+<p align="center">
+  <img src="docs/images/guide/bulk-report.png" alt="In bulk: the validation report, the cell at fault outlined and fixed in place" width="260">
+  &nbsp;
+  <img src="docs/images/guide/generate.png" alt="Generate in bulk: a file a row by a name pattern, one PDF, label sheets, one ZPL file" width="540">
+</p>
+
+**In bulk** takes an Excel workbook, a CSV or rows pasted from a spreadsheet; guesses each column's AI from its header
+and remembers it; checks every row, with the cell at fault outlined and fixed in place, or the row skipped; makes serial
+numbers or SSCCs for you; and generates every label in one zip — a file a row named by a pattern, one PDF, laser label
+sheets (Avery or your own), one ZPL file and a CSV of what was made — in the background, with its progress.
+→ [User guide, in bulk](docs/user-guide.md#13-in-bulk-rows-from-a-spreadsheet)
+
+### 7. RFID, NFC and digital signatures
+
+<p align="center">
+  <img src="docs/images/guide/epc.png" alt="RFID and NFC: the EPC of an SGTIN-198 as hexadecimal, tag URI, pure identity and the links for NFC" width="420">
+  &nbsp;
+  <img src="docs/images/guide/signature.png" alt="Digital signature: a JWS of the code's data, a security marking's code taken out, verified" width="420">
+</p>
+
+The key's **EPC** as the EPC Tag Data Standard encodes it, for RFID and NFC tags, with GS1's GCP length table loaded in
+your browser; an **NFC tag** written and read back from a phone; a **GS1 digital signature** of the code's data (the
+GS1 Digital Signatures guideline) and GS1 verifiable credentials, the key kept in your hands.
+→ [User guide, RFID and NFC](docs/user-guide.md#11-rfid-and-nfc-epc-and-nfc-tags) ·
+[digital signature](docs/user-guide.md#12-digital-signature-gs1-jws)
+
+### 8. On a computer, a tablet or a phone — in three languages
+
+<p align="center">
+  <img src="docs/images/guide/phone-data.png" alt="On a phone: Data, with the live preview at the top and the tab bar at the bottom" width="180">
+  <img src="docs/images/guide/phone-label.png" alt="On a phone: Label" width="180">
+  <img src="docs/images/guide/phone-export.png" alt="On a phone: Export" width="180">
+  &nbsp;
+  <img src="docs/images/guide/tablet.png" alt="On a tablet held horizontally: a rail, step 1, and the label beside it" width="400">
+</p>
+
+On a phone, one part at a time — Data, Scan, Label, Export, More — chosen in a tab bar at the bottom, as phone apps
+do; on a tablet held horizontally, a rail with the label always beside you; on a computer, everything at once. English,
+Português (Brasil) and Español, in the browser's language from the first visit.
+→ [User guide, the screen at a glance](docs/user-guide.md#2-the-screen-at-a-glance)
+
+---
+
+## The manuals
+
+Everything the studio does, step by step, with screenshots — written for people who make barcodes and labels, people
+who print them, and people who build on the studio. The index by reader: [docs/README.md](docs/README.md).
+
+| Manual | For | What it holds |
+|---|---|---|
+| **[User guide](docs/user-guide.md)** | anyone making barcodes and labels | every task, step by step: [the screen](docs/user-guide.md#2-the-screen-at-a-glance) · [what the code identifies](docs/user-guide.md#3-step-1--what-the-code-identifies) · [where it is scanned](docs/user-guide.md#4-step-2--where-it-is-scanned) · [the label](docs/user-guide.md#5-step-3--the-label) and [its options](docs/user-guide.md#6-the-labels-options) · [real size and the scan test](docs/user-guide.md#7-seeing-it-at-real-size-and-the-scan-test) · [exporting](docs/user-guide.md#8-exporting-the-label) · [the GS1 Logistic Label](docs/user-guide.md#9-the-gs1-logistic-label) · [printer profiles](docs/user-guide.md#10-printer-zpl) · [RFID and NFC](docs/user-guide.md#11-rfid-and-nfc-epc-and-nfc-tags) · [digital signatures](docs/user-guide.md#12-digital-signature-gs1-jws) · [in bulk](docs/user-guide.md#13-in-bulk-rows-from-a-spreadsheet), [the validation report](docs/user-guide.md#14-in-bulk-the-validation-report), [sequences and generating](docs/user-guide.md#15-in-bulk-sequences-and-generating-every-label) · [messages and what to do](docs/user-guide.md#16-messages-and-what-to-do) · [glossary](docs/user-guide.md#17-glossary) |
+| **[Printing guide](docs/printing-guide.md)** | people who print | [which file for which printing](docs/printing-guide.md#1-which-file-for-which-printing) · [artwork and prepress](docs/printing-guide.md#2-artwork-and-prepress-svg-pdf-eps) · [laser printers and label sheets](docs/printing-guide.md#3-office-and-laser-printers-pdf-and-label-sheets) · [thermal printers and ZPL](docs/printing-guide.md#4-thermal-label-printers-zpl) · [ZPL templates for systems](docs/printing-guide.md#5-zpl-templates-for-systems) · [checking a printed symbol](docs/printing-guide.md#6-checking-a-printed-symbol) · [what ZPL refuses, and why](docs/printing-guide.md#7-what-zpl-refuses-and-why) |
+| [Features](docs/features.md) | anyone checking what it does | every feature, the commit that brought it and the tests that prove it |
+| [Conformance](docs/conformance.md) | quality and standards people | each standard, section by section: what is done, what is not, and the evidence |
+| [Developer guide](docs/developer-guide.md) | developers | architecture, every module, the tests, how to extend |
+| [The core's API reference](docs/core-api.md) | integrators | every name `@gs1-label-studio/core` exports |
+| [Third-party licences](docs/third-party.md) | anyone reusing it | what the studio is made of, and why nothing restricts commercial use |
+| [Inventory of features](docs/test-inventory.md) · [History](docs/history.md) · [Changelog](CHANGELOG.md) | maintainers | every test by area; how the project grew; every change |
 
 ## Development
 
@@ -37,12 +202,6 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
 | `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
-
-Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first-architecture.md),
-[ADR 0002 — printer output](docs/adr/0002-printer-output.md),
-[ADR 0003 — product scope and user experience](docs/adr/0003-product-scope-and-ux.md),
-[ADR 0004 — the resolver's label studio as the starting point](docs/adr/0004-port-of-the-resolver-label-studio.md),
-[ADR 0005 — the documentation and the inventory of features](docs/adr/0005-documentation-and-feature-inventory.md).
 
 ## Backlog
 
@@ -296,4 +455,5 @@ complete.
 `packages/core/assets/fonts/OFL.txt`); the EPC schemes derived from GS1's EPC Tag Data Translation artefacts;
 [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT) for the editor's scan test and the tests; for tests,
 [resvg-js](https://github.com/yisibl/resvg-js) (MPL-2.0), [epc-tds](https://github.com/sergiss/epc-tds) (MIT), [Playwright](https://playwright.dev) (Apache-2.0) and
-poppler's `pdftoppm` (GPL-2.0) and Ghostscript (AGPL-3.0), both run as separate programs.
+poppler's `pdftoppm` (GPL-2.0) and Ghostscript (AGPL-3.0), both run as separate programs. The full list, with versions:
+[third-party licences](docs/third-party.md); the studio's About lists them too.
