@@ -12,6 +12,14 @@ import {
   parseElementString,
   specificationFor,
   splitGs1128,
+  encode,
+  gs1128StackDots,
+  labelFor,
+  syntaxEngine,
+  widthInModules,
+  zplLabel,
+  zplOptionsFor,
+  type LabelDesign,
   type LabelOptions,
 } from "../src/index.ts";
 import { drawPdf } from "./files.ts";
@@ -83,5 +91,24 @@ describe("the stacked symbols", () => {
     expect(layout.parts!.length).toBeGreaterThan(1);
     expect(layout.width * layout.xMm).toBeLessThanOrEqual(165.1 + 4 * layout.xMm);
     expect(() => layoutLabel(options(`(01)09506000134376(8200)${"X".repeat(30)}`, ), font)).toThrow(/at most 165.10 mm long/);
+  });
+});
+
+describe("in ZPL", () => {
+  it("stacks a ^BC a symbol on a label as wide as the widest and as high as the stack", async () => {
+    const engine = await syntaxEngine();
+    const design: LabelDesign = {
+      symbology: "gs1-128", hri: "full", version: null, error: "m", size: 100, linear: "none", linearSize: null, bearer: "frame",
+      reduction: 0, spec: specificationFor(5, "gs1-128")!, table: 5,
+    };
+    const drawn = labelFor(engine.parse(LONG) as never, design, font);
+    const o = zplOptionsFor(drawn, design, 203);
+    expect(o.parts).toEqual(splitGs1128(LONG));
+    const widest = Math.max(...o.parts!.map((part) => widthInModules(encode("gs1-128", part))));
+    expect(o.widthDots).toBeGreaterThanOrEqual(o.x + widest * o.dotsPerModule);
+    expect(o.heightDots).toBeGreaterThanOrEqual(o.y + (o.parts!.length - 1) * gs1128StackDots(o) + o.barHeightDots);
+    const zpl = zplLabel("gs1-128", drawn.data, o);
+    expect(zpl.match(/\^BCN/g)).toHaveLength(2);
+    expect(zpl).toContain(`^FO${o.x},${o.y + gs1128StackDots(o)}^BY`);
   });
 });

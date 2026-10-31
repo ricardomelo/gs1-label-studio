@@ -32,6 +32,11 @@ export interface ZplSymbolOptions {
   /** A QR code's error correction level (M when not given) and one encoding mode for its data (backlog 1.14). */
   qrError?: "L" | "M" | "Q" | "H";
   qrMode?: QrMode;
+  /**
+   * GS1-128 over several symbols (backlog 1.13): the element strings of each, from the top; the data is then the whole
+   * element string. Each symbol and its text are stacked `stackDots` apart, from `y`.
+   */
+  parts?: readonly string[];
 }
 
 export interface ZplLabelOptions extends ZplSymbolOptions {
@@ -60,7 +65,20 @@ const HRI_TEXT_MM = 2.2;
 
 /** One label with one symbol, ready to print. */
 export function zplLabel(symbology: SymbologyId, data: string, options: ZplLabelOptions): string {
-  return document(fields(symbology, data, options, false).commands, options, []);
+  return document(stacked(symbology, data, options, false).commands, options, []);
+}
+
+/** The height a stacked GS1-128 symbol takes with its text and the gap to the next: bars, text, a quiet zone. */
+export function gs1128StackDots(options: Pick<ZplSymbolOptions, "barHeightDots" | "dotsPerModule" | "dpi">): number {
+  return options.barHeightDots + 2 * options.dotsPerModule + hriTextDots(options.dpi) + 10 * options.dotsPerModule;
+}
+
+/** One symbol's fields, or GS1-128's symbols stacked from the top, each with its own element strings. */
+function stacked(symbology: SymbologyId, data: string, options: ZplSymbolOptions, template: boolean) {
+  if (symbology !== "gs1-128" || !options.parts || options.parts.length < 2) return fields(symbology, data, options, template);
+  const step = gs1128StackDots(options);
+  const all = options.parts.map((part, index) => fields(symbology, part, { ...options, y: options.y + index * step }, template));
+  return { commands: all.flatMap((f) => f.commands), placeholders: all.flatMap((f) => f.placeholders) };
 }
 
 /**
@@ -69,7 +87,7 @@ export function zplLabel(symbology: SymbologyId, data: string, options: ZplLabel
  * (and a Data Matrix's size, forced in the template) follows it, so it should be as long as the longest values.
  */
 export function zplTemplate(symbology: SymbologyId, data: string, options: ZplLabelOptions): ZplTemplate {
-  const { commands, placeholders } = fields(symbology, data, options, true);
+  const { commands, placeholders } = stacked(symbology, data, options, true);
   return { zpl: document(commands, options, placeholders), placeholders };
 }
 

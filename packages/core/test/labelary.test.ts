@@ -7,6 +7,7 @@ import {
   fillTemplate,
   rasterize,
   snapToDots,
+  splitGs1128,
   zplLabel,
   zplTemplate,
   graphicFields,
@@ -114,6 +115,25 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const result = await print(zpl, dpi, o.widthDots, o.heightDots);
     expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`]Q1 ${data}`);
     expect(LEVELS.indexOf(result!.ecLevel)).toBeGreaterThanOrEqual(LEVELS.indexOf(level));
+  });
+
+  // GS1-128 over several symbols (backlog 1.13), stacked, each with its own element strings; every symbol read back.
+  it("GS1-128 in two symbols, stacked", { timeout: 30000 }, async () => {
+    const data = "(00)106141411234567897(02)09506000134376(37)24(10)ABCDEFGHIJ(15)271231(3102)001250";
+    const parts = splitGs1128(data);
+    expect(parts).toHaveLength(2);
+    const o = { ...options(0.495, 203), parts, widthDots: Math.round(8 * 203), heightDots: Math.round(3 * 203) };
+    const zpl = zplLabel("gs1-128", data, o);
+    expect(zpl.match(/\^BCN/g)).toHaveLength(2);
+    const inches = (dots: number) => Math.ceil((dots / 203) * 100) / 100;
+    const response = await fetch(`https://api.labelary.com/v1/printers/8dpmm/labels/${inches(o.widthDots)}x${inches(o.heightDots)}/0/`, {
+      method: "POST", headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded" }, body: zpl,
+    });
+    expect(response.status).toBe(200);
+    const results = await readBarcodes(new Blob([await response.arrayBuffer()], { type: "image/png" }), {
+      formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4,
+    });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(parts.map((p) => `]C1 ${p}`).sort());
   });
 
   // Item 3.2 with the layouts of item 1.3. GS1 DataBar through ^BR at the height it prints each symbol at.

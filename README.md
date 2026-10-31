@@ -141,8 +141,8 @@ complete.
   was not checked before), the element strings go in as many GS1-128 symbols as needed, in order, the key in the
   first; stacked on the left a quiet zone apart, each with its own text; "GS1-128 symbols" under the options lists the
   element strings, "new symbol" starts one where the person chooses, "Automatic" goes back; the guided choice now
-  offers GS1-128 for such data; each symbol read back from the SVG, PNG and PDF. ZPL for several symbols waits for
-  3.2's label layout*
+  offers GS1-128 for such data; each symbol read back from the SVG, PNG and PDF; in ZPL a ^BC a symbol, stacked the same
+  way, each read back through Labelary (31 October)*
 - 1.14 QR Code's encoding modes: today bwip-js chooses the segments itself (numeric, alphanumeric, byte, mixed, for the
   smallest symbol). Offer automatic (as today) or one mode for the whole data — numeric, alphanumeric, byte — as ISO/IEC
   18004 defines them, alphanumeric only when the data allow it (upper case: a GS1 Digital Link URI's scheme and domain

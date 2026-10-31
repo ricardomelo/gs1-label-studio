@@ -12,6 +12,7 @@ export {
   gs1128FieldData,
   MAX_GRAPHIC_FIELD_BYTES,
   upcaManufacturerAndProduct,
+  gs1128StackDots,
   zplLabel,
   zplTemplate,
   ZplUnsupportedError,

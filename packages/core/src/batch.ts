@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { zplLabel, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { gs1128StackDots, zplLabel, type ZplLabelOptions } from "./zpl.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -106,9 +106,6 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
-  if (layout.parts && layout.parts.length > 1) {
-    throw new ZplUnsupportedError(`GS1-128 in ${layout.parts.length} symbols is not written in ZPL yet: it comes with the label layout of 3.2.`);
-  }
   const d = snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
   const quietZone = design.spec && typeof design.spec.quietZone !== "number"
@@ -123,12 +120,15 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
     : undefined;
   const t = bearer?.thicknessDots ?? 0;
   const side = bearer?.kind === "frame" ? t : 0;
-  const symbolWidth = itf ? 135 : widthInModules(geometry);
+  // GS1-128 over several symbols: as wide as the widest, as high as the stack (backlog 1.13)
+  const parts = layout.parts && layout.parts.length > 1 ? layout.parts : undefined;
+  const symbolWidth = itf ? 135 : parts ? Math.max(...parts.map((part) => widthInModules(encode("gs1-128", part)))) : widthInModules(geometry);
   return {
     x: quietZone * d + side, y: quietZone * d + t, dotsPerModule: d, barHeightDots, dpi,
     widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
-    heightDots: symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
+    heightDots: (parts ? (parts.length - 1) * gs1128StackDots({ barHeightDots, dotsPerModule: d, dpi }) : 0) + symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
     ...(bearer ? { bearer } : {}),
+    ...(parts ? { parts } : {}),
     ...(design.symbology === "dl-qrcode" ? { qrError: design.error.toUpperCase() as "L" | "M" | "Q" | "H", ...(design.qrMode ? { qrMode: design.qrMode } : {}) } : {}),
   };
 }
