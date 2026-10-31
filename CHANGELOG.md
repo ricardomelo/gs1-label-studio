@@ -127,4 +127,9 @@
   table's range, the print width checked and a test print with a 50 mm ruler.
 - The GS1 Logistic Label (item 4.1): A6, 4 × 6 in, A5 or 6 × 8 in, with free text, data titles and the GS1-128 symbols,
   the SSCC lowest, in SVG, PNG, PDF and EPS, one at a time or in bulk.
+- Documentation by reader (ADR 0005): a user guide with screenshots, a printing guide, the core's API reference
+  generated from its sources, a developer guide, the conformance to each standard, third-party licences and an index;
+  every feature in `docs/features.md` with the commit that brought it and the tests that prove it; the inventory of
+  every test (`docs/test-inventory.md`), drawn from a run; a test that keeps them in step, also run when only documents
+  change.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

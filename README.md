@@ -4,13 +4,20 @@ Create GS1 barcodes — and, later, whole labels — in your browser, one at a t
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
 DPL). Nothing you type or upload leaves your computer.
 
-> **Status:** early development (29 October 2026). The resolver's editor in the browser: key, qualifiers and data
-> attributes, where the code is scanned (the GS1 decision tree, the symbol recommended), the label beside its options,
-> live — EAN/UPC, ITF-14, GS1-128, GS1 DataBar, GS1 DataMatrix and the QR code and Data Matrix with a GS1 Digital Link
-> URI, each laid out as the GS1 General Specifications place it, seen at real size and read back by a scan test in the
-> browser; SVG, PNG at a chosen resolution, PDF and EPS in process black, a bar width reduction, a zip of all, and ZPL
-> with the printer's own commands (and as a template); EPC for RFID and NFC.
-> See the backlog.
+> **Status:** early development, published at <https://ricardomelo.github.io/gs1-label-studio/> (31 October 2026).
+> One code or thousands from a spreadsheet: what the code identifies (every GS1 key, qualifiers, data attributes,
+> several keys), where it is scanned (the GS1 decision tree, the symbol recommended), every GS1 symbol the tests can read
+> back — EAN/UPC, ITF-14, GS1-128 over several symbols, the GS1 DataBar family, GS1 DataMatrix, the QR code and Data
+> Matrix with a GS1 Digital Link URI —, laid out as the GS1 General Specifications place them, seen at real size and
+> read back in the browser; SVG, PNG, PDF and EPS for artwork, label sheets, ZPL II with the printer's own commands and
+> printer profiles; the GS1 Logistic Label; EPC for RFID and NFC tags; GS1 digital signatures. See the backlog.
+
+## Documentation
+
+[docs/README.md](docs/README.md) is the index, by reader: the [user guide](docs/user-guide.md), the
+[printing guide](docs/printing-guide.md), every [feature](docs/features.md) with the tests that prove it, the
+[developer guide](docs/developer-guide.md), the [core's API reference](docs/core-api.md),
+[conformance to the standards](docs/conformance.md) and [third-party licences](docs/third-party.md).
 
 ## Development
 
@@ -29,12 +36,13 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 | `apps/web` | the web application (React + Vite) |
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
-| `scripts` | project tools; `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
+| `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
 
 Decisions: [ADR 0001 — browser-first architecture](docs/adr/0001-browser-first-architecture.md),
 [ADR 0002 — printer output](docs/adr/0002-printer-output.md),
 [ADR 0003 — product scope and user experience](docs/adr/0003-product-scope-and-ux.md),
-[ADR 0004 — the resolver's label studio as the starting point](docs/adr/0004-port-of-the-resolver-label-studio.md).
+[ADR 0004 — the resolver's label studio as the starting point](docs/adr/0004-port-of-the-resolver-label-studio.md),
+[ADR 0005 — the documentation and the inventory of features](docs/adr/0005-documentation-and-feature-inventory.md).
 
 ## Backlog
 
@@ -56,6 +64,9 @@ complete.
 - 0.4 Release process, as in the resolver's project (the owner, 29 October 2026): `main` holds the last stable
   version, published at the site's root; `develop` holds the work in progress, published for the owner's tests under
   `/develop/`. Set up at the first release: until then there is no stable version, and `main` is where work lands
+- 0.5 Documentation by reader, as in the resolver's project (the owner, 31 October 2026): user and printing guides,
+  features each naming the tests that prove it, an inventory drawn from the tests, the core's API reference, a
+  developer guide, conformance and licences, kept in step by a test (ADR 0005) — *done 31 October*
 
 **Phase 1 — one code, right by construction** (ported from the resolver's label studio where it had it: ADR 0004)
 

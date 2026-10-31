@@ -1,0 +1,23 @@
+name: Documents
+
+# CI ignores changes to documents alone; this checks them (ADR 0005): features naming tests that exist, the
+# inventory and the developer guide's counts, links, and the core's API reference.
+on:
+  push:
+    branches: [main]
+    paths: ["**.md", "docs/**"]
+  pull_request:
+    paths: ["**.md", "docs/**"]
+
+jobs:
+  documents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @gs1-label-studio/core exec vitest run test/docs.test.ts --reporter=default --reporter=github-actions

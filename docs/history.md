@@ -138,3 +138,25 @@ named the Made-to-Order GTIN (03) as the one key of element strings only and sho
 attribute of a GTIN. An earlier answer to the owner had counted (8040) to (8043) among the identifiers; the section
 corrected it.
 
+On 30 October evening (session 5) the owner, away until 9 November, asked for the work to go on with the recommended
+options and placed five ideas in the backlog (1.15 to 1.19). In one session: the outputs in bulk (2.4) with one design
+drawn for every row; qualifiers and attributes in one list (1.15); the URI's own parameters (1.17); several keys (1.12),
+which the Syntax Engine already enforced; serial numbers and SSCCs made in the studio (2.3); the text placed and sized
+(1.16); GS1-128 over several symbols (1.13); generation three times faster and in a Web Worker (2.5), measured first;
+QR Code's encoding modes through node-qrcode (1.14); GS1 digital signatures and credentials (1.18); NFC tags (1.19);
+then ZPL caught up with the label, printer profiles (3.1) and the GS1 Logistic Label (4.1). Pimaco's sheets waited for
+margins its catalogue does not give. A push went out with a typecheck failing because the check's output was read
+instead of its exit status; the exit status is read since.
+
+## Session 6 — 31 October 2026: the documentation
+
+The owner asked for complete documentation, like the resolver's project (ADR 0005). As there, the tests' names became
+the inventory of what the studio does — 712 tests, the ZPL through Labelary included —, each feature names the tests
+that prove it, and a test keeps the documents in step with the code. Manuals by reader: a user guide with screenshots
+taken from the built application by a script, a printing guide (artwork, label sheets, thermal printers and ZPL), the
+core's API reference generated from its sources, a developer guide, a conformance review standard by standard, and the
+third-party licences. `vitest list` would have been simpler than a run, but it leaves out the tests made inside loops
+over fixtures; the inventory comes from a complete run, and refuses to be written when a test fails — including a test
+file that fails as a whole, which its first version missed. The owner then asked for the interface in Brazilian
+Portuguese and Spanish besides English, the documentation staying in English.
+

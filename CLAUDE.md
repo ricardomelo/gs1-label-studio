@@ -56,6 +56,16 @@ this public repository.
 - The editor has browser tests: `pnpm --filter @gs1-label-studio/web e2e` after `pnpm build` (Playwright 1.63.0, the
   version of this sandbox's browser).
 
+## Documents (ADR 0005)
+
+- `docs/README.md` indexes the documents by reader. A feature delivered gets its row in `docs/features.md` naming the
+  tests that prove it, and its steps in `docs/user-guide.md` (and `docs/printing-guide.md` for printing).
+- After changing tests: `NODE_USE_ENV_PROXY=1 LABELARY=1 node scripts/inventory.mjs` (the inventory and the developer
+  guide's counts). After changing the core's exports or their comments: `node scripts/api-reference.mjs`. After
+  changing a screen: `pnpm build` then `pnpm --filter @gs1-label-studio/web screenshots`.
+- `packages/core/test/docs.test.ts` fails when the documents are out of step; it also runs alone when only documents
+  change (`.github/workflows/docs.yml`).
+
 ## Working with the maintainer
 
 - New to Git: give step-by-step instructions with the expected output.

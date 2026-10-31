@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "jsx": "react-jsx", "types": ["vite/client"] },
-  "include": ["src", "e2e", "vite.config.ts", "offline.ts", "playwright.config.ts"]
+  "include": ["src", "e2e", "screenshots", "vite.config.ts", "offline.ts", "playwright.config.ts", "screenshots.config.ts"]
 }
