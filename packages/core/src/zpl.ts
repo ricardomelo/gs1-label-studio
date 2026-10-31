@@ -37,6 +37,9 @@ export interface ZplSymbolOptions {
    * element string. Each symbol and its text are stacked `stackDots` apart, from `y`.
    */
   parts?: readonly string[];
+  /** The human readable text's place and height in mm (backlog 1.16): below and 2.2 mm when not given. */
+  hriPosition?: "below" | "above" | "split" | "left" | "right";
+  hriHeightMm?: number;
 }
 
 export interface ZplLabelOptions extends ZplSymbolOptions {
@@ -69,14 +72,15 @@ export function zplLabel(symbology: SymbologyId, data: string, options: ZplLabel
 }
 
 /** The height a stacked GS1-128 symbol takes with its text and the gap to the next: bars, text, a quiet zone. */
-export function gs1128StackDots(options: Pick<ZplSymbolOptions, "barHeightDots" | "dotsPerModule" | "dpi">): number {
-  return options.barHeightDots + 2 * options.dotsPerModule + hriTextDots(options.dpi) + 10 * options.dotsPerModule;
+export function gs1128StackDots(options: Pick<ZplSymbolOptions, "barHeightDots" | "dotsPerModule" | "dpi" | "hriHeightMm">): number {
+  return options.barHeightDots + 2 * options.dotsPerModule + hriTextDots(options.dpi, options.hriHeightMm) + 10 * options.dotsPerModule;
 }
 
 /** One symbol's fields, or GS1-128's symbols stacked from the top, each with its own element strings. */
 function stacked(symbology: SymbologyId, data: string, options: ZplSymbolOptions, template: boolean) {
   if (symbology !== "gs1-128" || !options.parts || options.parts.length < 2) return fields(symbology, data, options, template);
-  const step = gs1128StackDots(options);
+  // Split, each symbol's attributes go above it: room for their line between the symbols
+  const step = gs1128StackDots(options) + (options.hriPosition === "split" ? zplTextAbove(options, 1) : 0);
   const all = options.parts.map((part, index) => fields(symbology, part, { ...options, y: options.y + index * step }, template));
   return { commands: all.flatMap((f) => f.commands), placeholders: all.flatMap((f) => f.placeholders) };
 }
@@ -216,10 +220,7 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
         template ? (e) => value(e.ai, e.value, aiDescription(e.ai, 'a ">" is written ">0"'), { ">": ">0" }) : undefined,
       );
       const widthDots = widthInModules(geometry) * d;
-      const hri = options.hri ?? true
-        ? [`^FO${x},${y + h + 2 * d}^A0N,${hriTextDots(options.dpi)},${hriTextDots(options.dpi)}^FB${widthDots},1,0,C` +
-            fieldData(elements.map((e) => `(${e.ai})${template ? `{{${e.ai}}}` : e.value}`).join(""))]
-        : [];
+      const hri = textAround(elements.map((e) => `(${e.ai})${template ? `{{${e.ai}}}` : e.value}`), x, y, y + h, widthDots, 2 * d, options, true);
       return { commands: [`${at}^BY${d},3.0,${h}^BCN,${h},N,N,N,N${fieldData(text)}`, ...hri], placeholders };
     }
     case "gs1-datamatrix": {
@@ -236,7 +237,7 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
         return e.ai + field + separator;
       }).join("");
       return {
-        commands: [`${at}^BXN,${d},200,${matrixSize},6,_${fieldData(text)}`, ...hriLines(elements, shown, geometry, options)],
+        commands: [`${at}^BXN,${d},200,${matrixSize},6,_${fieldData(text)}`, ...(geometry.kind === "matrix" ? textAround(elements.map((e, index) => `(${e.ai})${shown[index]}`), x, y, y + geometry.rows * d, Math.max(geometry.cols * d, 40 * hriTextDots(options.dpi, options.hriHeightMm)), 2 * d, options, false, "L") : [])],
         placeholders,
       };
     }
@@ -276,12 +277,6 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
 
 type Value = (name: string, sample: string, description: string, escapes?: Record<string, string>) => string;
 
-/** The text below a linear symbol, centred on `widthDots` from `x`, in the printer's scalable font. */
-function textBelow(text: string, x: number, y: number, widthDots: number, dpi: number): string {
-  const dots = hriTextDots(dpi);
-  return `^FO${x},${y}^A0N,${dots},${dots}^FB${widthDots},1,0,C${fieldData(text)}`;
-}
-
 /**
  * ITF-14 with its bearer bars as ^GB boxes and its 14 digits below them, 1.02 mm away: the printer's interpretation
  * line would print under the bottom bearer bar. The symbol takes the whole GTIN-14 with no check digit computed, so
@@ -299,9 +294,8 @@ function itf14WithBearers(data: string, options: ZplSymbolOptions, value: Value)
   const boxes = bearer!.kind === "frame"
     ? [`^FO${left},${y - t}^GB${outer},${h + 2 * t},${t}^FS`]
     : [`^FO${left},${y - t}^GB${outer},${t},${t}^FS`, `^FO${left},${y + h}^GB${outer},${t},${t}^FS`];
-  const text = options.hri ?? true
-    ? [textBelow(gtin, left, y + h + t + Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), outer, options.dpi)]
-    : [];
+  const gap = Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi);
+  const text = textAround([gtin], left, y - t, y + h + t, outer, gap, { ...options, hriPosition: options.hriPosition === "split" ? "below" : options.hriPosition }, true);
   return [`^FO${x},${y}^BY${d},${ITF14_RATIO}.0,${h}^B2N,${h},N,N,N${fieldData(gtin)}`, ...boxes, ...text];
 }
 
@@ -346,9 +340,7 @@ function databar(symbology: SymbologyId, data: string, geometry: SymbolGeometry,
   const segments = symbology === "databar-expanded-stacked" ? EXPANDED_STACKED_SEGMENTS : 22;
   const height = (modules ?? (geometry.kind === "matrix" ? geometry.rows : 34)) * d;
   const widthDots = widthInModules(geometry) * d;
-  const text = options.hri ?? true
-    ? [textBelow(type === 6 ? shown.join("") : shown[0]!, x, y + height + Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), widthDots, options.dpi)]
-    : [];
+  const text = textAround(type === 6 ? shown : [shown[0]!], x, y, y + height, widthDots, Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), options, true);
   return [`^FO${x},${y}^BRN,${type},${d},1,${h},${segments}${fieldData(fd)}`, ...text];
 }
 
@@ -403,20 +395,39 @@ export function gs1128FieldData(elements: Element[], placeholder?: (element: Ele
   return out;
 }
 
-function hriTextDots(dpi: number): number {
-  return Math.round((HRI_TEXT_MM / MM_PER_INCH) * dpi);
+function hriTextDots(dpi: number, mm = HRI_TEXT_MM): number {
+  return Math.round((mm / MM_PER_INCH) * dpi);
 }
 
-/** The element strings as text lines below a 2D symbol (after its one-module quiet zone), in the scalable font. */
-function hriLines(elements: Element[], shown: string[], geometry: SymbolGeometry, options: ZplSymbolOptions): string[] {
-  if (!(options.hri ?? true) || geometry.kind !== "matrix") return [];
-  const textDots = hriTextDots(options.dpi);
-  let y = options.y + (geometry.rows + 2) * options.dotsPerModule;
-  return elements.map((e, index) => {
-    const line = `^FO${options.x},${y}^A0N,${textDots},${textDots}${fieldData(`(${e.ai})${shown[index]}`)}`;
-    y += Math.round(textDots * 1.4);
-    return line;
-  });
+/**
+ * Text lines around a symbol that spans [top, bottom] from `x` over `widthDots`, `gap` away (backlog 1.16): below it,
+ * above it, or split with the key's line below and the others above; one element string a line unless `join`.
+ * Left and right are not written: the printer's font sets the text's width, which the studio cannot know here.
+ */
+function textAround(lines: string[], x: number, top: number, bottom: number, widthDots: number, gap: number,
+  options: ZplSymbolOptions, join: boolean, align: "C" | "L" = "C"): string[] {
+  if (!(options.hri ?? true) || !lines.length) return [];
+  const position = options.hriPosition ?? "below";
+  if (position === "left" || position === "right") {
+    throw new ZplUnsupportedError("ZPL places the text below or above the symbol: beside it, the printer's font would set its width.");
+  }
+  const t = hriTextDots(options.dpi, options.hriHeightMm);
+  const step = Math.round(t * 1.4);
+  const joined = (from: string[]) => (join && from.length ? [from.join("")] : from);
+  const below = position === "below" ? joined(lines) : position === "split" ? [lines[0]!] : [];
+  const above = position === "above" ? joined(lines) : position === "split" ? joined(lines.slice(1)) : [];
+  const line = (text: string, y: number) => `^FO${x},${y}^A0N,${t},${t}^FB${widthDots},1,0,${align}${fieldData(text)}`;
+  return [
+    ...above.map((text, index) => line(text, top - gap - t - (above.length - 1 - index) * step)),
+    ...below.map((text, index) => line(text, bottom + gap + index * step)),
+  ];
+}
+
+/** The room text above a symbol takes in ZPL (backlog 1.16), at most one line an element string. */
+export function zplTextAbove(options: Pick<ZplSymbolOptions, "hriPosition" | "hriHeightMm" | "dpi" | "dotsPerModule">, lines: number): number {
+  if (options.hriPosition !== "above" && options.hriPosition !== "split") return 0;
+  const t = hriTextDots(options.dpi, options.hriHeightMm);
+  return lines * Math.round(t * 1.4) + 2 * options.dotsPerModule + Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi);
 }
 
 /** UPC-E (number system 0, eight digits) expanded to the UPC-A's manufacturer and product digits (ten). */

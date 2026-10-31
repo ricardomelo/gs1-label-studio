@@ -170,8 +170,8 @@ complete.
   the 2 mm minimum (rule 2a iii) to 5 mm, 3 mm marked for the GS1 Logistic Label (rule 5c), for the 2D symbols, GS1-128,
   ITF-14 and the GS1 DataBar family, in the SVG, PNG, PDF, EPS and the files made in bulk; the text clears the quiet
   zone by a module (2D) or the bars by 1.02 mm as below; beside an EAN/UPC a 2D symbol's text goes below or above;
-  EAN/UPC's digits stay where section 5.2.5 puts them. ZPL keeps the printer's own text placement until 3.2's label
-  layout*
+  EAN/UPC's digits stay where section 5.2.5 puts them. In ZPL (31 October) the height everywhere, and below, above
+  or split, read back through Labelary; left and right are refused there, the printer's font setting the text's width*
 - 1.17 A GS1 Digital Link URI with parameters of its own: name=value pairs in the query string after the data
   attributes, e.g. `https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2&c=3`; a name made only of
   digits is refused (digits are the AIs'), names and values percent-encoded as the GS1 Digital Link standard asks; not

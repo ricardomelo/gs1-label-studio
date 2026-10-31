@@ -136,6 +136,26 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(parts.map((p) => `]C1 ${p}`).sort());
   });
 
+  // The text above or split (backlog 1.16), at the height chosen: the symbol still reads, the text clear of its bars.
+  it.each([
+    ["gs1-128", "(01)09506000134352(10)ABC123(17)271231", "above", 3, "]C1"],
+    ["gs1-128", "(01)09506000134352(10)ABC123(17)271231", "split", 2.5, "]C1"],
+    ["gs1-datamatrix", "(01)09506000134352(10)ABC123(17)271231", "split", 3, "]d2"],
+    ["databar-expanded", "(01)09506000134352(3103)001250(17)271231", "above", 2, "]e0"],
+  ] as const)("%s with its text %s, %s mm high", { timeout: 30000 }, async (symbology, data, position, mm, identifier) => {
+    const o = { ...options(0.495, 203), hriPosition: position, hriHeightMm: mm, y: 200 };
+    if (symbology === "databar-expanded") o.barHeightDots = 34 * o.dotsPerModule;
+    const zpl = zplLabel(symbology, data, o);
+    const t = Math.round((mm / 25.4) * 203);
+    expect(zpl).toContain(`^A0N,${t},${t}`);
+    // Above: every text line ends above the symbol's top
+    const textYs = [...zpl.matchAll(/\^FO\d+,(\d+)\^A0N/g)].map((m) => Number(m[1]));
+    expect(textYs.some((ty) => ty + t <= 200)).toBe(true);
+    if (position === "split") expect(textYs.some((ty) => ty > 200)).toBe(true);
+    const result = await print(zpl, 203, o.widthDots, o.heightDots);
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`${identifier} ${data}`);
+  });
+
   // Item 3.2 with the layouts of item 1.3. GS1 DataBar through ^BR at the height it prints each symbol at.
   const GTIN = "(01)09506000134352";
   const BARS: [SymbologyId, string, number, number][] = [

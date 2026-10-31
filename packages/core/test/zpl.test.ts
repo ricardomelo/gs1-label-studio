@@ -7,6 +7,7 @@ import {
   zplLabel,
   zplTemplate,
   ZplUnsupportedError,
+  zplTextAbove,
 } from "../src/index.ts";
 
 const at203 = { x: 40, y: 40, dotsPerModule: 3, barHeightDots: 120, dpi: 203, widthDots: 800, heightDots: 400 };
@@ -53,6 +54,19 @@ describe("ZPL with the printer's commands", () => {
   it("writes reserved characters through ^FH", () => {
     expect(zplLabel("dl-qrcode", "https://example.com/01/09506000134352?x=~", at203))
       .toContain("^BQN,2,3^FH\\^FDMA,https://example.com/01/09506000134352?x=\\7E^FS");
+  });
+
+  it("writes the text above, or split with the key below, at the height chosen; refuses it beside the symbol", () => {
+    const o = { ...at203, y: 200 };
+    const data = "(01)09506000134352(10)ABC123";
+    expect(zplLabel("gs1-128", data, { ...o, hriPosition: "above", hriHeightMm: 3 })).toMatch(/\^FO\d+,\d+\^A0N,24,24\^FB\d+,1,0,C\^FD\(01\)09506000134352\(10\)ABC123\^FS/);
+    const split = zplLabel("gs1-128", data, { ...o, hriPosition: "split" });
+    const [above, below] = [/\^FO\d+,(\d+)\^A0N,18,18\^FB\d+,1,0,C\^FD\(10\)ABC123/.exec(split), /\^FO\d+,(\d+)\^A0N,18,18\^FB\d+,1,0,C\^FD\(01\)09506000134352\^FS/.exec(split)];
+    expect(Number(above![1]) + 18).toBeLessThanOrEqual(200);
+    expect(Number(below![1])).toBeGreaterThan(200 + o.barHeightDots);
+    expect(() => zplLabel("gs1-128", data, { ...o, hriPosition: "right" })).toThrow(/below or above the symbol/);
+    expect(zplTextAbove({ dpi: 203, dotsPerModule: 3 }, 2)).toBe(0);
+    expect(zplTextAbove({ dpi: 203, dotsPerModule: 3, hriPosition: "above" }, 2)).toBe(2 * 25 + 6 + 8);
   });
 
   it("refuses a GS1 QR Code: ^BQ has no FNC1", () => {

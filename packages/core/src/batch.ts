@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { gs1128StackDots, zplLabel, type ZplLabelOptions } from "./zpl.ts";
+import { gs1128StackDots, zplLabel, zplTextAbove, type ZplLabelOptions } from "./zpl.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -112,7 +112,6 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
     ? Math.max(2, ...design.spec.quietZone)
     : linearKind ? 10 : 2;
   const barHeightDots = Math.round((layout.barHeight ?? 50) * d);
-  const textDots = Math.round((2.2 / 25.4) * dpi);
   const symbolHeight = geometry.kind === "matrix" ? geometry.rows * d : barHeightDots;
   const itf = design.symbology === "itf14";
   const bearer = itf
@@ -123,10 +122,21 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
   // GS1-128 over several symbols: as wide as the widest, as high as the stack (backlog 1.13)
   const parts = layout.parts && layout.parts.length > 1 ? layout.parts : undefined;
   const symbolWidth = itf ? 135 : parts ? Math.max(...parts.map((part) => widthInModules(encode("gs1-128", part)))) : widthInModules(geometry);
+  // Text above the symbol (backlog 1.16): one line for the linear symbols, which join their element strings, one an
+  // element string for GS1 DataMatrix
+  const hri = {
+    ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
+    ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
+  };
+  const lines = design.hri === "none" ? 0 : design.symbology === "gs1-datamatrix" ? Math.max(1, drawn.options.hriLines.length) : 1;
+  const above = zplTextAbove({ ...hri, dpi, dotsPerModule: d }, lines);
+  const stackAbove = parts && design.hriPosition === "split" ? (parts.length - 1) * zplTextAbove({ ...hri, dpi, dotsPerModule: d }, 1) : 0;
   return {
-    x: quietZone * d + side, y: quietZone * d + t, dotsPerModule: d, barHeightDots, dpi,
+    ...hri,
+    x: quietZone * d + side, y: quietZone * d + t + above, dotsPerModule: d, barHeightDots, dpi,
     widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
-    heightDots: (parts ? (parts.length - 1) * gs1128StackDots({ barHeightDots, dotsPerModule: d, dpi }) : 0) + symbolHeight + 2 * quietZone * d + 2 * t + 6 * textDots,
+    heightDots: (parts ? (parts.length - 1) * gs1128StackDots({ barHeightDots, dotsPerModule: d, dpi, ...hri }) + stackAbove : 0) + above +
+      symbolHeight + 2 * quietZone * d + 2 * t + 6 * Math.round(((design.hriHeightMm ?? 2.2) / 25.4) * dpi),
     ...(bearer ? { bearer } : {}),
     ...(parts ? { parts } : {}),
     ...(design.symbology === "dl-qrcode" ? { qrError: design.error.toUpperCase() as "L" | "M" | "Q" | "H", ...(design.qrMode ? { qrMode: design.qrMode } : {}) } : {}),
