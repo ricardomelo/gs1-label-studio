@@ -247,7 +247,13 @@ complete.
 
 **Phase 4 — labels**
 
-- 4.1 Templates: GS1 Logistic Label (SSCC), product labels, healthcare labels
+- 4.1 Templates: GS1 Logistic Label (SSCC), product labels, healthcare labels — *the GS1 Logistic Label done 31
+  October (mock-up A of two; General Specifications 26.0, 6.6): for an SSCC, "Label" in step 3 offers it in A6, 4 × 6
+  in, A5 or 6 × 8 in; the top block with who sends and receives it (3.5 mm), the middle block with each element
+  string's data title above its content (7 mm), the bottom block with the GS1-128 symbols and their 3 mm text, the
+  SSCC alone in the lowest, the rest split as they fit the page's width; refused when the page is too short; one
+  Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. Not yet: ZPL, a 2D symbol
+  beside the middle block, a second language for the data titles; product and healthcare labels*
 - 4.2 Designer: text, images, lines, several symbols, fields bound to spreadsheet columns
 - 4.3 Templates saved and shared as files
 

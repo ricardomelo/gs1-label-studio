@@ -31,6 +31,7 @@ import {
   type PrinterProfile,
   uriParameters,
   parseElementString,
+  LOGISTIC_SIZES,
   sequenceTable,
   withSequence,
   type BatchRow,
@@ -132,6 +133,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
     hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
+    logistic: "none", logisticFrom: "", logisticTo: "",
     expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
@@ -216,7 +218,10 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   const choice = guided ? chosen(guide, picked) : null;
   const chosenSymbol = choice ? (choice.with ?? choice.symbol) : settings.symbology;
   // A key a GS1 Digital Link URI cannot carry ((03), backlog 1.11) is drawn in GS1 DataMatrix, not a symbol for a URI.
-  const symbology = !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
+  // A GS1 Logistic Label (backlog 4.1) for an SSCC: GS1-128 at table 5's row, whatever step 2 says.
+  const logisticOn = active.key === "00" && settings.logistic !== "none";
+  const symbology: SymbologyId = logisticOn ? "gs1-128"
+    : !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
   // A symbol chosen alone that carries the GTIN alone (an EAN-13 alone, with a batch typed): it draws the GTIN.
   const gtinOnly = Boolean(choice && !choice.with && guide?.options.find((o) => o.symbol === choice.symbol)?.carries === "key");
 
@@ -231,8 +236,9 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   // The table's row that sizes the symbol: ITF-14, GS1-128 and GS1 DataBar always; a 2D symbol of a table without a
   // scanning environment (12, 13). The others are sized by the scanning environment, as the resolver sized them.
   const option = guided ? guide.options.find((o) => o.symbol === symbology) : undefined;
-  const table = guided ? guide.leaf.table : environment ? ENVIRONMENTS[environment]!.table : undefined;
-  const spec: SymbolSpecification | undefined = !bars && environment !== null
+  const table = logisticOn ? 5 : guided ? guide.leaf.table : environment ? ENVIRONMENTS[environment]!.table : undefined;
+  const spec: SymbolSpecification | undefined = logisticOn ? specificationFor(5, "gs1-128")
+    : !bars && environment !== null
     ? undefined
     : option ? (option.specs.find((row) => row.part) ?? option.specs[0])
     : table !== undefined ? specificationFor(table, symbology) : undefined;
@@ -264,7 +270,10 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     ...(effective.gs1128Starts ? { gs1128Starts: effective.gs1128Starts } : {}),
     ...(effective.qrMode !== "auto" ? { qrMode: effective.qrMode } : {}),
     ...(effective.qrUpperDomain ? { qrUpperDomain: true } : {}),
-  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain]);
+    ...(logisticOn && settings.logistic !== "none"
+      ? { logistic: { size: settings.logistic, from: settings.logisticFrom.split("\n"), to: settings.logisticTo.split("\n") } }
+      : {}),
+  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -303,7 +312,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
         `${count.characters} characters encoded${marks ? ` (${marks} included)` : ""}`,
       ].filter(Boolean).join(" · ");
       // GS1-128 over several symbols (backlog 1.13): its element strings and where each symbol starts
-      const gs1128 = symbology === "gs1-128"
+      const gs1128 = symbology === "gs1-128" && !logisticOn
         ? (() => {
             const elements = parseElementString(data).map((e) => `(${e.ai})${e.value}`);
             const starts = [0];
@@ -311,7 +320,10 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
             return { elements, starts };
           })()
         : undefined;
-      const symbolPart = layout.version
+      const logisticName = logisticOn && settings.logistic !== "none" ? LOGISTIC_SIZES[settings.logistic].name : null;
+      const symbolPart = logisticName
+        ? `GS1 Logistic Label ${logisticName} · ${layout.parts?.length ?? 1} GS1-128 ${(layout.parts?.length ?? 1) === 1 ? "symbol" : "symbols"}`
+        : layout.version
         ? `QR code version ${layout.version} · ${matrix} · correction ${effective.error.toUpperCase()}${options.qrMode ? ` · ${options.qrMode} mode` : ""}`
         : layout.modules
           ? `${SYMBOLOGIES[symbology].name} · ${matrix}`
@@ -321,7 +333,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       return {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
-          widthMm: wMm, heightMm: hMm, expected: expectedReads(options), ...(gs1128 ? { gs1128 } : {}),
+          widthMm: wMm, heightMm: hMm, expected: layout.parts ? layout.parts.map((part) => `]C1 ${part}`).sort() : expectedReads(options), ...(gs1128 ? { gs1128 } : {}),
           pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
           hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
           caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 % · ${tail}`,
@@ -334,7 +346,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   }, [checked, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD]);
 
   const view: LabelView = {
-    ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible,
+    ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible, logisticPossible: active.key === "00",
     ...(guided && walked.leaf
       ? {
           guided: {

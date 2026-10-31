@@ -279,3 +279,6 @@ table.mapping th:nth-child(2) { width: 30%; }
 .nfc { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
 .nfc select { margin-top: 6px; }
 details.printer .profile-edit { margin-top: 8px; }
+
+/* The GS1 Logistic Label (backlog 4.1) */
+.logistic textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); resize: vertical; }

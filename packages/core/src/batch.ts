@@ -14,7 +14,8 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { gs1128StackDots, zplLabel, zplTextAbove, type ZplLabelOptions } from "./zpl.ts";
+import { logisticLabel, type LogisticSize } from "./logistic.ts";
+import { gs1128StackDots, zplLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -45,6 +46,8 @@ export interface LabelDesign {
   /** A QR code's one encoding mode (backlog 1.14), and its URI's scheme and domain in capitals for alphanumeric mode. */
   qrMode?: QrMode;
   qrUpperDomain?: boolean;
+  /** A GS1 Logistic Label rather than the symbol alone (backlog 4.1): its size and free text; GS1-128 at `spec`. */
+  logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[] };
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -61,6 +64,14 @@ export interface DrawnLabel {
 /** The label of `identified` as `design` lays it out; an `InputError` when this data cannot be drawn so. */
 export function labelFor(identified: Identified, design: LabelDesign, font: HriFont): DrawnLabel {
   const { symbology } = design;
+  if (design.logistic) {
+    if (!design.spec) throw new InputError("A GS1 Logistic Label takes GS1-128 at its table's row.");
+    const { layout, options, parts } = logisticLabel({
+      elementString: identified.elementString, size: design.logistic.size, spec: design.spec,
+      ...(design.table ? { table: design.table } : {}), percent: design.size, from: design.logistic.from, to: design.logistic.to,
+    }, font);
+    return { data: identified.elementString, options, layout, geometry: encode("gs1-128", parts.at(-1)!) };
+  }
   const shown = design.gtinOnly ? { ...identified, elements: identified.elements.filter((e) => e.ai === "01") } : identified;
   const encoded = dataFor(symbology, shown);
   // A URI's scheme and domain are not case-sensitive (RFC 3986), its path and query are: capitals only there
@@ -106,6 +117,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
+  if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label is not written in ZPL yet: its PDF prints it at its size.");
   // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
   const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";

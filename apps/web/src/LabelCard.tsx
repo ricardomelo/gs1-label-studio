@@ -1,6 +1,7 @@
 import {
   ENVIRONMENTS,
   ERROR_LEVELS,
+  LOGISTIC_SIZES,
   linearSizesFor,
   linearXDimension,
   snapToDots,
@@ -10,6 +11,7 @@ import {
   type ErrorLevel,
   type HriPosition,
   type QrMode,
+  type LogisticSize,
   type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
@@ -56,6 +58,10 @@ export interface LabelSettings {
   /** A QR code's encoding mode, automatic or one for the whole data, and the URI's domain in capitals (backlog 1.14). */
   qrMode: QrMode | "auto";
   qrUpperDomain: boolean;
+  /** A GS1 Logistic Label for an SSCC (backlog 4.1), its size, and who sends and receives it (a line a line). */
+  logistic: "none" | LogisticSize;
+  logisticFrom: string;
+  logisticTo: string;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -92,6 +98,8 @@ export interface LabelView {
   heightMm?: number;
   /** What a reader should give back for the symbols on the label (`expectedReads()`), for the scan test. */
   expected?: string[];
+  /** An SSCC: the GS1 Logistic Label is offered (backlog 4.1). */
+  logisticPossible?: boolean;
   /** GS1-128: its element strings and the index of each that starts a symbol (the first always). */
   gs1128?: { elements: string[]; starts: number[] };
 }
@@ -321,6 +329,33 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
         </div>
 
         <div>
+          {view.logisticPossible && (
+            <div className="grid logistic">
+              <div>
+                <label htmlFor="opt-logistic">Label</label>
+                <select id="opt-logistic" value={s.logistic} onChange={(e) => set("logistic", e.target.value as "none" | LogisticSize)}>
+                  <option value="none">The symbol alone</option>
+                  {Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
+                    <option key={id} value={id}>
+                      GS1 Logistic Label, {size.name} ({size.widthMm} × {size.heightMm} mm)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {s.logistic !== "none" && (
+                <>
+                  <div>
+                    <label htmlFor="opt-from">From</label>
+                    <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder="Who sends it: name, address" onChange={(e) => set("logisticFrom", e.target.value)} />
+                  </div>
+                  <div>
+                    <label htmlFor="opt-to">To</label>
+                    <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder="Who receives it" onChange={(e) => set("logisticTo", e.target.value)} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <div className="grid">
             {view.guided ? (
               <div className="chosen">

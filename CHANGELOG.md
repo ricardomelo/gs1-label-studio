@@ -125,4 +125,6 @@
 - ZPL catches up with the label (phase 3): the QR code's error correction level as chosen, GS1-128 over several
   symbols, the text above or split at its height; printer profiles (item 3.1) with the module in whole dots within the
   table's range, the print width checked and a test print with a 50 mm ruler.
+- The GS1 Logistic Label (item 4.1): A6, 4 × 6 in, A5 or 6 × 8 in, with free text, data titles and the GS1-128 symbols,
+  the SSCC lowest, in SVG, PNG, PDF and EPS, one at a time or in bulk.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

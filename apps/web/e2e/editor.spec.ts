@@ -879,3 +879,24 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   await page.locator("details.printer summary").click();
   await expect(page.locator("#prn-profile option", { hasText: "Desk printer" })).toHaveCount(1);
 });
+
+// Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
+test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
+  await expect(page.locator("#opt-logistic")).toHaveCount(0); // a GTIN: no logistic label
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await page.selectOption("#opt-logistic", "a6");
+  await expect(page.locator(".preview .error")).toContainText("the A6 label is 148 mm high");
+  await page.selectOption("#opt-logistic", "a5");
+  await page.fill("#opt-from", "Dal Giardino S.p.A.\nVia Roma 1, Milano");
+  await page.fill("#opt-to", "Supermarket DC 12");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols");
+  await expect(page.locator(".caption")).toContainText("label 148.0 × 210.0 mm");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24(10)ABC123", { timeout: 30_000 });
+  const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
+  expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is not written in ZPL yet");
+});
