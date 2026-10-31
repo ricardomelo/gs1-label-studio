@@ -2,7 +2,7 @@
 
 Create GS1 barcodes — and, later, whole labels — in your browser, one at a time or thousands from a spreadsheet, and
 export them as vector files for artwork or as print files for label printers (PDF, ZPL II, EPL2, TSPL, PPLA, PPLB,
-DPL). Nothing you type or upload leaves your computer.
+DPL). Nothing you type or upload leaves your computer. In English, Brazilian Portuguese and Spanish.
 
 > **Status:** early development, published at <https://ricardomelo.github.io/gs1-label-studio/> (31 October 2026).
 > One code or thousands from a spreadsheet: what the code identifies (every GS1 key, qualifiers, data attributes,
@@ -33,7 +33,7 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 | Path | What |
 |---|---|
 | `packages/core` | GS1 encoding, geometry, printer dot grid, exporters; no user interface; runs in browser and Node |
-| `apps/web` | the web application (React + Vite) |
+| `apps/web` | the web application (React + Vite); `src/locales/` its languages, `test/` their test |
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
 | `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
@@ -164,7 +164,7 @@ complete.
   the path and query stay as typed); a character a mode cannot take is named; each mode read back by ZXing at the
   version its capacity gives. ZPL keeps the printer's automatic mode until phase 3*
 
-*The owner's ideas of 30 October 2026 added items 1.15 to 1.19.*
+*The owner's ideas of 30 October 2026 added items 1.15 to 1.19; the request of 31 October, item 1.20.*
 
 - 1.15 Qualifiers and data attributes in one block: every qualifier the key has, and every attribute, added one at a
   time with "+ Add attributes" (an AI chosen from the whole list, the qualifiers of the key first), each row checked as
@@ -211,6 +211,13 @@ complete.
   back to say whether it holds that URI; where the browser has no Web NFC (all but Chrome on Android), the buttons say
   so and the NDEF message (NFC Forum URI RTD, the prefix abbreviated) downloads as a file for a tag writer app. Tested
   with Web NFC stood in for in the browser tests; a real tag waits for the owner's phone*
+
+- 1.20 The interface in Brazilian Portuguese and Spanish besides English, the documentation in English only (the owner,
+  31 October 2026) — *done 31 October (mock-up A of three: a language menu in the header, each language named in
+  itself): the browser's language on the first visit, the choice kept afterwards, the page redrawn in place; every
+  text of the page and every message of the core and of the GS1 Barcode Syntax Engine in each language, the engine's
+  and the keys' texts from the resolver's catalogues; a test refuses a text without its translation. Drafts by
+  Claude, to be reviewed by native speakers; the files made stay in English*
 
 **Phase 2 — in bulk**
 

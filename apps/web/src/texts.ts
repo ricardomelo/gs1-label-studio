@@ -1,3 +1,6 @@
+import AI_TITLES_PT from "./locales/ai-titles.pt-BR.json";
+import { formatNumber, locale, t } from "./i18n.ts";
+
 // The page's texts, apart from the code so that a translation stays possible (ADR 0003). Key, qualifier and scanning
 // environment texts are the resolver's English ones (portal/static/i18n.js, ADR 0004).
 
@@ -148,7 +151,16 @@ export const QUALIFIER_LABELS: Record<string, string> = {
 /** An AI as every choice of one shows it: the AI, the key's abbreviation, its name — "(01) GTIN Product". */
 export function aiText(ai: string, title?: string): string {
   const key = KEY_TEXTS[ai];
-  return `(${ai}) ${key ? `${key.short} ${key.name}` : (QUALIFIER_LABELS[ai] ?? title ?? "")}`.trim();
+  const qualifier = QUALIFIER_LABELS[ai];
+  return `(${ai}) ${key ? `${key.short} ${t(key.name)}` : qualifier ? t(qualifier) : aiTitle(ai, title ?? "")}`.trim();
+}
+
+/**
+ * An AI's data title in the language shown: GS1's English data titles, Portuguese names where GS1 Brasil's are known
+ * (the resolver's, ADR 0004), the English title otherwise — as the resolver showed them (its ADR 0014).
+ */
+export function aiTitle(ai: string, title: string): string {
+  return locale() === "pt-BR" ? ((AI_TITLES_PT as Record<string, string>)[ai] ?? title) : title;
 }
 
 /**
@@ -310,12 +322,17 @@ export const NFC_TEXTS = {
   notAllowed: "NFC was not allowed: turn NFC on and allow this page to use it.",
 } as const;
 
+/** A row's state in bulk, as the report and the row navigation say it. */
+export const ROW_STATUS_NAMES = { ready: "ready", fixed: "fixed", error: "error", skipped: "skipped" } as const;
+
 // Printer profiles (backlog 3.1).
 export const PRINTER_TEXTS = {
   intro: "For the ZPL files: the printer's resolution and print width, and how many whole dots each module takes.",
   testPrint: "The test print adds a 50 mm ruler and the settings under the label: measure the ruler to check the printer's scale.",
   outOfRange: (dots: number, xMm: number, dpi: number, range: readonly [number, number] | null) =>
-    `✗ At ${dpi} dpi no whole number of dots gives an X-dimension within the table's ` +
-    `${range ? `${range[0].toFixed(3)} to ${range[1].toFixed(3)} mm` : "range"}: the nearest, ${dots} ` +
-    `${dots === 1 ? "dot" : "dots"}, prints ${xMm.toFixed(3)} mm. Choose a printer with another resolution.`,
+    (range
+      ? t("✗ At {dpi} dpi no whole number of dots gives an X-dimension within the table's {low} to {high} mm: the nearest, {dots} dots, prints {x} mm. Choose a printer with another resolution.",
+        { dpi, low: formatNumber(range[0], 3), high: formatNumber(range[1], 3), dots, x: formatNumber(xMm, 3) })
+      : t("✗ At {dpi} dpi no whole number of dots gives an X-dimension within the table's range: the nearest, {dots} dots, prints {x} mm. Choose a printer with another resolution.",
+        { dpi, dots, x: formatNumber(xMm, 3) })),
 } as const;

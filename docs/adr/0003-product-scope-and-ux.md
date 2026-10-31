@@ -43,8 +43,19 @@
    identifier and the data of every symbol with what the label should carry (`expectedReads()`).*
 5. **Private.** Nothing leaves the browser; said on the page.
 6. **Accessible.** Keyboard and screen reader, light and dark, phone width.
-7. **In English.** The owner fixed the tool in English (28 October 2026): one language to write, test and document.
-   Texts are kept apart from the code so that a translation remains possible, but none is planned.
+7. **In English, Brazilian Portuguese and Spanish.** The owner first fixed the tool in English (28 October 2026): one
+   language to write, test and document, the texts kept apart from the code so that a translation remained possible.
+   *On 31 October 2026 the owner asked for Brazilian Portuguese and Spanish besides English, the documentation staying
+   in English only. Decided then, the recommended option on each point: a language menu in the header, each language
+   named in itself (mock-up A of three; B was EN/PT/ES buttons, C links in a footer); the browser's language on the
+   first visit, the choice kept in the browser afterwards; changing it redraws the page in place, keeping what was
+   typed. The English text is the key (`t("Fill in")`), each language a catalogue of the page's texts and one of the
+   messages the core and the GS1 Barcode Syntax Engine write in English, translated where they are shown (`tm()`, by
+   template); the engine's messages, the keys', qualifiers' and attributes' texts and the Portuguese names of the AIs
+   come from the resolver's catalogues (ADR 0004), Spanish keeping GS1's English data titles as the resolver does. A
+   test fails when a text of the page or a message of the core lacks its translation or its placeholders differ. The
+   files made (README, CSV, ZPL notes, SVG descriptions) stay in English, as data exchanged with other systems. The
+   translations are drafts by Claude, to be reviewed by native speakers (the owner for Portuguese).*
 
 ## Screens
 

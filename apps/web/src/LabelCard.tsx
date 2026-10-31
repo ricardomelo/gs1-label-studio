@@ -29,7 +29,9 @@ import {
   LINEAR_CHOICES,
   type HriChoice,
   type LinearChoice,
+  ROW_STATUS_NAMES,
 } from "./texts.ts";
+import { formatNumber, t, tm } from "./i18n.ts";
 
 // Step 3 of the editor, as the resolver's label panel (ADR 0004): the preview beside its options, updated as the
 // fields change; the GS1 Digital Link URI coloured by part; the downloads.
@@ -195,7 +197,7 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
   return (
     <section className="card label-card" aria-labelledby="label-title">
       <h2 id="label-title">
-        <span className="n">3</span> Label <span className="badge">updates as you type</span>
+        <span className="n">3</span> {t("Label")} <span className="badge">{t("updates as you type")}</span>
       </h2>
       {/* The label above, in its own area, with its tools over it and its exports below; the options under them
           (the owner's request of 30 October 2026, mock-up B of three): room for the label designer of phase 4. */}
@@ -203,16 +205,16 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
         <div className="stage">
           {rows && (
             <div className="row-nav">
-              <button type="button" aria-label="Previous row" disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>
+              <button type="button" aria-label={t("Previous row")} disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>
                 ‹
               </button>
               <span aria-live="polite">
-                Row <b>{rows.row}</b> · {rows.index + 1} of {rows.count} ·{" "}
-                <span className={rows.status === "error" ? "bad" : rows.status === "skipped" ? "muted" : "ok"}>{rows.status}</span>
+                {t("Row")} <b>{rows.row}</b> · {t("{n} of {count}", { n: rows.index + 1, count: rows.count })} ·{" "}
+                <span className={rows.status === "error" ? "bad" : rows.status === "skipped" ? "muted" : "ok"}>{t(ROW_STATUS_NAMES[rows.status])}</span>
               </span>
               <button
                 type="button"
-                aria-label="Next row"
+                aria-label={t("Next row")}
                 disabled={rows.index === rows.count - 1}
                 onClick={() => rows.onMove(rows.index + 1)}
               >
@@ -223,17 +225,17 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
           <div className="toolbar">
             {view.svg && view.widthMm && (
               <div className="view-bar">
-                <span className="seg" role="group" aria-label="Preview size">
+                <span className="seg" role="group" aria-label={t("Preview size")}>
                   <button type="button" aria-pressed={!real} onClick={() => showReal(false)}>
-                    Fit
+                    {t("Fit")}
                   </button>
                   <button type="button" aria-pressed={real} onClick={() => showReal(true)}>
-                    Real size
+                    {t("Real size")}
                   </button>
                 </span>
                 {real && (
                   <button type="button" className="link" aria-expanded={calibrating} onClick={() => setCalibrating(!calibrating)}>
-                    Calibrate the screen
+                    {t("Calibrate the screen")}
                   </button>
                 )}
               </div>
@@ -241,18 +243,18 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             {view.svg && (
               <div className="scan">
                 <button type="button" className="btn" disabled={scan?.status === "reading"} onClick={runScan}>
-                  Scan test
+                  {t("Scan test")}
                 </button>
                 <span className={`scan-result ${scan?.status ?? ""}`} aria-live="polite">
                   {!scan
-                    ? "Reads the label back with ZXing, here in the browser."
+                    ? t("Reads the label back with ZXing, here in the browser.")
                     : scan.status === "reading"
-                      ? "Reading…"
+                      ? t("Reading…")
                       : scan.status === "error"
-                        ? `The test could not run: ${scan.message}`
+                        ? t("The test could not run: {reason}", { reason: scan.message })
                         : scan.status === "ok"
-                          ? `✓ Read as intended: ${scan.reads.join(" and ")}`
-                          : `✗ Read ${scan.reads.join(" and ") || "nothing"}; expected ${expected.join(" and ")}.`}
+                          ? t("✓ Read as intended: {reads}", { reads: scan.reads.join(t(" and ")) })
+                          : t("✗ Read {reads}; expected {expected}.", { reads: scan.reads.join(t(" and ")) || t("nothing"), expected: expected.join(t(" and ")) })}
                 </span>
               </div>
             )}
@@ -273,20 +275,20 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                   {view.svg ? (
                     <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
                   ) : (
-                    <p className="error">{view.error ?? "Loading…"}</p>
+                    <p className="error">{view.error ?? t("Loading…")}</p>
                   )}
                 </div>
               )}
             </div>
             {view.svg && (
-              <div className="zoom" role="group" aria-label="Zoom">
-                <button type="button" aria-label="Zoom out" disabled={zoom <= ZOOMS[0]!} onClick={() => setZoom(step(zoom, -1))}>
+              <div className="zoom" role="group" aria-label={t("Zoom")}>
+                <button type="button" aria-label={t("Zoom out")} disabled={zoom <= ZOOMS[0]!} onClick={() => setZoom(step(zoom, -1))}>
                   −
                 </button>
-                <button type="button" className="zoom-value" title="Back to 100 %" onClick={() => setZoom(1)}>
+                <button type="button" className="zoom-value" title={t("Back to 100 %")} onClick={() => setZoom(1)}>
                   {Math.round(zoom * 100)} %
                 </button>
-                <button type="button" aria-label="Zoom in" disabled={zoom >= ZOOMS.at(-1)!} onClick={() => setZoom(step(zoom, 1))}>
+                <button type="button" aria-label={t("Zoom in")} disabled={zoom >= ZOOMS.at(-1)!} onClick={() => setZoom(step(zoom, 1))}>
                   +
                 </button>
               </div>
@@ -294,10 +296,10 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
           </div>
           {fileError && <p className="error small">{fileError}</p>}
           <div className="exportbar">
-            <b>Export</b>
+            <b>{t("Export")}</b>
             <div className="downloads">
               <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
-                Download SVG
+                {t("Download SVG")}
               </button>
               <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
                 PNG{s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
@@ -312,16 +314,16 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                 type="button"
                 className="btn"
                 disabled={!view.svg}
-                title="SVG, PNG, PDF, EPS and a README"
+                title={t("SVG, PNG, PDF, EPS and a README")}
                 onClick={() => onDownload("zip")}
               >
-                Zip of all
+                {t("Zip of all")}
               </button>
               <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
-                ZPL ({s.dpi} dpi)
+                {t("ZPL ({dpi} dpi)", { dpi: s.dpi })}
               </button>
               <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
-                ZPL template
+                {t("ZPL template")}
               </button>
             </div>
           </div>
@@ -332,12 +334,12 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
           {view.logisticPossible && (
             <div className="grid logistic">
               <div>
-                <label htmlFor="opt-logistic">Label</label>
+                <label htmlFor="opt-logistic">{t("Label")}</label>
                 <select id="opt-logistic" value={s.logistic} onChange={(e) => set("logistic", e.target.value as "none" | LogisticSize)}>
-                  <option value="none">The symbol alone</option>
+                  <option value="none">{t("The symbol alone")}</option>
                   {Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
                     <option key={id} value={id}>
-                      GS1 Logistic Label, {size.name} ({size.widthMm} × {size.heightMm} mm)
+                      {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
                     </option>
                   ))}
                 </select>
@@ -345,12 +347,12 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               {s.logistic !== "none" && (
                 <>
                   <div>
-                    <label htmlFor="opt-from">From</label>
-                    <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder="Who sends it: name, address" onChange={(e) => set("logisticFrom", e.target.value)} />
+                    <label htmlFor="opt-from">{t("From")}</label>
+                    <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
                   </div>
                   <div>
-                    <label htmlFor="opt-to">To</label>
-                    <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder="Who receives it" onChange={(e) => set("logisticTo", e.target.value)} />
+                    <label htmlFor="opt-to">{t("To")}</label>
+                    <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
                   </div>
                 </>
               )}
@@ -360,19 +362,19 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             {view.guided ? (
               <div className="chosen">
                 <span>
-                  <b>{view.guided.summary}</b> · table {view.guided.table}, {view.guided.application.toLowerCase()}
+                  <b>{view.guided.summary}</b> · {t("table {n}", { n: view.guided.table })}, {view.guided.application.toLowerCase()}
                 </span>
                 <a className="link" href="#scan-title">
-                  Change in step 2
+                  {t("Change in step 2")}
                 </a>
               </div>
             ) : (
               <div>
-                <label htmlFor="opt-symbol">Symbol</label>
+                <label htmlFor="opt-symbol">{t("Symbol")}</label>
                 <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
                   {OFFERED.map((symbology) => (
                     <option key={symbology.id} value={symbology.id}>
-                      {symbology.name}
+                      {tm(symbology.name)}
                     </option>
                   ))}
                 </select>
@@ -380,18 +382,18 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             )}
             {!view.guided && (
               <div>
-                <label htmlFor="opt-env">Scanning environment</label>
+                <label htmlFor="opt-env">{t("Scanning environment")}</label>
                 <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
                   {view.environments.map((name) => (
                     <option key={name} value={name}>
-                      {ENVIRONMENT_NAMES[name] ?? name}
+                      {ENVIRONMENT_NAMES[name] ? t(ENVIRONMENT_NAMES[name]) : name}
                     </option>
                   ))}
                 </select>
               </div>
             )}
             <div>
-              <label htmlFor="opt-size">Size</label>
+              <label htmlFor="opt-size">{t("Size")}</label>
               <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
                 {view.sizes.map((size) => {
                   const x = view.sizeBase
@@ -399,18 +401,18 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                     : view.twoD ? xDimension(s.environment, size) : linearXDimension(s.environment, size);
                   return (
                     <option key={size} value={size}>
-                      {size} % (X {x.toFixed(3)} mm{size === 100 ? ", recommended" : ""})
+                      {size === 100 ? t("{size} % (X {x} mm, recommended)", { size, x: formatNumber(x, 3) }) : t("{size} % (X {x} mm)", { size, x: formatNumber(x, 3) })}
                     </option>
                   );
                 })}
               </select>
             </div>
             <div>
-              <label htmlFor="opt-hri">Human readable text</label>
+              <label htmlFor="opt-hri">{t("Human readable text")}</label>
               <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
                 {Object.entries(HRI_CHOICES).map(([value, text]) => (
                   <option key={value} value={value}>
-                    {text}
+                    {t(text)}
                   </option>
                 ))}
               </select>
@@ -418,24 +420,24 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
               <>
                 <div>
-                  <label htmlFor="opt-hri-position">Text position</label>
+                  <label htmlFor="opt-hri-position">{t("Text position")}</label>
                   <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
                     {Object.entries(HRI_POSITION_NAMES)
                       .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
                       .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
                       .map(([value, text]) => (
                         <option key={value} value={value}>
-                          {text}
+                          {t(text)}
                         </option>
                       ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="opt-hri-height">Text height</label>
+                  <label htmlFor="opt-hri-height">{t("Text height")}</label>
                   <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
                     {HRI_HEIGHTS.map(([mm, text]) => (
                       <option key={mm} value={mm === 2.2 ? "" : mm}>
-                        {text}
+                        {t(text)}
                       </option>
                     ))}
                   </select>
@@ -444,11 +446,11 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             )}
             {s.symbology === "itf14" && (
               <div>
-                <label htmlFor="opt-bearer">Bearer bars</label>
+                <label htmlFor="opt-bearer">{t("Bearer bars")}</label>
                 <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
                   {Object.entries(BEARER_CHOICES).map(([value, text]) => (
                     <option key={value} value={value}>
-                      {text}
+                      {t(text)}
                     </option>
                   ))}
                 </select>
@@ -457,43 +459,43 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             {view.isQr && (
               <>
                 <div>
-                  <label htmlFor="opt-version">QR code version</label>
+                  <label htmlFor="opt-version">{t("QR code version")}</label>
                   <select
                     id="opt-version"
                     value={s.version ?? ""}
                     onChange={(e) => set("version", e.target.value ? Number(e.target.value) : null)}
                   >
-                    <option value="">Automatic (smallest that fits)</option>
+                    <option value="">{t("Automatic (smallest that fits)")}</option>
                     {Array.from({ length: 40 }, (_, i) => i + 1).map((v) => (
                       <option key={v} value={v}>
-                        {v} ({17 + 4 * v} × {17 + 4 * v} modules)
+                        {t("{v} ({n} × {n} modules)", { v, n: 17 + 4 * v })}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="opt-qr-mode">Encoding mode</label>
+                  <label htmlFor="opt-qr-mode">{t("Encoding mode")}</label>
                   <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
                     {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
                       <option key={value} value={value}>
-                        {text}
+                        {t(text)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="opt-qr-upper">Scheme and domain</label>
+                  <label htmlFor="opt-qr-upper">{t("Scheme and domain")}</label>
                   <select id="opt-qr-upper" value={s.qrUpperDomain ? "upper" : "as"} onChange={(e) => set("qrUpperDomain", e.target.value === "upper")}>
-                    <option value="as">As typed (https://id.gs1.org)</option>
-                    <option value="upper">In capitals (HTTPS://ID.GS1.ORG)</option>
+                    <option value="as">{t("As typed (https://id.gs1.org)")}</option>
+                    <option value="upper">{t("In capitals (HTTPS://ID.GS1.ORG)")}</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="opt-ecl">Error correction</label>
+                  <label htmlFor="opt-ecl">{t("Error correction")}</label>
                   <select id="opt-ecl" value={s.error} onChange={(e) => set("error", e.target.value as ErrorLevel)}>
                     {ERROR_LEVELS.map((level) => (
                       <option key={level} value={level}>
-                        {ERROR_NAMES[level]}
+                        {t(ERROR_NAMES[level])}
                       </option>
                     ))}
                   </select>
@@ -504,11 +506,11 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               <>
                 {view.linearPossible && (
                   <div>
-                    <label htmlFor="opt-linear">Linear barcode beside it</label>
+                    <label htmlFor="opt-linear">{t("Linear barcode beside it")}</label>
                     <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
                       {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
                         <option key={value} value={value}>
-                          {text}
+                          {t(text)}
                         </option>
                       ))}
                     </select>
@@ -516,16 +518,16 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                 )}
                 {s.linear !== "none" && (
                   <div>
-                    <label htmlFor="opt-linear-size">Size of the linear barcode</label>
+                    <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
                     <select
                       id="opt-linear-size"
                       value={s.linearSize ?? ""}
                       onChange={(e) => set("linearSize", e.target.value ? Number(e.target.value) : null)}
                     >
-                      <option value="">As the 2D symbol: {s.size} %</option>
+                      <option value="">{t("As the 2D symbol: {size} %", { size: s.size })}</option>
                       {linearSizesFor(s.environment).map((size) => (
                         <option key={size} value={size}>
-                          {size} % (X {linearXDimension(s.environment, size).toFixed(3)} mm)
+                          {t("{size} % (X {x} mm)", { size, x: formatNumber(linearXDimension(s.environment, size), 3) })}
                         </option>
                       ))}
                     </select>
@@ -535,58 +537,60 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
             )}
             {view.hasBars && (
               <div>
-                <label htmlFor="opt-reduction">Bar width reduction</label>
+                <label htmlFor="opt-reduction">{t("Bar width reduction")}</label>
                 <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
                   {REDUCTIONS.map((mm) => (
                     <option key={mm} value={mm}>
-                      {mm ? `${mm.toFixed(3)} mm` : "None"}
+                      {mm ? `${formatNumber(mm, 3)} mm` : t("None")}
                     </option>
                   ))}
                 </select>
               </div>
             )}
             <div>
-              <label htmlFor="opt-png">PNG resolution</label>
+              <label htmlFor="opt-png">{t("PNG resolution")}</label>
               <select
                 id="opt-png"
                 value={s.pngResolution ?? ""}
                 onChange={(e) => set("pngResolution", e.target.value ? Number(e.target.value) : null)}
               >
-                <option value="">At the label's size{view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}</option>
+                <option value="">{view.pngDpi ? t("At the label's size ({dpi} dpi)", { dpi: Math.round(view.pngDpi) }) : t("At the label's size")}</option>
                 {(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => (
                   <option key={dpi} value={dpi}>
-                    {dpi} dpi — {pixelsPerModule} {pixelsPerModule === 1 ? "pixel" : "pixels"} a module, X {xMm.toFixed(3)} mm
+                    {pixelsPerModule === 1
+                      ? t("{dpi} dpi — 1 pixel a module, X {x} mm", { dpi, x: formatNumber(xMm, 3) })
+                      : t("{dpi} dpi — {n} pixels a module, X {x} mm", { dpi, n: pixelsPerModule, x: formatNumber(xMm, 3) })}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="opt-hritext">Text in the SVG</label>
+              <label htmlFor="opt-hritext">{t("Text in the SVG")}</label>
               <select
                 id="opt-hritext"
                 value={s.hriAsText ? "text" : "outline"}
                 onChange={(e) => set("hriAsText", e.target.value === "text")}
               >
-                <option value="outline">Outlines, no font needed</option>
-                <option value="text">Text, editable (needs the fonts)</option>
+                <option value="outline">{t("Outlines, no font needed")}</option>
+                <option value="text">{t("Text, editable (needs the fonts)")}</option>
               </select>
             </div>
             <div>
-              <label htmlFor="opt-stem">Domain in the GS1 Digital Link URI</label>
+              <label htmlFor="opt-stem">{t("Domain in the GS1 Digital Link URI")}</label>
               <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
             </div>
           </div>
           {view.gs1128 && view.gs1128.elements.length > 1 && (
             <div className="gs1128">
               <div className="gs1128-head">
-                <b>GS1-128 symbols</b>{" "}
+                <b>{t("GS1-128 symbols")}</b>{" "}
                 <span className="hint">
-                  {view.gs1128.starts.length > 1 ? `${view.gs1128.starts.length} symbols, ` : "one symbol, "}
-                  {s.gs1128Starts ? "split where you chose" : "as many element strings as fit in each (48 data characters, 165.10 mm)"}
+                  {view.gs1128.starts.length > 1 ? t("{n} symbols, ", { n: view.gs1128.starts.length }) : t("one symbol, ")}
+                  {s.gs1128Starts ? t("split where you chose") : t("as many element strings as fit in each (48 data characters, 165.10 mm)")}
                 </span>
                 {s.gs1128Starts && (
                   <button type="button" className="link" onClick={() => set("gs1128Starts", null)}>
-                    Automatic
+                    {t("Automatic")}
                   </button>
                 )}
               </div>
@@ -603,7 +607,7 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
                             set("gs1128Starts", e.target.checked ? [...starts, index].sort((a, b) => a - b) : starts);
                           }}
                         />
-                        new symbol
+                        {t("new symbol")}
                       </label>
                     )}
                     <code>{element}</code>
@@ -614,16 +618,17 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
           )}
           {view.guided && (
             <div className="hint">
-              Sizes within table {view.guided.table}'s ranges (GS1 General Specifications 5.12.3.{view.guided.table})
-              {view.bars ? "; bars as high as the table asks at this X-dimension" : ""}. At{" "}
-              {s.dpi} dpi a module prints as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}.
+              {t("Sizes within table {n}'s ranges (GS1 General Specifications 5.12.3.{n})", { n: view.guided.table })}
+              {view.bars ? t("; bars as high as the table asks at this X-dimension") : ""}.{" "}
+              {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
             </div>
           )}
           {!view.guided && (
             <div className="hint">
-              Only the key's scanning environments and the sizes within their ranges are offered (GS1 General
-              Specifications 5.12.3{target ? `; target X ${target.toFixed(3)} mm` : ""}). At {s.dpi} dpi a module prints
-              as {snap.dots} {snap.dots === 1 ? "dot" : "dots"}.
+              {target
+                ? t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3; target X {x} mm).", { x: formatNumber(target, 3) })
+                : t("Only the key's scanning environments and the sizes within their ranges are offered (GS1 General Specifications 5.12.3).")}{" "}
+              {snap.dots === 1 ? t("At {dpi} dpi a module prints as 1 dot.", { dpi: s.dpi }) : t("At {dpi} dpi a module prints as {n} dots.", { dpi: s.dpi, n: snap.dots })}
             </div>
           )}
 
@@ -635,31 +640,31 @@ export function LabelCard({ children, generate, settings: s, onChange, view, onD
               <div className="legend">
                 <span>
                   <span className="sw" style={{ background: "var(--dom)" }} />
-                  <b>Domain</b>
+                  <b>{t("Domain")}</b>
                 </span>
                 <span>
                   <span className="sw" style={{ background: "var(--navy)" }} />
-                  <b>Key</b>
+                  <b>{t("Key")}</b>
                 </span>
                 <span>
                   <span className="sw" style={{ background: "var(--q)" }} />
-                  <b>Qualifiers</b>
+                  <b>{t("Qualifiers")}</b>
                 </span>
                 <span>
                   <span className="sw" style={{ background: "var(--attr)" }} />
-                  <b>Data attributes</b>
+                  <b>{t("Data attributes")}</b>
                 </span>
                 <button type="button" className="link" onClick={() => copy(view.uri)}>
-                  Copy URI
+                  {t("Copy URI")}
                 </button>
               </div>
             </>
           ) : null}
           {view.elementString && (
             <div className="hint es">
-              Element string <code>{view.elementString}</code>{" "}
+              {t("Element string")} <code>{view.elementString}</code>{" "}
               <button type="button" className="link" onClick={() => copy(view.elementString)}>
-                Copy
+                {t("Copy")}
               </button>
             </div>
           )}

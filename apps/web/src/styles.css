@@ -282,3 +282,9 @@ details.printer .profile-edit { margin-top: 8px; }
 
 /* The GS1 Logistic Label (backlog 4.1) */
 .logistic textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); resize: vertical; }
+
+/* The language menu (ADR 0003), each language named in itself. */
+header.top .lang { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+header.top .lang span { opacity: 0.85; }
+header.top .lang select { font: inherit; font-size: 13px; font-weight: 600; background: #002c6c; color: #fff; border: 1.5px solid #fff; border-radius: 6px; padding: 3px 8px; }
+header.top .lang + .start-over { margin-left: 8px; }

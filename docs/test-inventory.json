@@ -1227,6 +1227,50 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "i18n",
+   "file": "apps/web/test/i18n.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the catalogues › pt-BR: every text of the page, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › pt-BR: every message of the core and of the Syntax Engine, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › es: every text of the page, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › es: every message of the core and of the Syntax Engine, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › finds the texts: the page's own, the core's messages and the engine's",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › a missing, empty or unknown entry and different placeholders are caught",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › t() never takes a text built at run time, which no catalogue can hold",
+     "status": "passed"
+    },
+    {
+     "name": "translating › chooses the browser's language among English, Brazilian Portuguese and Spanish",
+     "status": "passed"
+    },
+    {
+     "name": "translating › fills placeholders, and translates a core or engine message by its template, the linter's text inside too",
+     "status": "passed"
+    }
+   ],
+   "area": "The interface's languages: English, Brazilian Portuguese, Spanish"
+  },
+  {
    "program": "identifiers",
    "file": "packages/core/test/identifiers.test.ts",
    "kind": "unit",
@@ -3273,6 +3317,22 @@
     },
     {
      "name": "the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone"
+     ]
+    },
+    {
+     "name": "the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone"
+     ]
+    },
+    {
+     "name": "a browser in Portuguese opens the studio in Portuguese",
      "status": "listed",
      "projects": [
       "desktop",

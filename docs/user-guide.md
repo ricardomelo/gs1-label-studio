@@ -51,14 +51,14 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 - **Private and offline.** Everything runs in the page. After the first visit the studio works without a connection,
   and it can be installed as an application from the browser's menu.
 
-The studio is in English; texts in Brazilian Portuguese and Spanish are planned.
+The studio speaks English, Brazilian Portuguese and Spanish (section 2); this guide is in English.
 
 ## 2. The screen at a glance
 
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
-- The header: **One code** or **In bulk** (section 13), and **Start over**, which clears every field and choice as on a
-  first visit.
+- The header: **One code** or **In bulk** (section 13), **Language**, and **Start over**, which clears every field and
+  choice as on a first visit.
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
@@ -72,6 +72,14 @@ tap it to go to the label.
 ![On a phone: the live preview at the top, the fields below](images/guide/phone.png)
 
 The page follows the system's light or dark theme.
+
+**Language**: English, Português (Brasil) or Español. The studio opens in the browser's language (Portuguese for any
+Portuguese, Spanish for any Spanish, English otherwise) and remembers the choice in this browser. Changing it redraws
+the page at once, keeping what you typed; the messages of the GS1 Barcode Syntax Engine are translated too. The data
+titles of the AIs are GS1's English ones in Spanish, and Portuguese names in Portuguese. The files the studio makes —
+the README in the zip, the CSVs, the notes of a test print — stay in English.
+
+![The studio in Portuguese](images/guide/language.png)
 
 ## 3. Step 1 — what the code identifies
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { GENERIC_PROFILES, profileProblem, type ModuleChoice, type PrinterProfile } from "@gs1-label-studio/core";
 import { PRINTER_TEXTS } from "./texts.ts";
+import { formatNumber, t, tm } from "./i18n.ts";
 
 // Printer profiles (backlog 3.1, mock-up A of two, 31 October 2026), above the EPC section: the printer the ZPL files are
 // for — its resolution and print width —, the whole dots a module takes within the table's range, and a test label.
@@ -57,11 +58,11 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
 
   return (
     <details className="printer" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>Printer (ZPL)</summary>
-      <p className="hint">{PRINTER_TEXTS.intro}</p>
+      <summary>{t("Printer (ZPL)")}</summary>
+      <p className="hint">{t(PRINTER_TEXTS.intro)}</p>
       <div className="grid">
         <div>
-          <label htmlFor="prn-profile">Printer profile</label>
+          <label htmlFor="prn-profile">{t("Printer profile")}</label>
           <select
             id="prn-profile"
             value={profile.id}
@@ -72,19 +73,19 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
           >
             {all.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
+                {tm(p.name)}
               </option>
             ))}
-            <option value="new">New profile…</option>
+            <option value="new">{t("New profile…")}</option>
           </select>
         </div>
         <div>
-          <label htmlFor="prn-module">Module</label>
+          <label htmlFor="prn-module">{t("Module")}</label>
           <select id="prn-module" value={dots ?? ""} onChange={(e) => onDots(e.target.value ? Number(e.target.value) : null)}>
-            <option value="">{module ? `Nearest within the range: ${module.chosen.dots} dots, X ${module.chosen.xMm.toFixed(3)} mm` : "Nearest"}</option>
+            <option value="">{module ? t("Nearest within the range: {dots} dots, X {x} mm", { dots: module.chosen.dots, x: formatNumber(module.chosen.xMm, 3) }) : t("Nearest")}</option>
             {(module?.choices ?? []).map((c) => (
               <option key={c.dots} value={c.dots}>
-                {c.dots} {c.dots === 1 ? "dot" : "dots"} — X {c.xMm.toFixed(3)} mm
+                {c.dots === 1 ? t("1 dot — X {x} mm", { x: formatNumber(c.xMm, 3) }) : t("{dots} dots — X {x} mm", { dots: c.dots, x: formatNumber(c.xMm, 3) })}
               </option>
             ))}
           </select>
@@ -93,24 +94,24 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
       {editing && (
         <div className="grid profile-edit">
           <div>
-            <label htmlFor="prn-name">Name</label>
-            <input id="prn-name" value={editing.name} placeholder="e.g. Warehouse ZT411" onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+            <label htmlFor="prn-name">{t("Name")}</label>
+            <input id="prn-name" value={editing.name} placeholder={t("e.g. Warehouse ZT411")} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
           </div>
           <div>
-            <label htmlFor="prn-dpi">Resolution (dpi)</label>
+            <label htmlFor="prn-dpi">{t("Resolution (dpi)")}</label>
             <input id="prn-dpi" type="number" value={editing.dpi} onChange={(e) => setEditing({ ...editing, dpi: Number(e.target.value) })} />
           </div>
           <div>
-            <label htmlFor="prn-width">Print width (mm)</label>
+            <label htmlFor="prn-width">{t("Print width (mm)")}</label>
             <input id="prn-width" type="number" step="any" value={editing.widthMm} onChange={(e) => setEditing({ ...editing, widthMm: Number(e.target.value) })} />
           </div>
-          {problem && <p className="error small">{problem}</p>}
+          {problem && <p className="error small">{tm(problem)}</p>}
           <div className="sign-row">
             <button type="button" className="btn primary" disabled={Boolean(problem)} onClick={save}>
-              Save profile
+              {t("Save profile")}
             </button>
             <button type="button" className="btn" onClick={() => setEditing(null)}>
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </div>
@@ -119,16 +120,17 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
         <p className={module.inRange && !widthProblem ? "hint ok" : "hint error"} aria-live="polite">
           {!module.inRange
             ? PRINTER_TEXTS.outOfRange(module.chosen.dots, module.chosen.xMm, profile.dpi, range)
-            : `✓ X ${module.chosen.xMm.toFixed(3)} mm (${module.chosen.dots} ${module.chosen.dots === 1 ? "dot" : "dots"} at ${profile.dpi} dpi)` +
-              (range ? ` is within the table's ${range[0].toFixed(3)} to ${range[1].toFixed(3)} mm.` : ".")}
-          {widthProblem ? ` ${widthProblem}` : ""}
+            : range
+              ? t("✓ X {x} mm ({dots} dots at {dpi} dpi) is within the table's {low} to {high} mm.", { x: formatNumber(module.chosen.xMm, 3), dots: module.chosen.dots, dpi: profile.dpi, low: formatNumber(range[0], 3), high: formatNumber(range[1], 3) })
+              : t("✓ X {x} mm ({dots} dots at {dpi} dpi).", { x: formatNumber(module.chosen.xMm, 3), dots: module.chosen.dots, dpi: profile.dpi })}
+          {widthProblem ? ` ${tm(widthProblem)}` : ""}
         </p>
       )}
       <div className="sign-row">
         {own && !editing && (
           <>
             <button type="button" className="btn" onClick={() => setEditing(profile)}>
-              Edit profile
+              {t("Edit profile")}
             </button>
             <button
               type="button"
@@ -140,15 +142,15 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
                 onProfile(GENERIC_PROFILES.find((p) => p.dpi === profile.dpi) ?? GENERIC_PROFILES[1]!);
               }}
             >
-              Delete profile
+              {t("Delete profile")}
             </button>
           </>
         )}
         <button type="button" className="btn primary" disabled={!module || Boolean(widthProblem)} onClick={onTestPrint}>
-          Test print (ZPL)
+          {t("Test print (ZPL)")}
         </button>
       </div>
-      <p className="hint">{PRINTER_TEXTS.testPrint}</p>
+      <p className="hint">{t(PRINTER_TEXTS.testPrint)}</p>
     </details>
   );
 }

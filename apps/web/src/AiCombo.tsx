@@ -1,3 +1,4 @@
+import { t } from "./i18n.ts";
 import { useEffect, useRef, useState } from "react";
 
 // A field for an AI that is typed or picked from a list (the owner's report of 30 October 2026): a browser's datalist
@@ -79,7 +80,7 @@ export function AiCombo({ value, options, onChange, label, placeholder }: Props)
         type="button"
         className="combo-arrow"
         tabIndex={-1}
-        aria-label="Open the list"
+        aria-label={t("Open the list")}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => (open ? setOpen(false) : show(true))}
       >

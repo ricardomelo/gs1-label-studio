@@ -9,8 +9,11 @@ this public repository.
 ## Language
 
 - Code, comments, identifiers, commit messages and documents: **British English**.
-- User-facing texts: **English only** — the tool is fixed in English (decided on 28 October 2026; ADR 0003).
-  Write texts so they can be extracted later, but add no other language unless asked.
+- User-facing texts: **English, Brazilian Portuguese and Spanish** (the owner, 31 October 2026; ADR 0003). Write each
+  text in English through `t("…")` (or `en("…")` for a constant, `tm()` for a message of the core) and add its
+  translations to `apps/web/src/locales/` (`pt-BR.json` and `es.json` for the page, `*.messages.json` for the core's
+  and the engine's messages); `apps/web/test/i18n.test.ts` fails when one is missing. The files made stay in English.
+- Documentation: **English only**, whatever languages the tool speaks (the owner, 31 October 2026).
 - The conversation with the maintainer is in Portuguese.
 
 ## Commits and delivery

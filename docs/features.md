@@ -188,7 +188,8 @@ Which standard each follows: [conformance](conformance.md).
 | Phone and desktop | The whole width; on a phone the fields first and a live preview fixed at the top | `87a745d`, `9aa4493` | `editor`: the page fits the screen's width |
 | One code or in bulk | A mode of the editor; steps 2 and 3 shared | `0911949` | `editor`: in bulk: pasted rows |
 | Start over | Clears the data and every choice, as on a first visit | `b8caad3` | `editor`: Start over clears the data |
-| In English | The interface in English, texts kept apart from the code (ADR 0003) | `3dfd575` | `editor`: AI choices read (AI) abbreviation name |
+| Three languages | English, Brazilian Portuguese and Spanish from a menu in the header, the browser's language on a first visit, the choice kept; the page redrawn in place, what was typed kept (ADR 0003) | this delivery | `editor`: the interface in Brazilian Portuguese and Spanish · `editor`: a browser in Portuguese opens the studio in Portuguese · `i18n`: chooses the browser's language |
+| Every text translated | Every text of the page and every message of the core and of the Syntax Engine in each language, with the same placeholders; messages translated by template where they are shown; the engine's and the keys' texts from the resolver | this delivery | `i18n`: every text of the page · `i18n`: every message of the core and of the Syntax Engine · `i18n`: translates a core or engine message by its template |
 
 ## Tests, indicators and documents
 
@@ -196,4 +197,4 @@ Which standard each follows: [conformance](conformance.md).
 |---|---|---|---|
 | ZPL through Labelary in CI | ZPL rendered by labelary.com and read back by ZXing; retried when Labelary asks to slow down | `6733059`, `14c2704` | `labelary`: ZPL printed by Labelary and read back |
 | Fixtures from the resolver | The resolver's own answers, written by its Python, as fixtures | `5707969` | `environments`: has the same tables, sizes and symbols · `render`: render 0 |
-| The documentation kept in step | The core's API reference generated and checked; features naming tests; the developer guide's counts; links | this delivery | `docs`: is what the sources give · `docs`: every feature names at least one test · `docs`: counts each test file's tests · `docs`: lead to files that exist |
+| The documentation kept in step | The core's API reference generated and checked; features naming tests; the developer guide's counts; links | `4f9815f` | `docs`: is what the sources give · `docs`: every feature names at least one test · `docs`: counts each test file's tests · `docs`: lead to files that exist |

@@ -16,6 +16,7 @@ import {
 } from "@gs1-label-studio/core";
 import { fileText } from "./keep.ts";
 import { SECURITY_MARKINGS, SIGN_TEXTS } from "./texts.ts";
+import { formatNumber, t, tm } from "./i18n.ts";
 
 // A digital signature over the Web (backlog 1.18, mock-up A of two, 31 October 2026), below the EPC section: a JSON Web
 // Signature of the code's data with the GS1 Web Vocabulary, as the GS1 Digital Signatures Technical Implementation
@@ -49,7 +50,7 @@ export function SignSection({ identified, name, download }: Props) {
     : undefined;
   const problem = authenticity ? authenticityProblem(authenticity) : null;
   const current = signed && identified && signed.uri === identified.digitalLinkUri ? signed : null;
-  const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
+  const fail = (e: unknown) => setError(tm(e instanceof Error ? e.message : String(e)));
 
   async function sign() {
     if (!identified || !key) return;
@@ -80,28 +81,28 @@ export function SignSection({ identified, name, download }: Props) {
 
   return (
     <details className="sign" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>Digital signature (GS1, JWS)</summary>
-      <p className="hint">{SIGN_TEXTS.intro}</p>
+      <summary>{t("Digital signature (GS1, JWS)")}</summary>
+      <p className="hint">{t(SIGN_TEXTS.intro)}</p>
       {!identified?.digitalLinkUri ? (
-        <p className="hint error">{SIGN_TEXTS.noUri}</p>
+        <p className="hint error">{t(SIGN_TEXTS.noUri)}</p>
       ) : (
         <>
           <div className="grid">
             <div>
-              <label htmlFor="sig-name">Product name</label>
+              <label htmlFor="sig-name">{t("Product name")}</label>
               <input id="sig-name" value={productName} onChange={(e) => setProductName(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="sig-brand">Brand</label>
+              <label htmlFor="sig-brand">{t("Brand")}</label>
               <input id="sig-brand" value={brandName} onChange={(e) => setBrandName(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="sig-marking">Security marking</label>
+              <label htmlFor="sig-marking">{t("Security marking")}</label>
               <select id="sig-marking" value={marking} onChange={(e) => setMarking(e.target.value)}>
-                <option value="">None</option>
+                <option value="">{t("None")}</option>
                 {SECURITY_MARKINGS.map(([code, label]) => (
                   <option key={code} value={code}>
-                    {label}
+                    {t(label)}
                   </option>
                 ))}
               </select>
@@ -109,40 +110,40 @@ export function SignSection({ identified, name, download }: Props) {
             {marking && (
               <>
                 <div>
-                  <label htmlFor="sig-code">Its code</label>
+                  <label htmlFor="sig-code">{t("Its code")}</label>
                   <input id="sig-code" className="mono" value={value} spellCheck={false} aria-invalid={Boolean(problem)} onChange={(e) => setValue(e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="sig-where">Where to look</label>
-                  <input id="sig-where" value={instructions} placeholder="e.g. look on side of pack" onChange={(e) => setInstructions(e.target.value)} />
+                  <label htmlFor="sig-where">{t("Where to look")}</label>
+                  <input id="sig-where" value={instructions} placeholder={t("e.g. look on side of pack")} onChange={(e) => setInstructions(e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="sig-pattern">Code pattern (regular expression)</label>
+                  <label htmlFor="sig-pattern">{t("Code pattern (regular expression)")}</label>
                   <input id="sig-pattern" className="mono" value={pattern} placeholder="e.g. [A-Z0-9]{11}" spellCheck={false} onChange={(e) => setPattern(e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="sig-hidden">The code in the signature</label>
+                  <label htmlFor="sig-hidden">{t("The code in the signature")}</label>
                   <select id="sig-hidden" value={hidden ? "hidden" : "shown"} onChange={(e) => setHidden(e.target.value === "hidden")}>
-                    <option value="shown">Shown, to compare with the marking (workflow 2)</option>
-                    <option value="hidden">Taken out, read from the marking (workflow 3)</option>
+                    <option value="shown">{t("Shown, to compare with the marking (workflow 2)")}</option>
+                    <option value="hidden">{t("Taken out, read from the marking (workflow 3)")}</option>
                   </select>
                 </div>
               </>
             )}
             <div>
-              <label htmlFor="sig-issuer">Issuer, for credentials (DID)</label>
-              <input id="sig-issuer" className="mono" value={issuer} placeholder="e.g. did:web:brand.example.com" spellCheck={false} onChange={(e) => setIssuer(e.target.value)} />
+              <label htmlFor="sig-issuer">{t("Issuer, for credentials (DID)")}</label>
+              <input id="sig-issuer" className="mono" value={issuer} placeholder={t("e.g. did:web:brand.example.com")} spellCheck={false} onChange={(e) => setIssuer(e.target.value)} />
             </div>
           </div>
-          {problem && <p className="error small">{problem}</p>}
+          {problem && <p className="error small">{tm(problem)}</p>}
           <div className="sign-row">
-            <b>Key</b>
-            <span className="hint">{key ? `ECDSA P-256 · kid ${key.kid.slice(0, 6)}…${key.kid.slice(-4)}` : SIGN_TEXTS.noKey}</span>
+            <b>{t("Key")}</b>
+            <span className="hint">{key ? `ECDSA P-256 · kid ${key.kid.slice(0, 6)}…${key.kid.slice(-4)}` : t(SIGN_TEXTS.noKey)}</span>
             <button type="button" className="btn" onClick={() => void generateSigningKey().then((k) => { setKey(k); setSigned(null); }, fail)}>
-              New key
+              {t("New key")}
             </button>
             <label className="btn">
-              Use a saved key…
+              {t("Use a saved key…")}
               <input
                 type="file"
                 accept=".jwk,.json,application/json"
@@ -154,40 +155,40 @@ export function SignSection({ identified, name, download }: Props) {
                 }}
               />
             </label>
-            <button type="button" className="btn" disabled={!key} title={SIGN_TEXTS.saveKey}
+            <button type="button" className="btn" disabled={!key} title={t(SIGN_TEXTS.saveKey)}
               onClick={() => key && download(`signing-key-${key.kid.slice(0, 8)}.private.jwk`, JSON.stringify(key.privateJwk, null, 2), "application/jwk+json")}>
-              Save the key (private)
+              {t("Save the key (private)")}
             </button>
           </div>
           <div className="sign-row">
             <button type="button" className="btn primary" disabled={!key || Boolean(problem)} onClick={() => void sign()}>
-              Sign
+              {t("Sign")}
             </button>
             <button type="button" className="btn" disabled={!current} onClick={() => current && download(`${name}.jws`, current.jws, "application/jose")}>
-              JWS
+              {t("JWS")}
             </button>
             <button type="button" className="btn" disabled={!key}
               onClick={() => key && download(`signing-key-${key.kid.slice(0, 8)}.public.jwks.json`, JSON.stringify({ keys: [key.publicJwk] }, null, 2), "application/jwk-set+json")}>
-              Public key
+              {t("Public key")}
             </button>
             <button type="button" className="btn" disabled={!key || !issuer.trim()} onClick={() => void credential("product")}>
-              Product data credential
+              {t("Product data credential")}
             </button>
             <button type="button" className="btn" disabled={!key || !issuer.trim()} onClick={() => void credential("key")}>
-              Key credential
+              {t("Key credential")}
             </button>
           </div>
           {current && (
             <>
               <div className="uri jws">{current.jws}</div>
               <p className={current.verified ? "hint ok" : "hint error"} aria-live="polite">
-                {current.verified ? SIGN_TEXTS.verified : SIGN_TEXTS.notVerified}
-                {hidden && marking ? ` ${SIGN_TEXTS.hidden}` : ""}
+                {current.verified ? t(SIGN_TEXTS.verified) : t(SIGN_TEXTS.notVerified)}
+                {hidden && marking ? ` ${t(SIGN_TEXTS.hidden)}` : ""}
               </p>
             </>
           )}
           {error && <p className="error small">{error}</p>}
-          <p className="hint">{SIGN_TEXTS.notDigSig}</p>
+          <p className="hint">{t(SIGN_TEXTS.notDigSig)}</p>
         </>
       )}
     </details>

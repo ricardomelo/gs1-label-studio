@@ -127,6 +127,9 @@
   table's range, the print width checked and a test print with a 50 mm ruler.
 - The GS1 Logistic Label (item 4.1): A6, 4 × 6 in, A5 or 6 × 8 in, with free text, data titles and the GS1-128 symbols,
   the SSCC lowest, in SVG, PNG, PDF and EPS, one at a time or in bulk.
+- The interface in Brazilian Portuguese and Spanish besides English (item 1.20, ADR 0003): a language menu in the
+  header, the browser's language on a first visit, the choice kept; every text of the page and every message of the
+  core and of the GS1 Barcode Syntax Engine translated, checked by a test; the files made stay in English.
 - Documentation by reader (ADR 0005): a user guide with screenshots, a printing guide, the core's API reference
   generated from its sources, a developer guide, the conformance to each standard, third-party licences and an index;
   every feature in `docs/features.md` with the commit that brought it and the tests that prove it; the inventory of

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { formatNumber, t, tm } from "./i18n.ts";
 
 // The preview at real size (item 1.6, mock-up A of 29 October 2026): rulers in millimetres along the label, and a
 // calibration of the screen against a bank card, kept in this browser.
@@ -97,9 +98,9 @@ export function Calibration({ pxPerMm, onChange }: { pxPerMm: number; onChange: 
   };
   return (
     <div className="calibration" ref={box}>
-      <label htmlFor="calibrate">Screen calibration</label>
+      <label htmlFor="calibrate">{t("Screen calibration")}</label>
       <div className="calibrate-row">
-        <button type="button" className="ibtn" aria-label="Shorter" disabled={value <= MIN} onClick={() => set(value - FINE)}>
+        <button type="button" className="ibtn" aria-label={t("Shorter")} disabled={value <= MIN} onClick={() => set(value - FINE)}>
           −
         </button>
         <input
@@ -111,14 +112,13 @@ export function Calibration({ pxPerMm, onChange }: { pxPerMm: number; onChange: 
           value={value}
           onChange={(e) => set(Number(e.target.value))}
         />
-        <button type="button" className="ibtn" aria-label="Longer" disabled={value >= max} onClick={() => set(value + FINE)}>
+        <button type="button" className="ibtn" aria-label={t("Longer")} disabled={value >= max} onClick={() => set(value + FINE)}>
           +
         </button>
       </div>
       <div className="card-bar" style={{ width: CARD_MM * value }} />
       <div className="hint">
-        Hold the short side of a bank card ({CARD_MM.toFixed(2)} mm) against the screen and move the slider until the bar
-        is as long. Kept in this browser.{" "}
+        {t("Hold the short side of a bank card ({mm} mm) against the screen and move the slider until the bar is as long. Kept in this browser.", { mm: formatNumber(CARD_MM, 2) })}{" "}
         <button
           type="button"
           className="link"
@@ -128,7 +128,7 @@ export function Calibration({ pxPerMm, onChange }: { pxPerMm: number; onChange: 
             onChange(CSS_PX_PER_MM);
           }}
         >
-          Reset
+          {t("Reset")}
         </button>
       </div>
     </div>

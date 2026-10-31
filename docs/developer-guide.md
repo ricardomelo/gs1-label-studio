@@ -61,6 +61,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `packages/core/test/fixtures/bulk/` | A test workbook (`products.xlsx`) and the script that writes it |
 | `apps/web/src/` | The application (section 6) |
 | `apps/web/e2e/` | Playwright browser tests of the editor |
+| `apps/web/test/` | Vitest unit tests of the web application: its languages |
 | `apps/web/screenshots/` | The user guide's screenshots, written to `docs/images/guide/` |
 | `apps/web/offline.ts` | The Vite plugin that writes the service worker |
 | `apps/web/public/` | Web app manifest and icons |
@@ -209,7 +210,10 @@ Each module, in the order of the flow above.
 | `src/EpcSection.tsx`, `src/NfcWriter.tsx` | RFID and NFC: the EPC formats, the GCP table, writing an NFC tag through Web NFC or the NDEF file |
 | `src/SignSection.tsx` | The digital signature and credentials |
 | `src/keep.ts` | IndexedDB for the GCP table |
-| `src/texts.ts` | The page's texts kept apart from the code (keys, qualifiers, environments, guide, bulk) |
+| `src/texts.ts` | The page's texts kept apart from the code (keys, qualifiers, environments, guide, bulk), in English; `aiText`, `aiTitle` |
+| `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
+| `src/locales/` | `pt-BR.json`, `es.json` (the page), `pt-BR.messages.json`, `es.messages.json` (the core and the Syntax Engine), `ai-titles.pt-BR.json` (the AIs' Portuguese names, the resolver's) |
+| `test/i18n.test.ts`, `test/texts.ts` | Every text in each language: the page's `t()`/`en()` literals and texts.ts, the core's messages found in its sources, the engine's (`test/engine-messages.json`, release 1.4.1) |
 | `src/styles.css` | Light and dark, desktop and phone |
 | `offline.ts` | The Vite plugin writing `sw.js` with every built file: pages network-first, hashed files cache-first |
 
@@ -282,9 +286,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `syntax` | input through the Syntax Engine, what each symbol carries, characters encoded | 15 |
 | `table` | CSV and Excel read without a library | 9 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 15 |
-| `editor` | the editor in a browser, desktop and phone (Playwright) | 42 |
+| `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
+| `editor` | the editor in a browser, desktop and phone (Playwright) | 44 |
 
-The core's tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
+The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each at a desktop and a phone width.
 
 ## 10. Documents and indicators
@@ -313,8 +318,11 @@ The core's tests run with `pnpm test` (Vitest); the browser tests with `pnpm --f
   `src/data/gs1_dictionary.json` together and run the tests of `identify`, `identifiers` and `attributes`.
 - **A screen.** Mock-ups first (Playwright screenshots of the real application), then the component in `apps/web/src`,
   a browser test in `e2e/editor.spec.ts`, and its screenshots for the user guide.
-- **A text.** In English, kept in `src/texts.ts` or beside the component so that it can be extracted
-  ([ADR 0003](adr/0003-product-scope-and-ux.md)).
+- **A text.** In English through `t("…")` (a constant marked `en("…")` or kept in `src/texts.ts`), with its
+  translations in `src/locales/pt-BR.json` and `es.json`; a message the core writes is shown through `tm()` and
+  translated in `*.messages.json` (the same text with `{placeholders}` where its `${…}` are, named after them).
+  `pnpm --filter @gs1-label-studio/web test` lists what is missing ([ADR 0003](adr/0003-product-scope-and-ux.md)).
+  The documentation stays in English.
 
 ## 12. Conventions
 

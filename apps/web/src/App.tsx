@@ -85,6 +85,7 @@ import { kept } from "./keep.ts";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
+import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
 // code identifies and where it is scanned on the left (step 2, the guided choice: mock-up B of 29 October 2026), the
@@ -125,7 +126,8 @@ function rememberColumns(headers: string[], mapping: ColumnMapping, fixed: Fixed
   }
 }
 
-export function App({ onStartOver }: { onStartOver?: () => void }) {
+export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: () => void; onLocale?: (locale: Locale) => void }) {
+  const lang = locale();
   const [engine, setEngine] = useState<SyntaxEngine | null>(null);
   const [font, setFont] = useState<HriFont | null>(null);
   const [id, setId] = useState<Identification>(START);
@@ -195,19 +197,19 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
 
   const checked = useMemo((): { identified?: Identified; error?: string; markup?: string } => {
     if (bulk) {
-      if (!dataTable) return { error: BULK_TEXTS.noRows };
-      if (!current) return { error: "The file has no data rows." };
-      return current.identified ? { identified: current.identified } : { error: `Row ${current.row}: ${current.error}` };
+      if (!dataTable) return { error: t(BULK_TEXTS.noRows) };
+      if (!current) return { error: t("The file has no data rows.") };
+      return current.identified ? { identified: current.identified } : { error: t("Row {row}: {error}", { row: current.row, error: tm(current.error ?? "") }) };
     }
     if (!engine) return {};
     try {
       return { identified: identify(engine, id, settings.stem.trim() || DEFAULT_STEM) };
     } catch (error) {
-      if (error instanceof InputError) return { error: error.message, markup: error.markup };
-      if (error instanceof AttributeError) return { error: error.message };
+      if (error instanceof InputError) return { error: tm(error.message), markup: error.markup };
+      if (error instanceof AttributeError) return { error: tm(error.message) };
       return { error: errorText(error) };
     }
-  }, [engine, id, settings.stem, bulk, dataTable, current]);
+  }, [engine, id, settings.stem, bulk, dataTable, current, lang]);
 
   // Step 2: the decision tree walked with the answers so far; at a leaf, the symbols its table allows for this data
   // and the one chosen (the recommended one unless another was picked). Until then, or when the person chooses the
@@ -254,9 +256,9 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
   const size = sizes.includes(settings.size) ? settings.size : sizes.includes(100) ? 100 : (sizes[0] ?? 100);
   effective.size = size;
   const blocked = guided && !choice
-    ? guide.together ? `${GUIDE_TEXTS.together} ${GUIDE_TEXTS.togetherLater}`
-    : guide.waiting ? `${GUIDE_TEXTS.waiting} ${guide.options.find((o) => o.symbol === guide.waiting)?.name}.` : GUIDE_TEXTS.nothing
-    : !spec && environment === null ? `No scanning environment of this key allows ${SYMBOLOGIES[symbology].name}: choose it in step 2.`
+    ? guide.together ? `${t(GUIDE_TEXTS.together)} ${t(GUIDE_TEXTS.togetherLater)}`
+    : guide.waiting ? `${t(GUIDE_TEXTS.waiting)} ${tm(guide.options.find((o) => o.symbol === guide.waiting)?.name ?? "")}.` : t(GUIDE_TEXTS.nothing)
+    : !spec && environment === null ? t("No scanning environment of this key allows {symbol}: choose it in step 2.", { symbol: tm(SYMBOLOGIES[symbology].name) })
     : null;
 
   // The label's design, the same for the code typed and for every row in bulk (backlog 2.4).
@@ -287,7 +289,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     const base = {
       xMm: spec ? (baseX(spec) * size) / 100 : !environment ? 0.495 : twoD ? xDimension(environment, size) : linearXDimension(environment, size), uri: identified?.digitalLinkUri ?? "", elementString: identified?.elementString ?? "",
     };
-    if (!identified || !font) return { view: { ...base, error: checked.error ?? (engine && font ? undefined : "Loading…") } };
+    if (!identified || !font) return { view: { ...base, error: checked.error ?? (engine && font ? undefined : t("Loading…")) } };
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
@@ -297,19 +299,19 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       // The modules in all (a matrix's rows times its columns, a linear symbol's width) and the characters encoded,
       // FNC1 and group separators included (the owner's request of 30 October 2026), at the end of the caption.
       const matrix = geometry.kind === "matrix"
-        ? `${geometry.rows} × ${geometry.cols} = ${(geometry.rows * geometry.cols).toLocaleString("en-GB")} modules`
+        ? t("{rows} × {cols} = {total} modules", { rows: geometry.rows, cols: geometry.cols, total: formatNumber(geometry.rows * geometry.cols) })
         : "";
       const count = encodedCount(symbology, gtinOnly ? { ...identified, elements: identified.elements.filter((e) => e.ai === "01") } : identified, data);
-      const marks = [count.fnc1 ? "FNC1" : "", count.separators ? `${count.separators} group separator${count.separators === 1 ? "" : "s"}` : ""]
-        .filter(Boolean).join(" and ");
+      const marks = [count.fnc1 ? "FNC1" : "", count.separators ? (count.separators === 1 ? t("1 group separator") : t("{n} group separators", { n: count.separators })) : ""]
+        .filter(Boolean).join(t(" and "));
       const tail = [
         // From the first bar to the last (bwip-js may end the widths with a space); ITF-14 as the layout draws it, its
         // wide bars at the ratio 2.5 (bwip-js gives 2)
         geometry.kind === "linear"
-          ? `${geometry.widths.slice(0, geometry.widths.length % 2 ? undefined : -1)
-            .reduce((sum, w) => sum + (symbology === "itf14" && w > 1 ? ITF14_RATIO : w), 0)} modules wide`
+          ? t("{n} modules wide", { n: formatNumber(geometry.widths.slice(0, geometry.widths.length % 2 ? undefined : -1)
+            .reduce((sum, w) => sum + (symbology === "itf14" && w > 1 ? ITF14_RATIO : w), 0)) })
           : "",
-        `${count.characters} characters encoded${marks ? ` (${marks} included)` : ""}`,
+        marks ? t("{n} characters encoded ({marks} included)", { n: count.characters, marks }) : t("{n} characters encoded", { n: count.characters }),
       ].filter(Boolean).join(" · ");
       // GS1-128 over several symbols (backlog 1.13): its element strings and where each symbol starts
       const gs1128 = symbology === "gs1-128" && !logisticOn
@@ -322,28 +324,32 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
         : undefined;
       const logisticName = logisticOn && settings.logistic !== "none" ? LOGISTIC_SIZES[settings.logistic].name : null;
       const symbolPart = logisticName
-        ? `GS1 Logistic Label ${logisticName} · ${layout.parts?.length ?? 1} GS1-128 ${(layout.parts?.length ?? 1) === 1 ? "symbol" : "symbols"}`
+        ? ((layout.parts?.length ?? 1) === 1
+          ? t("GS1 Logistic Label {size} · 1 GS1-128 symbol", { size: logisticName })
+          : t("GS1 Logistic Label {size} · {n} GS1-128 symbols", { size: logisticName, n: layout.parts?.length ?? 1 }))
         : layout.version
-        ? `QR code version ${layout.version} · ${matrix} · correction ${effective.error.toUpperCase()}${options.qrMode ? ` · ${options.qrMode} mode` : ""}`
+        ? t("QR code version {version} · {matrix} · correction {level}", { version: layout.version, matrix, level: effective.error.toUpperCase() }) +
+          (options.qrMode ? ` · ${{ numeric: t("numeric mode"), alphanumeric: t("alphanumeric mode"), byte: t("byte mode") }[options.qrMode]}` : "")
         : layout.modules
-          ? `${SYMBOLOGIES[symbology].name} · ${matrix}`
+          ? `${tm(SYMBOLOGIES[symbology].name)} · ${matrix}`
           : layout.barHeight !== undefined
-            ? `${SYMBOLOGIES[symbology].name}${layout.parts ? ` in ${layout.parts.length} symbols` : ""} · bars ${(layout.barHeight * layout.xMm).toFixed(2)} mm`
-            : SYMBOLOGIES[symbology].name;
+            ? (layout.parts ? t("{symbol} in {n} symbols", { symbol: tm(SYMBOLOGIES[symbology].name), n: layout.parts.length }) : tm(SYMBOLOGIES[symbology].name)) +
+              ` · ${t("bars {mm} mm", { mm: formatNumber(layout.barHeight * layout.xMm, 2) })}`
+            : tm(SYMBOLOGIES[symbology].name);
       return {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
           widthMm: wMm, heightMm: hMm, expected: layout.parts ? layout.parts.map((part) => `]C1 ${part}`).sort() : expectedReads(options), ...(gs1128 ? { gs1128 } : {}),
           pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
           hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
-          caption: `${symbolPart} · X ${layout.xMm.toFixed(3)} mm · label ${wMm.toFixed(1)} × ${hMm.toFixed(1)} mm at 100 % · ${tail}`,
+          caption: `${symbolPart} · ${t("X {x} mm · label {w} × {h} mm at 100 %", { x: formatNumber(layout.xMm, 3), w: formatNumber(wMm, 1), h: formatNumber(hMm, 1) })} · ${tail}`,
         },
         data, geometry, options, layout,
       };
     } catch (error) {
-      return { view: { ...base, error: errorText(error) } };
+      return { view: { ...base, error: tm(errorText(error)) } };
     }
-  }, [checked, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD]);
+  }, [checked, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD, lang]);
 
   const view: LabelView = {
     ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible, logisticPossible: active.key === "00",
@@ -352,11 +358,11 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
           guided: {
             summary: choice
               ? choice.with
-                ? `${SYMBOLOGIES[choice.symbol].name} with a ${SYMBOLOGIES[choice.with].name} beside it`
-                : SYMBOLOGIES[choice.symbol].name
-              : "No symbol yet",
+                ? t("{symbol} with a {beside} beside it", { symbol: tm(SYMBOLOGIES[choice.symbol].name), beside: tm(SYMBOLOGIES[choice.with].name) })
+                : tm(SYMBOLOGIES[choice.symbol].name)
+              : t("No symbol yet"),
             table: walked.leaf.table,
-            application: walked.leaf.application,
+            application: tm(walked.leaf.application),
           },
         }
       : {}),
@@ -392,7 +398,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       download(`${name}${template ? "-template" : ""}.zpl`, zpl, "text/plain");
       setFileError(null);
     } catch (error) {
-      setFileError(errorText(error));
+      setFileError(tm(errorText(error)));
     }
   }
 
@@ -412,7 +418,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       download(`${name}-test-${settings.dpi}dpi.zpl`, zplTestLabel(symbology, data, zplOptions, notes), "text/plain");
       setFileError(null);
     } catch (error) {
-      setFileError(errorText(error));
+      setFileError(tm(errorText(error)));
     }
   }
 
@@ -435,7 +441,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg), "application/zip");
       setFileError(null);
     } catch (error) {
-      setFileError(errorText(error));
+      setFileError(tm(errorText(error)));
     }
   }
 
@@ -461,21 +467,21 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
       const message = event.data;
       if (message.type === "progress") setProgress({ done: message.done, total: message.total });
       else if (message.type === "error") {
-        setGenerated({ result: null, error: message.message });
+        setGenerated({ result: null, error: tm(message.message) });
         finish();
       } else {
         const stem = source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows";
         download(`${stem}_labels.zip`, message.zip, "application/zip");
         setGenerated({
-          result: `${message.generated} ${message.generated === 1 ? "label" : "labels"} generated` +
-            (message.left ? `; ${message.left} ${message.left === 1 ? "row" : "rows"} left out, each with its reason in generated.csv.` : "."),
+          result: (message.generated === 1 ? t("1 label generated") : t("{n} labels generated", { n: message.generated })) +
+            (message.left ? (message.left === 1 ? t("; 1 row left out, with its reason in generated.csv.") : t("; {n} rows left out, each with its reason in generated.csv.", { n: message.left })) : "."),
           error: null,
         });
         finish();
       }
     };
     running.onerror = (event) => {
-      setGenerated({ result: null, error: event.message || "The generation stopped." });
+      setGenerated({ result: null, error: event.message || t("The generation stopped.") });
       finish();
     };
     running.postMessage({
@@ -487,38 +493,48 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
     worker?.terminate();
     setWorker(null);
     setProgress(null);
-    setGenerated({ result: "Stopped: nothing was downloaded.", error: null });
+    setGenerated({ result: t("Stopped: nothing was downloaded."), error: null });
   }
 
   return (
     <>
       <header className="top">
         <h1>GS1 Label Studio</h1>
-        <span className="mode" role="group" aria-label="Mode">
+        <span className="mode" role="group" aria-label={t("Mode")}>
           <button type="button" aria-pressed={!bulk} onClick={() => setMode("one")}>
-            One code
+            {t("One code")}
           </button>
           <button type="button" aria-pressed={bulk} onClick={() => setMode("bulk")}>
-            In bulk
+            {t("In bulk")}
           </button>
         </span>
-        <span>Everything stays in your browser, and it works offline.</span>
+        <span>{t("Everything stays in your browser, and it works offline.")}</span>
+        <label className="lang">
+          <span>{t("Language")}</span>
+          <select id="language" value={lang} onChange={(e) => onLocale?.(e.target.value as Locale)}>
+            {LOCALES.map((l) => (
+              <option key={l.tag} value={l.tag} lang={l.tag}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           className="start-over"
-          title="Clears the data and every choice, as on a first visit"
+          title={t("Clears the data and every choice, as on a first visit")}
           onClick={() => {
-            if (dataTable && !window.confirm("Clear the rows, the fixes and every choice, and start over?")) return;
+            if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
             onStartOver?.();
           }}
         >
-          Start over
+          {t("Start over")}
         </button>
       </header>
       {view.svg && (
-        <a className="mini" href="#label-title" aria-label="Live preview: go to the label">
+        <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")}>
           <span dangerouslySetInnerHTML={{ __html: view.svg }} />
-          <span>Live preview · tap to go to the label</span>
+          <span>{t("Live preview · tap to go to the label")}</span>
         </a>
       )}
       <main className="editor">
@@ -536,31 +552,31 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               onFile={(file) => {
                 file.arrayBuffer()
                   .then((bytes) => parseTableFile(new Uint8Array(bytes)))
-                  .then((next) => takeTable(next, file.name), (error: unknown) => setTableError(errorText(error)));
+                  .then((next) => takeTable(next, file.name), (error: unknown) => setTableError(tm(errorText(error))));
               }}
               onPaste={(text) => {
                 try {
-                  takeTable(parseDelimited(text), "Pasted rows");
+                  takeTable(parseDelimited(text), t("Pasted rows"));
                 } catch (error) {
-                  setTableError(errorText(error));
+                  setTableError(tm(errorText(error)));
                 }
               }}
               onSequence={(sequence, as) => {
                 try {
                   if (as === "rows" || !dataTable) {
-                    takeTable(sequenceTable(sequence), sequence.kind === "sscc" ? "SSCCs made here" : "Serial numbers made here");
+                    takeTable(sequenceTable(sequence), sequence.kind === "sscc" ? t("SSCCs made here") : t("Serial numbers made here"));
                   } else {
                     // A column after the others: the fixes, the rows skipped and the columns chosen stay as they are
                     const next = withSequence(dataTable, sequence);
                     const nextMapping = [...mapping, sequence.kind === "sscc" ? "00" : "21"];
                     setDataTable(next);
                     setMapping(nextMapping);
-                    setSource(`${source} + ${sequence.kind === "sscc" ? "SSCCs" : "serial numbers"}`);
+                    setSource(`${source} + ${sequence.kind === "sscc" ? t("SSCCs") : t("serial numbers")}`);
                     rememberColumns(next.headers, nextMapping, fixed);
                     setTableError(null);
                   }
                 } catch (error) {
-                  setTableError(errorText(error));
+                  setTableError(tm(errorText(error)));
                 }
               }}
               onMapping={(next) => {
@@ -604,7 +620,7 @@ export function App({ onStartOver }: { onStartOver?: () => void }) {
               setFileError(null);
             }}
             onPaste={(text) => {
-              if (!engine) throw new Error("The GS1 Barcode Syntax Engine is still loading.");
+              if (!engine) throw new Error(t("The GS1 Barcode Syntax Engine is still loading."));
               // The URI's own parameters, which the engine leaves out (backlog 1.17)
               const parameters = uriParameters(text);
               const fields = { ...fieldsOf(engine.parse(text)), ...(parameters.length ? { parameters } : {}) };

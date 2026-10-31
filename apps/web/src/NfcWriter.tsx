@@ -1,6 +1,7 @@
 import { ndefUriMessage } from "@gs1-label-studio/core";
 import { useState } from "react";
 import { NFC_TEXTS } from "./texts.ts";
+import { formatNumber, t, tm } from "./i18n.ts";
 
 // Writing an NFC tag (backlog 1.19): one of the code's URIs as an NDEF URI record, through Web NFC where the browser has
 // it (Chrome on Android), read back from the tag to check it; elsewhere the NDEF message as a file for a tag writer.
@@ -36,14 +37,14 @@ export function NfcWriter({ choices, download }: Props) {
   if (!uri) return null;
 
   const failed = (error: unknown) =>
-    setStatus({ kind: "error", text: error instanceof Error ? `${error.name === "NotAllowedError" ? NFC_TEXTS.notAllowed : error.message}` : String(error) });
+    setStatus({ kind: "error", text: error instanceof Error ? `${error.name === "NotAllowedError" ? t(NFC_TEXTS.notAllowed) : tm(error.message)}` : String(error) });
 
   async function write() {
     if (!window.NDEFReader || !uri) return;
-    setStatus({ kind: "busy", text: NFC_TEXTS.hold });
+    setStatus({ kind: "busy", text: t(NFC_TEXTS.hold) });
     try {
       await new window.NDEFReader().write({ records: [{ recordType: "url", data: uri }] });
-      setStatus({ kind: "ok", text: NFC_TEXTS.written });
+      setStatus({ kind: "ok", text: t(NFC_TEXTS.written) });
     } catch (error) {
       failed(error);
     }
@@ -51,7 +52,7 @@ export function NfcWriter({ choices, download }: Props) {
 
   async function readBack() {
     if (!window.NDEFReader || !uri) return;
-    setStatus({ kind: "busy", text: NFC_TEXTS.holdRead });
+    setStatus({ kind: "busy", text: t(NFC_TEXTS.holdRead) });
     const reader = new window.NDEFReader();
     const stop = new AbortController();
     reader.addEventListener("reading", (event) => {
@@ -60,10 +61,10 @@ export function NfcWriter({ choices, download }: Props) {
       const found = records.find((r) => r.recordType === "url");
       const text = found?.data ? new TextDecoder().decode(found.data) : null;
       setStatus(text === uri
-        ? { kind: "ok", text: `${NFC_TEXTS.same} ${text}` }
-        : { kind: "error", text: text ? `${NFC_TEXTS.different} ${text}` : NFC_TEXTS.noUrl });
+        ? { kind: "ok", text: `${t(NFC_TEXTS.same)} ${text}` }
+        : { kind: "error", text: text ? `${t(NFC_TEXTS.different)} ${text}` : t(NFC_TEXTS.noUrl) });
     }, { once: true });
-    reader.addEventListener("readingerror", () => setStatus({ kind: "error", text: NFC_TEXTS.unreadable }), { once: true });
+    reader.addEventListener("readingerror", () => setStatus({ kind: "error", text: t(NFC_TEXTS.unreadable) }), { once: true });
     try {
       await reader.scan({ signal: stop.signal });
     } catch (error) {
@@ -73,9 +74,9 @@ export function NfcWriter({ choices, download }: Props) {
 
   return (
     <div className="nfc">
-      <b>NFC tag</b>
+      <b>{t("NFC tag")}</b>
       {choices.length > 1 && (
-        <select aria-label="What to write on the NFC tag" value={chosen} onChange={(e) => setChosen(Number(e.target.value))}>
+        <select aria-label={t("What to write on the NFC tag")} value={chosen} onChange={(e) => setChosen(Number(e.target.value))}>
           {choices.map(([label], index) => (
             <option key={label} value={index}>
               {label}
@@ -85,17 +86,17 @@ export function NfcWriter({ choices, download }: Props) {
       )}
       <div className="sign-row">
         <button type="button" className="btn" disabled={!available || status.kind === "busy"} onClick={() => void write()}>
-          Write to an NFC tag
+          {t("Write to an NFC tag")}
         </button>
         <button type="button" className="btn" disabled={!available || status.kind === "busy"} onClick={() => void readBack()}>
-          Read the tag back
+          {t("Read the tag back")}
         </button>
         <button type="button" className="btn" onClick={() => download("nfc-uri.ndef", ndefUriMessage(uri), "application/octet-stream")}>
-          NDEF file
+          {t("NDEF file")}
         </button>
       </div>
       <p className={status.kind === "ok" ? "hint ok" : status.kind === "error" ? "hint error" : "hint"} aria-live="polite">
-        {status.text || (available ? NFC_TEXTS.ready : NFC_TEXTS.unavailable)}
+        {status.text || (available ? t(NFC_TEXTS.ready) : t(NFC_TEXTS.unavailable))}
       </p>
     </div>
   );

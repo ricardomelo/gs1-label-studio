@@ -16,7 +16,8 @@ import {
   type Table,
 } from "@gs1-label-studio/core";
 import { SequenceForm } from "./SequenceForm.tsx";
-import { aiText, byAi, BULK_TEXTS } from "./texts.ts";
+import { aiText, byAi, BULK_TEXTS, ROW_STATUS_NAMES } from "./texts.ts";
+import { en, formatNumber, t, tm } from "./i18n.ts";
 
 // Step 1 in bulk (backlog 2.1, mock-up A of 29 October 2026): rows from a file or pasted, each column's AI — guessed
 // from its header, remembered for files with the same headers —, values the same on every row, and how many rows the
@@ -49,23 +50,23 @@ interface Props {
 }
 
 /** The AIs a column can go to: keys, their qualifiers, then the data attributes, each once. */
-const CHOICES: { group: string; options: [string, string][] }[] = (() => {
+const choices = (): { group: string; options: [string, string][] }[] => {
   const seen = new Set<string>();
   const options = (list: [string, string | undefined][]) =>
     list.filter(([ai]) => !seen.has(ai) && seen.add(ai)).map(([ai, title]) => [ai, aiText(ai, title)] as [string, string]);
   const keys = identifierKeys().sort(byAi);
   return [
-    { group: "Keys", options: options(keys.map((key) => [key, aiEntry(key)?.title])) },
-    { group: "Qualifiers", options: options(keys.flatMap((key) => qualifiersOf(key)).sort(byAi).map((ai) => [ai, aiEntry(ai)?.title])) },
-    { group: "Data attributes", options: options(offeredAttributes().map((a) => [a.ai, a.title])) },
+    { group: t("Keys"), options: options(keys.map((key) => [key, aiEntry(key)?.title])) },
+    { group: t("Qualifiers"), options: options(keys.flatMap((key) => qualifiersOf(key)).sort(byAi).map((ai) => [ai, aiEntry(ai)?.title])) },
+    { group: t("Data attributes"), options: options(offeredAttributes().map((a) => [a.ai, a.title])) },
   ];
-})();
+};
 
 function AiSelect({ id, value, onChange, label }: { id: string; value: string | null; onChange: (ai: string | null) => void; label: string }) {
   return (
     <select id={id} aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
-      <option value="">Not used</option>
-      {CHOICES.map(({ group, options }) => (
+      <option value="">{t("Not used")}</option>
+      {choices().map(({ group, options }) => (
         <optgroup key={group} label={group}>
           {options.map(([ai, text]) => (
             <option key={ai} value={ai}>
@@ -86,7 +87,7 @@ export function BulkCard(props: Props) {
   return (
     <section className="card" aria-labelledby="rows-title">
       <h2 id="rows-title">
-        <span className="n">1</span> Rows <span className="badge">CSV, Excel or pasted</span>
+        <span className="n">1</span> {t("Rows")} <span className="badge">{t("CSV, Excel or pasted")}</span>
       </h2>
       <div
         className={`drop${dragging ? " over" : ""}`}
@@ -102,9 +103,9 @@ export function BulkCard(props: Props) {
           if (file) onFile(file);
         }}
       >
-        {BULK_TEXTS.drop}{" "}
+        {t(BULK_TEXTS.drop)}{" "}
         <label className="link">
-          Choose a file
+          {t("Choose a file")}
           <input
             id="rows-file"
             type="file"
@@ -119,14 +120,14 @@ export function BulkCard(props: Props) {
         </label>
         <textarea
           id="rows-paste"
-          aria-label="Rows pasted from a spreadsheet"
-          placeholder={BULK_TEXTS.pastePlaceholder}
+          aria-label={t("Rows pasted from a spreadsheet")}
+          placeholder={t(BULK_TEXTS.pastePlaceholder)}
           value={pasted}
           onChange={(e) => setPasted(e.target.value)}
           rows={3}
         />
         <button type="button" className="btn" disabled={!pasted.trim()} onClick={() => onPaste(pasted)}>
-          Use the pasted rows
+          {t("Use the pasted rows")}
         </button>
         <SequenceForm
           loaded={table?.rows.length ?? 0}
@@ -140,15 +141,15 @@ export function BulkCard(props: Props) {
         <>
           <div className="source">
             <b>{source}</b>
-            {table.sheet ? ` · sheet “${table.sheet}”` : ""} · {table.rows.length} {table.rows.length === 1 ? "row" : "rows"} ·
-            headers in row 1
+            {table.sheet ? ` · ${t("sheet “{name}”", { name: table.sheet })}` : ""} · {table.rows.length === 1 ? t("1 row") : t("{n} rows", { n: table.rows.length })} ·{" "}
+            {t("headers in row 1")}
           </div>
           <table className="mapping">
             <thead>
               <tr>
-                <th>Column</th>
-                <th>First value</th>
-                <th>Goes to</th>
+                <th>{t("Column")}</th>
+                <th>{t("First value")}</th>
+                <th>{t("Goes to")}</th>
               </tr>
             </thead>
             <tbody>
@@ -163,7 +164,7 @@ export function BulkCard(props: Props) {
                     <td>
                       <AiSelect
                         id={`map-${column}`}
-                        label={`Column ${header} goes to`}
+                        label={t("Column {header} goes to", { header })}
                         value={ai}
                         onChange={(next) => onMapping(mapping.map((m, i) => (i === column ? next : m)))}
                       />
@@ -175,20 +176,20 @@ export function BulkCard(props: Props) {
           </table>
 
           <div className="fixed">
-            <b>Same value on every row</b>{" "}
+            <b>{t("Same value on every row")}</b>{" "}
             <button type="button" className="link" onClick={() => onFixed([...fixed, ["", ""]])}>
-              + Add
+              {t("+ Add")}
             </button>
             {fixed.map(([ai, value], index) => (
               <div className="fixed-row" key={index}>
                 <AiSelect
                   id={`fixed-ai-${index}`}
-                  label={`Value ${index + 1}: AI`}
+                  label={t("Value {n}: AI", { n: index + 1 })}
                   value={ai || null}
                   onChange={(next) => onFixed(fixed.map((f, i) => (i === index ? [next ?? "", f[1]] : f)))}
                 />
                 <input
-                  aria-label={`Value ${index + 1}`}
+                  aria-label={t("Value {n}", { n: index + 1 })}
                   className="mono"
                   value={value}
                   onChange={(e) => onFixed(fixed.map((f, i) => (i === index ? [f[0], e.target.value] : f)))}
@@ -196,18 +197,18 @@ export function BulkCard(props: Props) {
                 <button
                   type="button"
                   className="ibtn"
-                  aria-label={`Remove value ${index + 1}`}
+                  aria-label={t("Remove value {n}", { n: index + 1 })}
                   onClick={() => onFixed(fixed.filter((_, i) => i !== index))}
                 >
                   ×
                 </button>
               </div>
             ))}
-            {!fixed.length && <div className="hint">{BULK_TEXTS.fixedHint}</div>}
+            {!fixed.length && <div className="hint">{t(BULK_TEXTS.fixedHint)}</div>}
           </div>
 
           <Report {...props} table={table} />
-          <div className="hint">{BULK_TEXTS.remembered}</div>
+          <div className="hint">{t(BULK_TEXTS.remembered)}</div>
         </>
       )}
     </section>
@@ -216,10 +217,10 @@ export function BulkCard(props: Props) {
 
 const PAGE = 20;
 const FILTERS: { status: RowStatus | "all"; label: string }[] = [
-  { status: "error", label: "With errors" },
-  { status: "fixed", label: "Fixed" },
-  { status: "skipped", label: "Skipped" },
-  { status: "all", label: "All" },
+  { status: "error", label: en("With errors") },
+  { status: "fixed", label: en("Fixed") },
+  { status: "skipped", label: en("Skipped") },
+  { status: "all", label: en("All") },
 ];
 
 /** The validation report: how many rows are ready, fixed, in error or skipped, and the rows of the filter chosen. */
@@ -237,20 +238,20 @@ function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, o
   const errors = statuses.flatMap((status, index) => (status === "error" ? [index] : []));
   const skippedRows = [...skipped];
   const count = (status: RowStatus | "all") => (status === "all" ? rows.length : counts[status]);
-  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
 
   return (
     <div className="summary report" aria-live="polite">
-      <span className="ok">{plural(counts.ready, "row ready", "rows ready")}</span>
+      <span className="ok">{counts.ready === 1 ? t("1 row ready") : t("{n} rows ready", { n: counts.ready })}</span>
       {counts.error > 0 && (
         <>
           {" · "}
-          <span className="bad">{counts.error} with errors</span>
+          <span className="bad">{t("{n} with errors", { n: counts.error })}</span>
         </>
       )}
-      {counts.fixed > 0 && ` · ${counts.fixed} fixed`}
-      {counts.skipped > 0 && ` · ${counts.skipped} skipped`}
-      <div className="rep-tabs" role="group" aria-label="Rows shown">
+      {counts.fixed > 0 && ` · ${t("{n} fixed", { n: counts.fixed })}`}
+      {counts.skipped > 0 && ` · ${t("{n} skipped", { n: counts.skipped })}`}
+      <div className="rep-tabs" role="group" aria-label={t("Rows shown")}>
         {FILTERS.map(({ status, label }) => (
           <button
             key={status}
@@ -262,26 +263,26 @@ function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, o
               setKept(new Set());
             }}
           >
-            {label} ({count(status)})
+            {t(label)} ({count(status)})
           </button>
         ))}
       </div>
-      {!listed.length && <div className="hint">{filter === "error" ? "No row has an error." : "No rows here."}</div>}
+      {!listed.length && <div className="hint">{filter === "error" ? t("No row has an error.") : t("No rows here.")}</div>}
       {listed.slice(0, shown).map(({ row, index, status }) => (
         <div className="rrow" data-status={status} key={row.row} data-row={row.row}>
           <div className="head">
-            <b>Row {row.row}</b>
+            <b>{t("Row {n}", { n: row.row })}</b>
             <span className="tag-line">
-              {status !== "error" && <span className="tag" data-status={status}>{status}</span>}
+              {status !== "error" && <span className="tag" data-status={status}>{t(ROW_STATUS_NAMES[status])}</span>}
               <button type="button" className="link" onClick={() => onShow(index)}>
-                Show
+                {t("Show")}
               </button>
               {" · "}
               <button type="button" className="link" onClick={() => {
                   keep(index);
                   onSkip([index], status !== "skipped");
                 }}>
-                {status === "skipped" ? "Include" : "Skip"}
+                {status === "skipped" ? t("Include") : t("Skip")}
               </button>
               {edits[index] && (
                 <>
@@ -294,18 +295,17 @@ function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, o
                       onUndo(index);
                     }}
                   >
-                    Undo the fixes
+                    {t("Undo the fixes")}
                   </button>
                 </>
               )}
             </span>
           </div>
-          {row.error && <div className="why">{row.error}</div>}
-          {row.hint && <div className="hint">{row.hint}</div>}
+          {row.error && <div className="why">{tm(row.error)}</div>}
+          {row.hint && <div className="hint">{tm(row.hint)}</div>}
           {row.fixedAt?.length ? (
             <div className="hint">
-              {row.fixedAt.map((at) => `(${fixed[at]![0]}) ${fixed[at]![1]}`).join(", ")} is a value for every row: change it
-              above.
+              {t("{values} is a value for every row: change it above.", { values: row.fixedAt.map((at) => `(${fixed[at]![0]}) ${fixed[at]![1]}`).join(", ") })}
             </div>
           ) : null}
           <div className="cells">
@@ -337,28 +337,28 @@ function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, o
       ))}
       {listed.length > shown && (
         <button type="button" className="link more" onClick={() => setShown(shown + PAGE)}>
-          Show {Math.min(PAGE, listed.length - shown)} more of {listed.length - shown}
+          {t("Show {n} more of {rest}", { n: Math.min(PAGE, listed.length - shown), rest: listed.length - shown })}
         </button>
       )}
       <div className="rep-actions">
         {errors.length > 0 && (
           <button type="button" className="btn" onClick={() => onSkip(errors, true)}>
-            Skip the {plural(errors.length, "row", "rows")} with errors
+            {errors.length === 1 ? t("Skip the 1 row with errors") : t("Skip the {n} rows with errors", { n: errors.length })}
           </button>
         )}
         {skippedRows.length > 0 && (
           <button type="button" className="btn" onClick={() => onSkip(skippedRows, false)}>
-            Include the skipped rows
+            {t("Include the skipped rows")}
           </button>
         )}
         <button type="button" className="btn" onClick={() => onDownload("report")}>
-          Report (CSV)
+          {t("Report (CSV)")}
         </button>
         <button type="button" className="btn" disabled={!Object.keys(edits).length} onClick={() => onDownload("corrected")}>
-          Corrected rows (CSV)
+          {t("Corrected rows (CSV)")}
         </button>
       </div>
-      <div className="hint">{BULK_TEXTS.report}</div>
+      <div className="hint">{t(BULK_TEXTS.report)}</div>
     </div>
   );
 }

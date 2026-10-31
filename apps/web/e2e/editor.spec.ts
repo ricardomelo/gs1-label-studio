@@ -900,3 +900,39 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is not written in ZPL yet");
 });
+
+// The interface's languages (the owner, 31 October 2026; ADR 0003): English, Brazilian Portuguese and Spanish, the
+// language chosen kept for the next visit; the core's and the Syntax Engine's messages translated too.
+test("the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included", async ({ page }) => {
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.selectOption("#language", "pt-BR");
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
+  await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
+  await expect(page.locator("#scan-title")).toHaveText("2 Onde é lido?");
+  await expect(page.getByRole("group", { name: "É lido num ponto de venda do varejo geral?" })).toBeVisible();
+  await expect(page.locator(".attr").first().getByRole("combobox")).toHaveValue("(10) Lote");
+  // What was typed stays; a core message and an engine message in Portuguese
+  await expect(page.locator("#key-value")).toHaveValue("09506000134376");
+  await page.fill("#key-value", "09506000134377");
+  await expect(page.locator("#key-hint")).toHaveText("O dígito verificador não confere: deveria ser 6.");
+  await page.fill("#key-value", "09506000134376");
+  await page.fill("#paste", "(01)09506000134352(17)271331");
+  await page.getByRole("button", { name: "Preencher" }).click();
+  await expect(page.locator(".paste .hint")).toContainText("A data tem um mês inválido.");
+  // Kept for the next visit
+  await page.reload();
+  await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
+  await page.selectOption("#language", "es");
+  await expect(page.locator("#identify-title")).toHaveText("1 ¿Qué identifica el código?");
+  await expect(page.getByRole("button", { name: "Empezar de nuevo" })).toBeVisible();
+  await page.selectOption("#language", "en");
+  await expect(page.locator("#identify-title")).toHaveText("1 What does the code identify?");
+});
+
+test("a browser in Portuguese opens the studio in Portuguese", async ({ browser }) => {
+  const context = await browser.newContext({ locale: "pt-BR" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
+  await context.close();
+});

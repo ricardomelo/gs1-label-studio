@@ -146,3 +146,10 @@ test.describe("on a phone", () => {
     await shot(page, "phone");
   });
 });
+
+test("the studio in Portuguese", async ({ page }) => {
+  await page.selectOption("#language", "pt-BR");
+  await expect(page.locator("#identify-title")).toContainText("O que o código identifica?");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot(page, "language");
+});

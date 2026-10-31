@@ -25,6 +25,8 @@ jobs:
       - run: pnpm --filter @gs1-label-studio/core exec vitest run --reporter=default --reporter=github-actions
         env:
           LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
+      # The web application's unit tests: every text in each language (apps/web/test).
+      - run: pnpm --filter @gs1-label-studio/web test
       - run: pnpm build
       # The editor in a browser (apps/web/e2e), desktop and phone widths, against the build above.
       - run: pnpm --filter @gs1-label-studio/web exec playwright install --with-deps chromium

@@ -77,6 +77,7 @@ describe("the inventory of tests", () => {
   it("lists every test file there is, and no other", () => {
     const onDisk = [
       ...readdirSync(join(root, "packages/core/test")).filter((f) => f.endsWith(".test.ts")).map((f) => `packages/core/test/${f}`),
+      ...readdirSync(join(root, "apps/web/test")).filter((f) => f.endsWith(".test.ts")).map((f) => `apps/web/test/${f}`),
       ...readdirSync(join(root, "apps/web/e2e")).filter((f) => f.endsWith(".spec.ts")).map((f) => `apps/web/e2e/${f}`),
     ].sort();
     expect(inventory.programs.map((p) => p.file).sort()).toEqual(onDisk);

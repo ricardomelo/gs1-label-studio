@@ -160,3 +160,12 @@ over fixtures; the inventory comes from a complete run, and refuses to be writte
 file that fails as a whole, which its first version missed. The owner then asked for the interface in Brazilian
 Portuguese and Spanish besides English, the documentation staying in English.
 
+The interface came next. Of three mock-ups of the language switch — a menu in the header, buttons, links in a footer —
+the menu was taken. Every text of the page went through `t()`, with English as the key, and the messages the core
+writes in English are translated where they are shown, by template. The resolver's catalogues gave the Syntax Engine's
+211 messages and the keys' and qualifiers' texts in both languages; the rest, some 650 texts, were drafted for this
+delivery. Two traps appeared in the first screenshots in Portuguese: a short template of the page, "{first} to {last}",
+matched a hint ("up to 20 characters" became "up a 20 characters"), so the core's messages have a catalogue of their
+own; and two values of one name in a message ("({label} × {label} mm)") were told apart by numbering them. A test now
+refuses a text without its translation, and the documentation stays in English.
+
