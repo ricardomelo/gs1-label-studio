@@ -568,5 +568,10 @@
  "the scan test": "o teste de leitura",
  "the user interface": "a interface",
  "used by node-qrcode": "usado pelo node-qrcode",
- "user guide": "guia do usuário"
+ "user guide": "guia do usuário",
+ "Install the app": "Instalar o app",
+ "On an iPhone or iPad: tap Share, then Add to Home Screen.": "No iPhone ou iPad: toque em Compartilhar e depois em Adicionar à Tela de Início.",
+ "On the home screen, offline, without the browser's bars.": "Na tela inicial, offline, sem as barras do navegador.",
+ "This browser installs it from its menu: Install app, or Add to Home screen.": "Este navegador o instala pelo seu menu: Instalar app, ou Adicionar à tela inicial.",
+ "✓ Installed: open GS1 Label Studio from the home screen; it works offline.": "✓ Instalado: abra o GS1 Label Studio pela tela inicial; funciona offline."
 }

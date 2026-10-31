@@ -2,6 +2,7 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { initialLocale, setLocale, type Locale } from "./i18n.ts";
+import "./install.ts"; // catches the browser's install offer before the page is drawn
 import "./styles.css";
 
 // Offline (backlog 1.7): the service worker the build writes (offline.ts) keeps every file of the application.

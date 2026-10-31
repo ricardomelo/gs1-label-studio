@@ -1,6 +1,6 @@
 {
   "name": "GS1 Label Studio",
-  "short_name": "GS1 Labels",
+  "short_name": "GS1 Label Studio",
   "description": "GS1 barcodes and labels made in the browser; nothing leaves your computer.",
   "start_url": "./",
   "scope": "./",

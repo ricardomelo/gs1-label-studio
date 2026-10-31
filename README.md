@@ -385,7 +385,9 @@ complete.
   horizontally a navigation rail, the destination on the left and the label with its exports always on the right; the
   same page in every layout, so turning the device keeps what was typed. About: the repository, the Apache 2.0
   licence, the manuals, the version published (its commit and date) and the software of others it is made with, each
-  linked to its repository. The browser tests run on a phone and a tablet besides the desktop*
+  linked to its repository. The browser tests run on a phone and a tablet besides the desktop. Then, from the
+  owner's look on an Android phone: layout A kept; the home screen's name GS1 Label Studio (the manifest's short
+  name was "GS1 Labels"); *Install the app* under More; Start over a round reload icon beside the live preview*
 
 **Phase 2 — in bulk**
 

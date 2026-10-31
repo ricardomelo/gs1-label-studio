@@ -87,6 +87,7 @@ import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
 import { TabBar } from "./TabBar.tsx";
+import { InstallApp } from "./InstallApp.tsx";
 import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 
@@ -541,16 +542,21 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       </select>
     </label>
   );
-  const startOver = (
-    <button
-      type="button"
-      className="start-over"
-      title={t("Clears the data and every choice, as on a first visit")}
-      onClick={() => {
-        if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
-        onStartOver?.();
-      }}
-    >
+  const startOverClick = () => {
+    if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
+    onStartOver?.();
+  };
+  // In the header on a computer and a tablet; on a phone a round reload icon at the right of the live preview's bar
+  // (the owner, 31 October 2026), its name kept for screen readers.
+  const startOver = phone ? (
+    <button type="button" className="start-over round" aria-label={t("Start over")} title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+        <path d="M20 4v5h-5" />
+      </svg>
+    </button>
+  ) : (
+    <button type="button" className="start-over" title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
       {t("Start over")}
     </button>
   );
@@ -575,16 +581,24 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           </button>
         </span>
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
-        {/* On a phone the language and Start over are in "More", leaving the header to the name and the mode */}
+        {/* On a phone the language is in "More" and Start over beside the live preview, leaving the header to the
+            name and the mode */}
         {!phone && languageMenu}
         {!phone && startOver}
       </header>
-      {view.svg && (
-        <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")} data-pane="data scan export more">
-          <span dangerouslySetInnerHTML={{ __html: view.svg }} />
-          <span>{t("Live preview · tap to go to the label")}</span>
-        </a>
-      )}
+      <div className="mini-bar" data-pane="data scan export more">
+        {view.svg ? (
+          <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")}>
+            <span dangerouslySetInnerHTML={{ __html: view.svg }} />
+            <span>{t("Live preview · tap to go to the label")}</span>
+          </a>
+        ) : (
+          <a className="mini" href="#label-title">
+            <span className="error small">{view.error ?? t("Loading…")}</span>
+          </a>
+        )}
+        {phone && startOver}
+      </div>
       <main className="editor">
         <div className="steps" data-pane="data scan">
           <div data-pane="data">
@@ -757,10 +771,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           />
           }
         >
-          {phone && (
+          {tabbed && (
             <div className="settings">
-              {languageMenu}
-              {startOver}
+              {phone && languageMenu}
+              <InstallApp />
             </div>
           )}
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />

@@ -3435,6 +3435,24 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "More offers to install the studio: the browser's dialog where it has one, otherwise how",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "an iPhone is told to install from Share, Add to Home Screen; the name on the home screen is GS1 Label Studio",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"

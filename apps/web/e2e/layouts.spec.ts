@@ -36,6 +36,13 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(page.locator("#scan-title")).toBeHidden();
   await expect(page.locator("#label-title")).toBeHidden();
   await expect(page.locator(".mini")).toBeVisible();
+  // Start over: a round icon at the right of the live preview's bar, not in the header
+  const reload = page.locator(".mini-bar").getByRole("button", { name: "Start over" });
+  await expect(reload).toBeVisible();
+  const [bar0, icon] = [(await page.locator(".mini-bar").boundingBox())!, (await reload.boundingBox())!];
+  expect(icon.x + icon.width).toBeGreaterThan(bar0.x + bar0.width - 24);
+  expect(icon.width).toBe(icon.height);
+  await expect(page.locator("header.top").getByRole("button", { name: "Start over" })).toHaveCount(0);
   // The live preview opens the label
   await page.locator(".mini").click();
   await expect(bar.getByRole("button", { name: "Label" })).toHaveAttribute("aria-current", "page");
@@ -61,7 +68,7 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await bar.getByRole("button", { name: "More" }).click();
   await expect(page.locator("header.top #language")).toHaveCount(0);
   await expect(page.locator(".settings #language")).toBeVisible();
-  await expect(page.locator(".settings").getByRole("button", { name: "Start over" })).toBeVisible();
+  await expect(page.locator(".settings").getByRole("button", { name: "Install the app" })).toBeVisible();
   await expect(page.locator("details.epc")).toBeVisible();
   await expect(page.locator("footer.about")).toBeVisible();
   // Nothing wider than the screen, in any destination
@@ -123,4 +130,42 @@ test("About: the repository, the licence, the version and the software it is mad
   await expect(made).toHaveText(["bwip-js", "GS1 Barcode Syntax Engine", "node-qrcode", "dijkstrajs", "opentype.js", "zxing-wasm", "zxing-cpp", "React", "Liberation Sans"]);
   for (const href of await made.evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href))) expect(href).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/);
   await expect(about).toContainText("not maintained by GS1");
+});
+
+test("More offers to install the studio: the browser's dialog where it has one, otherwise how", async ({ page }, info) => {
+  test.skip(info.project.name === "desktop");
+  await tabs(page).getByRole("button", { name: "More" }).click();
+  const button = page.getByRole("button", { name: "Install the app" });
+  // A browser without the install event (Safari on a computer, Firefox, this test's Chromium): the menu's way
+  await expect(button).toBeDisabled();
+  await expect(page.locator(".install .hint")).toHaveText("This browser installs it from its menu: Install app, or Add to Home screen.");
+  // The browser's offer, stood in for: the button shows its dialog; accepted, the studio says it is installed
+  await page.evaluate(() => {
+    const offer = Object.assign(new Event("beforeinstallprompt", { cancelable: true }), {
+      prompt: async () => { (window as unknown as { prompted: boolean }).prompted = true; },
+      userChoice: Promise.resolve({ outcome: "accepted" }),
+    });
+    window.dispatchEvent(offer);
+  });
+  await expect(button).toBeEnabled();
+  await expect(page.locator(".install .hint")).toHaveText("On the home screen, offline, without the browser's bars.");
+  await button.click();
+  expect(await page.evaluate(() => (window as unknown as { prompted?: boolean }).prompted)).toBe(true);
+  await expect(page.locator(".install .hint.ok")).toHaveText("✓ Installed: open GS1 Label Studio from the home screen; it works offline.");
+});
+
+test("an iPhone is told to install from Share, Add to Home Screen; the name on the home screen is GS1 Label Studio", async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== "phone");
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+  });
+  const page = await context.newPage();
+  await page.goto(baseURL!);
+  await tabs(page).getByRole("button", { name: "More" }).click();
+  await expect(page.locator(".install .hint")).toHaveText("On an iPhone or iPad: tap Share, then Add to Home Screen.");
+  await expect(page.locator("meta[name='apple-mobile-web-app-title']")).toHaveAttribute("content", "GS1 Label Studio");
+  const manifest = await (await page.request.get(new URL("manifest.webmanifest", baseURL).href)).json();
+  expect([manifest.name, manifest.short_name]).toEqual(["GS1 Label Studio", "GS1 Label Studio"]);
+  await context.close();
 });

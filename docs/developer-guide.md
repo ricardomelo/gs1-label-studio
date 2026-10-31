@@ -198,6 +198,7 @@ Each module, in the order of the flow above.
 | `src/App.tsx` | The state of the editor (identification, answers, settings, bulk rows, edits, printer) and the label memo through `labelFor`; downloads; the destination shown on a phone or a tablet, each keeping its scroll, a link to another destination opening it |
 | `src/layout.ts` | The layouts (backlog 1.21): the destinations (`Pane`), the phone's and the tablet's media queries, `useMedia`, `paneOf` |
 | `src/TabBar.tsx` | The destinations' bar: at the bottom on a phone, a rail on a tablet held horizontally, hidden on a computer; a dot where something needs attention |
+| `src/install.ts`, `src/InstallApp.tsx` | Installing as an app: `beforeinstallprompt` caught as soon as the page loads (main.tsx imports it), `install()`, the state (installed, ready, iOS, the browser's menu); the button under More |
 | `src/About.tsx` | About, at the foot of the page: the repository, the licence, the manuals, the version (`__BUILD__`, the commit the build was made from, set in `vite.config.ts`), the software it is made with |
 | `src/IdentifyCard.tsx` | Step 1: paste box, key, the list of qualifiers and attributes (`AiCombo`), other keys, parameters |
 | `src/AiCombo.tsx` | The AI field: every AI from its arrow, filtered by typing |
@@ -291,7 +292,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 15 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 44 |
-| `layouts` | the computer's, the phone's and the tablet's layouts, About (Playwright) | 5 |
+| `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

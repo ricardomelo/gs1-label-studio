@@ -142,4 +142,6 @@
   the page: the repository, the Apache 2.0 licence, the manuals, the version (commit and date) and the software it is
   made with, each linked to its repository. The browser tests also run on a phone and a tablet. The README opens with
   a tour of the studio in screenshots and the manuals chapter by chapter.
+- Installing on a phone: *Install the app* under More (the browser's dialog, or how on an iPhone or iPad), the home
+  screen's name GS1 Label Studio; on a phone Start over is a round reload icon beside the live preview.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

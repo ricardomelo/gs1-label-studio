@@ -58,7 +58,8 @@ The studio speaks English, Brazilian Portuguese and Spanish (section 2); this gu
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
 - The header: **One code** or **In bulk** (section 13), **Language**, and **Start over**, which clears every field and
-  choice as on a first visit (on a phone, Language and Start over are under **More**).
+  choice as on a first visit (on a phone, Language is under **More** and Start over is a round icon beside the live
+  preview).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
@@ -82,11 +83,17 @@ bar at the bottom, as phone apps do:
 | **Scan** | step 2, where the code is scanned |
 | **Label** | the label, its tools and its options |
 | **Export** | the downloads, *Generate in bulk* and *Printer (ZPL)* |
-| **More** | **Language** and **Start over**, *RFID and NFC (EPC)*, *Digital signature* and About |
+| **More** | **Language**, **Install the app**, *RFID and NFC (EPC)*, *Digital signature* and About |
 
 Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
 live preview — opens its tab. A red dot on **Data** says the data has an error; on **Label**, that the label cannot be
-drawn. The header keeps the name and **One code / In bulk**.
+drawn. The header keeps the name and **One code / In bulk**; **Start over** is the round reload icon at the right of the
+live preview's bar.
+
+**Install the app** puts the studio on the home screen, where it opens without the browser's bars and works offline, under
+the name *GS1 Label Studio*. Chrome, Edge and Samsung Internet show their install dialog; on an iPhone or iPad the button
+says how: Share, then *Add to Home Screen*; other browsers install from their menu. Once installed, the button says so.
+On a tablet the button is under **More** too.
 
 <p>
   <img src="images/guide/phone-data.png" alt="On a phone: Data, step 1 with the live preview at the top and the tab bar at the bottom" width="200">

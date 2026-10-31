@@ -70,7 +70,8 @@
    October 2026 (the owner's request, backlog 1.21, mock-up A of three, taken under the owner's rule): the computer's
    layout stays as it is; a phone, a tablet held upright or a narrow window (900 pixels or less) shows one column and
    one destination at a time — Data, Scan, Label, Export, More — in a tab bar at the bottom, as phone apps do, the
-   language and Start over under More; a touch screen held horizontally up to 1,366 pixels shows a navigation rail, the
+   language and *Install the app* under More, Start over a round reload icon beside the live preview (the owner, who
+   kept layout A the same day); a touch screen held horizontally up to 1,366 pixels shows a navigation rail, the
    destination on the left and the label with its tools and Export bar always on the right. One page serves them all:
    its parts are marked with their destination (`data-pane`) and the styles hide the others, so turning a device keeps
    what was typed. The alternatives were one long column with step chips and a floating download button (B) and a
