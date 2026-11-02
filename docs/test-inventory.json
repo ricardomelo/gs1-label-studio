@@ -1,5 +1,5 @@
 {
- "date": "2026-10-31",
+ "date": "2026-11-02",
  "skipped": 0,
  "programs": [
   {
@@ -500,7 +500,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL and EPL2"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
   },
   {
    "program": "environments",
@@ -1532,7 +1532,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL and EPL2"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
   },
   {
    "program": "labelsvg",
@@ -1864,7 +1864,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL and EPL2"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
   },
   {
    "program": "printlangs",
@@ -1872,171 +1872,287 @@
    "kind": "unit",
    "tests": [
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl ean13 9506000134352 at 0.33 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl ean13 9506000134352 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl itf14 19506000134359 at 0.5 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl itf14 19506000134359 at 0.5 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl gs1-datamatrix (01)09506000134352(10)AB-C(17)271231(21)123 at 0.38 mm, 300 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl gs1-datamatrix (01)09506000134352(10)AB-C(17)271231(21)123 at 0.38 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl gs1-datamatrix (01)09506000134352(21)ABCDEFGH12345 at 0.5 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl gs1-datamatrix (01)09506000134352(21)ABCDEFGH12345 at 0.5 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl dl-datamatrix https://id.gs1.org/01/09506000134352/10/A~B at 0.495 mm, 300 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl dl-datamatrix https://id.gs1.org/01/09506000134352/10/A~B at 0.495 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl dl-qrcode https://id.gs1.org/01/09506000134352/10/ABC123 at 0.495 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl dl-qrcode https://id.gs1.org/01/09506000134352/10/ABC123 at 0.495 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl dl-qrcode https://example.com/a\"b at 0.495 mm, 300 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl dl-qrcode https://example.com/a\"b at 0.495 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl ean13 9506000134352 at 0.33 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl ean13 9506000134352 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl ean8 95012346 at 0.33 mm, 300 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl ean8 95012346 at 0.33 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl upca 614141000036 at 0.33 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl upca 614141000036 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl upce 01234565 at 0.33 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl upce 01234565 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl itf14 19506000134359 at 0.5 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl itf14 19506000134359 at 0.5 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl gs1-128 (01)09506000134352(17)271231(10)Ab-1/2.%+' at 0.33 mm, 300 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl gs1-128 (01)09506000134352(17)271231(10)Ab-1/2.%+' at 0.33 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl dl-datamatrix https://id.gs1.org/01/09506000134352/10/A%22B at 0.495 mm, 203 dpi",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl dl-datamatrix https://id.gs1.org/01/09506000134352/10/A%22B at 0.495 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: ITF-14 with its bearer frame, read back",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl ean13 9506000134352 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: ITF-14 with its bearer bars, read back",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl ean13 9506000134352 at 0.33 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl: ITF-14 with its bearer frame, read back",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl ean8 95012346 at 0.33 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl: ITF-14 with its bearer bars, read back",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl upca 614141000036 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: dl-datamatrix starts at the layout's corner",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl upce 01234565 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl: dl-datamatrix starts at the layout's corner",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl itf14 19506000134359 at 0.5 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: dl-qrcode starts at the layout's corner",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl: ean13 starts at the layout's corner",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl gs1-128 (00)095060001343520000 at 0.495 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: ean13 starts at the layout's corner",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl dl-datamatrix https://id.gs1.org/01/09506000134352/10/A~B at 0.495 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › EPL2: GS1-128 in two symbols, stacked, each read back",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl dl-datamatrix https://example.com/a\"b\\c at 0.495 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › tspl: a test label, the symbol read and the ruler 50 mm",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl dl-qrcode https://id.gs1.org/01/09506000134352/10/ABC123 at 0.495 mm, 203 dpi",
      "status": "passed"
     },
     {
-     "name": "TSPL and EPL2 rendered by Labelize and read back › epl: a test label, the symbol read and the ruler 50 mm",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl dl-qrcode https://id.gs1.org/01/09506000134352/10/A,B at 0.38 mm, 300 dpi",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › tspl refuses gs1-128 (01)09506000134352(10)ABC",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: ITF-14 with its bearer frame, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › tspl refuses ean8 95012346",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: ITF-14 with its bearer bars, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › tspl refuses upca 614141000036",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: ITF-14 with its bearer frame, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › tspl refuses databar-omni (01)09506000134352",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: ITF-14 with its bearer bars, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › tspl refuses gs1-qrcode (01)09506000134352",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: ITF-14 with its bearer frame, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses gs1-datamatrix (01)09506000134352",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: ITF-14 with its bearer bars, read back",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses dl-qrcode https://id.gs1.org/01/09506000134352",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: dl-datamatrix starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses gs1-128 (01)09506000134352(10)ABC(17)271231",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: dl-datamatrix starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses databar-omni (01)09506000134352",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: dl-qrcode starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses dl-datamatrix https://example.com/a\"b",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: ean13 starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › epl refuses gs1-128 (01)09506000134352(10)a\"b",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: ean13 starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › EPL2 prints EAN and UPC with a narrow bar of 2 to 4 dots only",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: dl-datamatrix starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › text beside a symbol is refused: the printer's font sets its width",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: dl-qrcode starts at the layout's corner",
      "status": "passed"
     },
     {
-     "name": "what TSPL and EPL2 refuse, with the reason › TSPL quotes a double quote as \\[\"], as its manual says (read back above)",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: ean13 starts at the layout's corner",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: itf14 starts at the layout's corner",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: gs1-128 starts at the layout's corner",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: GS1-128 in two symbols, stacked, each read back",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › DPL: gs1-128's text under the bars where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › DPL: itf14's text under the bars where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a test label, the symbol read and the ruler 50 mm",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a test label, the symbol read and the ruler 50 mm",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a test label, the symbol read and the ruler 50 mm",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses gs1-128 (01)09506000134352(10)ABC",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses ean8 95012346",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses upca 614141000036",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses databar-omni (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses gs1-qrcode (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses gs1-datamatrix (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses dl-qrcode https://id.gs1.org/01/09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses gs1-128 (01)09506000134352(10)ABC(17)271231",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses databar-omni (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses dl-datamatrix https://example.com/a\"b",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › epl refuses gs1-128 (01)09506000134352(10)a\"b",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › dpl refuses gs1-datamatrix (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › dpl refuses gs1-128 (01)09506000134352(10)ABC",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › dpl refuses gs1-128 (00)106141411234567897(02)09506000134376(37)24",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › dpl refuses databar-omni (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › dpl refuses gs1-qrcode (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › EPL2 prints EAN and UPC with a narrow bar of 2 to 4 dots only",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › DPL refuses what its records cannot hold: a module over 24 dots, a QR module between tenths of a millimetre, a line break, one mode",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › DPL counts in tenths of a millimetre from the label's bottom left corner: the record's row and column",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › text beside a symbol is refused: the printer's font sets its width",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › TSPL quotes a double quote as \\[\"], as its manual says (read back above)",
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL and EPL2"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
   },
   {
    "program": "pyformat",
@@ -3156,7 +3272,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL and EPL2"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
   },
   {
    "program": "editor",
@@ -3534,6 +3650,15 @@
     },
     {
      "name": "printer languages: a TSPL or EPL2 profile writes its own file, says it is checked in an emulator, refuses what it cannot print",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "printer languages: a DPL profile writes a label format in tenths of a millimetre, and refuses a GS1 DataMatrix",
      "status": "listed",
      "projects": [
       "desktop",

@@ -394,7 +394,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     }
   })();
 
-  // The print file in the profile's language (ADR 0002): ZPL, TSPL or EPL2; templates in ZPL only
+  // The print file in the profile's language (ADR 0002): ZPL, TSPL, EPL2 or DPL; templates in ZPL only
   const language = PRINTER_LANGUAGES[languageOf(profile)];
   function downloadZpl(template: boolean) {
     const data = label.data;

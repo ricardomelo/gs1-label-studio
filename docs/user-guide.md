@@ -19,7 +19,7 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 7. [Seeing it at real size, and the scan test](#7-seeing-it-at-real-size-and-the-scan-test)
 8. [Exporting the label](#8-exporting-the-label)
 9. [The GS1 Logistic Label](#9-the-gs1-logistic-label)
-10. [Printer (ZPL, TSPL, EPL2)](#10-printer-zpl-tspl-epl2)
+10. [Printer (ZPL, TSPL, EPL2, DPL)](#10-printer-zpl-tspl-epl2-dpl)
 11. [RFID and NFC (EPC), and NFC tags](#11-rfid-and-nfc-epc-and-nfc-tags)
 12. [Digital signature (GS1, JWS)](#12-digital-signature-gs1-jws)
 13. [In bulk: rows from a spreadsheet](#13-in-bulk-rows-from-a-spreadsheet)
@@ -64,7 +64,7 @@ The studio speaks English, Brazilian Portuguese and Spanish (section 2); this gu
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
 - **3 — Label.** The label, redrawn as you type, its tools over it, the **Export** bar below it, then its options, the
-  GS1 Digital Link URI and the element string, and the sections *Printer (ZPL, TSPL, EPL2)*, *RFID and NFC (EPC)* and *Digital
+  GS1 Digital Link URI and the element string, and the sections *Printer (ZPL, TSPL, EPL2, DPL)*, *RFID and NFC (EPC)* and *Digital
   signature (GS1, JWS)*.
 
 On a computer the page takes the screen's whole width, as above. At its foot, **About GS1 Label Studio**: the
@@ -82,7 +82,7 @@ bar at the bottom, as phone apps do:
 | **Data** | step 1 (or the rows, in bulk), with a small live preview at the top: tap it to open the label |
 | **Scan** | step 2, where the code is scanned |
 | **Label** | the label, its tools and its options |
-| **Export** | the downloads, *Generate in bulk* and *Printer (ZPL, TSPL, EPL2)* |
+| **Export** | the downloads, *Generate in bulk* and *Printer (ZPL, TSPL, EPL2, DPL)* |
 | **More** | **Language**, **Install the app**, *RFID and NFC (EPC)*, *Digital signature* and About |
 
 Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
@@ -316,20 +316,21 @@ A page too short for its symbols is refused with its height. The label exports a
 not yet in ZPL (its PDF prints it at its size). A 2D symbol beside the middle block and data titles in a second language
 are not there yet.
 
-## 10. Printer (ZPL, TSPL, EPL2)
+## 10. Printer (ZPL, TSPL, EPL2, DPL)
 
 A thermal printer prints whole dots, so a module must be a whole number of dots or the symbol degrades. **Printer
-(ZPL, TSPL, EPL2)** sets the printer the print files are for, and its language:
+(ZPL, TSPL, EPL2, DPL)** sets the printer the print files are for, and its language:
 
-![Printer (ZPL, TSPL, EPL2): the profile and the module's dots](images/guide/printer.png)
+![Printer (ZPL, TSPL, EPL2, DPL): the profile and the module's dots](images/guide/printer.png)
 
-- **Printer profile**: *Any ZPL printer* at 152, 203, 300, 406 or 600 dpi, *Any TSPL printer* and *Any EPL2 printer* at
-  203 and 300 dpi, all 104 mm wide, or your own — **New profile…** takes a name, the language (ZPL, TSPL or EPL2), the
+- **Printer profile**: *Any ZPL printer* at 152, 203, 300, 406 or 600 dpi, *Any TSPL printer*, *Any EPL2 printer* and
+  *Any DPL printer* at 203 and 300 dpi, all 104 mm wide, or your own — **New profile…** takes a name, the language (ZPL,
+  TSPL, EPL2 or DPL), the
   resolution (100 to 1200 dpi) and the print width (10 to 500 mm); **Edit profile** changes it. Your profiles are kept
   in this browser.
-- With a TSPL or EPL2 profile the studio says that its files are checked in an emulator (Labelize), not yet on such a
+- With a TSPL, EPL2 or DPL profile the studio says that its files are checked in an emulator (Labelize), not yet on such a
   printer: print the test label and scan it before a production run. What the language cannot print is refused with
-  the reason ([printing guide, section 8](printing-guide.md#8-tspl-and-epl2-and-the-other-printer-languages)).
+  the reason ([printing guide, section 8](printing-guide.md#8-tspl-epl2-and-dpl-and-the-other-printer-languages)).
 - **Module**: the whole numbers of dots within the table's X-dimension range, the nearest to the label's size by
   default; the X-dimension printed is said (*✓ X 0.500 mm (4 dots at 203 dpi) is within the table's 0.396 to 0.990
   mm*), or that no whole number of dots fits.
@@ -337,8 +338,8 @@ A thermal printer prints whole dots, so a module must be a whole number of dots 
 - **Test print** (in the profile's language) adds a 50 mm ruler with a tick every 10 mm and the settings under the label:
   print it and measure the ruler to check the printer's scale.
 
-The print file's button of the Export bar — *ZPL (203 dpi)*, *TSPL (203 dpi)* or *EPL2 (300 dpi)*, a `.zpl`, `.prn` or
-`.epl` file — and the bulk print file use the same profile and dots. The ZPL template is offered with a ZPL profile.
+The print file's button of the Export bar — *ZPL (203 dpi)*, *TSPL (203 dpi)*, *EPL2 (300 dpi)* or *DPL (300 dpi)*, a
+`.zpl`, `.prn`, `.epl` or `.dpl` file — and the bulk print file use the same profile and dots. The ZPL template is offered with a ZPL profile.
 
 ## 11. RFID and NFC (EPC), and NFC tags
 
@@ -472,6 +473,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *The GS1 Logistic Label is not written in a printer language yet* | Not done yet | Print its PDF at its size |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |
 | *EPL2's Data Matrix (the b command) has no FNC1…*, *EPL2's QR code is for Japanese printer models only* | The language cannot print it | Use a ZPL profile, or print the PDF |
+| *DPL's GS1-128 is offered for an SSCC (00) alone…*, *DPL's Data Matrix (W1c) has no FNC1…* | DPL cannot print it, or no test has read it back | Use a ZPL profile, or print the PDF |
+| *DPL sizes a QR code's module in tenths of a millimetre…* | The module's dots fall between DPL's sizes | Choose another size or printer |
 | *the A6 label is 148 mm high* (too short) | The page cannot hold its symbols | A larger page (A5, 6 × 8 in) |
 | *Not a name the pattern knows: {…}* | A file name pattern with an unknown name | `{row}`, `{symbol}`, `{key}` or an AI |
 

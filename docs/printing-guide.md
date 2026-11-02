@@ -13,7 +13,7 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
 5. [ZPL templates for systems](#5-zpl-templates-for-systems)
 6. [Checking a printed symbol](#6-checking-a-printed-symbol)
 7. [What ZPL refuses, and why](#7-what-zpl-refuses-and-why)
-8. [TSPL and EPL2, and the other printer languages](#8-tspl-and-epl2-and-the-other-printer-languages)
+8. [TSPL, EPL2 and DPL, and the other printer languages](#8-tspl-epl2-and-dpl-and-the-other-printer-languages)
 
 ## 1. Which file for which printing
 
@@ -24,7 +24,7 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
 | A web page, a document, a screen | **SVG** or **PNG** | PNG at the label's size or at 300, 600 or 1200 dpi |
 | An office or laser printer | **PDF**, one label a page or on **label sheets** | Printed at 100 % ("actual size") |
 | A thermal label printer (Zebra and printers that emulate ZPL) | **ZPL** | The printer's own commands, at its resolution |
-| A TSC or generic thermal printer, an older Zebra | **TSPL** or **EPL2** (section 8) | The printer's own commands, checked in an emulator: test-print first |
+| A TSC or generic thermal printer, an older Zebra, a Datamax-O'Neil or Honeywell | **TSPL**, **EPL2** or **DPL** (section 8) | The printer's own commands, checked in an emulator: test-print first |
 | A system (ERP, WMS) that prints labels | **ZPL template** | Placeholders the system fills in |
 | Every file of one label, to send to someone | **Zip of all** | SVG, PNG, PDF, EPS and a README of the data, sizes and how to print |
 
@@ -61,7 +61,7 @@ A thermal printer prints whole dots (152, 203, 300, 406 or 600 dpi). A module th
 rounded differently bar by bar and the symbol degrades: an EAN-13 at 100 % (0.330 mm) prints as 3 dots (0.375 mm) at
 203 dpi or 4 dots (0.339 mm) at 300 dpi.
 
-1. **Choose the printer** in *Printer (ZPL, TSPL, EPL2)*: a generic profile at its resolution, or a profile of your own with its
+1. **Choose the printer** in *Printer (ZPL, TSPL, EPL2, DPL)*: a generic profile at its resolution, or a profile of your own with its
    print width (the printer's specification sheet gives both).
 2. **Choose the module**: the studio offers the whole numbers of dots within the table's range and says the
    X-dimension that prints. If none fits, the nearest is printed and said.
@@ -123,37 +123,44 @@ PDF offered instead.
 | A label wider than the printer prints | It would be cut |
 | The GS1 Logistic Label | Not written in ZPL yet: print its PDF at its size |
 
-## 8. TSPL and EPL2, and the other printer languages
+## 8. TSPL, EPL2 and DPL, and the other printer languages
 
-Besides ZPL, the studio writes **TSPL/TSPL2** (TSC and most generic thermal printers; `.prn`) and **EPL2** (older
-Zebras and printers that emulate it; `.epl`) with the printer's own commands (backlog 3.3 and 3.6, 31 October 2026).
-Choose a TSPL or EPL2 profile under *Printer (ZPL, TSPL, EPL2)*: the Export bar's button, the test print and the bulk
-print file then use that language.
+Besides ZPL, the studio writes **TSPL/TSPL2** (TSC and most generic thermal printers; `.prn`), **EPL2** (older
+Zebras and printers that emulate it; `.epl`) and **DPL** (Datamax-O'Neil and Honeywell printers; `.dpl`) with the
+printer's own commands (backlog 3.3 and 3.6, 31 October 2026; 3.7, 2 November 2026). Choose a TSPL, EPL2 or DPL profile
+under *Printer (ZPL, TSPL, EPL2, DPL)*: the Export bar's button, the test print and the bulk print file then use that
+language.
 
-**How they are checked.** No simulator renders TSPL or EPL2 the way Labelary renders ZPL from Zebra's firmware. The
-tests print them with **Labelize**, an open-source emulator of both languages, and read every symbol back with ZXing,
-as ZPL is checked through Labelary; the commands follow each manufacturer's manual (TSC's *TSPL/TSPL2 Programming
-Manual* 3.0, Zebra's *EPL Programming Guide* 14245L-003). An emulator is not the printer's firmware: **print the test
-label on your printer and scan it before a production run**. The studio says so beside a TSPL or EPL2 profile.
+**How they are checked.** No simulator renders TSPL, EPL2 or DPL the way Labelary renders ZPL from Zebra's firmware.
+The tests print them with **Labelize**, an open-source emulator of these languages, and read every symbol back with
+ZXing, as ZPL is checked through Labelary; the commands follow each manufacturer's manual (TSC's *TSPL/TSPL2
+Programming Manual* 3.0, Zebra's *EPL Programming Guide* 14245L-003, Datamax's *Class Series 2 Programmer's Manual*
+88-2341-01). An emulator is not the printer's firmware: **print the test label on your printer and scan it before a
+production run**. The studio says so beside a TSPL, EPL2 or DPL profile.
 
-| Symbol | ZPL | TSPL | EPL2 |
-|---|---|---|---|
-| EAN-13 | ✓ | ✓ | ✓ |
-| EAN-8, UPC-A, UPC-E | ✓ | not yet: Labelize does not draw them | ✓ |
-| ITF-14, with bearer bars | ✓ | ✓ | ✓ |
-| GS1-128 | ✓, over several symbols too | not yet: Labelize encodes TSPL's `!102` (FNC1) as text | ✓, an element string of no predefined length last only; several symbols too |
-| GS1 DataBar | ✓ (see section 7) | not yet: Labelize does not draw `RSS` | not yet: Labelize does not draw `R14` |
-| GS1 DataMatrix | ✓ | ✓ | ✗ EPL2's Data Matrix has no FNC1 |
-| Data Matrix with a GS1 Digital Link URI | ✓ | ✓ | ✓, without a double quote or a backslash |
-| QR code with a GS1 Digital Link URI | ✓ | ✓ | ✗ Japanese models only (the guide) |
-| Text below or above the symbol | `^A0` at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, the nearest height |
-| Templates with `{{AI}}` | ✓ | — | — |
-| Checked with | Labelary | Labelize | Labelize |
+| Symbol | ZPL | TSPL | EPL2 | DPL |
+|---|---|---|---|---|
+| EAN-13 | ✓ | ✓ | ✓ | ✓ |
+| EAN-8, UPC-A, UPC-E | ✓ | not yet: Labelize does not draw them | ✓ | ✓ |
+| ITF-14, with bearer bars | ✓ | ✓ | ✓ | ✓ |
+| GS1-128 | ✓, over several symbols too | not yet: Labelize encodes TSPL's `!102` (FNC1) as text | ✓, an element string of no predefined length last only; several symbols too | an SSCC (00) alone; the rest not yet: Labelize does not draw DPL's ways to write FNC1 |
+| GS1 DataBar | ✓ (see section 7) | not yet: Labelize does not draw `RSS` | not yet: Labelize does not draw `R14` | not yet: Labelize does not draw `W1k` |
+| GS1 DataMatrix | ✓ | ✓ | ✗ EPL2's Data Matrix has no FNC1 | ✗ the manual gives DPL's Data Matrix no FNC1 |
+| Data Matrix with a GS1 Digital Link URI | ✓ | ✓ | ✓, without a double quote or a backslash | ✓, square |
+| QR code with a GS1 Digital Link URI | ✓ | ✓ | ✗ Japanese models only (the guide) | ✓, its module in tenths of a millimetre |
+| Text below or above the symbol | `^A0` at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, the nearest height | fonts 0 to 2, the nearest height |
+| Templates with `{{AI}}` | ✓ | — | — | — |
+| Checked with | Labelary | Labelize | Labelize | Labelize |
 
 What a language cannot print, or what no test has read back, is refused with the reason, never printed wrong; the PDF
-or ZPL print it meanwhile. TSPL and EPL2 at 203 and 300 dpi are offered as generic profiles; a profile of your own takes
-any language.
+or ZPL print it meanwhile. TSPL, EPL2 and DPL at 203 and 300 dpi are offered as generic profiles; a profile of your own
+takes any language.
 
-**PPLA, PPLB and DPL** (Argox and Elgin; Datamax-O'Neil and Honeywell) come next (backlog 3.4, 3.5, 3.7): Labelize
-renders DPL; PPLA and PPLB wait for their manuals. Meanwhile their printers print the PDF through their driver, and
+**DPL counts from the label's bottom.** A DPL record places a field by its bottom left corner, measured from the
+label's bottom left corner in tenths of a millimetre. The studio turns its positions into those, so the printer must
+know the label's length: calibrate it to the labels loaded (it senses the gap) before printing. The QR code's module is
+also given in tenths of a millimetre; a module that would not print as whole dots is refused, with another size to
+choose.
+
+**PPLA and PPLB** (Argox and Elgin) come next (backlog 3.4, 3.5): they wait for their manuals. Meanwhile their printers print the PDF through their driver, and
 many Argox and Elgin printers also understand EPL2 (PPLB is close to it) — check with the test label.

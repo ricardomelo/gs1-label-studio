@@ -4,7 +4,7 @@ import { PRINTER_TEXTS } from "./texts.ts";
 import { formatNumber, t, tm } from "./i18n.ts";
 
 // Printer profiles (backlog 3.1, mock-up A of two, 31 October 2026), above the EPC section: the printer the print files
-// are for — its language (ZPL, TSPL or EPL2; ADR 0002), resolution and print width —, the whole dots a module takes
+// are for — its language (ZPL, TSPL, EPL2 or DPL; ADR 0002), resolution and print width —, the whole dots a module takes
 // within the table's range, and a test label.
 // The person's own profiles are kept in this browser (a convenience, never needed).
 
@@ -60,7 +60,7 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
 
   return (
     <details className="printer" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>{t("Printer (ZPL, TSPL, EPL2)")}</summary>
+      <summary>{t("Printer (ZPL, TSPL, EPL2, DPL)")}</summary>
       <p className="hint">{t(PRINTER_TEXTS.intro)}</p>
       {language.id !== "zpl" && (
         <p className="hint error">{t("{language} files are checked in Labelize, an emulator, not yet on a {language} printer: print the test label and scan it before a production run.", { language: language.name })}</p>

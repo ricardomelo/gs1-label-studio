@@ -148,4 +148,9 @@
   the Export bar's file, the test print and the bulk print file follow it. Every symbol is rendered by Labelize, an
   open-source emulator, and read back by ZXing in the tests; what no test reads back is refused with the reason. The
   studio says these files are checked in an emulator, not yet on a printer.
+- DPL with the printer's own commands (backlog 3.7) for Datamax-O'Neil and Honeywell printers, from Datamax's Class
+  Series 2 Programmer's Manual: EAN and UPC, ITF-14 with bearer bars, GS1-128 for an SSCC alone, Data Matrix and QR code
+  with a GS1 Digital Link URI, text in the internal fonts; positions in tenths of a millimetre from the label's bottom
+  left corner. Rendered by Labelize and read back by ZXing; GS1 DataMatrix, other GS1-128 and DataBar refused with the
+  reason. Generic DPL profiles at 203 and 300 dpi.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

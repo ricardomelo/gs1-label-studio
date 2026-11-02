@@ -571,7 +571,7 @@
  "✓ Installed: open GS1 Label Studio from the home screen; it works offline.": "✓ Instalado: abra o GS1 Label Studio pela tela inicial; funciona offline.",
  "One {language} file ({dpi} dpi)": "Um arquivo {language} ({dpi} dpi)",
  "{language} ({dpi} dpi)": "{language} ({dpi} dpi)",
- "Printer (ZPL, TSPL, EPL2)": "Impressora (ZPL, TSPL, EPL2)",
+ "Printer (ZPL, TSPL, EPL2, DPL)": "Impressora (ZPL, TSPL, EPL2, DPL)",
  "{language} files are checked in Labelize, an emulator, not yet on a {language} printer: print the test label and scan it before a production run.": "Arquivos {language} são conferidos no Labelize, um emulador, ainda não numa impressora {language}: imprima a etiqueta de teste e leia-a antes de uma produção.",
  "Test print ({language})": "Impressão de teste ({language})",
  "For the print files: the printer's language, resolution and print width, and how many whole dots each module takes.": "Para os arquivos de impressão: a linguagem, a resolução e a largura de impressão da impressora, e quantos pontos inteiros cada módulo ocupa."

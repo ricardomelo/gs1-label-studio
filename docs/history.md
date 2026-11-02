@@ -187,3 +187,19 @@ old) standing in for the printer, the manuals alone, or the label as an image. W
 The emulator and the manuals did not always agree: TSC's own GS1-128 example writes FNC1 as `!102`, which Labelize
 prints as text, so GS1-128 waits in TSPL; Zebra's guide says EPL2 draws a Data Matrix's quiet zone itself, which
 Labelize does not, so the manual was followed and the difference kept in a test. Each refusal names its reason.
+
+## Session 8 — 2 November 2026: DPL
+
+The owner asked whether a label designer like ZebraDesigner, NiceLabel or BarTender — barcodes, text and images placed
+freely, each field edited — could be built and kept efficient. It could: it is backlog item 4.2, and the label's
+`Layout`, which every export already draws and which the GS1 Logistic Label composes from several symbols, text and
+lines, is where it starts. The owner kept it in its place in the backlog and asked to go on item by item until the next
+week, when the tests can be done.
+
+The next item was DPL (3.7). Honeywell's current DPL reference needs a sign-in, so the commands follow Datamax's public
+Class Series 2 Programmer's Manual. DPL counts from the label's bottom left corner, in tenths of a millimetre, where the
+studio counts dots from the top: the positions are turned over, within half a tenth of a millimetre. Labelize read back
+every symbol the manual describes for GS1 data except two ways of writing FNC1 in GS1-128 — `&G` in Code 128 and EAN 128
+with automatic subsets — so DPL's GS1-128 carries an SSCC alone, through the manual's UCC/EAN Code 128. The manual gives
+its Data Matrix no FNC1, so a GS1 DataMatrix is refused. Labelize places a QR code and an EAN's guard bars a little
+differently from the manual; the manual was followed and the difference kept in a test.

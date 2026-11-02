@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Accepted** for ZPL (28 October 2026); for TSPL and EPL2 (31 October 2026) with an emulator standing in for the printer, as the owner chose |
+| Status | **Accepted** for ZPL (28 October 2026); for TSPL and EPL2 (31 October 2026) and DPL (2 November 2026) with an emulator standing in for the printer, as the owner chose |
 | Languages | PDF (any printer with a driver), ZPL II, EPL2, TSPL/TSPL2, PPLA, PPLB, DPL — chosen by the owner |
 
 ## Context
@@ -34,7 +34,7 @@ Facts that shape the design:
    physical printers for the others) and an independent decoder reads back the same symbology identifier and data.
    What the language cannot print correctly is refused with an explanation and an alternative, never printed wrong.
    *For TSPL and EPL2 (the owner, 31 October 2026, of three options: an emulator, the manual alone, or the label as an
-   image): no physical printer and no simulator of the firmware exist, so the tests print them with **Labelize**, an
+   image), and for DPL after them (2 November 2026): no physical printer and no simulator of the firmware exist, so the tests print them with **Labelize**, an
    open-source emulator (MIT, `@goodboy008/labelize-wasm` 1.10.0, a test dependency only), and read every symbol back
    with ZXing. The commands follow the manufacturer's manual; what Labelize does not print as the manual describes is
    refused, not offered on the manual's word alone. The studio tells the person that these files are checked in an
@@ -115,6 +115,34 @@ Reference: Zebra's *EPL Programming Guide*, 14245L-003 Rev. A (2013). `packages/
 The file: a blank line, `N`, `q` (the print width in dots), the commands, `P`, each line ending CR LF. `Q` (label
 length and gap) is not sent: the printer keeps the length it sensed.
 
+## DPL: commands chosen and what Labelize showed
+
+Reference: Datamax's *Class Series 2 Programmer's Manual*, 88-2341-01 Rev. B (2008), public on datamax-printers.com;
+Honeywell's current *Command Reference User Guide: DPL* (DPL-EN-CR Rev H, March 2026) is behind a sign-in. `packages/core/src/dpl.ts`;
+the same tests.
+
+A DPL label format is `<STX>L`, label formatting commands, one **record** a field — a 15-character header (rotation,
+font or bar code, two multipliers, height, row, column), the data, a carriage return — then `Q` (the quantity) and `E`.
+Rows and columns are counted from the label's **bottom left corner**, in tenths of a millimetre after `m`; the studio's
+dots, counted from the top, are turned into them, within half a tenth of a millimetre (0.4 dots at 203 dpi). So the
+printer must know the label's length (it senses the gap), as rows depend on it. Modules and bars are in whole dots,
+1 to 24 (the multipliers 1 to 9 and A to O, where the manual and Labelize agree).
+
+| Symbol | Record | Notes |
+|---|---|---|
+| EAN-13, EAN-8, UPC-A, UPC-E | `F`, `G`, `B`, `C` | 12, 7, 11 and 6 digits (UPC-E: the six digits, number system 0); the printer adds the check digit and, in upper case, its human readable digits. The row is the guard bars' bottom, 5X below the others as the layout draws them; Labelize extends them 12 dots instead, so there its bars start 12 − 5X dots higher — tested in sight. |
+| ITF-14 | `d` (Interleaved 2 of 5) | The 14 digits, narrow to wide 1:3 (the manual allows 2:1 to 3:1); bearer bars as an `X` record's box `b` (frame) or lines `l` (bars), the digits as text below. |
+| GS1-128 | `q` (UCC/EAN Code 128) | **An SSCC (00) alone**: the manual's 19 digits, `00` and the SSCC's first 17, the printer adding FNC1 and the check digit (Labelize reads back the SSCC whole); lower case leaves out the printer's text, which it puts above, and the studio's text goes where asked. Every other element string is refused: FNC1 written `&G` in Code 128 (`E`) is encoded as text by Labelize and EAN 128 with automatic subsets (`W1I`) is not drawn. Not over several symbols. |
+| Data Matrix with a URI | `W1c` | ECC 200, its rows and columns given (square only), the module in dots. |
+| QR code with a URI | `W1D` | Manual formatting: the label's error correction level, `A` (automatic input), the data, two carriage returns. The module is given in tenths of a millimetre, not dots: the nearest, refused when it would not print the layout's dots. Labelize draws the symbol eight modules higher than its bottom left corner (its image's quiet zone, as for ZPL's `^FO`) — tested in sight. One encoding mode for the whole data (backlog 1.14) is refused. |
+| Text | Internal fonts 0 to 2 | Fixed pitch, their cells and spacing in dots at 203, 300, 406 and 600 dpi (the manual's tables C-2 to C-5); the multiplier whose cell is nearest the text height; centred by the pitch, as the `J` command is for scalable fonts on display-equipped models only. `z` takes the slash out of the zeros. |
+| **GS1 DataMatrix** | — | The manual gives no FNC1 for `W1c`. |
+| **GS1 DataBar** | — | `W1k` (RSS) is not drawn by Labelize: not offered yet. |
+| **A line break in the data** | — | It would end the record. |
+
+The file: `<STX>L`, `m` (metric), `D11` (each dot once), `z`, the records, `Q0001`, `E`, each ending CR. System-level
+commands (label length, sensor, speed, heat) are not sent: the printer keeps its configuration.
+
 ## References and verification
 
 - ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
@@ -123,21 +151,21 @@ length and gap) is not sent: the printer keeps the length it sensed.
   field each (`graphicFields()`).
 - No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), which renders what
   Zebra firmware prints; emulations by other brands are proven only on their own hardware.
-- TSPL and EPL2 are checked with **Labelize** (github.com/GOODBOY008/labelize), an open-source emulator that also
-  renders DPL. It is young (version 1.10.0, October 2026) and an approximation of the firmware, which it says itself;
+- TSPL, EPL2 and DPL are checked with **Labelize** (github.com/GOODBOY008/labelize), an open-source emulator. It is young (version 1.10.0, October 2026) and an approximation of the firmware, which it says itself;
   where it and the manual disagree the symbol is refused, and a print from a physical printer always outranks it.
 - PPLA and PPLB have no simulator known; their manuals are still to be gathered.
 
 ## Order of work
 
 ZPL II (done for the symbols above, GS1 DataBar and ITF-14's bearer bars included; the label layout next), then TSPL
-and EPL2 (31 October 2026, the symbols above), then DPL (Labelize renders it), PPLB and PPLA (manuals to gather).
+and EPL2 (31 October 2026, the symbols above), DPL (2 November 2026, the symbols above), then PPLB and PPLA (manuals to
+gather).
 The order can change with the printers the owner has at hand for tests.
 
 ## Open points for the owner
 
 - Physical printers for tests (model, resolution, language): none for now; to be listed when available.
-- Manuals: TSPL's and EPL2's are the manufacturers' public PDFs (above); DPL's, PPLA's and PPLB's to be gathered before
-  their items. Copies go in the Drive `references` folder, never in this repository.
+- Manuals: TSPL's, EPL2's and DPL's (Datamax's Class Series 2) are the manufacturers' public PDFs (above); Honeywell's
+  current DPL reference needs a sign-in; PPLA's and PPLB's to be gathered before their items. Copies go in the Drive `references` folder, never in this repository.
 - A printer whose ZPL emulation fails a symbol: refuse it for that printer profile, or offer the image as an exception?
   To be decided with the first such printer.

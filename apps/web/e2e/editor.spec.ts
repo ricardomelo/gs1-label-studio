@@ -989,6 +989,31 @@ test("printer languages: a TSPL or EPL2 profile writes its own file, says it is 
   await expect(page.getByRole("button", { name: "EPL2 (203 dpi)" })).toBeVisible();
 });
 
+// Backlog 3.7 (ADR 0002): DPL for Datamax-O'Neil and Honeywell printers, checked in Labelize as TSPL and EPL2 are.
+test("printer languages: a DPL profile writes a label format in tenths of a millimetre, and refuses a GS1 DataMatrix", async ({ page }) => {
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "dpl-300");
+  await expect(page.locator("details.printer .hint.error")).toContainText("DPL files are checked in Labelize, an emulator, not yet on a DPL printer");
+  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (300 dpi)" }).click()]);
+  expect(dpl.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42.dpl");
+  const text = readFileSync((await dpl.path())!, "latin1");
+  expect(text.startsWith("\x02L\rm\rD11\rz\r")).toBe(true);
+  expect(text).toMatch(/\r1W1D(\w)\1(?:000)\d{8}MA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\r\r/);
+  expect(text.endsWith("\rQ0001\rE\r")).toBe(true);
+  const [test] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Test print (DPL)" }).click()]);
+  expect(test.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42-test-300dpi.dpl");
+  expect(readFileSync((await test.path())!, "latin1")).toContain("50 mm: measure this line");
+  // A GS1 DataMatrix: DPL's Data Matrix has no FNC1 in the manual, refused with the reason
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await on(page, "export");
+  await page.getByRole("button", { name: "DPL (300 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("DPL's Data Matrix (W1c) has no FNC1 in the manual");
+});
+
 // Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
 test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
   await expect(page.locator("#opt-logistic")).toHaveCount(0); // a GTIN: no logistic label
