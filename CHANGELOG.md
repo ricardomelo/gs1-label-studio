@@ -153,4 +153,6 @@
   with a GS1 Digital Link URI, text in the internal fonts; positions in tenths of a millimetre from the label's bottom
   left corner. Rendered by Labelize and read back by ZXing; GS1 DataMatrix, other GS1-128 and DataBar refused with the
   reason. Generic DPL profiles at 203 and 300 dpi.
+- ZPL's human readable text at its capitals' height: `^A0`'s capitals are 0.78 of the height it is given, so the text
+  came out 22 % short (2.2 mm as 1.7 mm, below section 4.14's 2 mm); it is now given 1/0.78 of it.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

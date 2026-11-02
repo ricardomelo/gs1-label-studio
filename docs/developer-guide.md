@@ -276,7 +276,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 40 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 41 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 3 |

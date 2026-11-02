@@ -13,6 +13,7 @@ import {
   zplTestAreaDots,
   zplTestLabel,
   zplTemplate,
+  zplFontHeight,
   graphicFields,
   type SymbologyId,
 } from "../src/index.ts";
@@ -150,13 +151,32 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     if (symbology === "databar-expanded") o.barHeightDots = 34 * o.dotsPerModule;
     const zpl = zplLabel(symbology, data, o);
     const t = Math.round((mm / 25.4) * 203);
-    expect(zpl).toContain(`^A0N,${t},${t}`);
+    expect(zpl).toContain(`^A0N,${zplFontHeight(t)},${zplFontHeight(t)}`);
     // Above: every text line ends above the symbol's top
     const textYs = [...zpl.matchAll(/\^FO\d+,(\d+)\^A0N/g)].map((m) => Number(m[1]));
     expect(textYs.some((ty) => ty + t <= 200)).toBe(true);
     if (position === "split") expect(textYs.some((ty) => ty > 200)).toBe(true);
     const result = await print(zpl, 203, o.widthDots, o.heightDots);
     expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`${identifier} ${data}`);
+  });
+
+  // The text's height is its capitals' (section 4.14): ^A0's capitals are 0.78 of the height it is given, so the studio
+  // gives it more. ITF-14's digits (no descenders; with bearer bars, so the text is the studio's, not the printer's
+  // interpretation line) 3 mm high at 203 dpi: 24 dots of ink, within a dot.
+  it("the text's capitals are as high as asked", { timeout: 30000 }, async () => {
+    const o = { ...options(0.5, 203), hriHeightMm: 3, bearer: { kind: "bars" as const, thicknessDots: 8 } };
+    const png = await labelaryPng(zplLabel("itf14", "19506000134359", o), 203, o.widthDots, o.heightDots);
+    const { grey, width } = decodePng(png);
+    let top = Infinity;
+    let bottom = 0;
+    grey.forEach((value, index) => {
+      const row = Math.floor(index / width);
+      if (value < 128 && row > o.y + o.barHeightDots + 8 + 2) {
+        top = Math.min(top, row);
+        bottom = Math.max(bottom, row);
+      }
+    });
+    expect(Math.abs(bottom - top + 1 - Math.round((3 / 25.4) * 203))).toBeLessThanOrEqual(1);
   });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.

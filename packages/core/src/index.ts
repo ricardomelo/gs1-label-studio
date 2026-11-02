@@ -18,6 +18,7 @@ export {
   zplTestLabel,
   zplLabel,
   zplTemplate,
+  zplFontHeight,
   ZplUnsupportedError,
   type ZplLabelOptions,
   type ZplPlaceholder,

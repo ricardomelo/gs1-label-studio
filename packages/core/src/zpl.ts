@@ -58,10 +58,22 @@ export function zplTestLabel(symbology: SymbologyId, data: string, options: ZplL
   const ruler = [
     `^FO${x},${top + mm(3)}^GB${mm(50)},${Math.max(2, mm(0.3))},${Math.max(2, mm(0.3))}^FS`,
     ...[0, 10, 20, 30, 40, 50].map((at) => `^FO${x + mm(at) - (at === 50 ? Math.max(2, mm(0.3)) : 0)},${top}^GB${Math.max(2, mm(0.3))},${mm(at % 50 ? 2.5 : 4)},${Math.max(2, mm(0.3))}^FS`),
-    `^FO${x},${top + mm(5)}^A0N,${t},${t}^FB${mm(50)},1,0,C${fieldData("50 mm: measure this line")}`,
-    ...notes.map((note, index) => `^FO${mm(2)},${top + mm(10) + index * Math.round(t * 1.4)}^A0N,${t},${t}${fieldData(note)}`),
+    `^FO${x},${top + mm(5)}^A0N,${zplFontHeight(t)},${zplFontHeight(t)}^FB${mm(50)},1,0,C${fieldData("50 mm: measure this line")}`,
+    ...notes.map((note, index) => `^FO${mm(2)},${top + mm(10) + index * Math.round(t * 1.4)}^A0N,${zplFontHeight(t)},${zplFontHeight(t)}${fieldData(note)}`),
   ];
   return document([...commands, ...ruler], { ...options, widthDots: Math.max(options.widthDots, x + mm(52)), heightDots: options.heightDots + zplTestAreaDots(dpi, notes.length) }, []);
+}
+
+/**
+ * ^A0's capitals are 0.78 of the height it is given (measured through Labelary, 2 November 2026: 18, 43 and 78 dots for
+ * 24, 56 and 100), and they start at the field's top. The studio's text heights are its capitals' (section 4.14), so
+ * ^A0 is given this much more.
+ */
+const A0_CAPITALS = 0.78;
+
+/** The ^A0 height whose capitals are `capitalDots` high. */
+export function zplFontHeight(capitalDots: number): number {
+  return Math.round(capitalDots / A0_CAPITALS);
 }
 
 /** The height a stacked GS1-128 symbol takes with its text and the gap to the next: bars, text, a quiet zone. */
@@ -396,7 +408,7 @@ export function gs1128FieldData(elements: Element[], placeholder?: (element: Ele
 function textAround(lines: string[], x: number, top: number, bottom: number, widthDots: number, gap: number,
   options: ZplSymbolOptions, join: boolean, align: "C" | "L" = "C"): string[] {
   return textLines(lines, x, top, bottom, widthDots, gap, options, join, "ZPL")
-    .map((line) => `^FO${line.x},${line.y}^A0N,${line.height},${line.height}^FB${line.width},1,0,${align}${fieldData(line.text)}`);
+    .map((line) => `^FO${line.x},${line.y}^A0N,${zplFontHeight(line.height)},${zplFontHeight(line.height)}^FB${line.width},1,0,${align}${fieldData(line.text)}`);
 }
 
 /** The room text above a symbol takes in ZPL (backlog 1.16), at most one line an element string. */

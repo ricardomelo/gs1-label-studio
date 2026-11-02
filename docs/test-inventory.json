@@ -1484,6 +1484,10 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › the text's capitals are as high as asked",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a test label: the symbol reads and the ruler is 50 mm",
      "status": "passed"
     },

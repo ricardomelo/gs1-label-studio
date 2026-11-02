@@ -84,7 +84,7 @@ scan it before a production run.
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 as `_1` with `_` declared as the escape character |
 | QR code and Data Matrix with a GS1 Digital Link URI | `^BQ` model 2, `^BX` | At the label's error correction level |
 | GS1 DataBar | `^BR` | At its fixed heights; refused where the table asks for more |
-| Human readable text | `^A0` with `^FB` | Below, above or split, at the label's height |
+| Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height |
 
 To see a ZPL file without a printer, paste it into Labelary's viewer (<https://labelary.com/viewer.html>) with the
 printer's resolution (8 dpmm is 203 dpi, 12 dpmm is 300 dpi).
@@ -148,7 +148,7 @@ production run**. The studio says so beside a TSPL, EPL2 or DPL profile.
 | GS1 DataMatrix | ✓ | ✓ | ✗ EPL2's Data Matrix has no FNC1 | ✗ the manual gives DPL's Data Matrix no FNC1 |
 | Data Matrix with a GS1 Digital Link URI | ✓ | ✓ | ✓, without a double quote or a backslash | ✓, square |
 | QR code with a GS1 Digital Link URI | ✓ | ✓ | ✗ Japanese models only (the guide) | ✓, its module in tenths of a millimetre |
-| Text below or above the symbol | `^A0` at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, the nearest height | fonts 0 to 2, the nearest height |
+| Text below or above the symbol | `^A0`, its capitals at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, the nearest height | fonts 0 to 2, the nearest height |
 | Templates with `{{AI}}` | ✓ | — | — | — |
 | Checked with | Labelary | Labelize | Labelize | Labelize |
 
