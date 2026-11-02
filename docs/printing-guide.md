@@ -148,7 +148,7 @@ production run**. The studio says so beside a TSPL, EPL2 or DPL profile.
 | GS1 DataMatrix | ✓ | ✓ | ✗ EPL2's Data Matrix has no FNC1 | ✗ the manual gives DPL's Data Matrix no FNC1 |
 | Data Matrix with a GS1 Digital Link URI | ✓ | ✓ | ✓, without a double quote or a backslash | ✓, square |
 | QR code with a GS1 Digital Link URI | ✓ | ✓ | ✗ Japanese models only (the guide) | ✓, its module in tenths of a millimetre |
-| Text below or above the symbol | `^A0`, its capitals at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, the nearest height | fonts 0 to 2, the nearest height |
+| Text below or above the symbol | `^A0`, its capitals at the label's height | dot fonts 1 to 5, the nearest height | fonts 1 to 5, their capitals at the nearest height | fonts 0 to 2, the nearest height |
 | Templates with `{{AI}}` | ✓ | — | — | — |
 | Checked with | Labelary | Labelize | Labelize | Labelize |
 

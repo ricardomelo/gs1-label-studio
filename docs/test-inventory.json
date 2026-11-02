@@ -2100,6 +2100,18 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the text's capitals 2.2 mm high",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the text's capitals 3 mm high",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the text's capitals 4 mm high",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › DPL: gs1-128's text under the bars where the layout puts it",
      "status": "passed"
     },

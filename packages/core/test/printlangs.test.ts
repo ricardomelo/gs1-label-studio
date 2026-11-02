@@ -153,6 +153,31 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     expect(await reads(render("epl", file, o.widthDots, o.heightDots, 203))).toEqual(parts.map((p) => `]C1 ${p}`).sort());
   });
 
+  // EPL2's text at its capitals' height: the fonts' capitals are 0.75 of their cell (measured through Labelize), so the
+  // cell is asked that much larger; the HRI's last digit, as Labelize draws it, is as high as asked.
+  it.each([2.2, 3, 4])("EPL2: the text's capitals %s mm high", (mm) => {
+    const o = { ...options(0.495, 203), hriHeightMm: mm };
+    const file = eplLabel("gs1-128", "(00)106141411234567897", o);
+    const y = Number(file.match(/\r\nA\d+,(\d+),0,\d,\d,\d,N,"\(00\)106141411234567897"/)![1]);
+    // The digits after "(00)": Labelize's font is proportional, so the glyphs are found by the blank columns between them
+    const { grey, width } = decodePng(render("epl", file, o.widthDots, o.heightDots, 203));
+    const height = grey.length / width;
+    const ink = (row: number, col: number) => grey[row * width + col]! < 128;
+    const inked = Array.from({ length: width }, (_, col) => Array.from({ length: height - y }, (_, i) => ink(y + i, col)).some(Boolean));
+    const glyphs: [number, number][] = [];
+    inked.forEach((on, col) => {
+      if (on && !inked[col - 1]) glyphs.push([col, col]);
+      if (on) glyphs.at(-1)![1] = col;
+    });
+    expect(glyphs).toHaveLength(22);
+    const rows: number[] = [];
+    for (let row = y; row < height; row++) {
+      if (glyphs.slice(4).some(([from, to]) => Array.from({ length: to - from + 1 }, (_, i) => ink(row, from + i)).some(Boolean))) rows.push(row);
+    }
+    expect(Math.abs(Math.min(...rows) - y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(Math.max(...rows) - Math.min(...rows) + 1 - Math.round((mm / 25.4) * 203))).toBeLessThanOrEqual(2);
+  });
+
   // The studio's text under a symbol in DPL: the cell's bottom is the record's row, so its top must land where the
   // layout puts it, the gap below the bars; centred by the font's pitch
   it.each([["gs1-128", "(00)106141411234567897", 0.495], ["itf14", "19506000134359", 0.5]] as const)("DPL: %s's text under the bars where the layout puts it", (symbology, data, xMm) => {

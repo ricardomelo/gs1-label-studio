@@ -93,17 +93,43 @@ function document(commands: string[], options: PrintLabelOptions): string {
 }
 
 /**
- * A line of text in the font closest to its height. The A command has no centring: the text's width is the font's
- * pitch times its characters, so a centred line starts half the difference in.
+ * The fonts' capitals are this much of their cell (Labelize, 2 November 2026: 9, 12, 15, 18 and 36 dots in cells of
+ * 12, 16, 20, 24 and 48 at 203 dpi, and twice as many at multiplier 2). The studio's text heights are its capitals'
+ * (section 4.14), so the cell asked for is this much larger. At 300 dpi Labelize draws the 203 dpi cells, not the
+ * guide's; the guide's cells are taken with the same ratio.
+ */
+const EPL_CAPITALS = 0.75;
+
+/**
+ * A line of text in the font whose capitals come closest to its height, no wider than `line.width` where a font that
+ * tall fits it (else the narrowest). The A command has no centring: the text's width is the font's pitch times its
+ * characters, so a centred line starts half the difference in.
  */
 function text(line: TextLine, align: "C" | "L", dpi: number): string[] {
   const fonts = dpi < 250 ? FONTS_203 : FONTS_300;
-  const { font, multiplier } = bitmapFontFor(fonts, line.height);
+  const chars = [...line.text].length;
+  const cell = line.height / EPL_CAPITALS;
+  const widthOf = (font: BitmapFont, multiplier: number) => chars * font.width * horizontal(multiplier);
+  let best = { ...bitmapFontFor(fonts, Math.round(cell)), height: 0 };
+  best.height = best.font.height * best.multiplier;
+  if (widthOf(best.font, best.multiplier) > line.width) {
+    // The tallest cell within a tenth of the height asked that keeps the line within its width
+    const fitting = fonts.flatMap((font) => Array.from({ length: 9 }, (_, i) => ({ font, multiplier: i + 1, height: font.height * (i + 1) })))
+      .filter((c) => c.height <= Math.round(cell) * 1.1 && widthOf(c.font, c.multiplier) <= line.width)
+      .sort((a, b) => b.height - a.height);
+    best = fitting[0] ?? { font: fonts[0]!, multiplier: 1, height: fonts[0]!.height };
+  }
+  const { font, multiplier } = best;
   const v = Math.min(9, multiplier);
-  const h = [...H_MULTIPLIERS].reverse().find((m) => m <= multiplier) ?? 1;
-  const width = [...line.text].length * font.width * h;
+  const h = horizontal(multiplier);
+  const width = chars * font.width * h;
   const x = align === "C" ? line.x + Math.max(0, Math.round((line.width - width) / 2)) : line.x;
   return [`A${x},${line.y},0,${font.name},${h},${v},N,${quoted(line.text)}`];
+}
+
+/** The horizontal multiplier for a vertical one: the largest the A command takes that is no larger. */
+function horizontal(multiplier: number): number {
+  return [...H_MULTIPLIERS].reverse().find((m) => m <= multiplier) ?? 1;
 }
 
 function around(lines: string[], x: number, top: number, bottom: number, width: number, gap: number, options: PrintSymbolOptions, join: boolean): string[] {

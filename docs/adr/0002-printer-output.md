@@ -107,7 +107,7 @@ Reference: Zebra's *EPL Programming Guide*, 14245L-003 Rev. A (2013). `packages/
 | ITF-14 | `B…,2` | The 14 digits, narrow to wide 1:3; bearer bars as `X` (frame) or `LO` (bars), the digits as text below. |
 | GS1-128 | `B…,1E` (UCC/EAN 128) | The printer puts FNC1 first. No separator between element strings was read back (the guide's ASCII 06 delimiter was not), so an element string of no predefined length goes last only, as with ZPL's GS1 DataBar Expanded. Over several symbols, stacked as in ZPL. |
 | Data Matrix with a URI | `b…,D,c{cols},r{rows},h{dots}` | The guide says the printer draws a quiet zone of one module around the symbol, so the command starts a module before the layout's corner; Labelize draws none — the difference is tested in sight. |
-| Text | `A` with fonts 1 to 5 | Their cells differ at 203 and 300 dpi (the guide's table); centred by the font's pitch. |
+| Text | `A` with fonts 1 to 5 | Their cells differ at 203 and 300 dpi (the guide's table); centred by the font's pitch. The capitals are 0.75 of the cell (Labelize, 2 November 2026, every font at 203 dpi; at 300 dpi Labelize draws the 203 dpi cells), so the cell asked is 1/0.75 of the text height, a narrower font where the taller one would be wider than the symbol; until 2 November 2026 the text came out 25 % short. |
 | **A double quote or a backslash in a symbol's data** | — | The guide escapes them with a backslash, which Labelize encodes too: refused (a URI percent-encodes them). |
 | **GS1 DataMatrix** | — | EPL2's Data Matrix has no FNC1. |
 | **QR code** | — | Japanese printer models only (the guide). |
