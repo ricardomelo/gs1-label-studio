@@ -108,7 +108,8 @@ back by ZXing in CI.
 | Every symbol | Printed and read back | `labelary`: ZPL printed by Labelary and read back |
 
 Findings no manual showed, from Labelary: mode D joins element strings without FNC1; `^BQ` has no FNC1 (no GS1 QR
-Code); the Data Matrix escape character changed between firmware versions; `^BQ`'s manual mode was not honoured.
+Code); the Data Matrix escape character changed between firmware versions; `^BQ`'s manual mode was not honoured; `^BQ` prints the QR code as far below `^FO` as the bar height `^BY` last set (10 dots by default), so it is given a
+one-dot `^BY` and `^FO` a dot higher.
 
 ## 6a. TSPL/TSPL2 and EPL2
 

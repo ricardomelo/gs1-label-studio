@@ -131,6 +131,8 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const result = await print(zpl, dpi, o.widthDots, o.heightDots);
     expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`]Q1 ${data}`);
     expect(LEVELS.indexOf(result!.ecLevel)).toBeGreaterThanOrEqual(LEVELS.indexOf(level));
+    // Its top where the label puts it: ^BQ's shift by ^BY's bar height (10 dots by default) set to a dot and taken off
+    expect(Math.min(result!.position.topLeft.y, result!.position.topRight.y)).toBe(o.y);
   });
 
   // GS1-128 over several symbols (backlog 1.13), stacked, each with its own element strings; every symbol read back.

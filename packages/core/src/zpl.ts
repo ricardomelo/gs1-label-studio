@@ -227,6 +227,7 @@ const LINEAR_GTIN: Partial<Record<SymbologyId, LinearGtin>> = {
   },
 };
 
+const QR_SHIFT = 1; // the bar height ^BY is given before ^BQ, which prints the QR code this many dots below ^FO
 const ITF14_RATIO = 3; // ^BY's wide-to-narrow ratio for ^B2: whole dots for any module, within GS1's 2.25 to 3
 const HRI_GAP_MM = 1.02; // section 5.3.2.2: from the bearer bar to the text
 
@@ -311,8 +312,10 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
       if (options.qrMode) {
         throw new ZplUnsupportedError("ZPL writes the QR code in the printer's automatic mode: one mode for the whole data could not be shown to print (ADR 0002).");
       }
+      // ^BQ prints the symbol as far below ^FO as the bar height ^BY last set, 10 dots by default (Labelary, 2 November
+      // 2026: 10, 1, 50, 200 and 375 dots for those heights, at 203, 300 and 600 dpi): one dot here, taken off ^FO.
       const uri = value("URI", data, "the GS1 Digital Link URI.");
-      return { commands: [`${at}^BQN,2,${d}${fieldData(`${options.qrError ?? "M"}A,${uri}`)}`], placeholders };
+      return { commands: [`^BY1,3.0,${QR_SHIFT}^FO${x},${Math.max(0, y - QR_SHIFT)}^BQN,2,${d}${fieldData(`${options.qrError ?? "M"}A,${uri}`)}`], placeholders };
     }
     case "gs1-qrcode":
       throw new ZplUnsupportedError(

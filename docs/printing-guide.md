@@ -82,7 +82,7 @@ scan it before a production run.
 | ITF-14 | `^B2`, bearer bars as `^GB` | Ratio 3; the 14 digits printed below the bearer bar by the studio |
 | GS1-128 | `^BC` mode N | FNC1 and code sets written by the studio; several symbols stacked |
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 as `_1` with `_` declared as the escape character |
-| QR code and Data Matrix with a GS1 Digital Link URI | `^BQ` model 2, `^BX` | At the label's error correction level |
+| QR code and Data Matrix with a GS1 Digital Link URI | `^BQ` model 2, `^BX` | At the label's error correction level; `^BY1,3.0,1` before `^BQ`, which prints the symbol as far below `^FO` as `^BY`'s bar height |
 | GS1 DataBar | `^BR` | At its fixed heights; refused where the table asks for more |
 | Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height |
 
