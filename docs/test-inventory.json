@@ -252,6 +252,10 @@
      "status": "passed"
     },
     {
+     "name": "generating every row › writes the GS1 Logistic Label of every row in ZPL, and says another language cannot",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › names a row its design cannot draw, and a label larger than the sheet's, in the CSV",
      "status": "passed"
     },
@@ -1493,6 +1497,14 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › GS1-128 is as wide as the modules counted from its field data",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label a5 at 203 dpi: every symbol read back",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label 6x8 at 300 dpi: every symbol read back",
      "status": "passed"
     },
     {

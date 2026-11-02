@@ -24,10 +24,11 @@ import {
   labelFor,
   patternName,
   zplOptionsFor,
+  printFileFor,
+  printWidthDots,
+  type DrawnLabel,
   languageOf,
   PRINTER_LANGUAGES,
-  printLabel,
-  printTestLabel,
   GENERIC_PROFILES,
   moduleChoice,
   printWidthProblem,
@@ -290,6 +291,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     geometry?: SymbolGeometry;
     options?: LabelOptions;
     layout?: Layout;
+    logistic?: DrawnLabel["logistic"];
   } => {
     const identified = checked.identified;
     const base = {
@@ -299,7 +301,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
-      const { data, options, layout, geometry } = labelFor(identified, design, font);
+      const { data, options, layout, geometry, logistic } = labelFor(identified, design, font);
       const wMm = layout.width * layout.xMm;
       const hMm = layout.height * layout.xMm;
       // The modules in all (a matrix's rows times its columns, a linear symbol's width) and the characters encoded,
@@ -350,7 +352,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
           caption: `${symbolPart} · ${t("X {x} mm · label {w} × {h} mm at 100 %", { x: formatNumber(layout.xMm, 3), w: formatNumber(wMm, 1), h: formatNumber(hMm, 1) })} · ${tail}`,
         },
-        data, geometry, options, layout,
+        data, geometry, options, layout, ...(logistic ? { logistic } : {}),
       };
     } catch (error) {
       return { view: { ...base, error: tm(errorText(error)) } };
@@ -381,14 +383,14 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     ? [spec.x[0], spec.x[2]]
     : environment ? ((range) => (range ? [range[0], range[2]] as const : null))(twoD ? ENVIRONMENTS[environment]?.["2d"] : ENVIRONMENTS[environment]?.linear) : null;
   const module = label.layout ? moduleChoice(label.layout.xMm, xRange, settings.dpi, zplDots) : null;
-  const zplFor = () => {
-    const { geometry, data, options, layout } = label;
-    return geometry && data && options && layout ? zplOptionsFor({ geometry, data, options, layout }, design, settings.dpi, module?.chosen.dots) : null;
+  const drawn = (): DrawnLabel | null => {
+    const { geometry, data, options, layout, logistic } = label;
+    return geometry && data && options && layout ? { geometry, data, options, layout, ...(logistic ? { logistic } : {}) } : null;
   };
   const zplWidthProblem = (() => {
     try {
-      const o = zplFor();
-      return o ? printWidthProblem(o.widthDots, profile) : null;
+      const d = drawn();
+      return d ? printWidthProblem(printWidthDots(d, design, settings.dpi, module?.chosen.dots), profile) : null;
     } catch {
       return null;
     }
@@ -397,12 +399,14 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // The print file in the profile's language (ADR 0002): ZPL, TSPL, EPL2 or DPL; templates in ZPL only
   const language = PRINTER_LANGUAGES[languageOf(profile)];
   function downloadZpl(template: boolean) {
-    const data = label.data;
     try {
-      const zplOptions = zplFor();
-      if (!zplOptions || !data) return;
+      const d = drawn();
+      if (!d) return;
+      // What the language cannot write first, then whether the printer prints that wide
+      const file = template
+        ? zplTemplate(symbology, d.data, zplOptionsFor(d, design, settings.dpi, module?.chosen.dots)).zpl
+        : printFileFor(language.id, d, design, settings.dpi, module?.chosen.dots);
       if (zplWidthProblem) throw new Error(zplWidthProblem);
-      const file = template ? zplTemplate(symbology, data, zplOptions).zpl : printLabel(language.id, symbology, data, zplOptions);
       download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, file, "text/plain");
       setFileError(null);
     } catch (error) {
@@ -414,8 +418,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   function testPrint() {
     const data = label.data;
     try {
-      const zplOptions = zplFor();
-      if (!zplOptions || !data || !module) return;
+      const d = drawn();
+      if (!d || !data || !module) return;
       const notes = [
         `Printer: ${profile.name}`,
         `Module: ${module.chosen.dots} ${module.chosen.dots === 1 ? "dot" : "dots"}, X ${module.chosen.xMm.toFixed(3)} mm` +
@@ -423,7 +427,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         `${SYMBOLOGIES[symbology].name}: ${data.length > 60 ? `${data.slice(0, 57)}...` : data}`,
         `GS1 Label Studio, ${new Date().toISOString().slice(0, 10)}`,
       ];
-      download(`${name}-test-${settings.dpi}dpi.${language.extension}`, printTestLabel(language.id, symbology, data, zplOptions, notes), "text/plain");
+      download(`${name}-test-${settings.dpi}dpi.${language.extension}`, printFileFor(language.id, d, design, settings.dpi, module.chosen.dots, notes), "text/plain");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));

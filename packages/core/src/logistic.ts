@@ -41,12 +41,31 @@ export interface LogisticInput {
   to?: readonly string[];
 }
 
+/** A line of the label's own text (not a symbol's): its left edge and its capitals' top, in the label's units. */
+export interface LogisticText {
+  text: string;
+  x: number;
+  top: number;
+  /** Its capitals' height in mm. */
+  heightMm: number;
+}
+
 export interface LogisticLabel {
   layout: Layout;
   /** What the files' descriptions take: GS1-128 at its row, the whole element string as data. */
   options: LabelOptions;
   /** The GS1-128 symbols' element strings, from the top; the SSCC's last. */
   parts: string[];
+  /**
+   * What a printer language needs to write the label with its own commands (backlog 3.2): each symbol's bars' top left
+   * corner, its bar height, the label's own text and the rules between the blocks, in the label's units.
+   */
+  printer: {
+    symbols: { part: string; x: number; y: number }[];
+    barHeight: number;
+    texts: LogisticText[];
+    rules: [number, number, number, number][];
+  };
 }
 
 /** The label's GS1-128 symbols, from the top: the other element strings as they fit, then the SSCC alone at the bottom. */
@@ -82,12 +101,18 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   const height = u(page.heightMm);
   const rects: [number, number, number, number][] = [];
   const texts: LabelText[] = [];
+  const own: LogisticText[] = [];
+  const rules: [number, number, number, number][] = [];
   const em = (mm: number) => (u(mm) * font.unitsPerEm) / font.capHeight;
   const text = (value: string, x: number, top: number, mm: number) => {
     texts.push({ text: value, x, baseline: top + u(mm), em: em(mm), linear: false });
+    own.push({ text: value, x, top, heightMm: mm });
     return font.textWidth(value, em(mm));
   };
-  const rule = (y: number) => rects.push([0, y, width, u(RULE_MM)]);
+  const rule = (y: number) => {
+    rects.push([0, y, width, u(RULE_MM)]);
+    rules.push([0, y, width, u(RULE_MM)]);
+  };
 
   // Bottom block, from the bottom up: the SSCC's symbol lowest (6.6.4.1.1), each centred
   let bottom = height - u(MARGIN_MM);
@@ -99,10 +124,13 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
     bottom = top;
   }
   const bottomTop = bottom;
+  const bars: LogisticLabel["printer"]["symbols"] = [];
   for (const [i, l] of layouts.entries()) {
     const [dx, dy] = placed[i]!;
     for (const [x, y, w, h] of l.rects) rects.push([x + dx, y + dy, w, h]);
     for (const t of l.texts) texts.push({ ...t, x: t.x + dx, baseline: t.baseline + dy });
+    // The bars' top left corner: the first bar's left edge (a bar width reduction narrows bars, not the first's start)
+    bars.push({ part: parts[i]!, x: Math.min(...l.rects.map((r) => r[0])) + dx, y: Math.min(...l.rects.map((r) => r[1])) + dy });
   }
   const symbolRects = rects.length;
 
@@ -152,5 +180,6 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
     layout: { width, height, rects, symbolRects, texts, xMm, modules: 0, version: null, barHeight: layouts[0]!.barHeight, barRects: [0, symbolRects], parts },
     options,
     parts,
+    printer: { symbols: bars, barHeight: layouts[0]!.barHeight!, texts: own, rules },
   };
 }

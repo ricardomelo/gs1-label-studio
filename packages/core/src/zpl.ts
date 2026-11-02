@@ -1,6 +1,7 @@
 import { MM_PER_INCH } from "./dots.ts";
 import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
+import type { LogisticLabel } from "./logistic.ts";
 import type { Bitmap } from "./raster.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 import { hriTextDots, PrinterUnsupportedError, textLines, type PrintLabelOptions, type PrintSymbolOptions } from "./printers.ts";
@@ -50,19 +51,70 @@ export function zplTestAreaDots(dpi: number, notes: number): number {
  */
 export function zplTestLabel(symbology: SymbologyId, data: string, options: ZplLabelOptions, notes: readonly string[]): string {
   const { commands } = stacked(symbology, data, options, false);
+  return document([...commands, ...ruler(options, notes)], testArea(options, notes), []);
+}
+
+/** The ruler, its ticks and the settings below a label of `heightDots` (backlog 3.1), from about `x`. */
+function ruler(options: Pick<ZplLabelOptions, "x" | "widthDots" | "heightDots" | "dpi">, notes: readonly string[]): string[] {
   const dpi = options.dpi;
   const mm = (value: number) => Math.round((value / MM_PER_INCH) * dpi);
   const top = options.heightDots + mm(2);
   const x = Math.max(mm(2), Math.min(options.x, options.widthDots - mm(50) - mm(2)));
   const t = hriTextDots(dpi);
-  const ruler = [
+  return [
     `^FO${x},${top + mm(3)}^GB${mm(50)},${Math.max(2, mm(0.3))},${Math.max(2, mm(0.3))}^FS`,
     ...[0, 10, 20, 30, 40, 50].map((at) => `^FO${x + mm(at) - (at === 50 ? Math.max(2, mm(0.3)) : 0)},${top}^GB${Math.max(2, mm(0.3))},${mm(at % 50 ? 2.5 : 4)},${Math.max(2, mm(0.3))}^FS`),
     `^FO${x},${top + mm(5)}^A0N,${zplFontHeight(t)},${zplFontHeight(t)}^FB${mm(50)},1,0,C${fieldData("50 mm: measure this line")}`,
     ...notes.map((note, index) => `^FO${mm(2)},${top + mm(10) + index * Math.round(t * 1.4)}^A0N,${zplFontHeight(t)},${zplFontHeight(t)}${fieldData(note)}`),
   ];
-  return document([...commands, ...ruler], { ...options, widthDots: Math.max(options.widthDots, x + mm(52)), heightDots: options.heightDots + zplTestAreaDots(dpi, notes.length) }, []);
 }
+
+/** A test label's size: the label, made `zplTestAreaDots()` higher and wide enough for the ruler. */
+function testArea<T extends Pick<ZplLabelOptions, "x" | "widthDots" | "heightDots" | "dpi">>(options: T, notes: readonly string[]): T {
+  const mm = (value: number) => Math.round((value / MM_PER_INCH) * options.dpi);
+  const x = Math.max(mm(2), Math.min(options.x, options.widthDots - mm(50) - mm(2)));
+  return { ...options, widthDots: Math.max(options.widthDots, x + mm(52)), heightDots: options.heightDots + zplTestAreaDots(options.dpi, notes.length) };
+}
+
+/**
+ * The GS1 Logistic Label (backlog 4.1 and 3.2) with the printer's own commands: each GS1-128 symbol as ^BC at
+ * `dotsPerModule` whole dots, with its element strings below as the editor's symbol has them (3 mm, rule 5c), the
+ * label's own text with ^A0 at its capitals' height, the rules between the blocks with ^GB. Everything is placed where
+ * the label's layout puts it, in millimetres turned into dots at `dpi`; a symbol keeps its centre, as its width follows
+ * the printer's module rather than the layout's. With `notes`, a test label (backlog 3.1): the ruler and the settings
+ * below it.
+ */
+export function zplLogisticLabel(label: LogisticLabel, dpi: number, dotsPerModule: number, options: { copies?: number; notes?: readonly string[] } = {}): string {
+  const { layout, printer } = label;
+  const perUnit = (layout.xMm / MM_PER_INCH) * dpi; // dots a unit of the layout
+  const dots = (units: number) => Math.round(units * perUnit);
+  const d = dotsPerModule;
+  const widthDots = dots(layout.width);
+  const heightDots = dots(layout.height);
+  const barHeightDots = dots(printer.barHeight);
+  const symbols = printer.symbols.flatMap(({ part, x, y }) => {
+    const modules = gs1128Modules(gs1128FieldData(parseElementString(part))); // as ^BC prints it
+    const left = Math.round((x + modules / 2) * perUnit - (modules * d) / 2);
+    if (left < 0 || left + modules * d > widthDots) {
+      const mm = ((modules * d * MM_PER_INCH) / dpi).toFixed(1);
+      throw new ZplUnsupportedError(`The GS1-128 of ${part} is ${mm} mm wide at ${d} dots a module, wider than the label: choose fewer dots or the larger label.`);
+    }
+    return fields("gs1-128", part, { x: left, y: dots(y), dotsPerModule: d, barHeightDots, dpi, hri: true, hriHeightMm: LOGISTIC_HRI_MM }, false).commands;
+  });
+  const rules = printer.rules.map(([x, y, w, h]) => {
+    const t = Math.max(1, dots(h));
+    return `^FO${dots(x)},${dots(y)}^GB${dots(w)},${t},${t}^FS`;
+  });
+  const texts = printer.texts.map((t) => {
+    const height = zplFontHeight(hriTextDots(dpi, t.heightMm));
+    return `^FO${dots(t.x)},${dots(t.top)}^A0N,${height},${height}${fieldData(t.text)}`;
+  });
+  const size = { x: 0, widthDots, heightDots, dpi, ...(options.copies ? { copies: options.copies } : {}) };
+  if (!options.notes) return document([...rules, ...texts, ...symbols], size, []);
+  return document([...rules, ...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);
+}
+
+const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
 
 /**
  * ^A0's capitals are 0.78 of the height it is given (measured through Labelary, 2 November 2026: 18, 43 and 78 dots for
@@ -120,7 +172,7 @@ export function fillTemplate(template: ZplTemplate, values: Record<string, strin
     .join("\n");
 }
 
-function document(commands: string[], options: ZplLabelOptions, placeholders: ZplPlaceholder[]): string {
+function document(commands: string[], options: Pick<ZplLabelOptions, "widthDots" | "heightDots" | "copies">, placeholders: ZplPlaceholder[]): string {
   return [
     "^XA",
     ...(placeholders.length ? ["^FX Template: replace each {{name}}; values must not contain a caret or a tilde.^FS"] : []),

@@ -264,7 +264,7 @@ that say what is true; together they are the [inventory of features](test-invent
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 10 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 11 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 37 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
@@ -276,7 +276,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 42 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 44 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 3 |

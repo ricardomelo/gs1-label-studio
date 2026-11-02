@@ -14,10 +14,11 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { logisticLabel, type LogisticSize } from "./logistic.ts";
-import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { logisticLabel, type LogisticLabel, type LogisticSize } from "./logistic.ts";
+import { PrinterUnsupportedError } from "./printers.ts";
+import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
-import { PRINTER_LANGUAGES, printLabel, type PrinterLanguage } from "./printFile.ts";
+import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
 // the row shown, and in bulk the same design for every row. What the design does not decide comes from the row.
@@ -61,6 +62,8 @@ export interface DrawnLabel {
   options: LabelOptions;
   layout: Layout;
   geometry: SymbolGeometry;
+  /** A GS1 Logistic Label's own description, which its print file is written from (backlog 4.1). */
+  logistic?: LogisticLabel;
 }
 
 /** The label of `identified` as `design` lays it out; an `InputError` when this data cannot be drawn so. */
@@ -68,11 +71,11 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
   const { symbology } = design;
   if (design.logistic) {
     if (!design.spec) throw new InputError("A GS1 Logistic Label takes GS1-128 at its table's row.");
-    const { layout, options, parts } = logisticLabel({
+    const logistic = logisticLabel({
       elementString: identified.elementString, size: design.logistic.size, spec: design.spec,
       ...(design.table ? { table: design.table } : {}), percent: design.size, from: design.logistic.from, to: design.logistic.to,
     }, font);
-    return { data: identified.elementString, options, layout, geometry: encode("gs1-128", parts.at(-1)!) };
+    return { data: identified.elementString, options: logistic.options, layout: logistic.layout, geometry: encode("gs1-128", logistic.parts.at(-1)!), logistic };
   }
   const shown = design.gtinOnly ? { ...identified, elements: identified.elements.filter((e) => e.ai === "01") } : identified;
   const encoded = dataFor(symbology, shown);
@@ -119,7 +122,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
  */
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
-  if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label is not written in a printer language yet: its PDF prints it at its size.");
+  if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label has no ZPL template yet: its ZPL file prints it, or its PDF.");
   // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
   const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
@@ -159,6 +162,27 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
     ...(parts ? { parts } : {}),
     ...(design.symbology === "dl-qrcode" ? { qrError: design.error.toUpperCase() as "L" | "M" | "Q" | "H", ...(design.qrMode ? { qrMode: design.qrMode } : {}) } : {}),
   };
+}
+
+/**
+ * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
+ * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL (backlog 4.1).
+ */
+export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
+  notes?: readonly string[]): string {
+  if (drawn.logistic) {
+    if (language !== "zpl") throw new PrinterUnsupportedError("The GS1 Logistic Label is written in ZPL only, for now: its PDF prints it at its size.");
+    return zplLogisticLabel(drawn.logistic, dpi, dotsPerModule ?? snapToDots(drawn.layout.xMm, dpi).dots, notes ? { notes } : {});
+  }
+  const options = zplOptionsFor(drawn, design, dpi, dotsPerModule);
+  return notes ? printTestLabel(language, design.symbology, drawn.data, options, notes) : printLabel(language, design.symbology, drawn.data, options);
+}
+
+/** How wide the label's print file is, in dots at `dpi`: what a printer profile's print width is checked against. */
+export function printWidthDots(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): number {
+  return drawn.logistic
+    ? Math.round(((drawn.layout.width * drawn.layout.xMm) / 25.4) * dpi)
+    : zplOptionsFor(drawn, design, dpi, dotsPerModule).widthDots;
 }
 
 // In bulk (backlog 2.4): every row's label from one design, in the files chosen, with a CSV of what was generated.
@@ -297,7 +321,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     }
     if (request.zplDpi) {
       try {
-        zpl.push(printLabel(language, design.symbology, d.label!.data, zplOptionsFor(d.label!, design, request.zplDpi, request.zplDots)));
+        zpl.push(printFileFor(language, d.label!, design, request.zplDpi, request.zplDots));
       } catch (error) {
         note(d.row, `${languageName}: ${error instanceof Error ? error.message : String(error)}`);
       }

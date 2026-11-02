@@ -312,9 +312,11 @@ For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6
 - The bottom block: the GS1-128 symbols with their 3 mm text, the SSCC alone in the lowest, the rest split as they fit
   the page's width.
 
-A page too short for its symbols is refused with its height. The label exports as SVG, PNG, PDF and EPS and in bulk;
-not yet in ZPL (its PDF prints it at its size). A 2D symbol beside the middle block and data titles in a second language
-are not there yet.
+A page too short for its symbols is refused with its height. The label exports as SVG, PNG, PDF and EPS and in bulk,
+and in ZPL with the printer's own commands: each GS1-128 a `^BC` at the printer profile's dots, the text and the rules
+where the layout puts them, and its test print. A6 and A5 are wider than a 4-inch printer prints (104 mm): choose 4 × 6
+in, or a printer profile of your own that prints wider. TSPL, EPL2, DPL and a ZPL template do not write it yet (its PDF
+prints it). A 2D symbol beside the middle block and data titles in a second language are not there yet.
 
 ## 10. Printer (ZPL, TSPL, EPL2, DPL)
 
@@ -470,7 +472,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *ZPL writes the QR code in the printer's automatic mode* | One QR mode could not be shown to print in ZPL | Automatic mode for ZPL; the PDF keeps the mode |
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
-| *The GS1 Logistic Label is not written in a printer language yet* | Not done yet | Print its PDF at its size |
+| *The GS1 Logistic Label is written in ZPL only, for now* | A TSPL, EPL2 or DPL profile | Use a ZPL profile, or print its PDF at its size |
+| *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |
 | *EPL2's Data Matrix (the b command) has no FNC1…*, *EPL2's QR code is for Japanese printer models only* | The language cannot print it | Use a ZPL profile, or print the PDF |
 | *DPL's GS1-128 is offered for an SSCC (00) alone…*, *DPL's Data Matrix (W1c) has no FNC1…* | DPL cannot print it, or no test has read it back | Use a ZPL profile, or print the PDF |

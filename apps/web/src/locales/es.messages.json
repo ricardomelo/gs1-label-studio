@@ -484,7 +484,7 @@
  "A valid PackageTypeCode is required.": "Se requiere un PackageTypeCode válido.",
  "The component is shorter than the minimum length GS1 Company Prefix.": "El componente es más corto que la longitud mínima de un Prefijo de Empresa GS1.",
  "The IBAN is too long.": "El IBAN es demasiado largo.",
- "The GS1 Logistic Label is not written in a printer language yet: its PDF prints it at its size.": "La Etiqueta Logística GS1 aún no se escribe en un lenguaje de impresora: su PDF la imprime a su tamaño.",
+ "The GS1 Logistic Label is written in ZPL only, for now: its PDF prints it at its size.": "La Etiqueta Logística GS1 se escribe solo en ZPL, por ahora: su PDF la imprime a su tamaño.",
  "EPL2's {name} is not offered for data with a double quote or a backslash: their escape could not be read back. Leave them out, or percent-encode them in a URI.": "El {name} de EPL2 no se ofrece para datos con comillas dobles o barra invertida: su escape no pudo releerse. Omítalas, o codifíquelas con % en un URI.",
  "EPL2's RSS-14 is not offered yet for {name}: Labelize, the emulator the tests print EPL2 with, does not draw it, so no test has read it back. ZPL or the PDF print it.": "El RSS-14 de EPL2 aún no se ofrece para {name}: Labelize, el emulador con que las pruebas imprimen EPL2, no lo dibuja, así que ninguna prueba lo ha releído. ZPL o el PDF lo imprimen.",
  "EPL2 prints {name} with a narrow bar of 2 to 4 dots; this X-dimension needs {d}. Choose another size or printer.": "EPL2 imprime {name} con barra estrecha de 2 a 4 puntos; esta dimensión X necesita {d}. Elija otro tamaño o impresora.",
@@ -522,5 +522,7 @@
  "DPL's records end at a line break: the data cannot hold one.": "Los registros de DPL terminan en un salto de línea: los datos no pueden contener uno.",
  "Datamax-O'Neil and Honeywell printers that speak DPL": "Impresoras Datamax-O'Neil y Honeywell que hablan DPL",
  "The symbol falls outside the label: DPL places records within 0 to 999.9 mm of its bottom left corner.": "El símbolo cae fuera de la etiqueta: DPL coloca los registros a entre 0 y 999,9 mm de su esquina inferior izquierda.",
- "no DPL command for {name}": "ningún comando DPL para {name}"
+ "no DPL command for {name}": "ningún comando DPL para {name}",
+ "The GS1 Logistic Label has no ZPL template yet: its ZPL file prints it, or its PDF.": "La Etiqueta Logística GS1 aún no tiene plantilla ZPL: su archivo ZPL la imprime, o su PDF.",
+ "The GS1-128 of {part} is {mm} mm wide at {d} dots a module, wider than the label: choose fewer dots or the larger label.": "El GS1-128 de {part} mide {mm} mm de ancho a {d} puntos por módulo, más ancho que la etiqueta: elija menos puntos o la etiqueta más grande."
 }

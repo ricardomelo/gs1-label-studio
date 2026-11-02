@@ -209,7 +209,8 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 **Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
 request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
 day, 1.15, 1.17, 1.12, 2.3, 1.16, 1.13, 2.5 and 1.14 too; 1.18 and 1.19 on 31 October): phase 3 (3.1, 3.3 and 3.6 done
-on 31 October, 3.7 on 2 November; PPLB and PPLA wait for their manuals). The
+on 31 October, 3.7 on 2 November; PPLB and PPLA wait for their manuals), then the GS1 Logistic Label in ZPL (3.2,
+4.1; 2 November). The
 editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
 (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
 several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
@@ -430,7 +431,9 @@ complete.
   millimetre); the bulk ZPL file takes the same dots*
 - 3.2 ZPL II with the printer's commands and templates with placeholders — *EAN/UPC, ITF-14, GS1-128, GS1 DataMatrix,
   QR and Data Matrix with a GS1 Digital Link URI done (checked through Labelary); GS1 DataBar through `^BR` and
-  ITF-14's bearer bars through `^GB` done, with what `^BR` cannot print refused (ADR 0002); the label layout to do*
+  ITF-14's bearer bars through `^GB` done, with what `^BR` cannot print refused (ADR 0002); the GS1 Logistic Label done
+  2 November (each GS1-128 a `^BC`, the text and rules where the layout puts them), with two fixes found on the way:
+  the text's capitals at their height, and GS1-128 as wide as `^BC` prints it*
 - 3.3 TSPL/TSPL2 — *done 31 October for the symbols Labelize reads back (the owner chose it to stand in for a printer,
   ADR 0002): EAN-13, ITF-14 with bearer bars, GS1 DataMatrix (FNC1 as `~1`), Data Matrix and QR code with a GS1 Digital
   Link URI, text in the dot fonts, the test label; GS1-128 (the manual's `!102`, which Labelize encodes as text),
@@ -455,8 +458,9 @@ complete.
   in, A5 or 6 × 8 in; the top block with who sends and receives it (3.5 mm), the middle block with each element
   string's data title above its content (7 mm), the bottom block with the GS1-128 symbols and their 3 mm text, the
   SSCC alone in the lowest, the rest split as they fit the page's width; refused when the page is too short; one
-  Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. Not yet: ZPL, a 2D symbol
-  beside the middle block, a second language for the data titles; product and healthcare labels*
+  Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November (TSPL,
+  EPL2 and DPL not yet). Not yet: a 2D symbol beside the middle block, a second language for the data titles; product
+  and healthcare labels*
 - 4.2 Designer: text, images, lines, several symbols, fields bound to spreadsheet columns
 - 4.3 Templates saved and shared as files
 

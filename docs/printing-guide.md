@@ -121,7 +121,7 @@ PDF offered instead.
 | A QR code in one encoding mode | Nothing showed a printer honours the mode (Labelary chose its own) |
 | Text left or right of the symbol | The printer's font sets the text's width, which the studio does not know |
 | A label wider than the printer prints | It would be cut |
-| The GS1 Logistic Label | Not written in ZPL yet: print its PDF at its size |
+| The GS1 Logistic Label | In ZPL only for now (not TSPL, EPL2 or DPL, nor as a template): print its PDF meanwhile. A6 and A5 are wider than a 4-inch printer prints: a 4 × 6 in label, or a wider printer's profile |
 
 ## 8. TSPL, EPL2 and DPL, and the other printer languages
 

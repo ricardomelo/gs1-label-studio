@@ -16,6 +16,9 @@ import {
   patternProblem,
   pdfDocument,
   pdfContent,
+  printFileFor,
+  printWidthDots,
+  specificationFor,
   sheetCells,
   sheetPages,
   sheetProblem,
@@ -205,6 +208,29 @@ describe("generating every row", () => {
     expect(tspl.match(/^SIZE /gm)).toHaveLength(3);
     expect(tspl.match(/^QRCODE /gm)).toHaveLength(3);
     expect(tspl).toContain("09506000134352");
+  }, SLOW);
+
+  // The GS1 Logistic Label in ZPL (backlog 4.1, 3.2): every row's label in the one file, written by zplLogisticLabel;
+  // another language refuses it, each row naming the reason in the CSV
+  it("writes the GS1 Logistic Label of every row in ZPL, and says another language cannot", async () => {
+    const sscc = checkRows(engine, parseDelimited("SSCC,GTIN,Count\n106141411234567897,09506000134376,24\n106141411234567903,09506000134376,12"),
+      ["00", "02", "37"], [], "https://id.gs1.org").map((row) => ({ row: row.row, identified: row.identified! }));
+    const design: LabelDesign = {
+      symbology: "gs1-128", hri: "full", version: null, error: "m", size: 100, linear: "none", linearSize: null, bearer: "frame",
+      reduction: 0, spec: specificationFor(5, "gs1-128")!, table: 5, logistic: { size: "a5", from: ["Dal Giardino S.p.A."], to: [] },
+    };
+    const zpl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203 }, font);
+    const file = new TextDecoder().decode(unzip(zpl.zip).get("labels_gs1-128_203dpi.zpl"));
+    expect(file.match(/\^XA/g)).toHaveLength(2);
+    expect(file.match(/\^BCN/g)).toHaveLength(4);
+    expect(file).toContain("^FD>;>800106141411234567903^FS");
+    const drawn = labelFor(sscc[0]!.identified, design, font);
+    expect(drawn.logistic?.parts).toEqual(["(02)09506000134376(37)24", "(00)106141411234567897"]);
+    expect(printFileFor("zpl", drawn, design, 203, 4, ["a note"])).toContain("50 mm: measure this line");
+    expect(printWidthDots(drawn, design, 203)).toBe(Math.round((148 / 25.4) * 203));
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL only/);
+    const tspl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
+    expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL only/);
   }, SLOW);
 
   it("names a row its design cannot draw, and a label larger than the sheet's, in the CSV", async () => {

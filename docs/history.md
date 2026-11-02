@@ -203,3 +203,11 @@ every symbol the manual describes for GS1 data except two ways of writing FNC1 i
 with automatic subsets — so DPL's GS1-128 carries an SSCC alone, through the manual's UCC/EAN Code 128. The manual gives
 its Data Matrix no FNC1, so a GS1 DataMatrix is refused. Labelize places a QR code and an EAN's guard bars a little
 differently from the manual; the manual was followed and the difference kept in a test.
+
+PPLA and PPLB still have neither a manual at hand nor an emulator, and the other printer items need a printer, so the
+GS1 Logistic Label came next, in ZPL. Printing it whole through Labelary showed two things a test of one symbol had not:
+`^A0`'s capitals are 0.78 of the height it is given, so every line of ZPL text had come out 22 % short of the height the
+studio meant (2.2 mm as 1.7 mm, under the 2 mm the General Specifications ask); and GS1-128 sent a short run of digits
+to code set B, so `^BC` printed it wider than the label made for it. Both were fixed first, each with a test that fails
+without the fix; then the label itself: each symbol a `^BC` at the printer's dots, kept centred, the text and the rules
+where the layout puts them.

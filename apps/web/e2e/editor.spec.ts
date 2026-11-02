@@ -1033,8 +1033,26 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await on(page, "export");
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
+  // In ZPL (backlog 3.2): A5 is wider than a 4-inch printer prints, refused; a 6-inch printer of one's own writes it, each
+  // GS1-128 a ^BC, the label's text and rules with it; its test label too. Another language refuses it, with the reason.
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is not written in a printer language yet");
+  await expect(page.locator(".error.small")).toContainText("The label is 148.0 mm wide");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "new");
+  await page.fill("#prn-name", "Six-inch printer");
+  await page.fill("#prn-width", "168");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const text = readFileSync((await zpl.path())!, "utf8");
+  expect(text.match(/\^BCN/g)).toHaveLength(2);
+  expect(text).toContain("^PW1183\n^LL1678"); // 148 × 210 mm at 203 dpi
+  expect(text).toContain("^FDDal Giardino S.p.A.^FS");
+  expect(text).toMatch(/\^GB1183,2,2\^FS/);
+  const [test] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Test print (ZPL)" }).click()]);
+  expect(readFileSync((await test.path())!, "utf8")).toContain("50 mm: measure this line");
+  await page.selectOption("#prn-profile", "tspl-203");
+  await page.getByRole("button", { name: "TSPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is written in ZPL only, for now");
 });
 
 // The interface's languages (the owner, 31 October 2026; ADR 0003): English, Brazilian Portuguese and Spanish, the

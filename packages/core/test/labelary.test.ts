@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
+import { hriFont } from "./font.ts";
 import { decodePng } from "./png.ts";
 import {
   encode,
@@ -17,6 +18,9 @@ import {
   gs1128FieldData,
   gs1128Modules,
   parseElementString,
+  zplLogisticLabel,
+  logisticLabel,
+  specificationFor,
   graphicFields,
   type SymbologyId,
 } from "../src/index.ts";
@@ -201,6 +205,33 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       }
     }
     expect(right - left + 1).toBe(gs1128Modules(gs1128FieldData(parseElementString(data))) * o.dotsPerModule); // from the start bar to the stop's last bar
+  });
+
+  // The GS1 Logistic Label (backlog 4.1, 3.2) with the printer's own commands: each GS1-128 a ^BC, read back from the
+  // whole label as Labelary prints it; the rules and the label's own text where the layout puts them, clear of the
+  // symbols; the label the page's size in dots.
+  it.each([["a5", 203, 0.495], ["6x8", 300, 0.495]] as const)("the GS1 Logistic Label %s at %i dpi: every symbol read back", { timeout: 60000 }, async (size, dpi, xMm) => {
+    const label = logisticLabel({
+      elementString: "(00)106141411234567897(02)09506000134376(37)24(10)ABC123", size, spec: specificationFor(5, "gs1-128")!, table: 5,
+      percent: 100, from: ["Dal Giardino S.p.A.", "Via Roma 1, Milano"], to: ["Supermarket DC 12"],
+    }, hriFont());
+    const { dots } = snapToDots(xMm, dpi);
+    const zpl = zplLogisticLabel(label, dpi, dots);
+    const width = Math.round((label.layout.width * label.layout.xMm / 25.4) * dpi);
+    const height = Math.round((label.layout.height * label.layout.xMm / 25.4) * dpi);
+    expect(zpl).toContain(`^PW${width}\n^LL${height}`);
+    expect(zpl.match(/\^BCN/g)).toHaveLength(2);
+    expect(zpl).toMatch(/\^A0N,\d+,\d+\^FDFROM\^FS/);
+    // The data content's capitals 7 mm high (6.6.4.2), as zplFontHeight() gives them (measured above)
+    const seven = zplFontHeight(Math.round((7 / 25.4) * dpi));
+    expect(zpl).toContain(`^A0N,${seven},${seven}^FD106141411234567897^FS`);
+    const png = await labelaryPng(zpl, dpi, width, height);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4 });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(label.parts.map((p) => `]C1 ${p}`).sort());
+    // Nothing printed between the middle block's rule and the first symbol's text above it, but the symbols' own
+    const firstBars = Math.min(...label.printer.symbols.map((s) => s.y)) * (label.layout.xMm / 25.4) * dpi;
+    const lastRule = Math.max(...label.printer.rules.map((r) => r[1] + r[3])) * (label.layout.xMm / 25.4) * dpi;
+    expect(lastRule).toBeLessThan(firstBars);
   });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.

@@ -124,6 +124,7 @@ Which standard each follows: [conformance](conformance.md).
 |---|---|---|---|
 | The GS1 Logistic Label | For an SSCC, General Specifications 6.6 in A6, 4 × 6 in, A5 or 6 × 8 in: free text, data titles over 7 mm contents, GS1-128 with 3 mm text, the SSCC alone lowest | `3644f13` | `logistic`: is the page's size, its SSCC alone in the lowest symbol · `logistic`: reads back every symbol · `editor`: the GS1 Logistic Label |
 | Refused when it cannot be right | Data without an SSCC, a symbol wider than the page, more than the page holds | `3644f13` | `logistic`: refuses data without an SSCC |
+| In ZPL | Each GS1-128 a `^BC` at the profile's dots, the text with `^A0` at its capitals' height, the rules with `^GB`, where the layout puts them; its test print and the bulk ZPL file; other languages refuse it | this delivery | `labelary`: the GS1 Logistic Label a5 at 203 dpi · `batch`: writes the GS1 Logistic Label of every row in ZPL · `editor`: the GS1 Logistic Label |
 
 ## Printers and ZPL, TSPL, EPL2, DPL
 

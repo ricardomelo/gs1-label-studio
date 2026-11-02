@@ -158,4 +158,7 @@
 - ZPL's GS1-128 could print wider than the label made for it: a short run of digits in a value went to code set B (a
   count's "24": three codewords rather than one), and the width was the encoder's. An even run of digits now stays in
   code set C, and the width is counted from what `^BC` is given.
+- The GS1 Logistic Label in ZPL (backlog 3.2, 4.1): each GS1-128 a `^BC` at the printer profile's dots, the text and the
+  rules where the layout puts them; the Export bar's file, the test print and the bulk ZPL file. TSPL, EPL2 and DPL
+  refuse it for now, with the reason.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
