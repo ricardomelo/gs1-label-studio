@@ -224,7 +224,7 @@ function fields(symbology: SymbologyId, data: string, options: ZplSymbolOptions,
         elements,
         template ? (e) => value(e.ai, e.value, aiDescription(e.ai, 'a ">" is written ">0"'), { ">": ">0" }) : undefined,
       );
-      const widthDots = widthInModules(geometry) * d;
+      const widthDots = (template ? widthInModules(geometry) : gs1128Modules(text)) * d;
       const hri = textAround(elements.map((e) => `(${e.ai})${template ? `{{${e.ai}}}` : e.value}`), x, y, y + h, widthDots, 2 * d, options, true);
       return { commands: [`${at}^BY${d},3.0,${h}^BCN,${h},N,N,N,N${fieldData(text)}`, ...hri], placeholders };
     }
@@ -386,7 +386,9 @@ export function gs1128FieldData(elements: Element[], placeholder?: (element: Ele
       if (placeholder) inB(placeholder(e));
       else {
         for (const [run] of e.value.matchAll(/\d{4,}|\D+|\d{1,3}/g)) {
-          if (!/^\d{4,}$/.test(run)) inB(run);
+          // Already in C, an even run of digits stays there (a count's "24": one codeword rather than three)
+          if (set === "C" && /^\d+$/.test(run) && run.length % 2 === 0) out += run;
+          else if (!/^\d{4,}$/.test(run)) inB(run);
           else {
             if (run.length % 2 === 1) inB(run[0]!);
             to("C");
@@ -398,6 +400,30 @@ export function gs1128FieldData(elements: Element[], placeholder?: (element: Ele
     }
   });
   return out;
+}
+
+/**
+ * The modules of a GS1-128 symbol as ^BC mode N prints `fieldData` (gs1128FieldData): each codeword 11 modules — the
+ * start, each invocation code (">8", ">5", ">6"), a pair of digits in code set C, a character in B (">0" one) — then
+ * the check character and the stop pattern (13). The encoder may choose code sets more cleverly, so the width of what
+ * the printer is given is counted from what it is given.
+ */
+export function gs1128Modules(fieldData: string): number {
+  let codewords = 0;
+  let set: "B" | "C" = "B";
+  for (let i = 0; i < fieldData.length; ) {
+    if (fieldData[i] === ">") {
+      const code = fieldData[i + 1];
+      if (code === ";" || code === "5") set = "C";
+      if (code === ":" || code === "6") set = "B";
+      codewords++;
+      i += 2;
+    } else {
+      codewords++;
+      i += set === "C" ? 2 : 1;
+    }
+  }
+  return (codewords + 1) * 11 + 13;
 }
 
 /**

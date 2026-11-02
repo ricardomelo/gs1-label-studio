@@ -1010,6 +1010,10 @@
     {
      "name": "in ZPL › stacks a ^BC a symbol on a label as wide as the widest and as high as the stack",
      "status": "passed"
+    },
+    {
+     "name": "in ZPL › makes the label as wide as ^BC prints the symbol, not the encoder's",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -1485,6 +1489,10 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › the text's capitals are as high as asked",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › GS1-128 is as wide as the modules counted from its field data",
      "status": "passed"
     },
     {
@@ -3229,6 +3237,10 @@
     },
     {
      "name": "ZPL with the printer's commands › writes GS1-128 with FNC1 and code sets chosen here",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL with the printer's commands › keeps an even run of digits in code set C, and counts the modules ^BC prints from what it is given",
      "status": "passed"
     },
     {

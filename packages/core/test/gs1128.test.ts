@@ -14,6 +14,8 @@ import {
   splitGs1128,
   encode,
   gs1128StackDots,
+  gs1128FieldData,
+  gs1128Modules,
   labelFor,
   syntaxEngine,
   widthInModules,
@@ -110,5 +112,21 @@ describe("in ZPL", () => {
     const zpl = zplLabel("gs1-128", drawn.data, o);
     expect(zpl.match(/\^BCN/g)).toHaveLength(2);
     expect(zpl).toContain(`^FO${o.x},${o.y + gs1128StackDots(o)}^BY`);
+  });
+
+  // ^BC may take a codeword more than the encoder (an odd run of digits that starts a value: "1" in B, then pairs), so the
+  // label is made as wide as what the printer is given, its quiet zones clear
+  it("makes the label as wide as ^BC prints the symbol, not the encoder's", async () => {
+    const engine = await syntaxEngine();
+    const design: LabelDesign = {
+      symbology: "gs1-128", hri: "full", version: null, error: "m", size: 100, linear: "none", linearSize: null, bearer: "frame",
+      reduction: 0, spec: specificationFor(5, "gs1-128")!, table: 5,
+    };
+    const data = "(01)09506000134352(10)12345";
+    const drawn = labelFor(engine.parse(data) as never, design, font);
+    const printed = gs1128Modules(gs1128FieldData(parseElementString(data)));
+    expect(printed).toBeGreaterThan(widthInModules(encode("gs1-128", data)));
+    const o = zplOptionsFor(drawn, design, 203);
+    expect(o.widthDots).toBeGreaterThanOrEqual(2 * o.x + printed * o.dotsPerModule);
   });
 });

@@ -10,6 +10,7 @@ export {
   fillTemplate,
   graphicFields,
   gs1128FieldData,
+  gs1128Modules,
   MAX_GRAPHIC_FIELD_BYTES,
   upcaManufacturerAndProduct,
   gs1128StackDots,

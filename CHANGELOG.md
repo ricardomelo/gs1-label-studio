@@ -155,4 +155,7 @@
   reason. Generic DPL profiles at 203 and 300 dpi.
 - ZPL's human readable text at its capitals' height: `^A0`'s capitals are 0.78 of the height it is given, so the text
   came out 22 % short (2.2 mm as 1.7 mm, below section 4.14's 2 mm); it is now given 1/0.78 of it.
+- ZPL's GS1-128 could print wider than the label made for it: a short run of digits in a value went to code set B (a
+  count's "24": three codewords rather than one), and the width was the encoder's. An even run of digits now stays in
+  code set C, and the width is counted from what `^BC` is given.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

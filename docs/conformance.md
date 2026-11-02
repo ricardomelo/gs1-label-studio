@@ -100,7 +100,7 @@ back by ZXing in CI.
 
 | What | What the studio does | Evidence |
 |---|---|---|
-| `^BC` mode N | FNC1 (`>8`) first and after variable-length element strings; code sets chosen; `>` as `>0` | `zpl`: writes GS1-128 with FNC1 and code sets chosen here |
+| `^BC` mode N | FNC1 (`>8`) first and after variable-length element strings; code sets chosen; `>` as `>0`; the width counted from what is written | `zpl`: writes GS1-128 with FNC1 and code sets chosen here · `labelary`: GS1-128 is as wide as the modules counted |
 | `^BX` | FNC1 as `_1`, `_` declared as the escape character | `zpl`: places FNC1 in a GS1 DataMatrix only first and after variable-length element strings |
 | `^BR` | GS1 DataBar at its fixed heights; refused where the table asks more | `zpl`: refuses what ^BR cannot print |
 | `^FH` | Reserved characters escaped | `zpl`: writes reserved characters through ^FH |

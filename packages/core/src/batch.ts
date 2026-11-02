@@ -15,7 +15,8 @@ import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { logisticLabel, type LogisticSize } from "./logistic.ts";
-import { gs1128StackDots, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, type PrinterLanguage } from "./printFile.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
@@ -135,7 +136,10 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
   const side = bearer?.kind === "frame" ? t : 0;
   // GS1-128 over several symbols: as wide as the widest, as high as the stack (backlog 1.13)
   const parts = layout.parts && layout.parts.length > 1 ? layout.parts : undefined;
-  const symbolWidth = itf ? 135 : parts ? Math.max(...parts.map((part) => widthInModules(encode("gs1-128", part)))) : widthInModules(geometry);
+  // GS1-128 as wide as ^BC prints it, which may take more codewords than the encoder chose
+  const symbolWidth = itf ? 135
+    : design.symbology === "gs1-128" ? Math.max(...(parts ?? [drawn.data]).map((part) => Math.max(widthInModules(encode("gs1-128", part)), gs1128Modules(gs1128FieldData(parseElementString(part))))))
+    : widthInModules(geometry);
   // Text above the symbol (backlog 1.16): one line for the linear symbols, which join their element strings, one an
   // element string for GS1 DataMatrix
   const hri = {

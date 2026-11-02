@@ -271,12 +271,12 @@ that say what is true; together they are the [inventory of features](test-invent
 | `dots` | the printer's dot grid | 3 |
 | `environments` | the resolver's scanning environments, its 2,970 answers | 4 |
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 113 |
-| `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 5 |
+| `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 41 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 42 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 3 |
@@ -293,7 +293,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `specifications` | every row of tables 1 to 13 against the standard's text | 143 |
 | `syntax` | input through the Syntax Engine, what each symbol carries, characters encoded | 15 |
 | `table` | CSV and Excel read without a library | 9 |
-| `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 15 |
+| `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 46 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |

@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   fillTemplate,
+  encode,
   gs1128FieldData,
+  gs1128Modules,
   parseElementString,
   upcaManufacturerAndProduct,
   zplLabel,
   zplTemplate,
   ZplUnsupportedError,
   zplTextAbove,
+  widthInModules,
 } from "../src/index.ts";
 
 const at203 = { x: 40, y: 40, dotsPerModule: 3, barHeightDots: 120, dpi: 203, widthDots: 800, heightDots: 400 };
@@ -42,6 +45,15 @@ describe("ZPL with the printer's commands", () => {
       ">;>801{{01}}" + "10>6{{10}}>8" + ">521>6{{21}}>8" + ">517{{17}}",
     );
     expect(zplLabel("gs1-128", "(00)106141411234567897", at203)).toContain("^BCN,120,N,N,N,N^FD>;>800106141411234567897^FS");
+  });
+
+  it("keeps an even run of digits in code set C, and counts the modules ^BC prints from what it is given", () => {
+    // (37)24: "24" stays in C after its AI (one codeword, not a switch and two); then FNC1 and (10) in C
+    const count = gs1128FieldData(parseElementString("(02)09506000134376(37)24(10)ABC123"));
+    expect(count).toBe(">;>802095060001343763724>810>6ABC123");
+    expect(gs1128Modules(count)).toBe((1 + 1 + 8 + 2 + 1 + 1 + 1 + 6 + 1) * 11 + 13); // start, FNC1, 8 + 2 pairs, FNC1, 10, B, 6, check
+    // The SSCC alone: the encoder's width
+    expect(gs1128Modules(">;>800106141411234567897")).toBe(widthInModules(encode("gs1-128", "(00)106141411234567897")));
   });
 
   it("writes ^BQ at the error correction level chosen, M when none; refuses one mode for the data (ADR 0002)", () => {

@@ -14,6 +14,9 @@ import {
   zplTestLabel,
   zplTemplate,
   zplFontHeight,
+  gs1128FieldData,
+  gs1128Modules,
+  parseElementString,
   graphicFields,
   type SymbologyId,
 } from "../src/index.ts";
@@ -177,6 +180,27 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       }
     });
     expect(Math.abs(bottom - top + 1 - Math.round((3 / 25.4) * 203))).toBeLessThanOrEqual(1);
+  });
+
+  // GS1-128 as ^BC prints it: as wide as gs1128Modules() counts from the field data (a count's "24" kept in code set C),
+  // which is what the label's width and the text's box are made from.
+  it("GS1-128 is as wide as the modules counted from its field data", { timeout: 30000 }, async () => {
+    const data = "(02)09506000134376(37)24(10)ABC123";
+    const o = { ...options(0.33, 203), hri: false };
+    const png = await labelaryPng(zplLabel("gs1-128", data, o), 203, o.widthDots, o.heightDots);
+    const [result] = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`]C1 ${data}`);
+    const { grey, width } = decodePng(png);
+    const row = o.y + Math.round(o.barHeightDots / 2);
+    let left = width;
+    let right = 0;
+    for (let col = 0; col < width; col++) {
+      if (grey[row * width + col]! < 128) {
+        left = Math.min(left, col);
+        right = Math.max(right, col);
+      }
+    }
+    expect(right - left + 1).toBe(gs1128Modules(gs1128FieldData(parseElementString(data))) * o.dotsPerModule); // from the start bar to the stop's last bar
   });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.
