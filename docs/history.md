@@ -211,3 +211,17 @@ studio meant (2.2 mm as 1.7 mm, under the 2 mm the General Specifications ask); 
 to code set B, so `^BC` printed it wider than the label made for it. Both were fixed first, each with a test that fails
 without the fix; then the label itself: each symbol a `^BC` at the printer's dots, kept centred, the text and the rules
 where the layout puts them.
+
+## Session 9 — 2 November 2026: a 2D symbol on the GS1 Logistic Label
+
+The handover's next step was the rest of item 4.1, starting with the 2D symbol section 6.6.4.1.1 places to the right of
+the middle block. Drawing the labels to look at them first showed that an 18-digit SSCC at 7 mm is 102 mm wide in the
+studio's font, wider than a 4 × 6 in label: its content ran off the edge. That was fixed first, the block's margin
+narrowed to 2 mm and the content made just small enough to fit, below the 7 mm the specification recommends only there.
+
+The 2D symbol is table 5's: GS1 DataMatrix, or a QR code or Data Matrix with the GS1 Digital Link URI, sized at
+GS1-128's percentage of its own target, at the block's top right with its quiet zone clear; a line too wide for the
+room beside it waits for the first row below. Printing it through Labelary showed something no test of a lone QR code
+had: `^BQ` puts the symbol as far below `^FO` as the bar height `^BY` last set. After a GS1-128 at 300 dpi that was
+375 dots, over the rule below; on its own, 10 dots, the default, on every QR label written so far. Zebra's guide says
+nothing of it; a one-dot `^BY` before `^BQ` now keeps the symbol where the label puts it, and a test measures its top.
