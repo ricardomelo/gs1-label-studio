@@ -1508,6 +1508,14 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label with a gs1-datamatrix at 203 dpi: every symbol read back",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label with a dl-qrcode at 300 dpi: every symbol read back",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a test label: the symbol reads and the ruler is 50 mm",
      "status": "passed"
     },
@@ -1797,6 +1805,22 @@
     },
     {
      "name": "the GS1 Logistic Label › fits the SSCC's content on a 4 × 6 in label: 2 mm margins, and as near 7 mm as they allow",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › places a gs1-datamatrix to the right of the middle block, read back with the GS1-128",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › places a dl-qrcode to the right of the middle block, read back with the GS1-128",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › places a dl-datamatrix to the right of the middle block, read back with the GS1-128",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › puts a line too wide for the room beside the 2D symbol below it, and refuses a page too short for both",
      "status": "passed"
     }
    ],
@@ -3700,6 +3724,15 @@
     },
     {
      "name": "the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label with a QR code beside its data, read back, and in ZPL",
      "status": "listed",
      "projects": [
       "desktop",

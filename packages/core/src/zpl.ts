@@ -1,4 +1,4 @@
-import { MM_PER_INCH } from "./dots.ts";
+import { dotsWithin, MM_PER_INCH } from "./dots.ts";
 import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 import type { LogisticLabel } from "./logistic.ts";
@@ -109,6 +109,18 @@ export function zplLogisticLabel(label: LogisticLabel, dpi: number, dotsPerModul
     const height = zplFontHeight(hriTextDots(dpi, t.heightMm));
     return `^FO${dots(t.x)},${dots(t.top)}^A0N,${height},${height}${fieldData(t.text)}`;
   });
+  // The 2D symbol beside the middle block: whole dots a module within table 5's range, the nearest to the layout's,
+  // its right edge and top where the layout puts them (the quiet zones and the gap to the text take a rounding)
+  const twoD = printer.twoD;
+  if (twoD) {
+    const moduleMm = twoD.module * layout.xMm;
+    const choices = dotsWithin(twoD.rangeMm[0], twoD.rangeMm[1], dpi);
+    if (!choices.length) throw new ZplUnsupportedError(`A ${dpi} dpi printer cannot print the 2D symbol within table 5's X-dimensions.`);
+    const d2 = choices.reduce((best, c) => (Math.abs(c.xMm - moduleMm) < Math.abs(best.xMm - moduleMm) - 1e-9 ? c : best)).dots;
+    const right = dots(twoD.x + twoD.modules * twoD.module);
+    const qrError = twoD.error.toUpperCase() as "L" | "M" | "Q" | "H";
+    symbols.push(...fields(twoD.symbology, twoD.data, { x: right - twoD.modules * d2, y: dots(twoD.y), dotsPerModule: d2, barHeightDots: 0, dpi, hri: false, qrError }, false).commands);
+  }
   const size = { x: 0, widthDots, heightDots, dpi, ...(options.copies ? { copies: options.copies } : {}) };
   if (!options.notes) return document([...rules, ...texts, ...symbols], size, []);
   return document([...rules, ...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);

@@ -236,6 +236,34 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     expect(lastRule).toBeLessThan(firstBars);
   });
 
+  // With a 2D symbol beside the middle block (6.6.4.1.1): a ^BX or ^BQ at whole dots within table 5's X-dimensions,
+  // read back with the GS1-128 from the whole label; its right edge where the layout puts it
+  it.each([["gs1-datamatrix", 203, "]d2 (00)106141411234567897(02)09506000134376(37)24(10)ABC123"], ["dl-qrcode", 300, "]Q1 https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24&10=ABC123"]] as const)(
+    "the GS1 Logistic Label with a %s at %i dpi: every symbol read back", { timeout: 60000 }, async (symbology, dpi, expected) => {
+      const elementString = "(00)106141411234567897(02)09506000134376(37)24(10)ABC123";
+      const label = logisticLabel({
+        elementString, size: "a5", spec: specificationFor(5, "gs1-128")!, table: 5, percent: 100, from: ["Dal Giardino S.p.A."], to: [],
+        twoD: { symbology, data: expected.slice(4) },
+      }, hriFont());
+      const zpl = zplLogisticLabel(label, dpi, snapToDots(0.495, dpi).dots);
+      const d2 = Math.ceil(0.743 / (25.4 / dpi)); // 6 dots at 203 dpi (0.750 mm), 9 at 300 (0.762 mm)
+      expect(zpl).toContain(symbology === "dl-qrcode" ? `^BQN,2,${d2}^FDMA,https://id.gs1.org/00/` : `^BXN,${d2},200,0,0,6,_^FD_100106141411234567897`);
+      const width = Math.round((label.layout.width * label.layout.xMm / 25.4) * dpi);
+      const height = Math.round((label.layout.height * label.layout.xMm / 25.4) * dpi);
+      const png = await labelaryPng(zpl, dpi, width, height);
+      const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4 });
+      expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual([...label.parts.map((p) => `]C1 ${p}`), expected].sort());
+      // Where the layout puts it, within a module: its right edge 4 mm from the label's, its top as laid out (^BQ's own
+      // shift taken off). Labelary centres the label's print width on its page, a few dots wider in whole hundredths of
+      // an inch.
+      const offset = Math.floor((decodePng(png).width - width) / 2);
+      const two = results.find((r) => !r.symbologyIdentifier.startsWith("]C"))!.position;
+      const right = Math.max(two.topRight.x, two.bottomRight.x) + 1 - offset;
+      expect(Math.abs(width - Math.round((4 / 25.4) * dpi) - right)).toBeLessThanOrEqual(d2);
+      const top = Math.min(two.topLeft.y, two.topRight.y);
+      expect(Math.abs(top - Math.round(label.printer.twoD!.y * (label.layout.xMm / 25.4) * dpi))).toBeLessThanOrEqual(1);
+    });
+
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.
   it("a test label: the symbol reads and the ruler is 50 mm", { timeout: 30000 }, async () => {
     const o = { ...options(0.33, 203), heightDots: 400 };

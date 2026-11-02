@@ -96,6 +96,7 @@ test("step 3: the GS1 Logistic Label", async ({ page }) => {
   await page.selectOption("#opt-logistic", "a5");
   await page.fill("#opt-from", "Dal Giardino S.p.A.\nVia Roma 1, Milano");
   await page.fill("#opt-to", "Supermarket DC 12");
+  await page.selectOption("#opt-logistic-2d", "dl-qrcode");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5");
   await shot(label(page).locator(".stage"), "logistic-label");
 });

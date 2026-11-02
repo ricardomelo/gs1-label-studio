@@ -142,7 +142,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
     hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
-    logistic: "none", logisticFrom: "", logisticTo: "",
+    logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none",
     expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
@@ -280,9 +280,14 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     ...(effective.qrMode !== "auto" ? { qrMode: effective.qrMode } : {}),
     ...(effective.qrUpperDomain ? { qrUpperDomain: true } : {}),
     ...(logisticOn && settings.logistic !== "none"
-      ? { logistic: { size: settings.logistic, from: settings.logisticFrom.split("\n"), to: settings.logisticTo.split("\n") } }
+      ? {
+        logistic: {
+          size: settings.logistic, from: settings.logisticFrom.split("\n"), to: settings.logisticTo.split("\n"),
+          ...(settings.logisticTwoD !== "none" ? { twoD: settings.logisticTwoD } : {}),
+        },
+      }
       : {}),
-  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo]);
+  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -331,10 +336,12 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           })()
         : undefined;
       const logisticName = logisticOn && settings.logistic !== "none" ? LOGISTIC_SIZES[settings.logistic].name : null;
+      const beside = logistic?.printer.twoD;
       const symbolPart = logisticName
         ? ((layout.parts?.length ?? 1) === 1
           ? t("GS1 Logistic Label {size} · 1 GS1-128 symbol", { size: logisticName })
-          : t("GS1 Logistic Label {size} · {n} GS1-128 symbols", { size: logisticName, n: layout.parts?.length ?? 1 }))
+          : t("GS1 Logistic Label {size} · {n} GS1-128 symbols", { size: logisticName, n: layout.parts?.length ?? 1 })) +
+          (beside ? ` · ${tm(SYMBOLOGIES[beside.symbology].name)} · ${t("{rows} × {cols} = {total} modules", { rows: beside.modules, cols: beside.modules, total: formatNumber(beside.modules ** 2) })}` : "")
         : layout.version
         ? t("QR code version {version} · {matrix} · correction {level}", { version: layout.version, matrix, level: effective.error.toUpperCase() }) +
           (options.qrMode ? ` · ${{ numeric: t("numeric mode"), alphanumeric: t("alphanumeric mode"), byte: t("byte mode") }[options.qrMode]}` : "")
@@ -347,7 +354,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       return {
         view: {
           ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
-          widthMm: wMm, heightMm: hMm, expected: layout.parts ? layout.parts.map((part) => `]C1 ${part}`).sort() : expectedReads(options), ...(gs1128 ? { gs1128 } : {}),
+          widthMm: wMm, heightMm: hMm, expected: layout.parts
+            ? [...layout.parts.map((part) => `]C1 ${part}`), ...(beside ? expectedReads({ symbology: beside.symbology, data: beside.data }) : [])].sort()
+            : expectedReads(options), ...(gs1128 ? { gs1128 } : {}),
           pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
           hasBars: Boolean(layout.barRects && layout.barRects[1] > layout.barRects[0]),
           caption: `${symbolPart} · ${t("X {x} mm · label {w} × {h} mm at 100 %", { x: formatNumber(layout.xMm, 3), w: formatNumber(wMm, 1), h: formatNumber(hMm, 1) })} · ${tail}`,

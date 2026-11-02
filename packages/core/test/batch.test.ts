@@ -231,6 +231,12 @@ describe("generating every row", () => {
     expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL only/);
     const tspl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
     expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL only/);
+    // With a QR code beside the middle block: each row's own GS1 Digital Link URI, in the drawing and in the ZPL
+    const withQr: LabelDesign = { ...design, logistic: { ...design.logistic!, twoD: "dl-qrcode" } };
+    expect(labelFor(sscc[1]!.identified, withQr, font).logistic?.printer.twoD?.data).toBe("https://id.gs1.org/00/106141411234567903?02=09506000134376&37=12");
+    const qr = await generateBatch(sscc, { design: withQr, files: [], pattern: "{00}", pdf: false, zplDpi: 203 }, font);
+    const qrFile = new TextDecoder().decode(unzip(qr.zip).get("labels_gs1-128_203dpi.zpl"));
+    expect(qrFile.match(/\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/10614141123456\d{4}\?02=09506000134376&37=\d\d\^FS/g)).toHaveLength(2);
   }, SLOW);
 
   it("names a row its design cannot draw, and a label larger than the sheet's, in the CSV", async () => {

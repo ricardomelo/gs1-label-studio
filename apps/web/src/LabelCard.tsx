@@ -2,6 +2,7 @@ import {
   ENVIRONMENTS,
   ERROR_LEVELS,
   LOGISTIC_SIZES,
+  LOGISTIC_TWO_D,
   linearSizesFor,
   linearXDimension,
   snapToDots,
@@ -12,6 +13,7 @@ import {
   type HriPosition,
   type QrMode,
   type LogisticSize,
+  type LogisticTwoD,
   type PrinterLanguageInfo,
   type RowStatus,
   type SymbologyId,
@@ -65,6 +67,8 @@ export interface LabelSettings {
   logistic: "none" | LogisticSize;
   logisticFrom: string;
   logisticTo: string;
+  /** A 2D symbol to the right of the label's middle block (General Specifications 6.6.4.1.1). */
+  logisticTwoD: "none" | LogisticTwoD;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -371,6 +375,15 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 </div>
                 {s.logistic !== "none" && (
                   <>
+                    <div>
+                      <label htmlFor="opt-logistic-2d">{t("2D symbol beside the data")}</label>
+                      <select id="opt-logistic-2d" value={s.logisticTwoD} onChange={(e) => set("logisticTwoD", e.target.value as "none" | LogisticTwoD)}>
+                        <option value="none">{t("None")}</option>
+                        {LOGISTIC_TWO_D.map((id) => (
+                          <option key={id} value={id}>{tm(SYMBOLOGIES[id].name)}</option>
+                        ))}
+                      </select>
+                    </div>
                     <div>
                       <label htmlFor="opt-from">{t("From")}</label>
                       <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />

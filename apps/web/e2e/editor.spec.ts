@@ -1055,6 +1055,34 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is written in ZPL only, for now");
 });
 
+// Item 4.1 (mock-up A of two, 2 November 2026): a 2D symbol to the right of the GS1 Logistic Label's middle block
+// (General Specifications 6.6.4.1.1), read back with the GS1-128 symbols, and in the ZPL as ^BQ.
+test("the GS1 Logistic Label with a QR code beside its data, read back, and in ZPL", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "a5");
+  await expect(page.locator("#opt-logistic-2d")).toHaveValue("none");
+  await page.selectOption("#opt-logistic-2d", "dl-qrcode");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols · QR code (GS1 Digital Link) · 33 × 33 = 1,089 modules");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24(10)ABC123 and " +
+      "]Q1 https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24&10=ABC123", { timeout: 30_000 });
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "new");
+  await page.fill("#prn-name", "Six-inch printer");
+  await page.fill("#prn-width", "168");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^BY1,3\.0,1\^FO\d+,\d+\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/106141411234567897\?02=/);
+  // A GS1 DataMatrix instead: the element string
+  await on(page, "label");
+  await page.selectOption("#opt-logistic-2d", "gs1-datamatrix");
+  await expect(page.locator(".caption")).toContainText("· GS1 DataMatrix ·");
+});
+
 // The interface's languages (the owner, 31 October 2026; ADR 0003): English, Brazilian Portuguese and Spanish, the
 // language chosen kept for the next visit; the core's and the Syntax Engine's messages translated too.
 test("the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included", async ({ page }) => {

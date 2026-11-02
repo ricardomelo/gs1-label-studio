@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { logisticLabel, type LogisticLabel, type LogisticSize } from "./logistic.ts";
+import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { PrinterUnsupportedError } from "./printers.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
@@ -49,8 +49,11 @@ export interface LabelDesign {
   /** A QR code's one encoding mode (backlog 1.14), and its URI's scheme and domain in capitals for alphanumeric mode. */
   qrMode?: QrMode;
   qrUpperDomain?: boolean;
-  /** A GS1 Logistic Label rather than the symbol alone (backlog 4.1): its size and free text; GS1-128 at `spec`. */
-  logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[] };
+  /**
+   * A GS1 Logistic Label rather than the symbol alone (backlog 4.1): its size and free text, GS1-128 at `spec`, and a 2D
+   * symbol beside the middle block if asked for (QR at `error`).
+   */
+  logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[]; twoD?: LogisticTwoD };
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -74,6 +77,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     const logistic = logisticLabel({
       elementString: identified.elementString, size: design.logistic.size, spec: design.spec,
       ...(design.table ? { table: design.table } : {}), percent: design.size, from: design.logistic.from, to: design.logistic.to,
+      ...(design.logistic.twoD ? { twoD: { symbology: design.logistic.twoD, data: dataFor(design.logistic.twoD, identified), error: design.error } } : {}),
     }, font);
     return { data: identified.elementString, options: logistic.options, layout: logistic.layout, geometry: encode("gs1-128", logistic.parts.at(-1)!), logistic };
   }

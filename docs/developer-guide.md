@@ -276,10 +276,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 44 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 46 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
-| `logistic` | the GS1 Logistic Label | 4 |
+| `logistic` | the GS1 Logistic Label | 8 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 4 |
@@ -295,7 +295,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `table` | CSV and Excel read without a library | 9 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 46 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 47 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 70 |
 

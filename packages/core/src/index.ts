@@ -277,4 +277,6 @@ export {
 } from "./sign.ts";
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
-export { LOGISTIC_SIZES, logisticLabel, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText } from "./logistic.ts";
+export {
+  LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
+} from "./logistic.ts";

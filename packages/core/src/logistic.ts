@@ -3,13 +3,15 @@ import { parseElementString, type Element } from "./elementString.ts";
 import { encode, widthInModules } from "./encode.ts";
 import { GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
 import type { HriFont } from "./hri.ts";
-import { layoutLabel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
-import { specSizesFor, type SymbolSpecification } from "./specifications.ts";
+import { layoutLabel, symbolMatrix, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
+import { baseX, specificationFor, specSizesFor, type SymbolSpecification } from "./specifications.ts";
+import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 
 // The GS1 Logistic Label (backlog 4.1; General Specifications 26.0, section 6.6): a page of A6 or 4 × 6 inches with
 // its building blocks from the top — free text (who sends, who receives), text with data titles, and at the bottom the
 // GS1-128 symbols with their text, the one carrying the SSCC lowest. Laid out as one Layout in units of the symbols'
-// X-dimension, so that the SVG, PNG, PDF and EPS draw it as they draw a symbol.
+// X-dimension, so that the SVG, PNG, PDF and EPS draw it as they draw a symbol. A 2D symbol, if asked for, goes to the
+// right of the middle block (6.6.3.1, 6.6.4.1.1).
 
 /** Section 6.6.4.5's sizes: A6 and 4 × 6 inches for an SSCC and a little more, A5 and 6 × 8 inches for more data. */
 export const LOGISTIC_SIZES = {
@@ -28,6 +30,14 @@ const DATA_CONTENT_MM = 7; // 6.6.4.2: at least 7 mm
 const HRI_MM = 3; // 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
 const RULE_MM = 0.3; // the lines between the building blocks
 const BLOCK_GAP_MM = 3;
+const TWO_D_GAP_MM = 3; // between the middle block's text and the 2D symbol's quiet zone
+
+/**
+ * The 2D symbols table 5 allows beside the GS1-128: GS1 DataMatrix with the element string, and a QR code or a Data
+ * Matrix with its GS1 Digital Link URI (GS1 QR Code is not offered: ADR 0003).
+ */
+export const LOGISTIC_TWO_D = ["gs1-datamatrix", "dl-qrcode", "dl-datamatrix"] as const satisfies readonly SymbologyId[];
+export type LogisticTwoD = (typeof LOGISTIC_TWO_D)[number];
 
 export interface LogisticInput {
   /** The element string the label carries, its SSCC (00) among them. */
@@ -40,6 +50,12 @@ export interface LogisticInput {
   /** The top block's free text: who sends it, who receives it; a line an entry. */
   from?: readonly string[];
   to?: readonly string[];
+  /**
+   * A 2D symbol to the right of the middle block: what it carries (`dataFor()`: the element string, or the GS1 Digital
+   * Link URI) and, for a QR code, its error correction level (M when not given). Sized by table 5's row for it, at the
+   * same percentage of that row's target as GS1-128 of its own: 0.743 mm at 100 %.
+   */
+  twoD?: { symbology: LogisticTwoD; data: string; error?: ErrorLevel };
 }
 
 /** A line of the label's own text (not a symbol's): its left edge and its capitals' top, in the label's units. */
@@ -66,6 +82,12 @@ export interface LogisticLabel {
     barHeight: number;
     texts: LogisticText[];
     rules: [number, number, number, number][];
+    /** The 2D symbol: its top left module's corner, its modules a side and their size in the label's units. */
+    twoD?: {
+      symbology: LogisticTwoD; data: string; error: ErrorLevel; x: number; y: number; modules: number; module: number; version: number | null;
+      /** Table 5's range for its X-dimension, in mm: a printer's whole dots are chosen within it. */
+      rangeMm: readonly [number, number];
+    };
   };
 }
 
@@ -167,18 +189,76 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   // The block's left edge: the margin, or as far left as its widest line needs
   const left = Math.max(u(NARROW_MARGIN_MM), Math.min(u(MARGIN_MM), width - u(NARROW_MARGIN_MM) - Math.max(...items.map((i) => i.w))));
   const right = width - left;
-  let x = left;
   const rowHeight = u(DATA_TITLE_MM * 1.6 + DATA_CONTENT_MM * 1.3);
-  for (const item of items) {
-    if (x > left && x + item.w > right) {
-      x = left;
-      y += rowHeight;
+
+  // The 2D symbol at the block's top right, its quiet zone kept clear of the rule above and of the page's edge
+  let twoD: LogisticLabel["printer"]["twoD"];
+  let narrowRight = right; // where the text stops beside the symbol
+  let besideUntil = y; // the text beside the symbol: rows that start above this
+  if (input.twoD) {
+    const row = specificationFor(5, input.twoD.symbology === "dl-qrcode" ? "gs1-qrcode" : "gs1-datamatrix")!;
+    const moduleMm = (baseX(row) * input.percent) / 100;
+    const error = input.twoD.error ?? "m";
+    const { matrix, version } = symbolMatrix({ symbology: input.twoD.symbology, data: input.twoD.data, hriLines: [], showHri: false, error, version: null });
+    const n = matrix.length;
+    const m = u(moduleMm);
+    const quiet = (row.quietZone as number) * m;
+    const above = from.length || to.length ? u(BLOCK_GAP_MM - RULE_MM) : u(MARGIN_MM); // white between the symbol's top and the rule or the edge
+    const sx = width - Math.max(u(MARGIN_MM), quiet) - n * m;
+    const sy = y + Math.max(0, quiet - above);
+    if (sx - quiet < u(NARROW_MARGIN_MM)) {
+      const symbol = SYMBOLOGIES[input.twoD.symbology].name;
+      const mm = (n * moduleMm).toFixed(1);
+      throw new RangeError(`The ${symbol} is ${mm} mm wide, too wide for the ${page.name} label: choose a smaller size, fewer element strings, or the larger label.`);
     }
-    text(item.title, x, y, DATA_TITLE_MM);
-    text(item.value, x, y + u(DATA_TITLE_MM * 1.6), item.content);
-    x += item.w + u(6);
+    for (const r of matrix.keys()) {
+      let c = 0;
+      while (c < n) {
+        if (!matrix[r]![c]) {
+          c++;
+          continue;
+        }
+        const start = c;
+        while (c < n && matrix[r]![c]) c++;
+        rects.push([sx + start * m, sy + r * m, (c - start) * m, m]);
+      }
+    }
+    twoD = { symbology: input.twoD.symbology, data: input.twoD.data, error, x: sx, y: sy, modules: n, module: m, version, rangeMm: [row.x[0], row.x[2]] };
+    narrowRight = sx - quiet - u(TWO_D_GAP_MM);
+    besideUntil = sy + n * m + quiet;
   }
-  y += rowHeight + u(BLOCK_GAP_MM / 2);
+
+  // The text in rows from the top; a line too wide for the room beside the symbol waits for the first row below it
+  let x = left;
+  let rowTop = y;
+  let textBottom = y;
+  const waiting: typeof items = [];
+  const rowRight = () => (rowTop < besideUntil ? narrowRight : right);
+  const newRow = () => {
+    x = left;
+    rowTop += rowHeight;
+    if (rowTop >= besideUntil) waiting.splice(0).forEach(put);
+  };
+  function put(item: (typeof items)[number]) {
+    for (;;) {
+      if (x > left && x + item.w > rowRight()) {
+        newRow();
+        continue;
+      }
+      if (x + item.w > rowRight() && rowTop < besideUntil) {
+        waiting.push(item);
+        return;
+      }
+      text(item.title, x, rowTop, DATA_TITLE_MM);
+      text(item.value, x, rowTop + u(DATA_TITLE_MM * 1.6), item.content);
+      x += item.w + u(6);
+      textBottom = rowTop + rowHeight;
+      return;
+    }
+  }
+  items.forEach(put);
+  while (waiting.length) newRow();
+  y = Math.max(textBottom, besideUntil) + u(BLOCK_GAP_MM / 2);
   if (y > bottomTop - u(RULE_MM)) {
     throw new RangeError(`The label's text and symbols need ${((y + (height - bottomTop)) * xMm).toFixed(0)} mm; the ${page.name} label is ${page.heightMm} mm high. Choose a smaller size, fewer element strings, or the larger label.`);
   }
@@ -189,6 +269,6 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
     layout: { width, height, rects, symbolRects, texts, xMm, modules: 0, version: null, barHeight: layouts[0]!.barHeight, barRects: [0, symbolRects], parts },
     options,
     parts,
-    printer: { symbols: bars, barHeight: layouts[0]!.barHeight!, texts: own, rules },
+    printer: { symbols: bars, barHeight: layouts[0]!.barHeight!, texts: own, rules, ...(twoD ? { twoD } : {}) },
   };
 }

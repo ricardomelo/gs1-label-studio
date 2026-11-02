@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
-import { labelPdf, labelSvg, logisticLabel, specificationFor, type LogisticInput } from "../src/index.ts";
+import { labelPdf, labelSvg, logisticLabel, specificationFor, type LogisticInput, type LogisticTwoD } from "../src/index.ts";
 import { drawPdf } from "./files.ts";
 import { hriFont } from "./font.ts";
 
@@ -86,5 +86,70 @@ describe("the GS1 Logistic Label", () => {
     expect(capital(layout.texts.find((t) => t.text === "09506000134376")!)).toBeCloseTo(7, 6);
     // The block's titles and contents start where the SSCC does
     expect(layout.texts.find((t) => t.text === "CONTENT")!.x).toBeCloseTo(sscc.x, 9);
+  });
+
+  // A 2D symbol to the right of the middle block (6.6.3.1, 6.6.4.1.1), at table 5's row for it: its quiet zone clear of
+  // the text, the rule above and the page's edge; read back with the GS1-128 symbols
+  const URI = "https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24&10=ABC123";
+  const TWO_D: [LogisticTwoD, string, string, number][] = [
+    ["gs1-datamatrix", INPUT.elementString, `]d2 ${INPUT.elementString}`, 1],
+    ["dl-qrcode", URI, `]Q1 ${URI}`, 4],
+    ["dl-datamatrix", URI, `]d1 ${URI}`, 1],
+  ];
+  /** No text in the 2D symbol's quiet zone: every line of the middle block beside it ends 3 mm before it. */
+  function clearOf(label: ReturnType<typeof logisticLabel>, quiet: number) {
+    const { layout } = label;
+    const two = label.printer.twoD!;
+    const capital = (t: { em: number }) => (t.em * font.capHeight) / font.unitsPerEm;
+    const [left, top, bottom] = [two.x - quiet, two.y - quiet, two.y + two.modules * two.module + quiet];
+    for (const t of layout.texts) {
+      if (t.baseline > top && t.baseline - capital(t) < bottom) expect(t.x + font.textWidth(t.text, t.em)).toBeLessThanOrEqual(left - 3 / layout.xMm + 1e-9);
+    }
+  }
+
+  it.each(TWO_D)("places a %s to the right of the middle block, read back with the GS1-128", async (symbology, data, read_, quietModules) => {
+    const label = logisticLabel({ ...INPUT, twoD: { symbology, data } }, font);
+    const { layout, options, parts } = label;
+    const two = label.printer.twoD!;
+    expect(two.module * layout.xMm).toBeCloseTo(0.743, 9); // table 5's target at 100 %
+    // The symbol and its quiet zone on the page, within the middle block: below the top rule, above the middle one
+    const quiet = quietModules * two.module;
+    const box = [two.x - quiet, two.y - quiet, two.x + two.modules * two.module + quiet, two.y + two.modules * two.module + quiet] as const;
+    expect(box[0]).toBeGreaterThan(0);
+    expect(box[2]).toBeLessThanOrEqual(layout.width + 1e-9);
+    expect((two.x + two.modules * two.module) * layout.xMm).toBeCloseTo(layout.width * layout.xMm - 4, 9); // the page's margin
+    const [top, middle] = label.printer.rules.map((r) => r[1]);
+    expect(box[1]).toBeGreaterThanOrEqual(top! + label.printer.rules[0]![3] - 1e-9);
+    expect(box[3]).toBeLessThanOrEqual(middle! + 1e-9);
+    clearOf(label, quiet);
+    // Each module a dark square of the module's size, drawn after GS1-128's bars (a bar width reduction leaves it)
+    expect(layout.barRects![1]).toBeLessThan(layout.rects.length);
+    const expected = [...parts.map((p) => `]C1 ${p}`), read_].sort();
+    const svg = labelSvg(options, layout, font);
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(expected);
+    expect(await read(drawPdf(await labelPdf(options, layout, font), 300))).toEqual(expected);
+  }, SLOW);
+
+  it("puts a line too wide for the room beside the 2D symbol below it, and refuses a page too short for both", () => {
+    // On A6 the SSCC's 18 digits do not fit beside the Data Matrix: the content and count go beside it, the SSCC below
+    const data = "(00)106141411234567897(02)09506000134376(37)24";
+    const label = logisticLabel({ ...INPUT, size: "a6", elementString: data, twoD: { symbology: "gs1-datamatrix", data } }, font);
+    const two = label.printer.twoD!;
+    const bottom = two.y + (two.modules + 1) * two.module;
+    const at = (text: string) => label.layout.texts.find((t) => t.text === text)!;
+    expect(at("09506000134376").baseline).toBeLessThan(bottom);
+    expect(at("106141411234567897").baseline).toBeGreaterThan(bottom);
+    expect(label.layout.texts.map((t) => t.text).filter((t) => ["SSCC", "CONTENT", "COUNT"].includes(t))).toEqual(["CONTENT", "COUNT", "SSCC"]);
+    // A count that would end in the gap before the symbol, beside the SSCC, starts the next row
+    const countSecond = "(00)106141411234567897(37)24(02)09506000134376(10)A";
+    const beside = logisticLabel({ ...INPUT, elementString: countSecond, twoD: { symbology: "gs1-datamatrix", data: countSecond } }, font);
+    clearOf(beside, beside.printer.twoD!.module);
+    expect(beside.layout.texts.find((t) => t.text === "COUNT")!.x).toBeCloseTo(beside.layout.texts.find((t) => t.text === "SSCC")!.x, 9);
+    // Larger with GS1-128: the same percentage of table 5's target
+    const larger = logisticLabel({ ...INPUT, percent: 120, twoD: { symbology: "gs1-datamatrix", data: INPUT.elementString } }, font);
+    expect(larger.printer.twoD!.module * larger.layout.xMm).toBeCloseTo(0.743 * 1.2, 9);
+    // A QR code with its URI on a 4 × 6 in label leaves no room for the GS1-128 symbols
+    const uri = "https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24";
+    expect(() => logisticLabel({ ...INPUT, size: "4x6", elementString: data, twoD: { symbology: "dl-qrcode", data: uri } }, font)).toThrow(/the 4 × 6 in label is 152.4 mm high/);
   });
 });

@@ -303,21 +303,27 @@ correctly is refused with the reason, never printed wrong (section 16). How to u
 ## 9. The GS1 Logistic Label
 
 For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6) in A6 (105 × 148 mm), 4 × 6 in, A5
-(148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it.
+(148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it. **2D symbol beside the data** adds
+a QR code or a Data Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix with the element string, to the right of
+the middle block (6.6.4.1.1).
 
 ![A GS1 Logistic Label in A5](images/guide/logistic-label.png)
 
 - The top block: the free text, 3.5 mm high.
 - The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high. A content wider than the label (an 18-digit SSCC is 102 mm at 7 mm, wider
   than a 4 × 6 in label) takes 2 mm margins and is made just small enough to fit.
+- The 2D symbol, if chosen: at the middle block's top right, at table 5's X-dimension (0.743 mm at 100 %, growing with
+  **Size** as GS1-128 does), its quiet zone clear of the text; a line too wide for the room beside it goes below it.
+  It carries every element string, which the GS1-128 symbols already show as text, so it has no text of its own. The
+  caption gives its modules, and **Scan test** reads it with the GS1-128 symbols.
 - The bottom block: the GS1-128 symbols with their 3 mm text, the SSCC alone in the lowest, the rest split as they fit
   the page's width.
 
 A page too short for its symbols is refused with its height. The label exports as SVG, PNG, PDF and EPS and in bulk,
 and in ZPL with the printer's own commands: each GS1-128 a `^BC` at the printer profile's dots, the text and the rules
-where the layout puts them, and its test print. A6 and A5 are wider than a 4-inch printer prints (104 mm): choose 4 × 6
+where the layout puts them, the 2D symbol as `^BQ` or `^BX` at whole dots within table 5's X-dimensions, and its test print. A6 and A5 are wider than a 4-inch printer prints (104 mm): choose 4 × 6
 in, or a printer profile of your own that prints wider. TSPL, EPL2, DPL and a ZPL template do not write it yet (its PDF
-prints it). A 2D symbol beside the middle block and data titles in a second language are not there yet.
+prints it). Data titles in a second language are not there yet.
 
 ## 10. Printer (ZPL, TSPL, EPL2, DPL)
 
