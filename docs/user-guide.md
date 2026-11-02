@@ -308,7 +308,8 @@ For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6
 ![A GS1 Logistic Label in A5](images/guide/logistic-label.png)
 
 - The top block: the free text, 3.5 mm high.
-- The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high.
+- The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high. A content wider than the label (an 18-digit SSCC is 102 mm at 7 mm, wider
+  than a 4 × 6 in label) takes 2 mm margins and is made just small enough to fit.
 - The bottom block: the GS1-128 symbols with their 3 mm text, the SSCC alone in the lowest, the rest split as they fit
   the page's width.
 

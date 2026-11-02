@@ -69,4 +69,22 @@ describe("the GS1 Logistic Label", () => {
     expect(small.layout.height * small.layout.xMm).toBeCloseTo(152.4, 6);
     expect(small.parts).toEqual(["(02)09506000134376(37)24", "(00)106141411234567897"]);
   });
+
+  it("fits the SSCC's content on a 4 × 6 in label: 2 mm margins, and as near 7 mm as they allow", () => {
+    // 18 digits at 7 mm are 102 mm wide in the HRI font: more than the 101.6 mm label, so the content is shrunk to fit
+    const { layout } = logisticLabel({ ...INPUT, size: "4x6", elementString: "(00)106141411234567897(02)09506000134376(37)24" }, font);
+    const capital = (t: { em: number }) => ((t.em * font.capHeight) / font.unitsPerEm) * layout.xMm;
+    const sscc = layout.texts.find((t) => t.text === "106141411234567897")!;
+    expect(capital(sscc)).toBeGreaterThan(6.7);
+    expect(capital(sscc)).toBeLessThan(7);
+    expect((font.textWidth(sscc.text, sscc.em)) * layout.xMm).toBeCloseTo(101.6 - 4, 6);
+    for (const t of layout.texts) {
+      expect(t.x * layout.xMm).toBeGreaterThanOrEqual(2 - 1e-9);
+      expect((t.x + font.textWidth(t.text, t.em)) * layout.xMm).toBeLessThanOrEqual(layout.width * layout.xMm - 2 + 1e-9);
+    }
+    // The other contents stay at 7 mm, and start where the SSCC does
+    expect(capital(layout.texts.find((t) => t.text === "09506000134376")!)).toBeCloseTo(7, 6);
+    // The block's titles and contents start where the SSCC does
+    expect(layout.texts.find((t) => t.text === "CONTENT")!.x).toBeCloseTo(sscc.x, 9);
+  });
 });

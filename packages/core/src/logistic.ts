@@ -21,6 +21,7 @@ export const LOGISTIC_SIZES = {
 export type LogisticSize = keyof typeof LOGISTIC_SIZES;
 
 const MARGIN_MM = 4;
+const NARROW_MARGIN_MM = 2; // a line of data content too wide for MARGIN_MM: an SSCC at 7 mm is 96 mm, a 4 × 6 in label 101.6
 const FREE_TEXT_MM = 3.5; // 6.6.4.4: no less than 3 mm
 const DATA_TITLE_MM = 2.5;
 const DATA_CONTENT_MM = 7; // 6.6.4.2: at least 7 mm
@@ -156,18 +157,26 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   }
 
   // Middle block: each element string's data title above its content, as many on a row as fit (6.6.4.2, 6.6.4.3)
-  let x = u(MARGIN_MM);
-  const rowHeight = u(DATA_TITLE_MM * 1.6 + DATA_CONTENT_MM * 1.3);
-  for (const e of elements) {
+  const items = elements.map((e) => {
     const title = aiEntry(e.ai)?.title ?? `AI (${e.ai})`;
-    const w = Math.max(font.textWidth(title, em(DATA_TITLE_MM)), font.textWidth(e.value, em(DATA_CONTENT_MM)));
-    if (x > u(MARGIN_MM) && x + w > width - u(MARGIN_MM)) {
-      x = u(MARGIN_MM);
+    // A content wider than the page with its margins takes narrower margins, and a smaller height only when even they fail
+    const room = width - 2 * u(NARROW_MARGIN_MM);
+    const content = Math.min(DATA_CONTENT_MM, (DATA_CONTENT_MM * room) / font.textWidth(e.value, em(DATA_CONTENT_MM)));
+    return { title, value: e.value, content, w: Math.max(font.textWidth(title, em(DATA_TITLE_MM)), font.textWidth(e.value, em(content))) };
+  });
+  // The block's left edge: the margin, or as far left as its widest line needs
+  const left = Math.max(u(NARROW_MARGIN_MM), Math.min(u(MARGIN_MM), width - u(NARROW_MARGIN_MM) - Math.max(...items.map((i) => i.w))));
+  const right = width - left;
+  let x = left;
+  const rowHeight = u(DATA_TITLE_MM * 1.6 + DATA_CONTENT_MM * 1.3);
+  for (const item of items) {
+    if (x > left && x + item.w > right) {
+      x = left;
       y += rowHeight;
     }
-    text(title, x, y, DATA_TITLE_MM);
-    text(e.value, x, y + u(DATA_TITLE_MM * 1.6), DATA_CONTENT_MM);
-    x += w + u(6);
+    text(item.title, x, y, DATA_TITLE_MM);
+    text(item.value, x, y + u(DATA_TITLE_MM * 1.6), item.content);
+    x += item.w + u(6);
   }
   y += rowHeight + u(BLOCK_GAP_MM / 2);
   if (y > bottomTop - u(RULE_MM)) {

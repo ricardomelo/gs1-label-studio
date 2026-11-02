@@ -1794,6 +1794,10 @@
     {
      "name": "the GS1 Logistic Label › refuses data without an SSCC, a symbol wider than the page, and more than the page holds",
      "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › fits the SSCC's content on a 4 × 6 in label: 2 mm margins, and as near 7 mm as they allow",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
