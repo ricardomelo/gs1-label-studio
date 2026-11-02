@@ -137,7 +137,7 @@ Which standard each follows: [conformance](conformance.md).
 | QR code at the label's level | `^BQ` at the error correction level chosen; one encoding mode refused with Labelary's evidence | `fd93dcd` | `zpl`: writes ^BQ at the error correction level chosen · `labelary`: a QR code at level Q or above |
 | GS1-128 stacked in ZPL | A `^BC` a symbol, stacked as on the label | `de66a5b` | `gs1128`: stacks a ^BC a symbol · `labelary`: GS1-128 in two symbols, stacked |
 | ZPL's text | At the label's height, below, above or split; beside refused | `807c602` | `zpl`: writes the text above, or split · `labelary`: gs1-128 with its text |
-| ZPL's text at its capitals' height | `^A0` given 1/0.78 of the text height, as its capitals are 0.78 of it (measured through Labelary) | this delivery | `labelary`: the text's capitals are as high as asked |
+| ZPL's text at its capitals' height | `^A0` given 1/0.78 of the text height, as its capitals are 0.78 of it (measured through Labelary) | `cbc300c` | `labelary`: the text's capitals are as high as asked |
 | Images in stripes | An image larger than a graphic field (99,999 bytes) sent as stripes | `fb903f6` | `roundtrip`: splits an image larger than a graphic field into stripes · `labelary`: prints an image (a logo) larger than one graphic field |
 | Printer profiles | Generic profiles at 152 to 600 dpi, 104 mm, and one's own kept in the browser; a label wider than the printer refused | `a5e261d` | `printer`: checks a profile and the label's width · `editor`: printer profiles |
 | The module in whole dots | The dots within the table's range, the nearest by default; said when none fits | `a5e261d` | `printer`: offers the dots within the range · `printer`: says when no whole number of dots lies within the range |
