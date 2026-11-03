@@ -57,9 +57,9 @@ The studio speaks English, Brazilian Portuguese and Spanish (section 2); this gu
 
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
-- The header: **One code** or **In bulk** (section 13), **Language**, and **Start over**, which clears every field and
-  choice as on a first visit (on a phone, Language is under **More** and Start over is a round icon beside the live
-  preview).
+- The header: **One code** or **In bulk** (section 13), **Language**, **Open…** and **Save** (the work kept as a file
+  on your computer, section 8), and **Start over**, which clears every field and choice as on a first visit (on a
+  phone, Language, Open… and Save are under **More** and Start over is a round icon beside the live preview).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
@@ -341,6 +341,20 @@ Files are named after the symbol, the key and its qualifiers: `gs1-128_00_106141
 correctly is refused with the reason, never printed wrong (section 16). How to use each file: the
 [printing guide](printing-guide.md).
 
+### Saving the work and opening it again
+
+1. **Save** in the header (under **More** on a phone) downloads the work as a file, such as
+   `dl-qrcode_01_09506000134376_10_B42.gs1-work.json`: the data typed in step 1, the answers of step 2, every option of
+   the label — a label of one's own with all its elements —, the printer profile and, in bulk, the columns chosen for
+   the spreadsheet's headers. A message under the header names the file.
+2. Keep it where you like; nothing leaves your computer.
+3. Later, or in another browser, **Open…** takes the file back: the fields, the choices and the label return as they
+   were saved. In bulk, take the spreadsheet again: its columns are chosen as they were saved (the rows stay in the
+   spreadsheet, not in the work).
+4. The ZPL the Export bar downloads carries the same work in comments (`^FX GS1 Label Studio work 1/3 …`), which
+   printers and Labelary ignore: **Open…** takes that ZPL back too. A ZPL made elsewhere cannot be opened — its printer
+   commands do not keep the fields, the meaning of the data or the sizes in millimetres; Labelary's viewer draws it.
+
 ## 9. The GS1 Logistic Label
 
 For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6) in A6 (105 × 148 mm), 4 × 6 in, A5
@@ -530,6 +544,11 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *A line or box needs a length, a width and a thickness greater than 0 mm* | A line or box of a label of one's own with a size of 0 | Give it a size |
 | *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
 | *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |
+| *This file is not a work saved by GS1 Label Studio.* | **Open…** was given another file (a spreadsheet, an image) | Open a `.gs1-work.json` file saved here, or a ZPL downloaded here |
+| *This ZPL carries no work: only the ZPL that GS1 Label Studio downloads can be opened here.* | A ZPL made elsewhere, or a ZPL template | Open the work file, or view the ZPL in Labelary's viewer |
+| *Part of the work in this ZPL is missing* | The ZPL was cut or edited, and some `^FX` comments are lost | Download the ZPL again |
+| *This work was saved by a newer version of GS1 Label Studio* | The file comes from a newer studio than the page shown | Reload the page, then open it again |
+| *The work file is damaged (part: …)* | The file was edited and a part is not as the studio writes it | Save the work again from the studio |
 | *Table … does not allow …* | A barcode on a label of one's own that the scanning environment's table does not have | Choose another symbol, or another environment (or another answer in step 2) |
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |

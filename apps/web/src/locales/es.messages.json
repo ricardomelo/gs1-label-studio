@@ -537,5 +537,20 @@
  "A line or box needs a length, a width and a thickness greater than 0 mm.": "Una línea o un recuadro necesita longitud, ancho y grosor mayores que 0 mm.",
  "A line or box runs past the label's edge: move it inside the label.": "Una línea o un recuadro sobrepasa el borde de la etiqueta: muévalo dentro de la etiqueta.",
  "The date format “{format}” has none of DD, MM, MMM, YY and YYYY.": "El formato de fecha “{format}” no tiene ninguno de DD, MM, MMM, YY y YYYY.",
- "({ai}) is not a date, so its field takes no date format.": "({ai}) no es una fecha, así que su campo no admite formato de fecha."
+ "({ai}) is not a date, so its field takes no date format.": "({ai}) no es una fecha, así que su campo no admite formato de fecha.",
+ "Part of the work in this ZPL is missing: download the ZPL again.": "Falta parte del trabajo en este ZPL: descárguelo de nuevo.",
+ "The ZPL has no ^XA, so it cannot carry the work.": "El ZPL no tiene ^XA, así que no puede llevar el trabajo.",
+ "The work file is damaged: {what} is not as the studio writes it.": "El archivo de trabajo está dañado (parte: {what}).",
+ "This ZPL carries no work: only the ZPL that GS1 Label Studio downloads can be opened here.": "Este ZPL no lleva ningún trabajo: solo el ZPL que descarga GS1 Label Studio se puede abrir aquí.",
+ "This file is not a work saved by GS1 Label Studio.": "Este archivo no es un trabajo guardado por GS1 Label Studio.",
+ "This work was saved by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Este trabajo se guardó con una versión más reciente de GS1 Label Studio: recargue la página para actualizarla y ábralo de nuevo.",
+ "element {n} of the label's page": "elemento {n} de la página de la etiqueta",
+ "step 2's answers": "respuestas del paso 2",
+ "the data": "datos",
+ "the label's page": "página de la etiqueta",
+ "the label's settings": "configuración de la etiqueta",
+ "the mode": "modo",
+ "the printer": "impresora",
+ "the spreadsheet's columns": "columnas de la hoja de cálculo",
+ "the symbol picked in step 2": "símbolo elegido en el paso 2"
 }

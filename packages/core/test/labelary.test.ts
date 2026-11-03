@@ -27,6 +27,8 @@ import {
   printPageFor,
   syntaxEngine,
   zplPage,
+  zplWithWork,
+  readWork,
   type DesignPage,
   type Identified,
   type SymbologyId,
@@ -334,6 +336,25 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const offset = Math.floor((width - printed.widthDots) / 2); // Labelary centres the print width on its page
     const dark = (x: number, y: number) => grey[y * width + x + offset]! < 128;
     expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
+  });
+
+  // The work carried in the studio's ZPL (backlog 4.3): its ^FX comments change nothing the printer draws
+  it("a label of one's own with its work in ^FX comments prints exactly as without them", { timeout: 60000 }, async () => {
+    const engine = await syntaxEngine();
+    const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    const printed = printPageFor(designed, 203);
+    const zpl = zplPage(printed);
+    const work = {
+      mode: "one" as const, identification: { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [] },
+      answers: {}, picked: null, settings: { designer: true, note: "x".repeat(4000) }, page: GRAPHICS, printer: null, columns: null,
+    };
+    const carrying = zplWithWork(zpl, work);
+    expect(carrying.match(/\^FX /g)!.length).toBeGreaterThan(4);
+    expect(readWork(carrying)).toEqual(work);
+    const plain = decodePng(await labelaryPng(zpl, 203, printed.widthDots, printed.heightDots));
+    const withWork = decodePng(await labelaryPng(carrying, 203, printed.widthDots, printed.heightDots));
+    expect([withWork.width, withWork.grey.length]).toEqual([plain.width, plain.grey.length]);
+    expect(withWork.grey.findIndex((g, i) => g !== plain.grey[i])).toBe(-1);
   });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.

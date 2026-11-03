@@ -1588,6 +1588,10 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › a label of one's own with its work in ^FX comments prints exactly as without them",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a test label: the symbol reads and the ruler is 50 mm",
      "status": "passed"
     },
@@ -1917,6 +1921,22 @@
     }
    ],
    "area": "RFID, NFC and digital signatures"
+  },
+  {
+   "program": "opened",
+   "file": "apps/web/test/opened.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the label's settings of a work opened (backlog 4.3) › come back as they were saved, the page apart and nothing chosen on it",
+     "status": "passed"
+    },
+    {
+     "name": "the label's settings of a work opened (backlog 4.3) › keep the editor's own where a setting is unknown, of another kind or a choice not offered",
+     "status": "passed"
+    }
+   ],
+   "area": "The work saved on one's own computer and opened again"
   },
   {
    "program": "prepress",
@@ -3371,6 +3391,30 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "work",
+   "file": "packages/core/test/work.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the work saved and opened again (backlog 4.3) › a work file opens as it was saved",
+     "status": "passed"
+    },
+    {
+     "name": "the work saved and opened again (backlog 4.3) › the studio's ZPL carries the work in comments and opens too, the commands unchanged",
+     "status": "passed"
+    },
+    {
+     "name": "the work saved and opened again (backlog 4.3) › refuses what the studio did not save, and says why",
+     "status": "passed"
+    },
+    {
+     "name": "the work saved and opened again (backlog 4.3) › refuses a work file with a part not as the studio writes it, naming the part",
+     "status": "passed"
+    }
+   ],
+   "area": "The work saved on one's own computer and opened again"
+  },
+  {
    "program": "zpl",
    "file": "packages/core/test/zpl.test.ts",
    "kind": "unit",
@@ -3890,6 +3934,15 @@
     },
     {
      "name": "a label of one's own: shapes added, changed, sized, named, and written in ZPL",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused",
      "status": "listed",
      "projects": [
       "desktop",

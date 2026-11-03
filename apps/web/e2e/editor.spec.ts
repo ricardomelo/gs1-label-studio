@@ -1303,3 +1303,60 @@ test("a label of one's own: shapes added, changed, sized, named, and written in 
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("A line or box runs past the label's edge");
 });
+
+// Item 4.3 (mock-up A of two, 3 November 2026): Save downloads the work, Open… takes it back after Start over — the data,
+// the choices and a label of one's own; the ZPL downloaded here carries the same work and opens too; a ZPL made
+// elsewhere is refused, saying why.
+test("the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)LOT7(17)280930");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  await page.fill("#el-x", "5");
+  await page.fill("#el-y", "5");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-text", "VAL {17:DD MMM YYYY}");
+  await page.selectOption("#el-months", "pt");
+  await page.fill("#el-x", "50");
+  await page.fill("#el-y", "40");
+  const drawn = '.preview .symbol svg [aria-label="VAL 30 SET 2028"]';
+  await expect(page.locator(drawn)).toHaveCount(1);
+  const caption = "A label of my own 100 × 60 mm · QR code (GS1 Digital Link)";
+  await expect(page.locator(".caption")).toHaveText(caption);
+  await on(page, "more");
+  const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
+  expect(saved.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_LOT7.gs1-work.json");
+  const savedPath = (await saved.path())!;
+  const work = JSON.parse(readFileSync(savedPath, "utf8")) as { format: string; identification: { qualifiers: Record<string, string> }; page: { elements: unknown[] } };
+  expect([work.format, work.identification.qualifiers["10"], work.page.elements.length]).toEqual(["gs1-label-studio.work", "LOT7", 3]);
+  await expect(page.locator(".work-note")).toContainText(`Saved as ${saved.suggestedFilename()}: Open… takes it back`);
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const zplPath = (await zpl.path())!;
+  expect(readFileSync(zplPath, "utf8")).toMatch(/^\^XA\n\^FX GS1 Label Studio work 1\/\d+ /);
+  for (const file of [savedPath, zplPath]) {
+    await on(page, "more");
+    await page.getByRole("button", { name: "Start over" }).click();
+    await on(page, "data");
+    await expect(page.locator("#q-10")).toHaveValue("B42");
+    await on(page, "more");
+    await page.getByLabel("Open a saved work").setInputFiles(file);
+    await expect(page.locator(".work-note")).toContainText("Opened");
+    await on(page, "data");
+    await expect(page.locator("#q-10")).toHaveValue("LOT7");
+    await on(page, "label");
+    await expect(page.locator(".caption")).toHaveText(caption);
+    await expect(page.locator(drawn)).toHaveCount(1);
+    await page.locator(".design-list button", { hasText: "VAL" }).press("Enter");
+    await expect(page.locator("#el-months")).toHaveValue("pt");
+  }
+  await on(page, "more");
+  await page.getByLabel("Open a saved work").setInputFiles({ name: "hello.zpl", mimeType: "text/plain", buffer: Buffer.from("^XA^FO50,50^A0N,50^FDHello^FS^XZ") });
+  await expect(page.locator(".work-note.error")).toHaveText(
+    "hello.zpl: This ZPL carries no work: only the ZPL that GS1 Label Studio downloads can be opened here.×");
+  await page.locator(".work-note").getByRole("button", { name: "Close" }).click();
+  await expect(page.locator(".work-note")).toHaveCount(0);
+});

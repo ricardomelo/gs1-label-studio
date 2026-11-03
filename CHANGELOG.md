@@ -172,4 +172,8 @@
   for each text block (*Month names*).
 - The print files now carry the human readable text chosen for the label — every element string, the key's alone, or
   none — in ZPL, TSPL, EPL2 and DPL; until 3 November they printed every element string whatever was chosen.
+- The work saved on one's own computer and opened again (backlog 4.3, 3 November): **Save** and **Open…** in the header
+  (under More on a phone). The work file (`.gs1-work.json`) keeps the data, step 2's answers, the label's options with
+  a label of one's own, the printer profile and, in bulk, the columns chosen; the ZPL downloaded carries the same work
+  in `^FX` comments and opens too. A ZPL made elsewhere is refused, saying why.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

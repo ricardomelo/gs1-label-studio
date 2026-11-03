@@ -612,5 +612,14 @@
  "Month names": "Nombres de los meses",
  "English ({dec})": "Inglés ({dec})",
  "Portuguese ({dec})": "Portugués ({dec})",
- "Spanish ({dec})": "Español ({dec})"
+ "Spanish ({dec})": "Español ({dec})",
+ "Close": "Cerrar",
+ "Downloads the work: the data, the choices and the label": "Descarga el trabajo: los datos, las elecciones y la etiqueta",
+ "Open a saved work": "Abrir un trabajo guardado",
+ "Opened {file}. Take the spreadsheet again: its columns are chosen as they were saved.": "{file} abierto. Cargue la hoja de cálculo de nuevo: sus columnas se eligen como se guardaron.",
+ "Opened {file}.": "{file} abierto.",
+ "Opens a work saved here (.json), or a ZPL downloaded here": "Abre un trabajo guardado aquí (.json) o un ZPL descargado aquí",
+ "Open…": "Abrir…",
+ "Save": "Guardar",
+ "Saved as {file}: Open… takes it back, with the data, the choices and the label.": "Guardado como {file}: Abrir… lo recupera, con los datos, las elecciones y la etiqueta."
 }

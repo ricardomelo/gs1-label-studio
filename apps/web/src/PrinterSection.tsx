@@ -18,7 +18,7 @@ export function keptProfiles(): PrinterProfile[] {
     return [];
   }
 }
-function keepProfiles(profiles: PrinterProfile[]) {
+export function keepProfiles(profiles: PrinterProfile[]) {
   try {
     localStorage.setItem(KEY, JSON.stringify(profiles));
   } catch {

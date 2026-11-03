@@ -537,5 +537,20 @@
  "A line or box needs a length, a width and a thickness greater than 0 mm.": "Uma linha ou caixa precisa de comprimento, largura e espessura maiores que 0 mm.",
  "A line or box runs past the label's edge: move it inside the label.": "Uma linha ou caixa passa da borda da etiqueta: mova-a para dentro da etiqueta.",
  "The date format “{format}” has none of DD, MM, MMM, YY and YYYY.": "O formato de data “{format}” não tem nenhum de DD, MM, MMM, YY e YYYY.",
- "({ai}) is not a date, so its field takes no date format.": "({ai}) não é uma data, então seu campo não aceita formato de data."
+ "({ai}) is not a date, so its field takes no date format.": "({ai}) não é uma data, então seu campo não aceita formato de data.",
+ "Part of the work in this ZPL is missing: download the ZPL again.": "Falta parte do trabalho neste ZPL: baixe o ZPL de novo.",
+ "The ZPL has no ^XA, so it cannot carry the work.": "O ZPL não tem ^XA, então não pode levar o trabalho.",
+ "The work file is damaged: {what} is not as the studio writes it.": "O arquivo de trabalho está danificado (parte: {what}).",
+ "This ZPL carries no work: only the ZPL that GS1 Label Studio downloads can be opened here.": "Este ZPL não traz trabalho: só o ZPL que o GS1 Label Studio baixa pode ser aberto aqui.",
+ "This file is not a work saved by GS1 Label Studio.": "Este arquivo não é um trabalho salvo pelo GS1 Label Studio.",
+ "This work was saved by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Este trabalho foi salvo por uma versão mais nova do GS1 Label Studio: recarregue a página para atualizá-la e abra-o de novo.",
+ "element {n} of the label's page": "elemento {n} da página da etiqueta",
+ "step 2's answers": "respostas do passo 2",
+ "the data": "dados",
+ "the label's page": "página da etiqueta",
+ "the label's settings": "configurações da etiqueta",
+ "the mode": "modo",
+ "the printer": "impressora",
+ "the spreadsheet's columns": "colunas da planilha",
+ "the symbol picked in step 2": "símbolo escolhido no passo 2"
 }

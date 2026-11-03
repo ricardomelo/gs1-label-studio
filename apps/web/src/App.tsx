@@ -75,13 +75,18 @@ import {
   type SymbolSpecification,
   type SyntaxEngine,
   type SymbologyId,
+  readWork,
+  workFile,
+  zplWithWork,
+  type Work,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { About } from "./About.tsx";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
-import { keptProfiles, PrinterSection } from "./PrinterSection.tsx";
+import { keepProfiles, keptProfiles, PrinterSection } from "./PrinterSection.tsx";
+import { DEFAULT_STEM, openedSettings, savedSettings, START_SETTINGS } from "./work.ts";
 import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
@@ -101,7 +106,6 @@ import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 // browser: the GS1 Barcode Syntax Engine and the encoder run here.
 
 const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
-const DEFAULT_STEM = "https://id.gs1.org";
 const PNG_RESOLUTIONS = [300, 600, 1200]; // besides the PNG at the label's size (backlog 1.5)
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
@@ -139,13 +143,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const [engine, setEngine] = useState<SyntaxEngine | null>(null);
   const [font, setFont] = useState<HriFont | null>(null);
   const [id, setId] = useState<Identification>(START);
-  const [settings, setSettings] = useState<LabelSettings>({
-    symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
-    linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
-    hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
-    logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", designer: false, page: null, selected: null,
-    expert: false,
-  });
+  const [settings, setSettings] = useState<LabelSettings>(START_SETTINGS);
   const [answers, setAnswers] = useState<Answers>({});
   const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -169,6 +167,11 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // Generating every row (backlog 2.4): its progress while it runs, then what was made.
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [generated, setGenerated] = useState<{ result: string | null; error: string | null }>({ result: null, error: null });
+  // The work saved or opened (backlog 4.3): what happened, in words, under the header.
+  const [workNote, setWorkNote] = useState<{ text: string; error: boolean } | null>(null);
+  const openInput = useRef<HTMLInputElement>(null);
+  // Step 1 keeps its rows of fields itself: a work opened draws it anew from the data opened
+  const [opened, setOpened] = useState(0);
 
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
@@ -442,7 +445,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         ? zplTemplate(symbology, d.data, zplOptionsFor(d, design, settings.dpi, module?.chosen.dots)).zpl
         : printFileFor(language.id, d, design, settings.dpi, module?.chosen.dots);
       if (zplWidthProblem) throw new Error(zplWidthProblem);
-      download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, file, "text/plain");
+      // The ZPL carries the work in comments, so that Open… takes it back (backlog 4.3)
+      download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, !template && language.id === "zpl" ? zplWithWork(file, currentWork()) : file, "text/plain");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
@@ -573,6 +577,83 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     return () => document.removeEventListener("click", follow);
   });
 
+  // The work saved on this computer and opened again (backlog 4.3, mock-up A of two): the data typed, step 2's answers,
+  // the label's settings and page, the printer, in bulk the columns chosen (the rows stay in their spreadsheet).
+  function currentWork(): Work {
+    return {
+      mode, identification: id, answers, picked, settings: savedSettings(settings), page: settings.page,
+      printer: { profile, moduleDots: zplDots },
+      columns: dataTable ? { headers: dataTable.headers, mapping, fixed } : null,
+    };
+  }
+  function saveWork() {
+    const file = `${name}.gs1-work.json`;
+    download(file, workFile(currentWork()), "application/json");
+    setWorkNote({ text: t("Saved as {file}: Open… takes it back, with the data, the choices and the label.", { file }), error: false });
+  }
+  async function openWork(file: File) {
+    let work: Work;
+    try {
+      work = readWork(await file.text());
+    } catch (error) {
+      setWorkNote({ text: `${file.name}: ${tm(errorText(error))}`, error: true });
+      return;
+    }
+    setMode(work.mode);
+    setId(work.identification);
+    setOpened(opened + 1);
+    setAnswers(work.answers);
+    setPicked(work.picked);
+    setSettings(openedSettings(work.settings, work.page, START_SETTINGS));
+    if (work.printer) {
+      const saved = work.printer.profile;
+      const known = [...GENERIC_PROFILES, ...profiles].find((p) => p.id === saved.id);
+      if (!known) {
+        // A profile of another browser: kept here too, so that it can be chosen again
+        const next = [...profiles, saved];
+        keepProfiles(next);
+        setProfiles(next);
+      }
+      setProfile(known ?? saved);
+      setZplDots(work.printer.moduleDots);
+    }
+    if (work.columns) {
+      rememberColumns(work.columns.headers, work.columns.mapping, work.columns.fixed);
+      if (dataTable && dataTable.headers.join("\u001f") === work.columns.headers.join("\u001f")) {
+        setMapping(work.columns.mapping);
+        setFixed(work.columns.fixed);
+      }
+    }
+    setWorkNote({
+      text: work.mode === "bulk" && !dataTable
+        ? t("Opened {file}. Take the spreadsheet again: its columns are chosen as they were saved.", { file: file.name })
+        : t("Opened {file}.", { file: file.name }),
+      error: false,
+    });
+  }
+  const workButtons = (
+    <span className="work">
+      <button type="button" className={phone ? "btn" : "start-over"} title={t("Opens a work saved here (.json), or a ZPL downloaded here")} onClick={() => openInput.current?.click()}>
+        {t("Open…")}
+      </button>
+      <button type="button" className={phone ? "btn" : "start-over"} title={t("Downloads the work: the data, the choices and the label")} onClick={saveWork}>
+        {t("Save")}
+      </button>
+      <input
+        ref={openInput}
+        type="file"
+        hidden
+        accept=".json,.zpl,.txt,application/json,text/plain"
+        aria-label={t("Open a saved work")}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) void openWork(file);
+        }}
+      />
+    </span>
+  );
+
   const languageMenu = (
     <label className="lang">
       <span>{t("Language")}</span>
@@ -627,8 +708,17 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         {/* On a phone the language is in "More" and Start over beside the live preview, leaving the header to the
             name and the mode */}
         {!phone && languageMenu}
+        {!phone && workButtons}
         {!phone && startOver}
       </header>
+      {workNote && (
+        <div className={`work-note${workNote.error ? " error" : ""}`} role={workNote.error ? "alert" : "status"}>
+          <span>{workNote.text}</span>
+          <button type="button" aria-label={t("Close")} onClick={() => setWorkNote(null)}>
+            ×
+          </button>
+        </div>
+      )}
       <div className="mini-bar" data-pane="data scan export more">
         {view.svg ? (
           <a className="mini" href="#label-title" aria-label={t("Live preview: go to the label")}>
@@ -721,6 +811,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             />
           ) : (
           <IdentifyCard
+            key={opened}
             id={id}
             onChange={(next) => {
               setId(next);
@@ -819,6 +910,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           {tabbed && (
             <div className="settings">
               {phone && languageMenu}
+              {phone && workButtons}
               <InstallApp />
             </div>
           )}
