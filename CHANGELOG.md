@@ -166,7 +166,8 @@
   fields filled from the data, so in bulk each row's label shows its own data; one layout, so SVG, PNG, PDF, EPS and the
   files in bulk draw it, every barcode read back. In ZPL and EPL2 since 3 November: each barcode with the commands of the
   symbol alone, its bars where the page puts them (to the dot through Labelary and Labelize), the text with `^A0` or `A`.
-  Lines and boxes since 3 November (*+ Line*, *+ Box*, outlined or filled): in ZPL with `^GB`, in EPL2 with `LO` and `X`.
+  Lines and boxes since 3 November (*+ Shape*: a line across or down, a box or a filled box): in ZPL with `^GB`, in
+  EPL2 with `LO` and `X`.
 - The print files now carry the human readable text chosen for the label — every element string, the key's alone, or
   none — in ZPL, TSPL, EPL2 and DPL; until 3 November they printed every element string whatever was chosen.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

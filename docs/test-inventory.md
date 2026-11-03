@@ -1049,7 +1049,7 @@ Every unit test ran and passed in the run that wrote this file, the ZPL printed 
 - the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included
 - a browser in Portuguese opens the studio in Portuguese
 - a label of one's own: barcodes and text placed and moved, read back, exported
-- a label of one's own: lines and boxes added, sized, named, and written in ZPL
+- a label of one's own: shapes added, changed, sized, named, and written in ZPL
 
 </details>
 

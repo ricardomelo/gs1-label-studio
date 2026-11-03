@@ -1,5 +1,5 @@
 import {
-  SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef } from "react";
 import { formatNumber, t, tm } from "./i18n.ts";
@@ -8,7 +8,8 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
 // canvas with its barcodes and text blocks, each selected by a click and moved by dragging it; "+ Barcode" and
 // "+ Text" over the canvas; under it the page's size, the elements and the selected one's properties. Then (step b,
-// mock-up A of two) "+ Line" and "+ Box" beside them: a rule across or down, a box outlined or filled.
+// mock-up B of two, the owner's choice of 3 November 2026) "+ Shape" beside them: a line across or down, a box
+// outlined or filled, the shape chosen in its properties.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -40,7 +41,7 @@ export function elementName(element: DesignElement): string {
   if (element.kind === "text") return `“${element.text.split("\n")[0] || t("Text")}”`;
   if (element.kind === "line") {
     const mm = formatNumber(element.lengthMm);
-    return element.vertical ? t("Vertical line {mm} mm", { mm }) : t("Horizontal line {mm} mm", { mm });
+    return element.vertical ? t("Line down {mm} mm", { mm }) : t("Line across {mm} mm", { mm });
   }
   const size = { w: formatNumber(element.widthMm), h: formatNumber(element.heightMm) };
   return element.filled ? t("Filled box {w} × {h} mm", size) : t("Box {w} × {h} mm", size);
@@ -50,8 +51,28 @@ export function elementName(element: DesignElement): string {
 function elementIcon(element: DesignElement): string {
   if (element.kind === "symbol") return "▥";
   if (element.kind === "text") return "T";
-  if (element.kind === "line") return element.vertical ? "│" : "─";
-  return element.filled ? "■" : "□";
+  return "◇";
+}
+
+/** A shape: a line across or down, a box outlined or filled (the core's line and box). */
+type Shape = "across" | "down" | "box" | "filled";
+const BOX_SIDE_MM = 20; // a box made from a line takes the line's length one way and this the other
+
+function shapeOf(element: DesignLine | DesignBox): Shape {
+  if (element.kind === "line") return element.vertical ? "down" : "across";
+  return element.filled ? "filled" : "box";
+}
+
+/** The shape changed to another, its corner and thickness kept, and the length it shares with the new one. */
+function reshaped(element: DesignLine | DesignBox, shape: Shape): DesignLine | DesignBox {
+  const { id, xMm, yMm, thicknessMm } = element;
+  if (shape === "across" || shape === "down") {
+    const lengthMm = element.kind === "line" ? element.lengthMm : shape === "across" ? element.widthMm : element.heightMm;
+    return { id, kind: "line", vertical: shape === "down", lengthMm, thicknessMm, xMm, yMm };
+  }
+  const [widthMm, heightMm] = element.kind === "box" ? [element.widthMm, element.heightMm]
+    : element.vertical ? [BOX_SIDE_MM, element.lengthMm] : [element.lengthMm, BOX_SIDE_MM];
+  return { id, kind: "box", widthMm, heightMm, thicknessMm, filled: shape === "filled", xMm, yMm };
 }
 
 interface ToolsProps {
@@ -61,7 +82,7 @@ interface ToolsProps {
   onChange: (page: DesignPage, selected: string | null) => void;
 }
 
-/** + Barcode, + Text, + Line, + Box and Delete, over the canvas. */
+/** + Barcode, + Text, + Shape and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange }: ToolsProps) {
   const add = (element: DesignElement) => onChange({ ...page, elements: [...page.elements, element] }, element.id);
   return (
@@ -73,10 +94,7 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
         {t("+ Text")}
       </button>
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
-        {t("+ Line")}
-      </button>
-      <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "box", widthMm: 40, heightMm: 20, thicknessMm: 0.5, filled: false, xMm: 4, yMm: 4 })}>
-        {t("+ Box")}
+        {t("+ Shape")}
       </button>
       <span className="grow" />
       <button type="button" className="btn" disabled={!selected} onClick={() => onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null)}>
@@ -164,14 +182,52 @@ interface PanelProps {
   onChange: (page: DesignPage, selected: string | null) => void;
 }
 
+const millimetres = (value: string, fallback: number) => (Number.isFinite(Number(value)) && value !== "" ? Number(value) : fallback);
+// A size or thickness is kept while the field holds nothing above 0 (being typed): the core refuses none
+const positive = (value: string, fallback: number) => (millimetres(value, fallback) > 0 ? millimetres(value, fallback) : fallback);
+
+/**
+ * A shape's properties (mock-up B): its shape, then its width, height and thickness. A line's width (across) or height
+ * (down) is its length and the other its thickness, shown but not typed; a filled box has no outline to thicken.
+ */
+function ShapeFields({ element, onChange }: { element: DesignLine | DesignBox; onChange: (element: DesignLine | DesignBox) => void }) {
+  const shape = shapeOf(element);
+  const { widthMm, heightMm } = boxOf(element);
+  const setWidth = (value: number) => onChange(element.kind === "line" ? { ...element, lengthMm: value } : { ...element, widthMm: value });
+  const setHeight = (value: number) => onChange(element.kind === "line" ? { ...element, lengthMm: value } : { ...element, heightMm: value });
+  return (
+    <>
+      <div>
+        <label htmlFor="el-shape">{t("Shape")}</label>
+        <select id="el-shape" value={shape} onChange={(e) => onChange(reshaped(element, e.target.value as Shape))}>
+          <option value="across">{t("Line across")}</option>
+          <option value="down">{t("Line down")}</option>
+          <option value="box">{t("Box")}</option>
+          <option value="filled">{t("Filled box")}</option>
+        </select>
+      </div>
+      <div>
+        <label htmlFor="el-width">{t("Width (mm)")}</label>
+        <input id="el-width" type="number" min={STEP_MM} step={STEP_MM} disabled={shape === "down"} value={widthMm} onChange={(e) => setWidth(positive(e.target.value, widthMm))} />
+      </div>
+      <div>
+        <label htmlFor="el-height-mm">{t("Height (mm)")}</label>
+        <input id="el-height-mm" type="number" min={STEP_MM} step={STEP_MM} disabled={shape === "across"} value={heightMm} onChange={(e) => setHeight(positive(e.target.value, heightMm))} />
+      </div>
+      <div>
+        <label htmlFor="el-thickness">{t("Thickness (mm)")}</label>
+        <input id="el-thickness" type="number" min={0.1} step={0.1} disabled={shape === "filled"} value={element.thicknessMm} onChange={(e) => onChange({ ...element, thicknessMm: positive(e.target.value, element.thicknessMm) })} />
+      </div>
+    </>
+  );
+}
+
 /** The page's size, its elements and the selected one's properties, under the canvas. */
 export function DesignerPanel({ page, selected, elements, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
-  const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignLine> | Partial<DesignBox>) =>
+  const update = (patch: Partial<DesignSymbol> | Partial<DesignText>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
-  const mm = (value: string, fallback: number) => (Number.isFinite(Number(value)) && value !== "" ? Number(value) : fallback);
-  // A size or thickness is kept while the field holds nothing above 0 (being typed): the core refuses none
-  const positive = (value: string, fallback: number) => (mm(value, fallback) > 0 ? mm(value, fallback) : fallback);
+  const mm = (value: string, fallback: number) => millimetres(value, fallback);
   return (
     <div className="designer">
       <div className="grid">
@@ -270,44 +326,8 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                     )}
                   </fieldset>
                 </>
-              ) : element.kind === "line" ? (
-                <>
-                  <div>
-                    <label htmlFor="el-direction">{t("Direction")}</label>
-                    <select id="el-direction" value={element.vertical ? "vertical" : "horizontal"} onChange={(e) => update({ vertical: e.target.value === "vertical" })}>
-                      <option value="horizontal">{t("Across (horizontal)")}</option>
-                      <option value="vertical">{t("Down (vertical)")}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="el-length">{t("Length (mm)")}</label>
-                    <input id="el-length" type="number" min={STEP_MM} step={STEP_MM} value={element.lengthMm} onChange={(e) => update({ lengthMm: positive(e.target.value, element.lengthMm) })} />
-                  </div>
-                  <div>
-                    <label htmlFor="el-thickness">{t("Thickness (mm)")}</label>
-                    <input id="el-thickness" type="number" min={0.1} step={0.1} value={element.thicknessMm} onChange={(e) => update({ thicknessMm: positive(e.target.value, element.thicknessMm) })} />
-                  </div>
-                </>
-              ) : element.kind === "box" ? (
-                <>
-                  <div>
-                    <label htmlFor="el-width">{t("Width (mm)")}</label>
-                    <input id="el-width" type="number" min={STEP_MM} step={STEP_MM} value={element.widthMm} onChange={(e) => update({ widthMm: positive(e.target.value, element.widthMm) })} />
-                  </div>
-                  <div>
-                    <label htmlFor="el-height-mm">{t("Height (mm)")}</label>
-                    <input id="el-height-mm" type="number" min={STEP_MM} step={STEP_MM} value={element.heightMm} onChange={(e) => update({ heightMm: positive(e.target.value, element.heightMm) })} />
-                  </div>
-                  <div>
-                    <label htmlFor="el-thickness">{t("Line thickness (mm)")}</label>
-                    <input id="el-thickness" type="number" min={0.1} step={0.1} disabled={element.filled} value={element.thicknessMm} onChange={(e) => update({ thicknessMm: positive(e.target.value, element.thicknessMm) })} />
-                  </div>
-                  <div className="check">
-                    <label>
-                      <input type="checkbox" checked={element.filled} onChange={(e) => update({ filled: e.target.checked })} /> {t("Filled")}
-                    </label>
-                  </div>
-                </>
+              ) : element.kind === "line" || element.kind === "box" ? (
+                <ShapeFields element={element} onChange={(shape) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? shape : e)) }, selected)} />
               ) : (
                 <>
                   <div className="wide">

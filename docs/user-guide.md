@@ -249,7 +249,7 @@ of my own (barcodes and text placed freely)*:
 
 1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
    step 2's guided choice, its table does).
-2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Line** a line; **+ Box** a box. Each is listed under
+2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box. Each is listed under
    **Elements**.
 3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
    type **Left (mm)** and **Top (mm)**.
@@ -258,9 +258,11 @@ of my own (barcodes and text placed freely)*:
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,
    which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
    own data.
-6. A line: its **Direction** (*across* or *down*), **Length (mm)** and **Thickness (mm)**, from its top left corner.
-7. A box: its **Width (mm)** and **Height (mm)** (its outer size), its **Line thickness (mm)** (drawn inside that size),
-   or **Filled**. A frame around the whole label, or around a barcode clear of its quiet zones, is not an overlap.
+6. A shape: its **Shape** (*Line across*, *Line down*, *Box* or *Filled box*), **Width (mm)**, **Height (mm)** and
+   **Thickness (mm)**, from its top left corner. A line across is as wide as it is long, a line down as high; its other
+   side is its thickness, shown but not typed. A box's outline is drawn inside its width and height; a filled box has
+   no outline to thicken. Changing the shape keeps its corner, its thickness and the length it shares with the new one.
+7. A frame around the whole label, or around a barcode clear of its quiet zones, is not an overlap.
 8. **Delete** takes the chosen element off the label.
 
 A barcode, line or box past the label's edge, or a barcode overlapping another element (its quiet zones must stay

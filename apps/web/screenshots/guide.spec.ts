@@ -118,14 +118,15 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.fill("#el-x", "14");
   await page.fill("#el-y", "48");
   // A frame around the label and a rule under the text (step b)
-  await page.getByRole("button", { name: "+ Box" }).click();
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
   await page.fill("#el-width", "146");
   await page.fill("#el-height-mm", "86");
   await page.fill("#el-thickness", "0.8");
   await page.fill("#el-x", "2");
   await page.fill("#el-y", "2");
-  await page.getByRole("button", { name: "+ Line" }).click();
-  await page.fill("#el-length", "100");
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.fill("#el-width", "100");
   await page.fill("#el-x", "6");
   await page.fill("#el-y", "38");
   await expect(page.locator(".design-problems")).toHaveCount(0);
