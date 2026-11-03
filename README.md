@@ -474,10 +474,20 @@ complete.
   and Labelize). A date field in a format since 3 November (mock-up B of two,
   taken under the owner's rule: Insert a field offers each date also as `{17:DD/MM/YYYY}` and four other formats, each
   with the date it gives; any format of DD, MM, MMM, YY and YYYY typed; the month's abbreviation in English, Portuguese
-  or Spanish, chosen for each text block, the interface's language first). Not yet: TSPL and DPL, images, rotation,
-  saving the label (4.3)*
-- 4.3 Templates saved and shared as files; later perhaps templates tied to a project, to speed it up (the owner, 3
-  November 2026: not needed now)
+  or Spanish, chosen for each text block, the interface's language first). Not yet: TSPL and DPL, images, rotation;
+  saving the label is 4.3*
+- 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
+  save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *planned (mock-up A of two,
+  taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save** and **Open…** in the
+  header beside Start over (in More on a phone). (a) Save downloads a work file (JSON: the data typed, step 2's answers,
+  the label's settings with a label of one's own, the printer's profile, in bulk the columns chosen; the spreadsheet
+  stays a file of its own); Open… takes it back, refused with the reason when it is not one or comes from a newer
+  version. (b) The ZPL the Export bar downloads carries the same work in `^FX` comments, which printers and Labelary
+  ignore, so Open… takes the studio's own ZPL back too. A ZPL made elsewhere is refused: Labelary draws any ZPL but
+  recovers no design, and a printer's commands lose what the studio needs (the fields such as `{17:DD/MM/YYYY}`, the
+  GS1 meaning of the data, sizes in millimetres rather than dots at one resolution). (c) Later: the last work kept in
+  this browser and offered again on the next visit. Templates tied to a project perhaps later still (the owner, 3
+  November 2026: not needed now)*
 
 **Phase 5 — beyond the browser** (if needed)
 
