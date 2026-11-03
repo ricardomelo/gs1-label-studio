@@ -461,9 +461,12 @@ complete.
   Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November, EPL2
   since 3 November (TSPL and DPL not yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Not yet: a second
-  language for the data titles; product and healthcare labels*
-- 4.2 Designer: text, images, lines, several symbols, fields bound to spreadsheet columns
-- 4.3 Templates saved and shared as files
+  language for the data titles. No product or healthcare templates (the owner, 3 November 2026: every place has its
+  own label, so the designer of 4.2 is what matters)*
+- 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
+  to spreadsheet columns — *next (the owner, 3 November 2026)*
+- 4.3 Templates saved and shared as files; later perhaps templates tied to a project, to speed it up (the owner, 3
+  November 2026: not needed now)
 
 **Phase 5 — beyond the browser** (if needed)
 
