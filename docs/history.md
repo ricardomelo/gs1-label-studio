@@ -231,3 +231,11 @@ at three quarters of their cell, so every line of EPL2 text had come out a quart
 ZPL's had been. The label's own text then takes the printer's font that fits the room the layout gave it, since a
 fixed pitch is wider than the layout's font. EPL2 cannot separate an element string of no predefined length from the
 next, so a label whose symbol needs that is refused with the reason.
+
+On 3 November the owner set the course for phase 4: no product or healthcare templates, as every place has its own
+label; what matters is an editor where one or several barcodes and text blocks are placed, and perhaps one day
+templates tied to a project. Two mock-ups were made on the real screen — the designer inside step 3, or a destination
+of its own in three columns — and the first, which keeps the data, the export bar, the files in bulk and the phone's
+layout, was built. The page is one Layout in units of its smallest module, so every export draws it; each barcode is
+laid out as a symbol alone is, and each text block can carry fields from the data, which in bulk take each row's own.
+The printer languages wait for a later step of the item.
