@@ -250,7 +250,8 @@ of my own (barcodes and text placed freely)*:
 1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
    step 2's guided choice, its table does).
 2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box. Each is listed under
-   **Elements**.
+   **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
+   down, and again, so that it is never hidden under another.
 3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
    type **Left (mm)** and **Top (mm)**.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),

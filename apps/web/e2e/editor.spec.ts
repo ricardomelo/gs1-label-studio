@@ -1360,3 +1360,24 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   await page.locator(".work-note").getByRole("button", { name: "Close" }).click();
   await expect(page.locator(".work-note")).toHaveCount(0);
 });
+
+// The owner, 3 November 2026: a new element never lands exactly on another, so that the person sees it was made — a
+// step of 5 mm right and down from one at its corner.
+test("a label of one's own: each new element a step right and down from one already at its corner", async ({ page }) => {
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const corner = async () => [await page.locator("#el-x").inputValue(), await page.locator("#el-y").inputValue()];
+  for (const expected of [["4", "4"], ["9", "9"], ["14", "14"]]) {
+    await page.getByRole("button", { name: "+ Text" }).click();
+    expect(await corner()).toEqual(expected);
+  }
+  // The QR code of the starting page is at (2, 2): a new barcode goes beside it
+  await page.getByRole("button", { name: "+ Barcode" }).click();
+  expect(await corner()).toEqual(["7", "7"]);
+  // A shape's corner (4, 4) is taken by the first text, (9, 9) by the second, (14, 14) by the third
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  expect(await corner()).toEqual(["19", "19"]);
+  await expect(page.locator(".design-list button")).toHaveCount(7);
+});

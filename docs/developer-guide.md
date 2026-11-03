@@ -299,7 +299,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 51 |
+| `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 52 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 80 |
 

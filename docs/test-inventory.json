@@ -1939,6 +1939,22 @@
    "area": "The work saved on one's own computer and opened again"
   },
   {
+   "program": "place",
+   "file": "apps/web/test/place.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "where a new element lands › at its corner when no element has it, else a step right and down, and again",
+     "status": "passed"
+    },
+    {
+     "name": "where a new element lands › past the page's foot, the next diagonal a step right of the first; a page full keeps the corner",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "prepress",
    "file": "packages/core/test/prepress.test.ts",
    "kind": "unit",
@@ -3943,6 +3959,15 @@
     },
     {
      "name": "the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: each new element a step right and down from one already at its corner",
      "status": "listed",
      "projects": [
       "desktop",

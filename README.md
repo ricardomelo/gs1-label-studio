@@ -474,7 +474,9 @@ complete.
   and Labelize). A date field in a format since 3 November (mock-up B of two,
   taken under the owner's rule: Insert a field offers each date also as `{17:DD/MM/YYYY}` and four other formats, each
   with the date it gives; any format of DD, MM, MMM, YY and YYYY typed; the month's abbreviation in English, Portuguese
-  or Spanish, chosen for each text block, the interface's language first). Not yet: TSPL and DPL, images, rotation;
+  or Spanish, chosen for each text block, the interface's language first). A new element never lands exactly on
+  another (the owner, 3 November 2026: one made over another went unnoticed): where an element already has its
+  corner, it goes 5 mm right and down, and again — done the same day. Not yet: TSPL and DPL, images, rotation;
   saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November

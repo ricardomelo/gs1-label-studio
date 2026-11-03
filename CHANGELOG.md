@@ -176,4 +176,6 @@
   (under More on a phone). The work file (`.gs1-work.json`) keeps the data, step 2's answers, the label's options with
   a label of one's own, the printer profile and, in bulk, the columns chosen; the ZPL downloaded carries the same work
   in `^FX` comments and opens too. A ZPL made elsewhere is refused, saying why.
+- A new element on a label of one's own never lands exactly on another (3 November, the owner): where an element
+  already has its corner, it goes 5 mm right and down, and again, so the person sees it was made.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

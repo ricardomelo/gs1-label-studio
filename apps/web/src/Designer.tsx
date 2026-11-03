@@ -3,6 +3,7 @@ import {
 } from "@gs1-label-studio/core";
 import { useRef } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
+import { freeCorner } from "./place.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -94,7 +95,11 @@ interface ToolsProps {
 
 /** + Barcode, + Text, + Shape and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange }: ToolsProps) {
-  const add = (element: DesignElement) => onChange({ ...page, elements: [...page.elements, element] }, element.id);
+  // A new element never lands exactly on another: a step right and down from one at its corner (place.ts)
+  const add = (element: DesignElement) => {
+    const placed = { ...element, ...freeCorner(page, element.xMm, element.yMm) };
+    onChange({ ...page, elements: [...page.elements, placed] }, placed.id);
+  };
   return (
     <div className="design-tools" data-pane="label" data-beside="">
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "symbol", symbology, ais: null, size: 100, hri: true, xMm: 2, yMm: 2 })}>
