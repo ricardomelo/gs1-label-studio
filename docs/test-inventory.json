@@ -451,6 +451,38 @@
    "area": "Input and identification: the Syntax Engine, keys, qualifiers, attributes"
   },
   {
+   "program": "design",
+   "file": "packages/core/test/design.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a label of one's own › places each barcode and text block where the page says, each symbol at its own X-dimension",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › reads back every barcode from the SVG and the PDF",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › fills a text's fields from the data, an AI it does not have leaving nothing",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › names an element past the page's edge and a symbol overlapping another element, and still draws the page",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › refuses a barcode the data or the table cannot give, naming it",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › draws every row's page in bulk, each with its own data, and says the printer languages cannot write it yet",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "docs",
    "file": "packages/core/test/docs.test.ts",
    "kind": "unit",

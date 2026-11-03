@@ -109,7 +109,7 @@ cd packages/core && NODE_USE_ENV_PROXY=1 LABELARY=1 npx vitest run test/labelary
 5. **The label.** `labelFor(identified, design, font)` derives the data the symbol carries (`dataFor`), builds
    `LabelOptions` and lays them out: `layoutLabel()` places the symbol (encoded by `encode()` through bwip-js, or
    node-qrcode for one QR mode), its quiet zone, the text as glyph outlines (`HriFont`), an EAN/UPC beside it, or the
-   stacked GS1-128 symbols (`gs1128.ts`) or the GS1 Logistic Label (`logistic.ts`). The `Layout` is
+   stacked GS1-128 symbols (`gs1128.ts`), the GS1 Logistic Label (`logistic.ts`) or a label of one's own (`design.ts`). The `Layout` is
    format-independent: rectangles, modules and paths in millimetres.
 6. **Exports.** Every format draws the same `Layout`: `labelSvg`, `labelPng`/`pngAt`, `labelPdf`/`pdfDocument`,
    `labelEps`, `labelZip`. A printer language is different — the printer draws the symbol — so `zplOptionsFor(drawn,
@@ -154,6 +154,7 @@ Each module, in the order of the flow above.
 | `layout.ts` | `layoutLabel` (the resolver's `_layout` and `_place_linear`, and `layoutBars` for symbols sized by their table's row), `labelSvg`, the text's position and height, bar width reduction, ITF-14's bearer bars |
 | `gs1128.ts` | `splitGs1128` and `dataCharacters` (48 data characters and 165.10 mm a symbol); the stack is laid out by `layout.ts` |
 | `logistic.ts` | `logisticLabel`: the GS1 Logistic Label as one `Layout` (6.6) |
+| `design.ts` | `designLabel`: a label of one's own, barcodes and text blocks placed on a page, as one `Layout` (backlog 4.2) |
 | `hri.ts` | `HriFont`: Liberation Sans through opentype.js, contours drawn as fontTools does, glyph points cached |
 | `pyformat.ts` | `pyFixed`: Python's `%.3f` with ties to even, so the SVG equals the resolver's |
 | `scan.ts` | `expectedReads`: the symbology identifier and data each symbol of a label should read as |
@@ -280,6 +281,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
+| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 6 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 4 |

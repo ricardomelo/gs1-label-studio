@@ -101,6 +101,8 @@ export interface LabelOptions {
   gs1128Starts?: readonly number[];
   /** A QR code's one encoding mode for the whole data (backlog 1.14); the encoder mixes modes when not given. */
   qrMode?: QrMode;
+  /** The files' description of a label that is more than one symbol (a label of one's own, backlog 4.2). */
+  description?: string;
 }
 
 export interface LabelText {
@@ -637,7 +639,9 @@ export function labelSvg(options: LabelOptions, layout: Layout, font: HriFont, h
     `<svg xmlns="http://www.w3.org/2000/svg" width="${pyFixed(wMm, 3)}mm" height="${pyFixed(hMm, 3)}mm" ` +
       `viewBox="0 0 ${pyFixed(layout.width, 4)} ${pyFixed(layout.height, 4)}">`,
     `<title>${xml(options.data)}</title>`,
-    options.spec
+    options.description
+      ? `<desc>${xml(options.description)}.</desc>`
+      : options.spec
       ? `<desc>${xml(specDescription(options, layout))}${reductionNote(options)}.</desc>`
       : `<desc>${SYMBOLOGIES[options.symbology].name} at ${size} % of the target size of the scanning environment ` +
         `${environment} (X = ${pyFixed(layout.xMm, 3)} mm), quiet zone ${QUIET_ZONE}X${linearNote}${reductionNote(options)}.</desc>`,

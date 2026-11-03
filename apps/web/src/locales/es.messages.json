@@ -526,5 +526,9 @@
  "The GS1 Logistic Label has no ZPL template yet: its ZPL file prints it, or its PDF.": "La Etiqueta Logística GS1 aún no tiene plantilla ZPL: su archivo ZPL la imprime, o su PDF.",
  "The GS1-128 of {part} is {mm} mm wide at {d} dots a module, wider than the label: choose fewer dots or the larger label.": "El GS1-128 de {part} mide {mm} mm de ancho a {d} puntos por módulo, más ancho que la etiqueta: elija menos puntos o la etiqueta más grande.",
  "The {symbol} is {mm} mm wide, too wide for the {name} label: choose a smaller size, fewer element strings, or the larger label.": "El {symbol} mide {mm} mm de ancho, demasiado para la etiqueta {name}: elija un tamaño menor, menos element strings o la etiqueta más grande.",
- "A {dpi} dpi printer cannot print the 2D symbol within table 5's X-dimensions.": "Una impresora de {dpi} dpi no puede imprimir el símbolo 2D dentro de las dimensiones X de la tabla 5."
+ "A {dpi} dpi printer cannot print the 2D symbol within table 5's X-dimensions.": "Una impresora de {dpi} dpi no puede imprimir el símbolo 2D dentro de las dimensiones X de la tabla 5.",
+ "A label of one's own needs a barcode: add one.": "Una etiqueta propia necesita un código de barras: añada uno.",
+ "A barcode on the label carries none of the data's element strings: choose at least one.": "Un código de barras de la etiqueta no lleva ninguna de las element strings de los datos: elija al menos una.",
+ "Table {table} does not allow {name}: choose another symbol or scanning environment.": "La tabla {table} no admite {name}: elija otro símbolo u otro entorno de lectura.",
+ "A label of one's own is not written in printer languages yet: its PDF prints it at its size.": "Una etiqueta propia aún no se escribe en lenguajes de impresora: su PDF la imprime a su tamaño."
 }

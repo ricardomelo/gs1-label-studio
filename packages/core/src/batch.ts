@@ -14,6 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
+import { designLabel, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { PrinterUnsupportedError } from "./printers.ts";
 import { eplLogisticLabel } from "./epl.ts";
@@ -55,6 +56,8 @@ export interface LabelDesign {
    * symbol beside the middle block if asked for (QR at `error`).
    */
   logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[]; twoD?: LogisticTwoD };
+  /** A label of one's own (backlog 4.2): barcodes and text blocks on a page, sized by `environment` and `table`. */
+  page?: DesignPage;
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
   gtinOnly?: boolean;
 }
@@ -68,11 +71,21 @@ export interface DrawnLabel {
   geometry: SymbolGeometry;
   /** A GS1 Logistic Label's own description, which its print file is written from (backlog 4.1). */
   logistic?: LogisticLabel;
+  /** A label of one's own: where each element landed, what the scan test expects, what is wrong with the page. */
+  designed?: DesignedLabel;
 }
 
 /** The label of `identified` as `design` lays it out; an `InputError` when this data cannot be drawn so. */
 export function labelFor(identified: Identified, design: LabelDesign, font: HriFont): DrawnLabel {
   const { symbology } = design;
+  if (design.page) {
+    if (!design.page.elements.some((e) => e.kind === "symbol")) throw new InputError("A label of one's own needs a barcode: add one.");
+    const designed = designLabel(design.page, identified, font, {
+      environment: design.environment ?? "retail", ...(design.table ? { table: design.table } : {}), error: design.error,
+    });
+    const first = designed.symbols[0]!;
+    return { data: identified.elementString, options: designed.options, layout: designed.layout, geometry: encode(first.symbology, dataFor(first.symbology, identified)), designed };
+  }
   if (design.logistic) {
     if (!design.spec) throw new InputError("A GS1 Logistic Label takes GS1-128 at its table's row.");
     const logistic = logisticLabel({
@@ -128,6 +141,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
   if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label has no ZPL template yet: its ZPL file prints it, or its PDF.");
+  if (design.page) throw new ZplUnsupportedError("A label of one's own is not written in printer languages yet: its PDF prints it at its size.");
   // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
   const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
@@ -175,6 +189,7 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): string {
+  if (drawn.designed) throw new PrinterUnsupportedError("A label of one's own is not written in printer languages yet: its PDF prints it at its size.");
   if (drawn.logistic) {
     const d = dotsPerModule ?? snapToDots(drawn.layout.xMm, dpi).dots;
     if (language === "epl2") return eplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
@@ -187,7 +202,7 @@ export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, desig
 
 /** How wide the label's print file is, in dots at `dpi`: what a printer profile's print width is checked against. */
 export function printWidthDots(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): number {
-  return drawn.logistic
+  return drawn.logistic || drawn.designed
     ? Math.round(((drawn.layout.width * drawn.layout.xMm) / 25.4) * dpi)
     : zplOptionsFor(drawn, design, dpi, dotsPerModule).widthDots;
 }
