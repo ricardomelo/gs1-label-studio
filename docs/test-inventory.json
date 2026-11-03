@@ -3813,6 +3813,15 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "a label of one's own: barcodes and text placed and moved, read back, exported",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"

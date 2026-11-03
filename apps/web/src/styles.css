@@ -371,3 +371,25 @@ footer.about .hint { margin-top: 12px; }
   .label-card .canvas { max-height: 56vh; min-height: 200px; padding: 16px 16px 52px; }
   .label-card .canvas { --fit: 340px; }
 }
+
+/* A label of one's own (backlog 4.2): tools over the canvas, each element's box over the drawn page, the panel below */
+.design-tools { display: flex; gap: 8px; align-items: center; margin: 0 0 8px; }
+.design-tools .grow { flex: 1; }
+.designed { position: relative; width: 100%; }
+.design-overlay { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.design-overlay rect { fill: transparent; stroke: transparent; stroke-width: 0.4; cursor: move; }
+.design-overlay rect:hover { stroke: #1a73e8; stroke-dasharray: 1 1; }
+.design-overlay rect.selected { stroke: #1a73e8; stroke-dasharray: 1.2 0.8; fill: rgba(26, 115, 232, 0.06); }
+.designer input[type="number"], .designer textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); }
+.designer .wide { grid-column: 1 / -1; }
+.designer fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; margin: 6px 0; }
+.designer label.inline { display: inline-flex; gap: 4px; align-items: center; margin: 2px 12px 2px 0; font-weight: 400; }
+.designer .check { display: flex; align-items: flex-end; }
+.designer .check label { display: inline-flex; gap: 6px; align-items: center; width: auto; margin: 0 0 12px; font-weight: 400; white-space: nowrap; }
+.design-columns { display: grid; grid-template-columns: minmax(180px, 1fr) 2fr; gap: 16px; margin-top: 12px; }
+.design-columns .label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
+.design-list { list-style: none; margin: 0; padding: 0; }
+.design-list button { display: block; width: 100%; text-align: left; padding: 7px 10px; margin: 0 0 4px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.design-list button[aria-pressed="true"] { border-color: #1a73e8; background: rgba(26, 115, 232, 0.1); }
+.design-problems { margin: 8px 0 0; padding-left: 18px; }
+@media (max-width: 700px) { .design-columns { grid-template-columns: 1fr; } }

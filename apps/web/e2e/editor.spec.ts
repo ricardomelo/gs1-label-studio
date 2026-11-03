@@ -1016,7 +1016,7 @@ test("printer languages: a DPL profile writes a label format in tenths of a mill
 
 // Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
 test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
-  await expect(page.locator("#opt-logistic")).toHaveCount(0); // a GTIN: no logistic label
+  await expect(page.locator('#opt-logistic option[value="a6"]')).toHaveCount(0); // a GTIN: no logistic label
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
@@ -1122,4 +1122,65 @@ test("a browser in Portuguese opens the studio in Portuguese", async ({ browser 
   await page.goto("/");
   await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
   await context.close();
+});
+
+// Item 4.2 (mock-up A of two, 3 November 2026): a label of one's own, barcodes and text blocks placed on a page, each
+// chosen by a click or in the list and moved by dragging; every barcode read back by the scan test.
+test("a label of one's own: barcodes and text placed and moved, read back, exported", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  await expect(page.locator(".caption")).toHaveText("A label of my own 100 × 60 mm · QR code (GS1 Digital Link)");
+  await page.fill("#page-width", "150");
+  await page.fill("#page-height", "90");
+  // A text block with a field from the data, then a GS1-128 with two of the three element strings
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-text", "BATCH ");
+  await page.selectOption("#el-field", "10");
+  await expect(page.locator("#el-text")).toHaveValue("BATCH {10}");
+  await page.fill("#el-x", "70");
+  await page.fill("#el-y", "6");
+  await expect(page.locator('.preview .symbol svg [aria-label="BATCH B42"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "+ Barcode" }).click();
+  await page.selectOption("#el-symbol", "gs1-128");
+  await page.getByRole("checkbox", { name: "(10)B42" }).uncheck();
+  await page.fill("#el-x", "10");
+  await page.fill("#el-y", "48");
+  await expect(page.locator(".caption")).toHaveText("A label of my own 150 × 90 mm · QR code (GS1 Digital Link), GS1-128");
+  // The first text block lies under the QR code: named, then moved out of the way by dragging it
+  await expect(page.locator(".design-problems")).toContainText("overlap: a barcode's quiet zones must stay clear");
+  const overlay = page.locator(".design-overlay");
+  await page.locator(".design-list button", { hasText: "“{01}”" }).click();
+  await page.fill("#el-y", "40");
+  await page.fill("#el-x", "60");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  const qr = page.locator('.design-overlay rect[data-id="e1"]');
+  await qr.scrollIntoViewIfNeeded();
+  const box = (await qr.boundingBox())!;
+  const pxPerMm = (await overlay.boundingBox())!.width / 150;
+  await page.mouse.move(box.x + 4, box.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 4 + 5 * pxPerMm, box.y + 4, { steps: 3 });
+  await page.mouse.move(box.x + 4 + 110 * pxPerMm, box.y + 4, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText(/QR code/);
+  await expect(page.locator("#el-x")).toHaveValue("112");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]C1 (01)09506000134376(17)271231 and ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 });
+  // Exported as PDF; a printer language says it cannot write it yet
+  await on(page, "export");
+  const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
+  expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("A label of one's own is not written in printer languages yet");
+  // Deleting the selected element takes it off the page
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "GS1-128" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+  await expect(page.locator(".caption")).toHaveText("A label of my own 150 × 90 mm · QR code (GS1 Digital Link)");
 });

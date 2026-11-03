@@ -86,6 +86,7 @@ import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { kept } from "./keep.ts";
+import { elementName } from "./Designer.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
@@ -142,7 +143,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
     linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
     hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
-    logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none",
+    logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", designer: false, page: null, selected: null,
     expert: false,
   });
   const [answers, setAnswers] = useState<Answers>({});
@@ -228,7 +229,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const chosenSymbol = choice ? (choice.with ?? choice.symbol) : settings.symbology;
   // A key a GS1 Digital Link URI cannot carry ((03), backlog 1.11) is drawn in GS1 DataMatrix, not a symbol for a URI.
   // A GS1 Logistic Label (backlog 4.1) for an SSCC: GS1-128 at table 5's row, whatever step 2 says.
-  const logisticOn = active.key === "00" && settings.logistic !== "none";
+  const logisticOn = active.key === "00" && settings.logistic !== "none" && !settings.designer;
   const symbology: SymbologyId = logisticOn ? "gs1-128"
     : !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
   // A symbol chosen alone that carries the GTIN alone (an EAN-13 alone, with a batch typed): it draws the GTIN.
@@ -287,7 +288,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         },
       }
       : {}),
-  }), [symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD]);
+    // A label of one's own (backlog 4.2): its page, the environment and table sizing its barcodes
+    ...(settings.designer && settings.page ? { page: settings.page } : {}),
+  }), [settings.designer, settings.page, symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {
@@ -297,6 +300,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     options?: LabelOptions;
     layout?: Layout;
     logistic?: DrawnLabel["logistic"];
+    designed?: DrawnLabel["designed"];
   } => {
     const identified = checked.identified;
     const base = {
@@ -306,7 +310,29 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
-      const { data, options, layout, geometry, logistic } = labelFor(identified, design, font);
+      const { data, options, layout, geometry, logistic, designed } = labelFor(identified, design, font);
+      if (designed && design.page) {
+        // A label of one's own: its size and its barcodes in the caption, its problems in words, its symbols expected
+        const page = design.page;
+        const named = (id: string) => {
+          const element = page.elements.find((e) => e.id === id);
+          return element ? elementName(element) : id;
+        };
+        const problems = designed.problems.map((p) => p.kind === "edge"
+          ? t("{name} goes past the label's edge.", { name: named(p.id) })
+          : t("{a} and {b} overlap: a barcode's quiet zones must stay clear.", { a: named(p.ids[0]), b: named(p.ids[1]) }));
+        const names = designed.symbols.map((s) => tm(SYMBOLOGIES[s.symbology].name)).join(", ");
+        return {
+          view: {
+            ...base, xMm: layout.xMm, svg: labelSvg(options, layout, font, effective.hriAsText), pngDpi: pngDpi(layout),
+            widthMm: page.widthMm, heightMm: page.heightMm, expected: designed.expected,
+            pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
+            caption: t("A label of my own {w} × {h} mm · {symbols}", { w: formatNumber(page.widthMm), h: formatNumber(page.heightMm), symbols: names }),
+            designer: { placed: designed.placed, problems },
+          },
+          data, geometry, options, layout, designed,
+        };
+      }
       const wMm = layout.width * layout.xMm;
       const hMm = layout.height * layout.xMm;
       // The modules in all (a matrix's rows times its columns, a linear symbol's width) and the characters encoded,
@@ -393,8 +419,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     : environment ? ((range) => (range ? [range[0], range[2]] as const : null))(twoD ? ENVIRONMENTS[environment]?.["2d"] : ENVIRONMENTS[environment]?.linear) : null;
   const module = label.layout ? moduleChoice(label.layout.xMm, xRange, settings.dpi, zplDots) : null;
   const drawn = (): DrawnLabel | null => {
-    const { geometry, data, options, layout, logistic } = label;
-    return geometry && data && options && layout ? { geometry, data, options, layout, ...(logistic ? { logistic } : {}) } : null;
+    const { geometry, data, options, layout, logistic, designed } = label;
+    return geometry && data && options && layout ? { geometry, data, options, layout, ...(logistic ? { logistic } : {}), ...(designed ? { designed } : {}) } : null;
   };
   const zplWidthProblem = (() => {
     try {

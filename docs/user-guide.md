@@ -240,6 +240,29 @@ zone apart, each with its own text:
 The box **GS1-128 symbols** under the options lists the element strings: tick *new symbol* to start a symbol where you
 choose; **Automatic** goes back.
 
+### A label of one's own: barcodes and text placed freely
+
+Every place has its own label, so the studio has an editor rather than ready-made ones. In **Label**, choose *A label
+of my own (barcodes and text placed freely)*:
+
+![A label of one's own: a QR code, a GS1-128 and text blocks on a 150 × 90 mm page](images/guide/designer.png)
+
+1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
+   step 2's guided choice, its table does).
+2. **+ Barcode** adds a barcode; **+ Text** a text block. Each is listed under **Elements**.
+3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
+   type **Left (mm)** and **Top (mm)**.
+4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
+   **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
+5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,
+   which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
+   own data.
+6. **Delete** takes the chosen element off the label.
+
+A barcode past the label's edge, or overlapping another element (its quiet zones must stay clear), is named in red under
+the size; the label is still drawn. **Scan test** reads every barcode. The label exports as SVG, PNG, PDF and EPS and
+in bulk; the printer languages do not write it yet (its PDF prints it at its size).
+
 ## 6. The label's options
 
 Only the choices that apply to the symbol are shown.
@@ -483,6 +506,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
+| *A label of one's own is not written in printer languages yet* | A print file of a label of one's own | Print its PDF at its size |
+| *Table … does not allow …* | A barcode on a label of one's own that the scanning environment's table does not have | Choose another symbol, or another environment (or another answer in step 2) |
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |
 | *EPL2's Data Matrix (the b command) has no FNC1…*, *EPL2's QR code is for Japanese printer models only* | The language cannot print it | Use a ZPL profile, or print the PDF |

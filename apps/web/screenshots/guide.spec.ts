@@ -91,6 +91,35 @@ test("step 3: symbols laid out by their table", async ({ page }) => {
   await shot(label(page).locator(".canvas-frame"), "gs1-128-stack");
 });
 
+test("step 3: a label of one's own", async ({ page }) => {
+  await paste(page, "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  await page.fill("#page-width", "150");
+  await page.fill("#page-height", "90");
+  await page.locator(".design-list button", { hasText: "“{01}”" }).click();
+  await page.fill("#el-text", "Finest Truffle Tapenade");
+  await page.selectOption("#el-height", "5");
+  await page.fill("#el-x", "6");
+  await page.fill("#el-y", "6");
+  await page.locator(".design-list button", { hasText: "QR code" }).click();
+  await page.locator("#el-x").fill("112");
+  await page.getByRole("checkbox", { name: "Human readable text" }).uncheck();
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-text", "BATCH {10}\nBEST BEFORE {17}");
+  await page.selectOption("#el-height", "3.5");
+  await page.fill("#el-x", "6");
+  await page.fill("#el-y", "18");
+  await page.getByRole("button", { name: "+ Barcode" }).click();
+  await page.selectOption("#el-symbol", "gs1-128");
+  await page.getByRole("checkbox", { name: "(10)B42" }).uncheck();
+  await page.fill("#el-x", "14");
+  await page.fill("#el-y", "50");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await shot(label(page).locator(".panel"), "designer");
+});
+
 test("step 3: the GS1 Logistic Label", async ({ page }) => {
   await paste(page, "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await page.selectOption("#opt-logistic", "a5");

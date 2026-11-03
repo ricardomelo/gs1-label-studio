@@ -122,6 +122,7 @@ PDF offered instead.
 | Text left or right of the symbol | The printer's font sets the text's width, which the studio does not know |
 | A label wider than the printer prints | It would be cut |
 | The GS1 Logistic Label | In ZPL and EPL2 only for now (not TSPL or DPL, nor as a template): print its PDF meanwhile. In EPL2, an element string of no predefined length must end its symbol, and the 2D symbol can only be a Data Matrix with a URI. A6 and A5 are wider than a 4-inch printer prints: a 4 × 6 in label, or a wider printer's profile |
+| A label of one's own | No printer language writes it yet: print its PDF at its size |
 
 ## 8. TSPL, EPL2 and DPL, and the other printer languages
 

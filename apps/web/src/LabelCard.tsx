@@ -14,11 +14,15 @@ import {
   type QrMode,
   type LogisticSize,
   type LogisticTwoD,
+  parseElementString,
+  type DesignPage,
+  type PlacedElement,
   type PrinterLanguageInfo,
   type RowStatus,
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useState } from "react";
+import { DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
 import { scanSvg } from "./scan.ts";
 import {
@@ -69,6 +73,10 @@ export interface LabelSettings {
   logisticTo: string;
   /** A 2D symbol to the right of the label's middle block (General Specifications 6.6.4.1.1). */
   logisticTwoD: "none" | LogisticTwoD;
+  /** A label of one's own (backlog 4.2): on or off, its page (kept when off) and the element chosen on it. */
+  designer: boolean;
+  page: DesignPage | null;
+  selected: string | null;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -107,6 +115,8 @@ export interface LabelView {
   expected?: string[];
   /** An SSCC: the GS1 Logistic Label is offered (backlog 4.1). */
   logisticPossible?: boolean;
+  /** A label of one's own: where each element landed, and what is wrong with the page, in words. */
+  designer?: { placed: PlacedElement[]; problems: string[] };
   /** GS1-128: its element strings and the index of each that starts a symbol (the first always). */
   gs1128?: { elements: string[]; starts: number[] };
 }
@@ -177,6 +187,14 @@ const step = (zoom: number, by: 1 | -1) =>
 
 export function LabelCard({ children, generate, printer, printLanguage, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
+  // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
+  const aiList = (() => {
+    try {
+      return view.elementString ? parseElementString(view.elementString).map((e) => ({ ai: e.ai, text: `(${e.ai})${e.value}` })) : [];
+    } catch {
+      return [];
+    }
+  })();
   const [real, setReal] = useState(false);
   // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
   // view changes.
@@ -281,6 +299,9 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
               {view.caption}
             </div>
           )}
+          {s.designer && s.page && (
+            <DesignerTools page={s.page} selected={s.selected} symbology={s.symbology} onChange={(page, selected) => onChange({ ...s, page, selected })} />
+          )}
           <div className="canvas-frame" data-pane="label" data-beside="">
             <div className="canvas">
               {real && view.svg && view.widthMm && view.heightMm ? (
@@ -291,7 +312,12 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                   aria-live="polite"
                   style={zoom === 1 ? undefined : { width: `calc(min(100%, var(--fit, ${FIT_PX}px)) * ${zoom})` }}
                 >
-                  {view.svg ? (
+                  {view.svg && s.designer && s.page && view.designer ? (
+                    <div className="designed">
+                      <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
+                      <DesignerOverlay page={s.page} placed={view.designer.placed} selected={s.selected} onChange={(page, selected) => onChange({ ...s, page, selected })} />
+                    </div>
+                  ) : view.svg ? (
                     <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
                   ) : (
                     <p className="error">{view.error ?? t("Loading…")}</p>
@@ -360,13 +386,23 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
 
         <div className="side" data-pane="label export more">
           <div className="options" data-pane="label">
-            {view.logisticPossible && (
+            {(
               <div className="grid logistic">
                 <div>
                   <label htmlFor="opt-logistic">{t("Label")}</label>
-                  <select id="opt-logistic" value={s.logistic} onChange={(e) => set("logistic", e.target.value as "none" | LogisticSize)}>
+                  <select
+                    id="opt-logistic"
+                    value={s.designer ? "designer" : s.logistic}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "designer") {
+                        onChange({ ...s, designer: true, logistic: "none", page: s.page ?? startingPage(s.symbology, aiList[0]?.ai), selected: s.selected });
+                      } else onChange({ ...s, designer: false, logistic: value as "none" | LogisticSize });
+                    }}
+                  >
                     <option value="none">{t("The symbol alone")}</option>
-                    {Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
+                    <option value="designer">{t("A label of my own (barcodes and text placed freely)")}</option>
+                    {view.logisticPossible && Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
                       <option key={id} value={id}>
                         {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
                       </option>
@@ -396,6 +432,20 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 )}
               </div>
             )}
+            {s.designer && s.page && (
+              <DesignerPanel
+                page={s.page}
+                selected={s.selected}
+                elements={aiList}
+                environments={view.environments}
+                environment={s.environment}
+                guided={Boolean(view.guided)}
+                problems={view.designer?.problems ?? []}
+                onEnvironment={(environment) => set("environment", environment)}
+                onChange={(page, selected) => onChange({ ...s, page, selected })}
+              />
+            )}
+            {!s.designer && (<>
             <div className="grid">
               {view.guided ? (
                 <div className="chosen">
@@ -698,6 +748,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 </div>
               </>
             ) : null}
+            </>)}
             {view.elementString && (
               <div className="hint es">
                 {t("Element string")} <code>{view.elementString}</code>{" "}
