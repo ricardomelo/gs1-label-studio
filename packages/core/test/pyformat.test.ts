@@ -28,7 +28,8 @@ describe("pyFixed", () => {
     expect(pyFixed(-0, 1)).toBe("-0.0");
   });
 
-  it("gives the reference's answer for 200 000 values of every kind a layout writes", () => {
+  // 200 000 values take about 5 s on a cloud session's machine, beyond Vitest's default timeout when other tests run beside
+  it("gives the reference's answer for 200 000 values of every kind a layout writes", { timeout: 60_000 }, () => {
     let seed = 1;
     const random = () => ((seed = (seed * 48271) % 2147483647) / 2147483647);
     for (let i = 0; i < 200_000; i++) {
