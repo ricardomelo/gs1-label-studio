@@ -8,7 +8,7 @@ import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 import { dataFor, InputError } from "./syntax.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): a page in millimetres with barcodes and text
-// blocks placed on it. Each barcode is laid out as the editor lays out a symbol alone — its quiet zones and text, at the
+// blocks placed on it, and lines and boxes. Each barcode is laid out as the editor lays out a symbol alone — its quiet zones and text, at the
 // scanning environment's X-dimension — and the page is one Layout, in units of the smallest module, so that the SVG,
 // PNG, PDF and EPS draw it as they draw a symbol. Every place has its own label (the owner), so the designer, not
 // ready-made templates, is what the studio offers.
@@ -41,7 +41,30 @@ export interface DesignText {
   yMm: number;
 }
 
-export type DesignElement = DesignSymbol | DesignText;
+/** A rule across or down the page (backlog 4.2): `lengthMm` long from its top left corner, `thicknessMm` thick. */
+export interface DesignLine {
+  id: string;
+  kind: "line";
+  vertical: boolean;
+  lengthMm: number;
+  thicknessMm: number;
+  xMm: number;
+  yMm: number;
+}
+
+/** A box (backlog 4.2): its outer size from its top left corner, its outline `thicknessMm` thick inside it, or filled. */
+export interface DesignBox {
+  id: string;
+  kind: "box";
+  widthMm: number;
+  heightMm: number;
+  thicknessMm: number;
+  filled: boolean;
+  xMm: number;
+  yMm: number;
+}
+
+export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox;
 
 export interface DesignPage {
   widthMm: number;
@@ -75,11 +98,13 @@ export interface DesignedLabel {
   /**
    * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
-   * corner, height and width in the HRI font, in mm.
+   * corner, height and width in the HRI font, in mm; each line and box as a box with its outline's thickness (a line,
+   * and a filled box, as thick as their narrower side).
    */
   printer: {
     symbols: { id: string; xMm: number; yMm: number; data: string; options: LabelOptions; layout: Layout }[];
     texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number }[];
+    boxes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; thicknessMm: number }[];
   };
 }
 
@@ -93,6 +118,23 @@ export interface DesignOptions {
 
 const LINE_SPACING = 1.4; // a text block's baseline-to-baseline distance, as a multiple of its height
 const NO_SYMBOL_UNIT_MM = 0.1; // the page's unit when it has no symbol
+
+/** A line or box as a box: its outer size and its outline's thickness, no more than half its narrower side (filled). */
+export function boxOf(element: DesignLine | DesignBox): { widthMm: number; heightMm: number; thicknessMm: number } {
+  const [widthMm, heightMm] = element.kind === "line"
+    ? element.vertical ? [element.thicknessMm, element.lengthMm] : [element.lengthMm, element.thicknessMm]
+    : [element.widthMm, element.heightMm];
+  const narrow = Math.min(widthMm, heightMm);
+  const t = element.kind === "line" || element.filled ? narrow : element.thicknessMm;
+  return { widthMm, heightMm, thicknessMm: 2 * t >= narrow ? narrow : t };
+}
+
+/** A box's dark rectangles, `[x, y, width, height]` from its corner: itself when filled, else its four sides. */
+function boxRects(box: { widthMm: number; heightMm: number; thicknessMm: number }): [number, number, number, number][] {
+  const { widthMm: w, heightMm: h, thicknessMm: t } = box;
+  if (t >= Math.min(w, h)) return [[0, 0, w, h]];
+  return [[0, 0, w, t], [0, h - t, w, t], [0, t, t, h - 2 * t], [w - t, t, t, h - 2 * t]];
+}
 
 /** The value of each `{AI}` in a text, from the data; an AI the data does not have leaves nothing. */
 export function fillFields(text: string, identified: Pick<Identified, "elements">): string {
@@ -139,7 +181,11 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   const rects: Layout["rects"] = [];
   const texts: LabelText[] = [];
   const placed: PlacedElement[] = [];
-  const printer: DesignedLabel["printer"] = { symbols: [], texts: [] };
+  const printer: DesignedLabel["printer"] = { symbols: [], texts: [], boxes: [] };
+  // The rules and boxes after the symbols' rectangles, so that `symbolRects` counts the symbols' alone
+  const graphics: Layout["rects"] = [];
+  // Each element's dark rectangles in mm where they are not its whole box (a box's outline): what overlaps a symbol
+  const dark = new Map<string, [number, number, number, number][]>();
   for (const element of page.elements) {
     if (element.kind === "symbol") {
       const { layout, options: o } = symbols.find((s) => s.element === element)!;
@@ -149,6 +195,16 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       for (const [x, y, w, h] of layout.rects) rects.push([dx + x * scale, dy + y * scale, w * scale, h * scale]);
       for (const t of layout.texts) texts.push({ ...t, x: dx + t.x * scale, baseline: dy + t.baseline * scale, em: t.em * scale });
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: layout.width * layout.xMm, heightMm: layout.height * layout.xMm });
+    } else if (element.kind === "line" || element.kind === "box") {
+      const box = boxOf(element);
+      if (!(box.widthMm > 0 && box.heightMm > 0 && box.thicknessMm > 0)) {
+        throw new InputError("A line or box needs a length, a width and a thickness greater than 0 mm.");
+      }
+      const rectsMm = boxRects(box).map(([x, y, w, h]): [number, number, number, number] => [element.xMm + x, element.yMm + y, w, h]);
+      for (const [x, y, w, h] of rectsMm) graphics.push([u(x), u(y), u(w), u(h)]);
+      dark.set(element.id, rectsMm);
+      printer.boxes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, ...box });
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: box.widthMm, heightMm: box.heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
       const lines = fillFields(element.text, identified).split("\n");
@@ -162,22 +218,28 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
     }
   }
 
+  const symbolRects = rects.length;
+  rects.push(...graphics);
+
   const problems: DesignedLabel["problems"] = [];
   for (const p of placed) {
     if (p.xMm < -1e-9 || p.yMm < -1e-9 || p.xMm + p.widthMm > page.widthMm + 1e-9 || p.yMm + p.heightMm > page.heightMm + 1e-9) {
       problems.push({ kind: "edge", id: p.id });
     }
   }
+  // A box's outline overlaps a symbol only where it is drawn: a frame around a barcode, clear of its quiet zones, is not
+  const areas = (p: PlacedElement): [number, number, number, number][] => dark.get(p.id) ?? [[p.xMm, p.yMm, p.widthMm, p.heightMm]];
+  const apart = ([ax, ay, aw, ah]: number[], [bx, by, bw, bh]: number[]) =>
+    ax! + aw! <= bx! + 1e-9 || bx! + bw! <= ax! + 1e-9 || ay! + ah! <= by! + 1e-9 || by! + bh! <= ay! + 1e-9;
   placed.forEach((a, i) => placed.slice(i + 1).forEach((b) => {
-    const apart = a.xMm + a.widthMm <= b.xMm + 1e-9 || b.xMm + b.widthMm <= a.xMm + 1e-9 || a.yMm + a.heightMm <= b.yMm + 1e-9 || b.yMm + b.heightMm <= a.yMm + 1e-9;
     const symbol = [a, b].some((p) => page.elements.find((e) => e.id === p.id)!.kind === "symbol");
-    if (!apart && symbol) problems.push({ kind: "overlap", ids: [a.id, b.id] });
+    if (symbol && areas(a).some((ra) => areas(b).some((rb) => !apart(ra, rb)))) problems.push({ kind: "overlap", ids: [a.id, b.id] });
   }));
 
   const names = symbols.map((s) => SYMBOLOGIES[s.element.symbology].name);
   const description = `A label of one's own, ${page.widthMm} × ${page.heightMm} mm` + (names.length ? `: ${names.join(", ")}` : "");
   return {
-    layout: { width: u(page.widthMm), height: u(page.heightMm), rects, symbolRects: rects.length, texts, xMm: unit, modules: 0, version: null },
+    layout: { width: u(page.widthMm), height: u(page.heightMm), rects, symbolRects, texts, xMm: unit, modules: 0, version: null },
     options: { symbology: symbols[0]?.options.symbology ?? "gs1-128", data: identified.elementString, showHri: false, hriLines: [], description },
     placed,
     expected: symbols.flatMap((s) => (s.layout.parts ? s.layout.parts.map((part) => `]C1 ${part}`) : expectedReads(s.options))).sort(),

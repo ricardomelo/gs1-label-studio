@@ -3,7 +3,8 @@ import { createRequire } from "node:module";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import { hriFont } from "./font.ts";
-import { decodePng } from "./png.ts";
+import { GRAPHICS } from "./fixtures/graphics.ts";
+import { decodePng, drawnBox } from "./png.ts";
 import {
   encode,
   fillTemplate,
@@ -316,6 +317,23 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       while (y < dots(t.yMm) + 8 && !row(y)) y++;
       expect(Math.abs(y - dots(t.yMm))).toBeLessThanOrEqual(1);
     }
+  });
+
+  // Lines and boxes on a label of one's own (backlog 4.2): ^GB draws each where the page puts it, to the dot, its outline
+  // inside its size and as thick as asked; a line and a filled box filled
+  it.each([203, 300])("a label of one's own at %i dpi: its lines and boxes drawn by ^GB where the page puts them", { timeout: 60000 }, async (dpi) => {
+    const engine = await syntaxEngine();
+    const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    expect(printed.boxes).toHaveLength(5);
+    const png = await labelaryPng(zplPage(printed), dpi, printed.widthDots, printed.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2); // Labelary centres the print width on its page
+    const dark = (x: number, y: number) => grey[y * width + x + offset]! < 128;
+    expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
   });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.

@@ -1,11 +1,14 @@
-import { SIZES, SYMBOLOGIES, type DesignElement, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId } from "@gs1-label-studio/core";
+import {
+  SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+} from "@gs1-label-studio/core";
 import { useRef } from "react";
 import { formatNumber, t, tm } from "./i18n.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
 // canvas with its barcodes and text blocks, each selected by a click and moved by dragging it; "+ Barcode" and
-// "+ Text" over the canvas; under it the page's size, the elements and the selected one's properties.
+// "+ Text" over the canvas; under it the page's size, the elements and the selected one's properties. Then (step b,
+// mock-up A of two) "+ Line" and "+ Box" beside them: a rule across or down, a box outlined or filled.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -31,9 +34,24 @@ export function startingPage(symbology: SymbologyId, firstAi: string | undefined
   };
 }
 
-/** The name an element goes by in the list and in the problems: its symbol, or its text's first line. */
+/** The name an element goes by in the list and in the problems: its symbol, its text's first line, a line or a box with its size. */
 export function elementName(element: DesignElement): string {
-  return element.kind === "symbol" ? tm(SYMBOLOGIES[element.symbology].name) : `“${element.text.split("\n")[0] || t("Text")}”`;
+  if (element.kind === "symbol") return tm(SYMBOLOGIES[element.symbology].name);
+  if (element.kind === "text") return `“${element.text.split("\n")[0] || t("Text")}”`;
+  if (element.kind === "line") {
+    const mm = formatNumber(element.lengthMm);
+    return element.vertical ? t("Vertical line {mm} mm", { mm }) : t("Horizontal line {mm} mm", { mm });
+  }
+  const size = { w: formatNumber(element.widthMm), h: formatNumber(element.heightMm) };
+  return element.filled ? t("Filled box {w} × {h} mm", size) : t("Box {w} × {h} mm", size);
+}
+
+/** The mark beside an element's name in the list. */
+function elementIcon(element: DesignElement): string {
+  if (element.kind === "symbol") return "▥";
+  if (element.kind === "text") return "T";
+  if (element.kind === "line") return element.vertical ? "│" : "─";
+  return element.filled ? "■" : "□";
 }
 
 interface ToolsProps {
@@ -43,7 +61,7 @@ interface ToolsProps {
   onChange: (page: DesignPage, selected: string | null) => void;
 }
 
-/** + Barcode, + Text and Delete, over the canvas. */
+/** + Barcode, + Text, + Line, + Box and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange }: ToolsProps) {
   const add = (element: DesignElement) => onChange({ ...page, elements: [...page.elements, element] }, element.id);
   return (
@@ -53,6 +71,12 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
       </button>
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "text", text: t("Text"), heightMm: 3, xMm: 4, yMm: 4 })}>
         {t("+ Text")}
+      </button>
+      <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
+        {t("+ Line")}
+      </button>
+      <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "box", widthMm: 40, heightMm: 20, thicknessMm: 0.5, filled: false, xMm: 4, yMm: 4 })}>
+        {t("+ Box")}
       </button>
       <span className="grow" />
       <button type="button" className="btn" disabled={!selected} onClick={() => onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null)}>
@@ -68,6 +92,8 @@ interface OverlayProps {
   selected: string | null;
   onChange: (page: DesignPage, selected: string | null) => void;
 }
+
+const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id === id && (e.kind === "line" || e.kind === "box"));
 
 /** Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging. */
 export function DesignerOverlay({ page, placed, selected, onChange }: OverlayProps) {
@@ -94,7 +120,8 @@ export function DesignerOverlay({ page, placed, selected, onChange }: OverlayPro
         if (event.target === svg.current) onChange(page, null);
       }}
     >
-      {placed.map((p) => {
+      {/* Lines and boxes underneath, so that a frame around a barcode or text leaves them to be chosen */}
+      {[...placed].sort((a, b) => Number(!graphic(page, a.id)) - Number(!graphic(page, b.id))).map((p) => {
         const element = page.elements.find((e) => e.id === p.id);
         if (!element) return null;
         return (
@@ -140,9 +167,11 @@ interface PanelProps {
 /** The page's size, its elements and the selected one's properties, under the canvas. */
 export function DesignerPanel({ page, selected, elements, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
-  const update = (patch: Partial<DesignSymbol> | Partial<DesignText>) =>
+  const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignLine> | Partial<DesignBox>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
   const mm = (value: string, fallback: number) => (Number.isFinite(Number(value)) && value !== "" ? Number(value) : fallback);
+  // A size or thickness is kept while the field holds nothing above 0 (being typed): the core refuses none
+  const positive = (value: string, fallback: number) => (mm(value, fallback) > 0 ? mm(value, fallback) : fallback);
   return (
     <div className="designer">
       <div className="grid">
@@ -181,7 +210,7 @@ export function DesignerPanel({ page, selected, elements, environments, environm
             {page.elements.map((e) => (
               <li key={e.id}>
                 <button type="button" aria-pressed={e.id === selected} onClick={() => onChange(page, e.id)}>
-                  <span aria-hidden="true">{e.kind === "symbol" ? "▥" : "T"}</span> {elementName(e)}
+                  <span aria-hidden="true">{elementIcon(e)}</span> {elementName(e)}
                 </button>
               </li>
             ))}
@@ -240,6 +269,44 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                       ))
                     )}
                   </fieldset>
+                </>
+              ) : element.kind === "line" ? (
+                <>
+                  <div>
+                    <label htmlFor="el-direction">{t("Direction")}</label>
+                    <select id="el-direction" value={element.vertical ? "vertical" : "horizontal"} onChange={(e) => update({ vertical: e.target.value === "vertical" })}>
+                      <option value="horizontal">{t("Across (horizontal)")}</option>
+                      <option value="vertical">{t("Down (vertical)")}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="el-length">{t("Length (mm)")}</label>
+                    <input id="el-length" type="number" min={STEP_MM} step={STEP_MM} value={element.lengthMm} onChange={(e) => update({ lengthMm: positive(e.target.value, element.lengthMm) })} />
+                  </div>
+                  <div>
+                    <label htmlFor="el-thickness">{t("Thickness (mm)")}</label>
+                    <input id="el-thickness" type="number" min={0.1} step={0.1} value={element.thicknessMm} onChange={(e) => update({ thicknessMm: positive(e.target.value, element.thicknessMm) })} />
+                  </div>
+                </>
+              ) : element.kind === "box" ? (
+                <>
+                  <div>
+                    <label htmlFor="el-width">{t("Width (mm)")}</label>
+                    <input id="el-width" type="number" min={STEP_MM} step={STEP_MM} value={element.widthMm} onChange={(e) => update({ widthMm: positive(e.target.value, element.widthMm) })} />
+                  </div>
+                  <div>
+                    <label htmlFor="el-height-mm">{t("Height (mm)")}</label>
+                    <input id="el-height-mm" type="number" min={STEP_MM} step={STEP_MM} value={element.heightMm} onChange={(e) => update({ heightMm: positive(e.target.value, element.heightMm) })} />
+                  </div>
+                  <div>
+                    <label htmlFor="el-thickness">{t("Line thickness (mm)")}</label>
+                    <input id="el-thickness" type="number" min={0.1} step={0.1} disabled={element.filled} value={element.thicknessMm} onChange={(e) => update({ thicknessMm: positive(e.target.value, element.thicknessMm) })} />
+                  </div>
+                  <div className="check">
+                    <label>
+                      <input type="checkbox" checked={element.filled} onChange={(e) => update({ filled: e.target.checked })} /> {t("Filled")}
+                    </label>
+                  </div>
                 </>
               ) : (
                 <>

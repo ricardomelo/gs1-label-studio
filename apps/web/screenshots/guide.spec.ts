@@ -105,6 +105,7 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.fill("#el-y", "6");
   await page.locator(".design-list button", { hasText: "QR code" }).click();
   await page.locator("#el-x").fill("112");
+  await page.locator("#el-y").fill("4");
   await page.getByRole("checkbox", { name: "Human readable text" }).uncheck();
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-text", "BATCH {10}\nBEST BEFORE {17}");
@@ -115,7 +116,18 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.selectOption("#el-symbol", "gs1-128");
   await page.getByRole("checkbox", { name: "(10)B42" }).uncheck();
   await page.fill("#el-x", "14");
-  await page.fill("#el-y", "50");
+  await page.fill("#el-y", "48");
+  // A frame around the label and a rule under the text (step b)
+  await page.getByRole("button", { name: "+ Box" }).click();
+  await page.fill("#el-width", "146");
+  await page.fill("#el-height-mm", "86");
+  await page.fill("#el-thickness", "0.8");
+  await page.fill("#el-x", "2");
+  await page.fill("#el-y", "2");
+  await page.getByRole("button", { name: "+ Line" }).click();
+  await page.fill("#el-length", "100");
+  await page.fill("#el-x", "6");
+  await page.fill("#el-y", "38");
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await shot(label(page).locator(".panel"), "designer");
 });

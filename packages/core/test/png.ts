@@ -62,3 +62,34 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
   }
   return { width, height, grey, perMetre };
 }
+
+export interface DrawnBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  thickness: number;
+}
+
+/**
+ * A box (a line, a filled box or an outline) as a printed label shows it, scanned from its pixels a few dots outside
+ * where `asked` puts it: its edges along its middle column and row, and its outline's thickness, the narrower of the
+ * runs of dark from its top and from its left. Nothing else may be within `margin` dots of it on those lines.
+ */
+export function drawnBox(dark: (x: number, y: number) => boolean, asked: DrawnBox, margin = 6): DrawnBox {
+  const midX = asked.x + Math.floor(asked.width / 2);
+  const midY = asked.y + Math.floor(asked.height / 2);
+  let top = Math.max(0, asked.y - margin);
+  while (!dark(midX, top) && top < asked.y + margin) top++;
+  let bottom = asked.y + asked.height - 1 + margin;
+  while (!dark(midX, bottom) && bottom > asked.y + asked.height - 1 - margin) bottom--;
+  let left = Math.max(0, asked.x - margin);
+  while (!dark(left, midY) && left < asked.x + margin) left++;
+  let right = asked.x + asked.width - 1 + margin;
+  while (!dark(right, midY) && right > asked.x + asked.width - 1 - margin) right--;
+  let down = 0;
+  while (dark(midX, top + down)) down++;
+  let across = 0;
+  while (dark(left + across, midY)) across++;
+  return { x: left, y: top, width: right - left + 1, height: bottom - top + 1, thickness: Math.min(down, across) };
+}

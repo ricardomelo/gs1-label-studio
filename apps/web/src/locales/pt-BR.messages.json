@@ -533,5 +533,7 @@
  "A label of one's own has no ZPL template yet: its ZPL file prints it, or its PDF.": "Uma etiqueta própria ainda não tem modelo ZPL: o arquivo ZPL dela a imprime, ou o PDF.",
  "A label of one's own is written in ZPL and EPL2 only, for now: its PDF prints it at its size.": "Por enquanto, uma etiqueta própria é escrita só em ZPL e EPL2: o PDF dela a imprime no tamanho certo.",
  "The {name} runs past the label's edge at {d} dots a module: move it inside the label.": "O {name} passa da borda da etiqueta a {d} pontos por módulo: mova-o para dentro da etiqueta.",
- "A {dpi} dpi printer cannot print the {name} within its table's X-dimensions.": "Uma impressora de {dpi} dpi não consegue imprimir o {name} dentro das dimensões X da sua tabela."
+ "A {dpi} dpi printer cannot print the {name} within its table's X-dimensions.": "Uma impressora de {dpi} dpi não consegue imprimir o {name} dentro das dimensões X da sua tabela.",
+ "A line or box needs a length, a width and a thickness greater than 0 mm.": "Uma linha ou caixa precisa de comprimento, largura e espessura maiores que 0 mm.",
+ "A line or box runs past the label's edge: move it inside the label.": "Uma linha ou caixa passa da borda da etiqueta: mova-a para dentro da etiqueta."
 }

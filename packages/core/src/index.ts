@@ -280,7 +280,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  designLabel, fillFields, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignSymbol, type DesignText,
+  boxOf, designLabel, fillFields, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {

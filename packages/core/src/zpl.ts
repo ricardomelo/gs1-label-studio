@@ -131,7 +131,8 @@ const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 
 /**
  * A label of one's own (backlog 4.2) with the printer's own commands: each barcode with the commands of a symbol alone
  * (^BE, ^BC, ^BX, ^BQ…, its text as that symbol has it), where the page puts it; each line of text with ^A0 at its
- * capitals' height. With `notes`, a test label (backlog 3.1): the ruler and the settings below it.
+ * capitals' height; each line and box with ^GB. With `notes`, a test label (backlog 3.1): the ruler and the settings
+ * below it.
  */
 export function zplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
   const symbols = page.symbols.flatMap((s) => stacked(s.symbology, s.data, s.options, false).commands);
@@ -139,9 +140,11 @@ export function zplPage(page: PrintPage, options: { notes?: readonly string[] } 
     const height = zplFontHeight(t.heightDots);
     return `^FO${t.x},${t.y}^A0N,${height},${height}${fieldData(t.text)}`;
   });
+  // ^GB draws a box's outline inside its width and height, filled when the thickness is its narrower side
+  const boxes = page.boxes.map((b) => `^FO${b.x},${b.y}^GB${b.width},${b.height},${b.thickness}^FS`);
   const size = { x: 0, widthDots: page.widthDots, heightDots: page.heightDots, dpi: page.dpi, ...(page.copies ? { copies: page.copies } : {}) };
-  if (!options.notes) return document([...texts, ...symbols], size, []);
-  return document([...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);
+  if (!options.notes) return document([...boxes, ...texts, ...symbols], size, []);
+  return document([...boxes, ...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);
 }
 
 /**

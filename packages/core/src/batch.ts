@@ -150,7 +150,8 @@ function leadingSpace(geometry: SymbolGeometry): [number, number] {
  * A label of one's own in dots at `dpi` (backlog 4.2): each barcode placed and sized as the editor's symbol alone is
  * in a print file (`zplOptionsFor`), at the whole dots a module within its table's row nearest to the layout's (the
  * nearest when no row sizes it), its bars' top left corner where the page's layout puts them; each line of text at its
- * capitals' corner and height. A barcode whose bars would run past the label's edge is refused.
+ * capitals' corner and height; each line and box with its edges at the nearest dots. A barcode whose bars, or a line or
+ * box, would run past the label's edge is refused.
  */
 export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
   const dots = (mm: number) => Math.round((mm / MM_PER_INCH) * dpi);
@@ -187,7 +188,18 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     return { symbology, data, options: { ...placement, x, y } };
   });
   const texts = designed.printer.texts.map((t) => ({ x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), widthDots: Math.floor((t.widthMm / MM_PER_INCH) * dpi), text: t.text }));
-  return { widthDots, heightDots, dpi, symbols, texts };
+  // Each line and box from the dots its edges round to, so that boxes side by side meet; its outline at least a dot
+  const boxes = designed.printer.boxes.map((b) => {
+    const [x, y] = [dots(b.xMm), dots(b.yMm)];
+    const [width, height] = [Math.max(1, dots(b.xMm + b.widthMm) - x), Math.max(1, dots(b.yMm + b.heightMm) - y)];
+    const narrow = Math.min(width, height);
+    const thickness = b.thicknessMm >= Math.min(b.widthMm, b.heightMm) ? narrow : Math.min(narrow, Math.max(1, dots(b.thicknessMm)));
+    if (x < 0 || y < 0 || x + width > widthDots || y + height > heightDots) {
+      throw new PrinterUnsupportedError("A line or box runs past the label's edge: move it inside the label.");
+    }
+    return { x, y, width, height, thickness };
+  });
+  return { widthDots, heightDots, dpi, symbols, texts, boxes };
 }
 
 /**

@@ -594,5 +594,20 @@
  "{mm} mm": "{mm} mm",
  "Left (mm)": "Esquerda (mm)",
  "Top (mm)": "Topo (mm)",
- "A label of my own (barcodes and text placed freely)": "Uma etiqueta própria (códigos de barras e textos onde quiser)"
+ "A label of my own (barcodes and text placed freely)": "Uma etiqueta própria (códigos de barras e textos onde quiser)",
+ "+ Line": "+ Linha",
+ "+ Box": "+ Caixa",
+ "Vertical line {mm} mm": "Linha vertical de {mm} mm",
+ "Horizontal line {mm} mm": "Linha horizontal de {mm} mm",
+ "Filled box {w} × {h} mm": "Caixa cheia de {w} × {h} mm",
+ "Box {w} × {h} mm": "Caixa de {w} × {h} mm",
+ "Direction": "Direção",
+ "Across (horizontal)": "Na horizontal",
+ "Down (vertical)": "Na vertical",
+ "Length (mm)": "Comprimento (mm)",
+ "Thickness (mm)": "Espessura (mm)",
+ "Width (mm)": "Largura (mm)",
+ "Height (mm)": "Altura (mm)",
+ "Line thickness (mm)": "Espessura da linha (mm)",
+ "Filled": "Cheia"
 }

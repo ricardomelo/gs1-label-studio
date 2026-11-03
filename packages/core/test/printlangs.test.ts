@@ -4,7 +4,8 @@ import { lz_render_lang } from "@goodboy008/labelize-wasm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import { hriFont } from "./font.ts";
-import { decodePng } from "./png.ts";
+import { GRAPHICS } from "./fixtures/graphics.ts";
+import { decodePng, drawnBox } from "./png.ts";
 import {
   dplLabel,
   dplTestLabel,
@@ -262,6 +263,22 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       while (y < dots(t.yMm) + 8 && !row(y)) y++;
       expect(Math.abs(y - dots(t.yMm))).toBeLessThanOrEqual(1);
     }
+  });
+
+  // Lines and boxes on a label of one's own (backlog 4.2): LO fills a line and a filled box, X draws an outline whose
+  // ends are the box's outer edges; each where the page puts it, to the dot
+  it.each([203, 300])("EPL2: a label of one's own at %i dpi, its lines and boxes drawn by LO and X where the page puts them", async (dpi) => {
+    const engine = await syntaxEngine();
+    const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    const printed = printPageFor(designed, dpi);
+    const epl = eplPage(printed);
+    expect(epl.match(/^X\d/gm)).toHaveLength(2);
+    expect(epl.match(/^LO\d/gm)).toHaveLength(3);
+    const png = render("epl", epl, printed.widthDots, printed.heightDots, dpi);
+    expect(await reads(png)).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const dark = (x: number, y: number) => grey[y * width + x]! < 128;
+    expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
   });
 
   it("EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason", () => {

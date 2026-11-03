@@ -1203,3 +1203,56 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   expect(file).toMatch(/\^BQN,2,\d+\^FDMA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\^FS/);
   await expect(page.locator(".error.small")).toHaveCount(0);
 });
+
+// Item 4.2, step b (mock-up A of two, 3 November 2026): lines and boxes on a label of one's own, beside the barcodes and
+// text; a frame clear of the barcodes is not an overlap, a line across one is; in ZPL each with ^GB where the page puts it.
+test("a label of one's own: lines and boxes added, sized, named, and written in ZPL", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  // The QR code at the top left, the text below it moved clear of the frame
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter"); // under a phone's tab bar
+  await page.fill("#el-x", "5");
+  await page.fill("#el-y", "5");
+  await page.getByRole("button", { name: "+ Box" }).click();
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("□ Box 40 × 20 mm");
+  await page.fill("#el-width", "96");
+  await page.fill("#el-height-mm", "56");
+  await page.fill("#el-thickness", "0.8");
+  await page.fill("#el-x", "2");
+  await page.fill("#el-y", "2");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("□ Box 96 × 56 mm");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  // A filled box: its outline's thickness no longer asked
+  await page.getByRole("checkbox", { name: "Filled" }).check();
+  await expect(page.locator("#el-thickness")).toBeDisabled();
+  await page.getByRole("checkbox", { name: "Filled" }).uncheck();
+  // A line down across the QR code overlaps it; moved to the right it does not
+  await page.getByRole("button", { name: "+ Line" }).click();
+  await page.selectOption("#el-direction", "vertical");
+  await page.fill("#el-length", "30");
+  await page.fill("#el-x", "10");
+  await page.fill("#el-y", "6");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("│ Vertical line 30 mm");
+  await expect(page.locator(".design-problems")).toContainText("Vertical line 30 mm");
+  await page.fill("#el-x", "60");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  // Drawn on the page: the frame's four sides and the line among its rectangles
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  const dots = (mm: number) => Math.round((mm / 25.4) * 203);
+  expect(file).toContain(`^FO${dots(2)},${dots(2)}^GB${dots(98) - dots(2)},${dots(58) - dots(2)},${dots(0.8)}^FS`);
+  expect(file).toContain(`^FO${dots(60)},${dots(6)}^GB${dots(60.5) - dots(60)},${dots(36) - dots(6)},${dots(60.5) - dots(60)}^FS`);
+  // Past the label's edge, a line is named on the page and refused in the print file
+  await on(page, "label");
+  await page.fill("#el-length", "60");
+  await expect(page.locator(".design-problems")).toContainText("Vertical line 60 mm goes past the label's edge.");
+  await on(page, "export");
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("A line or box runs past the label's edge");
+});

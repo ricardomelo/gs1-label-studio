@@ -472,6 +472,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › draws lines and boxes, a frame clear of a barcode's quiet zones not an overlap, and writes them in ZPL and EPL2",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › fills a text's fields from the data, an AI it does not have leaving nothing",
      "status": "passed"
     },
@@ -1564,6 +1568,14 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: its lines and boxes drawn by ^GB where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: its lines and boxes drawn by ^GB where the page puts them",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a test label: the symbol reads and the ruler is 50 mm",
      "status": "passed"
     },
@@ -2173,6 +2185,14 @@
     },
     {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi, its lines and boxes drawn by LO and X where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, its lines and boxes drawn by LO and X where the page puts them",
      "status": "passed"
     },
     {
@@ -3840,6 +3860,15 @@
     },
     {
      "name": "a label of one's own: barcodes and text placed and moved, read back, exported",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: lines and boxes added, sized, named, and written in ZPL",
      "status": "listed",
      "projects": [
       "desktop",

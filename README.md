@@ -468,8 +468,10 @@ complete.
   label of my own"; + Barcode, + Text and Delete over the canvas, each element chosen and dragged on it; under it the
   page's size, the elements and the chosen one's properties; text with {AI} fields filled from the data, so the files in
   bulk fill every row's label; one Layout, so SVG, PNG, PDF and EPS; every barcode read back). In ZPL and EPL2 since 3
-  November (each barcode as the symbol alone, where the page puts it; checked through Labelary and Labelize). Not yet: TSPL and DPL,
-  lines and boxes, a date format for fields, images, rotation, saving the label (4.3)*
+  November (each barcode as the symbol alone, where the page puts it; checked through Labelary and Labelize). Lines and
+  boxes since 3 November (mock-up A of two: + Line and + Box beside + Barcode and + Text; a box outlined or filled; in
+  ZPL `^GB`, in EPL2 `LO` and `X`, to the dot through Labelary and Labelize). Not yet: TSPL and DPL, a date format for
+  fields, images, rotation, saving the label (4.3)*
 - 4.3 Templates saved and shared as files; later perhaps templates tied to a project, to speed it up (the owner, 3
   November 2026: not needed now)
 

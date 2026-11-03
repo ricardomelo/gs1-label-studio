@@ -6,6 +6,7 @@ import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   checkRows,
   designLabel,
+  eplPage,
   fillFields,
   generateBatch,
   InputError,
@@ -16,6 +17,7 @@ import {
   printWidthDots,
   snapToDots,
   zplFontHeight,
+  zplPage,
   type LabelDesign,
   labelPdf,
   labelSvg,
@@ -139,6 +141,64 @@ describe("a label of one's own", () => {
     const past: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "b1" ? { ...e, xMm: 40 } : e)) } };
     expect(() => printFileFor("zpl", labelFor(data, past, font), past, 203)).toThrow(/The GS1-128 runs past the label's edge at 4 dots a module/);
   });
+
+  // Lines and boxes (backlog 4.2, step b): drawn as dark rectangles after the symbols', a box's outline inside its size;
+  // in ZPL with ^GB, in EPL2 with LO (a line, a filled box) and X (an outline), each edge at the nearest dot
+  it("draws lines and boxes, a frame clear of a barcode's quiet zones not an overlap, and writes them in ZPL and EPL2", async () => {
+    const graphics: DesignPage = {
+      widthMm: 130, heightMm: 80,
+      elements: [
+        { id: "b1", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 100, hri: true, xMm: 4, yMm: 38 },
+        { id: "frame", kind: "box", widthMm: 126, heightMm: 76, thicknessMm: 0.8, filled: false, xMm: 2, yMm: 2 },
+        { id: "rule", kind: "line", vertical: false, lengthMm: 120, thicknessMm: 0.5, xMm: 5, yMm: 35 },
+        { id: "post", kind: "line", vertical: true, lengthMm: 25, thicknessMm: 0.3, xMm: 90, yMm: 6 },
+        { id: "spot", kind: "box", widthMm: 10, heightMm: 6, thicknessMm: 0.5, filled: true, xMm: 110, yMm: 8 },
+        { id: "thick", kind: "box", widthMm: 4, heightMm: 4, thicknessMm: 3, filled: false, xMm: 100, yMm: 8 },
+      ],
+    };
+    const label = designLabel(graphics, data, font, { environment: "distribution" });
+    const { layout } = label;
+    expect(label.problems).toEqual([]);
+    // The symbol's rectangles first, then the frame's four sides, each line, the filled box whole, and a box whose
+    // outline would pass its middle filled
+    const mm = layout.rects.slice(layout.symbolRects).map((r) => r.map((v) => Math.round(v * layout.xMm * 1000) / 1000));
+    expect(mm).toEqual([
+      [2, 2, 126, 0.8], [2, 77.2, 126, 0.8], [2, 2.8, 0.8, 74.4], [127.2, 2.8, 0.8, 74.4],
+      [5, 35, 120, 0.5], [90, 6, 0.3, 25], [110, 8, 10, 6], [100, 8, 4, 4],
+    ]);
+    expect(layout.symbolRects).toBe(layout.rects.length - 8);
+    expect(label.placed.find((p) => p.id === "post")).toEqual({ id: "post", xMm: 90, yMm: 6, widthMm: 0.3, heightMm: 25 });
+    // Still read back with its frame and rules
+    const svg = labelSvg(label.options, layout, font);
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(label.expected);
+    // A line across the barcode overlaps it; a box over it too
+    const across: DesignPage = { ...graphics, elements: [...graphics.elements, { id: "x", kind: "line", vertical: true, lengthMm: 30, thicknessMm: 0.5, xMm: 20, yMm: 38 }] };
+    expect(designLabel(across, data, font, { environment: "distribution" }).problems).toEqual([{ kind: "overlap", ids: ["b1", "x"] }]);
+    // The print file: each edge at the nearest dot, the outline at least a dot
+    const dots = (v: number) => Math.round((v / 25.4) * 203);
+    const page = printPageFor(label, 203);
+    expect(page.boxes).toEqual([
+      { x: dots(2), y: dots(2), width: dots(128) - dots(2), height: dots(78) - dots(2), thickness: dots(0.8) },
+      { x: dots(5), y: dots(35), width: dots(125) - dots(5), height: dots(35.5) - dots(35), thickness: dots(35.5) - dots(35) },
+      { x: dots(90), y: dots(6), width: dots(90.3) - dots(90), height: dots(31) - dots(6), thickness: dots(90.3) - dots(90) },
+      { x: dots(110), y: dots(8), width: dots(120) - dots(110), height: dots(14) - dots(8), thickness: dots(14) - dots(8) },
+      { x: dots(100), y: dots(8), width: dots(104) - dots(100), height: dots(12) - dots(8), thickness: dots(104) - dots(100) },
+    ]);
+    const zpl = zplPage(page);
+    expect(zpl).toContain(`^FO${dots(2)},${dots(2)}^GB${dots(128) - dots(2)},${dots(78) - dots(2)},${dots(0.8)}^FS`);
+    expect(zpl).toContain(`^FO${dots(90)},${dots(6)}^GB${dots(90.3) - dots(90)},${dots(31) - dots(6)},${dots(90.3) - dots(90)}^FS`);
+    const epl = eplPage(page);
+    expect(epl).toContain(`\r\nX${dots(2)},${dots(2)},${dots(0.8)},${dots(128)},${dots(78)}\r\n`);
+    expect(epl).toContain(`\r\nLO${dots(110)},${dots(8)},${dots(120) - dots(110)},${dots(14) - dots(8)}\r\n`);
+    // A line past the label's edge is named in the editor and refused in a print file, not cut
+    const past: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 2), { id: "long", kind: "line", vertical: false, lengthMm: 130, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
+    const pastLabel = designLabel(past, data, font, { environment: "distribution" });
+    expect(pastLabel.problems).toEqual([{ kind: "edge", id: "long" }]);
+    expect(() => printPageFor(pastLabel, 203)).toThrow(/A line or box runs past the label's edge/);
+    // A line or box without a size or thickness is refused, naming what it needs
+    const flat: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 1), { id: "z", kind: "line", vertical: false, lengthMm: 0, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
+    expect(() => designLabel(flat, data, font, { environment: "distribution" })).toThrow(/A line or box needs a length, a width and a thickness greater than 0 mm/);
+  }, SLOW);
 
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {
     expect(fillFields("BATCH {10} · SERIAL {21}", data)).toBe("BATCH B42 · SERIAL ");

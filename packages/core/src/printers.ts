@@ -50,8 +50,9 @@ export interface PrintLabelOptions extends PrintSymbolOptions {
 }
 
 /**
- * A label of one's own (backlog 4.2) in dots: several symbols, each placed and sized as a symbol alone is, and lines of
- * text, each with its capitals' top left corner and height. What a printer language writes the designer's page from.
+ * A label of one's own (backlog 4.2) in dots: several symbols, each placed and sized as a symbol alone is, lines of
+ * text, each with its capitals' top left corner and height, and lines and boxes. What a printer language writes the
+ * designer's page from.
  */
 export interface PrintPage {
   widthDots: number;
@@ -61,6 +62,8 @@ export interface PrintPage {
   symbols: { symbology: SymbologyId; data: string; options: PrintSymbolOptions }[];
   /** Each line's width as the page lays it out: a printer whose fonts are fixed-pitch picks one that fits it. */
   texts: { x: number; y: number; heightDots: number; widthDots: number; text: string }[];
+  /** The page's lines and boxes: each a box's top left corner and outer size, its outline as thick as its narrower side when filled. */
+  boxes: { x: number; y: number; width: number; height: number; thickness: number }[];
 }
 
 export const HRI_TEXT_MM = 2.2;

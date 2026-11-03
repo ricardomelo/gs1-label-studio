@@ -373,7 +373,7 @@ footer.about .hint { margin-top: 12px; }
 }
 
 /* A label of one's own (backlog 4.2): tools over the canvas, each element's box over the drawn page, the panel below */
-.design-tools { display: flex; gap: 8px; align-items: center; margin: 0 0 8px; }
+.design-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 8px; }
 .design-tools .grow { flex: 1; }
 .designed { position: relative; width: 100%; }
 .design-overlay { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
