@@ -21,6 +21,12 @@ import {
   tsplLabel,
   tsplTestLabel,
   TsplUnsupportedError,
+  designLabel,
+  eplPage,
+  printPageFor,
+  syntaxEngine,
+  type DesignPage,
+  type Identified,
   type SymbologyId,
 } from "../src/index.ts";
 
@@ -212,6 +218,50 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     }
     const expected = [...label.parts.map((p) => `]C1 ${p}`), ...(withDataMatrix ? [`]d1 ${uri}`] : [])].sort();
     expect(await reads(render("epl", file, width, height, dpi))).toEqual(expected);
+  });
+
+  // A label of one's own (backlog 4.2) in EPL2, as in ZPL: each barcode read back from the whole page, its first bar
+  // where the page's layout puts it, to the dot; the text's capitals at their corner. Labelize draws the Data Matrix
+  // without the one-module quiet zone the guide says the printer adds (b command), so a module up and left there.
+  it.each([
+    [203, "distribution", [
+      { id: "t", kind: "text", text: "BATCH {10}", heightMm: 4, xMm: 6, yMm: 4 },
+      { id: "c", kind: "symbol", symbology: "gs1-128", ais: null, size: 100, hri: true, xMm: 2, yMm: 36 },
+      { id: "m", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 90, yMm: 3 },
+    ]],
+    [300, "retail", [
+      { id: "e", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 30 },
+      { id: "t", kind: "text", text: "BEST BEFORE {17}\nBATCH {10}", heightMm: 3, xMm: 4, yMm: 4 },
+      { id: "m", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
+    ]],
+  ] as const)("EPL2: a label of one's own at %i dpi, every barcode read back, each where the layout puts it", async (dpi, environment, elements) => {
+    const engine = await syntaxEngine();
+    const page = { widthMm: 130, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };
+    const designed = designLabel(page, engine.parse("(01)09506000134376(17)271231(10)B42") as Identified, hriFont(), { environment });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    const png = render("epl", eplPage(printed), printed.widthDots, printed.heightDots, dpi);
+    expect(await reads(png)).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const dark = (x: number, y: number) => grey[y * width + x]! < 128;
+    const dots = (mm: number) => Math.round((mm / 25.4) * dpi);
+    for (const [index, s] of designed.printer.symbols.entries()) {
+      const range = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.barRects : [0, s.layout.rects.length] as const;
+      const bars = s.layout.rects.slice(...range);
+      const early = s.options.symbology === "dl-datamatrix" ? printed.symbols[index]!.options.dotsPerModule : 0;
+      const [left, top] = [dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm) - early, dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm) - early];
+      let x = left - 12;
+      while (x < left + 12 && !dark(x, top + 4)) x++;
+      let y = top - 12;
+      while (y < top + 12 && !dark(left + 1, y)) y++;
+      expect([s.id, x, y]).toEqual([s.id, left, top]);
+    }
+    for (const t of page.elements.filter((e) => e.kind === "text")) {
+      let y = dots(t.yMm) - 8;
+      const row = (yy: number) => Array.from({ length: dots(20) }, (_, i) => dots(t.xMm) + i).some((xx) => dark(xx, yy));
+      while (y < dots(t.yMm) + 8 && !row(y)) y++;
+      expect(Math.abs(y - dots(t.yMm))).toBeLessThanOrEqual(1);
+    }
   });
 
   it("EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason", () => {

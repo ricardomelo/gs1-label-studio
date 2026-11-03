@@ -17,7 +17,7 @@ import { fileName, zipArchive } from "./zip.ts";
 import { designLabel, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { PrinterUnsupportedError, type PrintPage } from "./printers.ts";
-import { eplLogisticLabel } from "./epl.ts";
+import { eplLogisticLabel, eplPage } from "./epl.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
@@ -186,7 +186,7 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     }
     return { symbology, data, options: { ...placement, x, y } };
   });
-  const texts = designed.printer.texts.map((t) => ({ x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), text: t.text }));
+  const texts = designed.printer.texts.map((t) => ({ x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), widthDots: Math.floor((t.widthMm / MM_PER_INCH) * dpi), text: t.text }));
   return { widthDots, heightDots, dpi, symbols, texts };
 }
 
@@ -244,12 +244,13 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 /**
  * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
  * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL and EPL2 (backlog 4.1), a
- * label of one's own in ZPL (backlog 4.2), each of its barcodes at its own whole dots a module.
+ * label of one's own in ZPL and EPL2 (backlog 4.2), each of its barcodes at its own whole dots a module.
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): string {
   if (drawn.designed) {
-    if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL only, for now: its PDF prints it at its size.");
+    if (language === "epl2") return eplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
+    if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL and EPL2 only, for now: its PDF prints it at its size.");
     return zplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
   }
   if (drawn.logistic) {

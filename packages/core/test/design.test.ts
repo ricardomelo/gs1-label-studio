@@ -127,8 +127,15 @@ describe("a label of one's own", () => {
     const first = Math.min(...bar.printer.symbols[0]!.layout.rects.map((r) => r[0])) * bar.printer.symbols[0]!.layout.xMm;
     const d = printPageFor(bar, 300).symbols[0]!.options;
     expect(d.x).toBe(Math.round(((2 + first) / 25.4) * 300) - d.dotsPerModule);
+    // EPL2 writes it too (printlangs.test.ts prints it): its QR code refused with the reason, as for a symbol alone
+    expect(() => printFileFor("epl2", drawn, design, 203)).toThrow(/QR/);
+    const noQr: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.filter((e) => e.id !== "qr") } };
+    const epl = printFileFor("epl2", labelFor(data, noQr, font), noQr, 203);
+    expect(epl).toContain(`q${dots(130)}`);
+    expect(epl).toMatch(new RegExp(`^A${dots(6)},${dots(6)},0,\\d,\\d,\\d,N,"Finest Truffle Tapenade"$`, "m"));
+    expect(epl).toMatch(/^B\d+,\d+,0,1E,4,4,\d+,N,"010950600013437617271231"$/m);
     // Another language says it cannot write it yet; a barcode past the label's edge is refused, not cut
-    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL only/);
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL and EPL2 only/);
     const past: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "b1" ? { ...e, xMm: 40 } : e)) } };
     expect(() => printFileFor("zpl", labelFor(data, past, font), past, 203)).toThrow(/The GS1-128 runs past the label's edge at 4 dots a module/);
   });

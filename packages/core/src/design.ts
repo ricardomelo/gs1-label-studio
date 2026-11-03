@@ -75,11 +75,11 @@ export interface DesignedLabel {
   /**
    * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
-   * corner and height, in mm.
+   * corner, height and width in the HRI font, in mm.
    */
   printer: {
     symbols: { id: string; xMm: number; yMm: number; data: string; options: LabelOptions; layout: Layout }[];
-    texts: { text: string; xMm: number; yMm: number; heightMm: number }[];
+    texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number }[];
   };
 }
 
@@ -155,7 +155,7 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       lines.forEach((line, index) => {
         if (!line) return;
         texts.push({ text: line, x: u(element.xMm), baseline: u(element.yMm + element.heightMm * (1 + index * LINE_SPACING)), em, linear: false });
-        printer.texts.push({ text: line, xMm: element.xMm, yMm: element.yMm + element.heightMm * index * LINE_SPACING, heightMm: element.heightMm });
+        printer.texts.push({ text: line, xMm: element.xMm, yMm: element.yMm + element.heightMm * index * LINE_SPACING, heightMm: element.heightMm, widthMm: font.textWidth(line, em) * unit });
       });
       const width = Math.max(0, ...lines.map((line) => font.textWidth(line, em))) * unit;
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: width, heightMm: element.heightMm * (1 + (lines.length - 1) * LINE_SPACING) });

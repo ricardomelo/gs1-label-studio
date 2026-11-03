@@ -9,6 +9,7 @@ import {
   textLines,
   type BitmapFont,
   type PrintLabelOptions,
+  type PrintPage,
   type PrintSymbolOptions,
   type TextLine,
 } from "./printers.ts";
@@ -117,6 +118,18 @@ export function eplLogisticLabel(label: LogisticLabel, dpi: number, dotsPerModul
 }
 
 const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
+
+/**
+ * A label of one's own (backlog 4.2) with EPL2's own commands, as ZPL writes it: each barcode with the commands of a
+ * symbol alone where the page puts it; each line of text with A in the fixed-pitch font whose capitals come nearest its
+ * height and that keeps it within the width the page gives it. With `notes`, a test label (backlog 3.1).
+ */
+export function eplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
+  const symbols = page.symbols.flatMap((s) => fields(s.symbology, s.data, s.options));
+  const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L", page.dpi));
+  const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
+  return options.notes ? withRuler([...texts, ...symbols], size, options.notes) : document([...texts, ...symbols], size);
+}
 
 /** The commands, then a 50 mm ruler below the label with a tick every 10 mm and the settings as text. */
 function withRuler(commands: string[], options: PrintLabelOptions, notes: readonly string[]): string {

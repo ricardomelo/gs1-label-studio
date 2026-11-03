@@ -59,7 +59,8 @@ export interface PrintPage {
   dpi: number;
   copies?: number;
   symbols: { symbology: SymbologyId; data: string; options: PrintSymbolOptions }[];
-  texts: { x: number; y: number; heightDots: number; text: string }[];
+  /** Each line's width as the page lays it out: a printer whose fonts are fixed-pitch picks one that fits it. */
+  texts: { x: number; y: number; heightDots: number; widthDots: number; text: string }[];
 }
 
 export const HRI_TEXT_MM = 2.2;

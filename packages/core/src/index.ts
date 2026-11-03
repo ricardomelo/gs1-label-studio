@@ -30,7 +30,7 @@ export {
 export { HRI_TEXT_MM, hriTextDots, PrinterUnsupportedError, type PrintLabelOptions, type PrintPage, type PrintSymbolOptions } from "./printers.ts";
 export { tsplLabel, tsplTestLabel, TsplUnsupportedError } from "./tspl.ts";
 export { dplLabel, dplTestLabel, DplUnsupportedError } from "./dpl.ts";
-export { eplLabel, eplLogisticLabel, eplTestLabel, EplUnsupportedError } from "./epl.ts";
+export { eplLabel, eplLogisticLabel, eplPage, eplTestLabel, EplUnsupportedError } from "./epl.ts";
 export { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage, type PrinterLanguageInfo } from "./printFile.ts";
 export {
   dataFor,

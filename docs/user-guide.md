@@ -264,7 +264,9 @@ the size; the label is still drawn. **Scan test** reads every barcode. The label
 in bulk, and in ZPL with the printer's own commands (the Export bar's file, its test print and the bulk ZPL file): each
 barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
 row), its bars where the label puts them; each line of text with `^A0` at its capitals' height. A barcode whose bars
-would run past the label's edge at those dots is refused. TSPL, EPL2 and DPL do not write it yet.
+would run past the label's edge at those dots is refused. In EPL2 too, each line of text in the printer's font whose
+capitals come nearest its height and that keeps it within the width the label gives it; EPL2 refuses what it refuses for
+a symbol alone (GS1 DataMatrix, the QR code, GS1 DataBar). TSPL and DPL do not write it yet.
 
 ## 6. The label's options
 
@@ -509,7 +511,7 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
-| *A label of one's own is written in ZPL only, for now* | A TSPL, EPL2 or DPL profile | Use a ZPL profile, or print its PDF at its size |
+| *A label of one's own is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
 | *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *Table … does not allow …* | A barcode on a label of one's own that the scanning environment's table does not have | Choose another symbol, or another environment (or another answer in step 2) |
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |

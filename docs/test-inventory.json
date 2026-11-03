@@ -2168,6 +2168,14 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason",
      "status": "passed"
     },

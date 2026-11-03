@@ -531,7 +531,7 @@
  "A barcode on the label carries none of the data's element strings: choose at least one.": "Um código de barras da etiqueta não leva nenhuma das element strings dos dados: escolha pelo menos uma.",
  "Table {table} does not allow {name}: choose another symbol or scanning environment.": "A tabela {table} não admite {name}: escolha outro símbolo ou ambiente de leitura.",
  "A label of one's own has no ZPL template yet: its ZPL file prints it, or its PDF.": "Uma etiqueta própria ainda não tem modelo ZPL: o arquivo ZPL dela a imprime, ou o PDF.",
- "A label of one's own is written in ZPL only, for now: its PDF prints it at its size.": "Por enquanto, uma etiqueta própria é escrita só em ZPL: o PDF dela a imprime no tamanho certo.",
+ "A label of one's own is written in ZPL and EPL2 only, for now: its PDF prints it at its size.": "Por enquanto, uma etiqueta própria é escrita só em ZPL e EPL2: o PDF dela a imprime no tamanho certo.",
  "The {name} runs past the label's edge at {d} dots a module: move it inside the label.": "O {name} passa da borda da etiqueta a {d} pontos por módulo: mova-o para dentro da etiqueta.",
  "A {dpi} dpi printer cannot print the {name} within its table's X-dimensions.": "Uma impressora de {dpi} dpi não consegue imprimir o {name} dentro das dimensões X da sua tabela."
 }
