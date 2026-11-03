@@ -138,6 +138,7 @@ export {
   elementStringAttributes,
   exclusiveQualifiers,
   identifierKeys,
+  isDateAi,
   isDigitalLinkKey,
   formatHint,
   pathAis,
@@ -280,7 +281,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, designLabel, fillFields, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, DATE_FORMATS, designLabel, fillFields, formatDate, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {

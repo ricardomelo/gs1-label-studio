@@ -108,7 +108,7 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.locator("#el-y").fill("4");
   await page.getByRole("checkbox", { name: "Human readable text" }).uncheck();
   await page.getByRole("button", { name: "+ Text" }).click();
-  await page.fill("#el-text", "BATCH {10}\nBEST BEFORE {17}");
+  await page.fill("#el-text", "BATCH {10}\nBEST BEFORE {17:DD.MM.YYYY}");
   await page.selectOption("#el-height", "3.5");
   await page.fill("#el-x", "6");
   await page.fill("#el-y", "18");

@@ -480,6 +480,14 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › writes a date field in the format it names, the century as section 7.12 chooses it",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › prints a date field in its format, in the drawing and in a printer language",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › names an element past the page's edge and a symbol overlapping another element, and still draws the page",
      "status": "passed"
     },

@@ -7,7 +7,9 @@ import {
   checkRows,
   designLabel,
   eplPage,
+  DATE_FORMATS,
   fillFields,
+  formatDate,
   generateBatch,
   InputError,
   labelFor,
@@ -203,6 +205,35 @@ describe("a label of one's own", () => {
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {
     expect(fillFields("BATCH {10} · SERIAL {21}", data)).toBe("BATCH B42 · SERIAL ");
     expect(fillFields("{01}", data)).toBe("09506000134376");
+  });
+
+  it("writes a date field in the format it names, the century as section 7.12 chooses it", () => {
+    const today = new Date(Date.UTC(2026, 10, 3));
+    expect(fillFields("BEST BEFORE {17:DD.MM.YYYY}", data, today)).toBe("BEST BEFORE 31.12.2027");
+    expect(DATE_FORMATS.map((format) => fillFields(`{17:${format}}`, data, today))).toEqual(["31/12/2027", "31.12.2027", "2027-12-31", "12/2027", "31 DEC 2027"]);
+    expect(fillFields("{17:YYMMDD} {17:MMM YY}", data, today)).toBe("271231 DEC 27");
+    expect(fillFields("{17}", data, today)).toBe("271231"); // without a format, as in the data
+    expect(fillFields("{15:DD/MM/YYYY}", data, today)).toBe(""); // an AI the data does not have
+    // Section 7.12: 51 years or more ahead is the last century, 50 or more behind the next; day 00 is the month's last
+    expect(formatDate("770101", "YYYY", today)).toBe("1977");
+    expect(formatDate("760101", "YYYY", today)).toBe("2076");
+    expect(formatDate("300101", "YYYY", new Date(Date.UTC(2080, 0, 1)))).toBe("2130");
+    expect(formatDate("310101", "YYYY", new Date(Date.UTC(2080, 0, 1)))).toBe("2031");
+    expect(formatDate("280200", "DD/MM/YYYY", today)).toBe("29/02/2028");
+    // A date AI with a time after its date, such as (7003), takes the date's six digits
+    const dated = engine.parse("(01)09506000134376(7003)2712311530") as Identified;
+    expect(fillFields("{7003:YYYY-MM-DD}", dated, today)).toBe("2027-12-31");
+    // A format after an AI that is not a date, and a format with no date in it, are refused, naming them
+    expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow(InputError);
+    expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow("(10) is not a date, so its field takes no date format.");
+    expect(() => fillFields("{17:dd/mm/yy}", data)).toThrow("The date format “dd/mm/yy” has none of DD, MM, MMM, YY and YYYY.");
+  });
+
+  it("prints a date field in its format, in the drawing and in a printer language", () => {
+    const page: DesignPage = { widthMm: 80, heightMm: 30, elements: [{ id: "t", kind: "text", text: "EXP {17:DD MMM YYYY}", heightMm: 4, xMm: 4, yMm: 4 }] };
+    const designed = designLabel(page, data, font, { environment: "distribution" });
+    expect(designed.layout.texts.map((t) => t.text)).toEqual(["EXP 31 DEC 2027"]);
+    expect(zplPage(printPageFor(designed, 203))).toContain("^FDEXP 31 DEC 2027^FS");
   });
 
   it("names an element past the page's edge and a symbol overlapping another element, and still draws the page", () => {

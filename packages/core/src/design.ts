@@ -1,8 +1,10 @@
+import { isDateAi } from "./dictionary.ts";
 import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
 import { BARS, layoutLabel, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import { expectedReads } from "./scan.ts";
+import { isoDate } from "./sign.ts";
 import { specificationFor, type SpecSymbol } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 import { dataFor, InputError } from "./syntax.ts";
@@ -29,7 +31,10 @@ export interface DesignSymbol {
   yMm: number;
 }
 
-/** A block of text: a line a line, `{10}` replaced by the AI's value in the data (empty when the data has none). */
+/**
+ * A block of text: a line a line, `{10}` replaced by the AI's value in the data (empty when the data has none), and a
+ * date's `{17:DD/MM/YYYY}` by its date in that format (`formatDate`).
+ */
 export interface DesignText {
   id: string;
   kind: "text";
@@ -136,9 +141,37 @@ function boxRects(box: { widthMm: number; heightMm: number; thicknessMm: number 
   return [[0, 0, w, t], [0, h - t, w, t], [0, t, t, h - 2 * t], [w - t, t, t, h - 2 * t]];
 }
 
-/** The value of each `{AI}` in a text, from the data; an AI the data does not have leaves nothing. */
-export function fillFields(text: string, identified: Pick<Identified, "elements">): string {
-  return text.replace(/\{(\d{2,4})\}/g, (_, ai: string) => identified.elements.find((e) => e.ai === ai)?.value ?? "");
+/** The date formats the editor offers for a date field (backlog 4.2): `{17:DD/MM/YYYY}`. */
+export const DATE_FORMATS = ["DD/MM/YYYY", "DD.MM.YYYY", "YYYY-MM-DD", "MM/YYYY", "DD MMM YYYY"] as const;
+
+const DATE_TOKENS = /YYYY|YY|MMM|MM|DD/g;
+// The files made stay in English (ADR 0003), so the month's abbreviation too
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+/**
+ * A YYMMDD date in a format of DD, MM, MMM (JAN to DEC), YY and YYYY, what is between them kept: the century as section
+ * 7.12 of the General Specifications chooses it, day 00 the month's last (`isoDate`). A format with none of them raises
+ * an `InputError`.
+ */
+export function formatDate(yymmdd: string, format: string, today = new Date()): string {
+  if (!format.match(DATE_TOKENS)) throw new InputError(`The date format “${format}” has none of DD, MM, MMM, YY and YYYY.`);
+  const [yyyy, mm, dd] = isoDate(yymmdd, today).split("-") as [string, string, string];
+  const parts: Record<string, string> = { YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTHS[Number(mm) - 1] ?? mm, MM: mm, DD: dd };
+  return format.replace(DATE_TOKENS, (token) => parts[token]!);
+}
+
+/**
+ * The value of each `{AI}` in a text, from the data, and of each `{AI:format}` of a date AI its date in that format
+ * (`formatDate`); an AI the data does not have leaves nothing. A format after an AI that is not a date raises an
+ * `InputError`.
+ */
+export function fillFields(text: string, identified: Pick<Identified, "elements">, today = new Date()): string {
+  return text.replace(/\{(\d{2,4})(?::([^{}]*))?\}/g, (_, ai: string, format: string | undefined) => {
+    if (format === undefined) return identified.elements.find((e) => e.ai === ai)?.value ?? "";
+    if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
+    const value = identified.elements.find((e) => e.ai === ai)?.value;
+    return value ? formatDate(value.slice(0, 6), format, today) : "";
+  });
 }
 
 /** The element strings a symbol carries: those of its AIs, in the data's order, or all. */

@@ -471,8 +471,10 @@ complete.
   November (each barcode as the symbol alone, where the page puts it; checked through Labelary and Labelize). Lines and
   boxes since 3 November (mock-up B of two, the owner's choice: + Shape beside + Barcode and + Text, a line across or
   down, a box or a filled box chosen in its properties; in ZPL `^GB`, in EPL2 `LO` and `X`, to the dot through Labelary
-  and Labelize). Not yet: TSPL and DPL, a date format for
-  fields, images, rotation, saving the label (4.3)*
+  and Labelize). A date field in a format since 3 November (mock-up B of two,
+  taken under the owner's rule: Insert a field offers each date also as `{17:DD/MM/YYYY}` and four other formats, each
+  with the date it gives; any format of DD, MM, MMM, YY and YYYY typed). Not yet: TSPL and DPL, images, rotation,
+  saving the label (4.3)*
 - 4.3 Templates saved and shared as files; later perhaps templates tied to a project, to speed it up (the owner, 3
   November 2026: not needed now)
 

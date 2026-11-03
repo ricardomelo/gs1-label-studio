@@ -281,7 +281,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
-| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 8 |
+| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 10 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 4 |

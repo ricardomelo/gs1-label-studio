@@ -1,5 +1,5 @@
 import {
-  boxOf, SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, DATE_FORMATS, formatDate, isDateAi, SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef } from "react";
 import { formatNumber, t, tm } from "./i18n.ts";
@@ -9,7 +9,7 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // canvas with its barcodes and text blocks, each selected by a click and moved by dragging it; "+ Barcode" and
 // "+ Text" over the canvas; under it the page's size, the elements and the selected one's properties. Then (step b,
 // mock-up B of two, the owner's choice of 3 November 2026) "+ Shape" beside them: a line across or down, a box
-// outlined or filled, the shape chosen in its properties.
+// outlined or filled, the shape chosen in its properties. Then (step c) a date field in a format, {17:DD/MM/YYYY}.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -222,6 +222,41 @@ function ShapeFields({ element, onChange }: { element: DesignLine | DesignBox; o
   );
 }
 
+/** A field's value in the data: "(17)271231" without its AI. */
+const valueOf = ({ ai, text }: { ai: string; text: string }) => text.slice(ai.length + 2);
+
+/**
+ * "Insert a field from the data" (backlog 4.2, step c, mock-up B of two): each AI's field, and each date's in the formats
+ * offered as well, each with the value it gives; the other mock-up had a date format select beside it.
+ */
+function FieldInsert({ elements, onInsert }: { elements: { ai: string; text: string }[]; onInsert: (field: string) => void }) {
+  const today = new Date();
+  return (
+    <div>
+      <label htmlFor="el-field">{t("Insert a field from the data")}</label>
+      <select id="el-field" value="" onChange={(e) => e.target.value && onInsert(e.target.value)}>
+        <option value="">{t("Choose…")}</option>
+        {elements.map((x) =>
+          isDateAi(x.ai) ? (
+            <optgroup key={x.ai} label={x.text}>
+              <option value={`{${x.ai}}`}>{`{${x.ai}}`} — {valueOf(x)}</option>
+              {DATE_FORMATS.map((format) => (
+                <option key={format} value={`{${x.ai}:${format}}`}>
+                  {`{${x.ai}:${format}}`} — {formatDate(valueOf(x), format, today)}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            <option key={x.ai} value={`{${x.ai}}`}>
+              {`{${x.ai}}`} — {x.text}
+            </option>
+          ),
+        )}
+      </select>
+    </div>
+  );
+}
+
 /** The page's size, its elements and the selected one's properties, under the canvas. */
 export function DesignerPanel({ page, selected, elements, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
@@ -333,18 +368,9 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                   <div className="wide">
                     <label htmlFor="el-text">{t("Text")}</label>
                     <textarea id="el-text" rows={2} value={element.text} onChange={(e) => update({ text: e.target.value })} />
+                    <p className="hint">{t("A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.", { field: "{17:DD/MM/YYYY}" })}</p>
                   </div>
-                  <div>
-                    <label htmlFor="el-field">{t("Insert a field from the data")}</label>
-                    <select id="el-field" value="" onChange={(e) => e.target.value && update({ text: `${element.text}{${e.target.value}}` })}>
-                      <option value="">{t("Choose…")}</option>
-                      {elements.map(({ ai, text }) => (
-                        <option key={ai} value={ai}>
-                          {`{${ai}}`} — {text}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <FieldInsert elements={elements} onInsert={(field) => update({ text: element.text + field })} />
                   <div>
                     <label htmlFor="el-height">{t("Text height")}</label>
                     <select id="el-height" value={element.heightMm} onChange={(e) => update({ heightMm: Number(e.target.value) })}>

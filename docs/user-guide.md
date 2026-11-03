@@ -257,7 +257,10 @@ of my own (barcodes and text placed freely)*:
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,
    which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
-   own data.
+   own data. A date, such as (17) or (11), is also offered in five formats, each shown with the date it gives:
+   `{17:DD/MM/YYYY}` *31/12/2027*, `{17:DD.MM.YYYY}`, `{17:YYYY-MM-DD}`, `{17:MM/YYYY}` and `{17:DD MMM YYYY}`
+   *31 DEC 2027*. Other formats can be typed after the colon, with `DD`, `MM`, `MMM` (JAN to DEC), `YY` and `YYYY`;
+   the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the month's last.
 6. A shape: its **Shape** (*Line across*, *Line down*, *Box* or *Filled box*), **Width (mm)**, **Height (mm)** and
    **Thickness (mm)**, from its top left corner. A line across is as wide as it is long, a line down as high; its other
    side is its thickness, shown but not typed. A box's outline is drawn inside its width and height; a filled box has
@@ -523,6 +526,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *A line or box runs past the label's edge* | A line or box of a label of one's own past the label's edge, in a print file | Move it inside the label, or shorten it |
 | *A line or box needs a length, a width and a thickness greater than 0 mm* | A line or box of a label of one's own with a size of 0 | Give it a size |
+| *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
+| *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |
 | *Table … does not allow …* | A barcode on a label of one's own that the scanning environment's table does not have | Choose another symbol, or another environment (or another answer in step 2) |
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |

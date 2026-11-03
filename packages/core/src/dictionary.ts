@@ -34,6 +34,13 @@ export function aiEntry(ai: string): AiEntry | undefined {
   return DICTIONARY.ais[ai];
 }
 
+const DATE_LINTERS = new Set(["yymmd0", "yymmdd"]);
+
+/** Whether an AI's value starts with a date YYMMDD, such as (17) or (7003): a bulk cell read as a date, a date field's format. */
+export function isDateAi(ai: string): boolean {
+  return aiEntry(ai)?.components[0]?.linters.some((l) => DATE_LINTERS.has(l)) ?? false;
+}
+
 export interface Attribute {
   ai: string;
   title: string;

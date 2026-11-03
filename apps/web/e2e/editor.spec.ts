@@ -1140,11 +1140,21 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   // A text block with a field from the data, then a GS1-128 with two of the three element strings
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-text", "BATCH ");
-  await page.selectOption("#el-field", "10");
+  await page.selectOption("#el-field", "{10}");
   await expect(page.locator("#el-text")).toHaveValue("BATCH {10}");
   await page.fill("#el-x", "70");
   await page.fill("#el-y", "6");
   await expect(page.locator('.preview .symbol svg [aria-label="BATCH B42"]')).toHaveCount(1);
+  // A date field in a format (step c): each date offered in the formats with the value it gives
+  await page.fill("#el-text", "BATCH {10}\nEXP ");
+  await expect(page.locator('#el-field option[value="{17:DD.MM.YYYY}"]')).toHaveText("{17:DD.MM.YYYY} — 31.12.2027");
+  await page.selectOption("#el-field", "{17:DD.MM.YYYY}");
+  await expect(page.locator("#el-text")).toHaveValue("BATCH {10}\nEXP {17:DD.MM.YYYY}");
+  await expect(page.locator('.preview .symbol svg [aria-label="EXP 31.12.2027"]')).toHaveCount(1);
+  // A format after an AI that is not a date is refused, naming it
+  await page.fill("#el-text", "BATCH {10:DD/MM/YYYY}");
+  await expect(page.locator("p.error", { hasText: "(10) is not a date, so its field takes no date format." })).toBeVisible();
+  await page.fill("#el-text", "BATCH {10}\nEXP {17:DD.MM.YYYY}");
   await page.getByRole("button", { name: "+ Barcode" }).click();
   await page.selectOption("#el-symbol", "gs1-128");
   await page.getByRole("checkbox", { name: "(10)B42" }).uncheck();
@@ -1200,6 +1210,7 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   expect(file).toContain(`^PW${dots(100)}\n^LL${dots(90)}`);
   expect(file).toContain(`^FO${dots(70)},${dots(6)}^A0N`);
   expect(file).toContain("^FDBATCH B42^FS");
+  expect(file).toContain("^FDEXP 31.12.2027^FS");
   expect(file).toMatch(/\^BQN,2,\d+\^FDMA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\^FS/);
   await expect(page.locator(".error.small")).toHaveCount(0);
 });

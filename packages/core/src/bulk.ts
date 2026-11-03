@@ -1,5 +1,5 @@
 import { attributeByCode, AttributeError } from "./attributes.ts";
-import { aiEntry, identifierKeys, qualifiersOf } from "./dictionary.ts";
+import { aiEntry, identifierKeys, isDateAi, qualifiersOf } from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
@@ -86,8 +86,6 @@ export function guessMapping(headers: string[]): ColumnMapping {
   });
 }
 
-const DATE_LINTERS = new Set(["yymmd0", "yymmdd"]);
-
 /**
  * A cell as the AI takes it. Dates — AIs whose value starts with YYMMDD — are also read as YYYY-MM-DD (what an Excel
  * date becomes), day first as DD/MM/YYYY or DD/MM/YY (also with "-" or "."), and given as YYMMDD; a time after a date
@@ -95,8 +93,7 @@ const DATE_LINTERS = new Set(["yymmd0", "yymmdd"]);
  */
 export function normaliseCell(ai: string, raw: string): string {
   const value = raw.trim();
-  const first = aiEntry(ai)?.components[0];
-  if (!first?.linters.some((l) => DATE_LINTERS.has(l))) return value;
+  if (!isDateAi(ai)) return value;
   if (/^\d{6}$/.test(value)) return value;
   const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$/.exec(value);
   if (iso) return iso[1]!.slice(2) + iso[2] + iso[3];
