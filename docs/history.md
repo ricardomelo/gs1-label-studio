@@ -225,3 +225,9 @@ room beside it waits for the first row below. Printing it through Labelary showe
 had: `^BQ` puts the symbol as far below `^FO` as the bar height `^BY` last set. After a GS1-128 at 300 dpi that was
 375 dots, over the rule below; on its own, 10 dots, the default, on every QR label written so far. Zebra's guide says
 nothing of it; a one-dot `^BY` before `^BQ` now keeps the symbol where the label puts it, and a test measures its top.
+
+The same day the label was written in EPL2 too. Its text, measured through Labelize, showed EPL2's fonts with capitals
+at three quarters of their cell, so every line of EPL2 text had come out a quarter short; that was fixed first, as
+ZPL's had been. The label's own text then takes the printer's font that fits the room the layout gave it, since a
+fixed pitch is wider than the layout's font. EPL2 cannot separate an element string of no predefined length from the
+next, so a label whose symbol needs that is refused with the reason.
