@@ -228,9 +228,10 @@ describe("generating every row", () => {
     expect(drawn.logistic?.parts).toEqual(["(02)09506000134376(37)24", "(00)106141411234567897"]);
     expect(printFileFor("zpl", drawn, design, 203, 4, ["a note"])).toContain("50 mm: measure this line");
     expect(printWidthDots(drawn, design, 203)).toBe(Math.round((148 / 25.4) * 203));
-    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL only/);
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL and EPL2 only/);
+    expect(printFileFor("epl2", drawn, design, 203).match(/,1E,/g)).toHaveLength(2); // EPL2 writes it (backlog 4.1)
     const tspl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
-    expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL only/);
+    expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL and EPL2 only/);
     // With a QR code beside the middle block: each row's own GS1 Digital Link URI, in the drawing and in the ZPL
     const withQr: LabelDesign = { ...design, logistic: { ...design.logistic!, twoD: "dl-qrcode" } };
     expect(labelFor(sscc[1]!.identified, withQr, font).logistic?.printer.twoD?.data).toBe("https://id.gs1.org/00/106141411234567903?02=09506000134376&37=12");

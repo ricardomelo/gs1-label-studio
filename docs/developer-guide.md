@@ -297,7 +297,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 47 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
-| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 73 |
+| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 76 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

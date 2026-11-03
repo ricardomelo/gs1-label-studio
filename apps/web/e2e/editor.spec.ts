@@ -1052,7 +1052,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   expect(readFileSync((await test.path())!, "utf8")).toContain("50 mm: measure this line");
   await page.selectOption("#prn-profile", "tspl-203");
   await page.getByRole("button", { name: "TSPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is written in ZPL only, for now");
+  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is written in ZPL and EPL2 only, for now");
 });
 
 // Item 4.1 (mock-up A of two, 2 November 2026): a 2D symbol to the right of the GS1 Logistic Label's middle block

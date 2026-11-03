@@ -1,5 +1,5 @@
 {
- "date": "2026-11-02",
+ "date": "2026-11-03",
  "skipped": 0,
  "programs": [
   {
@@ -2109,6 +2109,18 @@
     },
     {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the text's capitals 4 mm high",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the GS1 Logistic Label at 203 dpi, every symbol read back (a Data Matrix: false)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the GS1 Logistic Label at 300 dpi, every symbol read back (a Data Matrix: true)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason",
      "status": "passed"
     },
     {

@@ -1,6 +1,7 @@
-import { MM_PER_INCH } from "./dots.ts";
+import { dotsWithin, MM_PER_INCH } from "./dots.ts";
 import { encode, widthInModules } from "./encode.ts";
 import { hasPredefinedLength, parseElementString } from "./elementString.ts";
+import type { LogisticLabel } from "./logistic.ts";
 import {
   bitmapFontFor,
   hriTextDots,
@@ -70,7 +71,55 @@ export function eplLabel(symbology: SymbologyId, data: string, options: PrintLab
 
 /** A test label (backlog 3.1): the label, then a 50 mm ruler with a tick every 10 mm and the settings as text. */
 export function eplTestLabel(symbology: SymbologyId, data: string, options: PrintLabelOptions, notes: readonly string[]): string {
-  const commands = fields(symbology, data, options);
+  return withRuler(fields(symbology, data, options), options, notes);
+}
+
+/**
+ * The GS1 Logistic Label (backlog 4.1) with EPL2's own commands, as ZPL writes it: each GS1-128 as UCC/EAN 128 at the
+ * profile's dots, kept centred, its element strings below at 3 mm; the label's own text with A in the fixed-pitch
+ * font nearest its height (narrower than the layout's, so it stays where the layout left room); the rules with LO.
+ * A 2D symbol beside the data only as a Data Matrix with a GS1 Digital Link URI: EPL2's Data Matrix has no FNC1 and
+ * its QR code is for Japanese models (REFUSED). Element strings of no predefined length must each end their symbol.
+ */
+export function eplLogisticLabel(label: LogisticLabel, dpi: number, dotsPerModule: number, options: { copies?: number; notes?: readonly string[] } = {}): string {
+  const { layout, printer } = label;
+  const perUnit = (layout.xMm / MM_PER_INCH) * dpi;
+  const dots = (units: number) => Math.round(units * perUnit);
+  const d = dotsPerModule;
+  const widthDots = dots(layout.width);
+  const heightDots = dots(layout.height);
+  const barHeightDots = dots(printer.barHeight);
+  const symbols = printer.symbols.flatMap(({ part, x }, index) => {
+    const modules = widthInModules(encode("gs1-128", part));
+    const left = Math.round((x + modules / 2) * perUnit - (modules * d) / 2);
+    if (left < 0 || left + modules * d > widthDots) {
+      const mm = ((modules * d * MM_PER_INCH) / dpi).toFixed(1);
+      throw new EplUnsupportedError(`The GS1-128 of ${part} is ${mm} mm wide at ${d} dots a module, wider than the label: choose fewer dots or the larger label.`);
+    }
+    return gs1128(part, { x: left, y: dots(printer.symbols[index]!.y), dotsPerModule: d, barHeightDots, dpi, hri: true, hriHeightMm: LOGISTIC_HRI_MM });
+  });
+  const rules = printer.rules.map(([x, y, w, h]) => `LO${dots(x)},${dots(y)},${dots(w)},${Math.max(1, dots(h))}`);
+  const texts = printer.texts.flatMap((t) => text({ x: dots(t.x), y: dots(t.top), width: Math.floor(t.width * perUnit), height: hriTextDots(dpi, t.heightMm), text: t.text }, "L", dpi));
+  const twoD = printer.twoD;
+  if (twoD) {
+    const refused = REFUSED[twoD.symbology];
+    if (refused) throw new EplUnsupportedError(refused);
+    const moduleMm = twoD.module * layout.xMm;
+    const choices = dotsWithin(twoD.rangeMm[0], twoD.rangeMm[1], dpi);
+    if (!choices.length) throw new EplUnsupportedError(`A ${dpi} dpi printer cannot print the 2D symbol within table 5's X-dimensions.`);
+    const d2 = choices.reduce((best, c) => (Math.abs(c.xMm - moduleMm) < Math.abs(best.xMm - moduleMm) - 1e-9 ? c : best)).dots;
+    const right = dots(twoD.x + twoD.modules * twoD.module);
+    symbols.push(...fields(twoD.symbology, twoD.data, { x: right - twoD.modules * d2, y: dots(twoD.y), dotsPerModule: d2, barHeightDots: 0, dpi, hri: false }));
+  }
+  const size = { x: 0, y: 0, dotsPerModule: d, barHeightDots, dpi, widthDots, heightDots, ...(options.copies ? { copies: options.copies } : {}) };
+  const commands = [...rules, ...texts, ...symbols];
+  return options.notes ? withRuler(commands, size, options.notes) : document(commands, size);
+}
+
+const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
+
+/** The commands, then a 50 mm ruler below the label with a tick every 10 mm and the settings as text. */
+function withRuler(commands: string[], options: PrintLabelOptions, notes: readonly string[]): string {
   const dpi = options.dpi;
   const mm = (value: number) => Math.round((value / MM_PER_INCH) * dpi);
   const top = options.heightDots + mm(2);

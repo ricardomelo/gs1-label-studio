@@ -65,6 +65,8 @@ export interface LogisticText {
   top: number;
   /** Its capitals' height in mm. */
   heightMm: number;
+  /** Its width in the layout's font, in the label's units: the room a printer's own font must keep within. */
+  width: number;
 }
 
 export interface LogisticLabel {
@@ -128,9 +130,10 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   const rules: [number, number, number, number][] = [];
   const em = (mm: number) => (u(mm) * font.unitsPerEm) / font.capHeight;
   const text = (value: string, x: number, top: number, mm: number) => {
+    const w = font.textWidth(value, em(mm));
     texts.push({ text: value, x, baseline: top + u(mm), em: em(mm), linear: false });
-    own.push({ text: value, x, top, heightMm: mm });
-    return font.textWidth(value, em(mm));
+    own.push({ text: value, x, top, heightMm: mm, width: w });
+    return w;
   };
   const rule = (y: number) => {
     rects.push([0, y, width, u(RULE_MM)]);

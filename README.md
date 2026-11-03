@@ -458,8 +458,8 @@ complete.
   in, A5 or 6 × 8 in; the top block with who sends and receives it (3.5 mm), the middle block with each element
   string's data title above its content (7 mm), the bottom block with the GS1-128 symbols and their 3 mm text, the
   SSCC alone in the lowest, the rest split as they fit the page's width; refused when the page is too short; one
-  Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November (TSPL,
-  EPL2 and DPL not yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
+  Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November, EPL2
+  since 3 November (TSPL and DPL not yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Not yet: a second
   language for the data titles; product and healthcare labels*
 - 4.2 Designer: text, images, lines, several symbols, fields bound to spreadsheet columns

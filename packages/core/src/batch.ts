@@ -16,6 +16,7 @@ import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { PrinterUnsupportedError } from "./printers.ts";
+import { eplLogisticLabel } from "./epl.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
@@ -175,8 +176,10 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): string {
   if (drawn.logistic) {
-    if (language !== "zpl") throw new PrinterUnsupportedError("The GS1 Logistic Label is written in ZPL only, for now: its PDF prints it at its size.");
-    return zplLogisticLabel(drawn.logistic, dpi, dotsPerModule ?? snapToDots(drawn.layout.xMm, dpi).dots, notes ? { notes } : {});
+    const d = dotsPerModule ?? snapToDots(drawn.layout.xMm, dpi).dots;
+    if (language === "epl2") return eplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
+    if (language !== "zpl") throw new PrinterUnsupportedError("The GS1 Logistic Label is written in ZPL and EPL2 only, for now: its PDF prints it at its size.");
+    return zplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
   }
   const options = zplOptionsFor(drawn, design, dpi, dotsPerModule);
   return notes ? printTestLabel(language, design.symbology, drawn.data, options, notes) : printLabel(language, design.symbology, drawn.data, options);

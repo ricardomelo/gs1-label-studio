@@ -3,13 +3,17 @@ import { createRequire } from "node:module";
 import { lz_render_lang } from "@goodboy008/labelize-wasm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
+import { hriFont } from "./font.ts";
 import { decodePng } from "./png.ts";
 import {
   dplLabel,
   dplTestLabel,
   DplUnsupportedError,
   eplLabel,
+  eplLogisticLabel,
   eplTestLabel,
+  logisticLabel,
+  specificationFor,
   EplUnsupportedError,
   PrinterUnsupportedError,
   snapToDots,
@@ -176,6 +180,47 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     }
     expect(Math.abs(Math.min(...rows) - y)).toBeLessThanOrEqual(1);
     expect(Math.abs(Math.max(...rows) - Math.min(...rows) + 1 - Math.round((mm / 25.4) * 203))).toBeLessThanOrEqual(2);
+  });
+
+  // The GS1 Logistic Label in EPL2 (backlog 4.1): each GS1-128 as UCC/EAN 128, the text in the fixed-pitch font nearest
+  // its height and never wider than the layout's, the rules with LO; with a Data Matrix and its GS1 Digital Link URI
+  // beside the data. Every symbol read back from the whole label as Labelize draws it.
+  it.each([[203, false], [300, true]] as const)("EPL2: the GS1 Logistic Label at %i dpi, every symbol read back (a Data Matrix: %s)", async (dpi, withDataMatrix) => {
+    const elementString = "(00)106141411234567897(02)09506000134376(37)24";
+    const uri = "https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24";
+    const label = logisticLabel({
+      elementString, size: withDataMatrix ? "a5" : "4x6", spec: specificationFor(5, "gs1-128")!, table: 5, percent: 100,
+      from: ["Dal Giardino S.p.A."], to: ["Supermarket DC 12"], ...(withDataMatrix ? { twoD: { symbology: "dl-datamatrix" as const, data: uri } } : {}),
+    }, hriFont());
+    const d = snapToDots(0.495, dpi).dots;
+    const file = eplLogisticLabel(label, dpi, d);
+    const width = Math.round((label.layout.width * label.layout.xMm / 25.4) * dpi);
+    const height = Math.round((label.layout.height * label.layout.xMm / 25.4) * dpi);
+    expect(file).toContain(`\r\nq${width}\r\n`);
+    expect(file.match(/,1E,/g)).toHaveLength(2);
+    expect(file).toMatch(/\r\nA\d+,\d+,0,\d,\d,\d,N,"FROM"\r\n/);
+    // The HRI at 3 mm (rule 5c): at 203 dpi 24 dots of capitals, font 2's 16-dot cell twice
+    if (dpi === 203) expect(file).toMatch(/\r\nA\d+,\d+,0,2,2,2,N,"\(00\)106141411234567897"\r\n/);
+    // Each line of the label's own text no wider in the printer's font than the layout made room for
+    const font = hriFont();
+    for (const t of label.printer.texts) {
+      const line = file.split("\r\n").find((l) => l.endsWith(`,N,"${t.text}"`))!;
+      const [, fontName, h] = line.match(/^A\d+,\d+,0,(\d),(\d),\d,N,/)!;
+      const pitch = (dpi < 250 ? [8, 10, 12, 14, 32] : [12, 16, 20, 24, 48])[Number(fontName) - 1]! * Number(h);
+      const em = ((t.heightMm / label.layout.xMm) * font.unitsPerEm) / font.capHeight;
+      expect([...t.text].length * pitch).toBeLessThanOrEqual(Math.ceil(font.textWidth(t.text, em) * (label.layout.xMm / 25.4) * dpi));
+    }
+    const expected = [...label.parts.map((p) => `]C1 ${p}`), ...(withDataMatrix ? [`]d1 ${uri}`] : [])].sort();
+    expect(await reads(render("epl", file, width, height, dpi))).toEqual(expected);
+  });
+
+  it("EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason", () => {
+    const base = { size: "a5" as const, spec: specificationFor(5, "gs1-128")!, table: 5, percent: 100 };
+    // (37) has no predefined length and is not last in its symbol: EPL2's UCC/EAN 128 cannot separate it
+    const batch = logisticLabel({ ...base, elementString: "(00)106141411234567897(02)09506000134376(37)24(10)ABC123" }, hriFont());
+    expect(() => eplLogisticLabel(batch, 203, 4)).toThrow(/no predefined length only last/);
+    const gs1dm = logisticLabel({ ...base, elementString: "(00)106141411234567897", twoD: { symbology: "gs1-datamatrix", data: "(00)106141411234567897" } }, hriFont());
+    expect(() => eplLogisticLabel(gs1dm, 203, 4)).toThrow(/Data Matrix \(the b command\) has no FNC1/);
   });
 
   // The studio's text under a symbol in DPL: the cell's bottom is the record's row, so its top must land where the
