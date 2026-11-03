@@ -150,7 +150,8 @@ function stacked(symbology: SymbologyId, data: string, options: ZplSymbolOptions
   if (symbology !== "gs1-128" || !options.parts || options.parts.length < 2) return fields(symbology, data, options, template);
   // Split, each symbol's attributes go above it: room for their line between the symbols
   const step = gs1128StackDots(options) + (options.hriPosition === "split" ? zplTextAbove(options, 1) : 0);
-  const all = options.parts.map((part, index) => fields(symbology, part, { ...options, y: options.y + index * step }, template));
+  // The key's element string alone: under the first symbol, which carries it
+  const all = options.parts.map((part, index) => fields(symbology, part, { ...options, y: options.y + index * step, ...(options.hriKey && index ? { hri: false } : {}) }, template));
   return { commands: all.flatMap((f) => f.commands), placeholders: all.flatMap((f) => f.placeholders) };
 }
 

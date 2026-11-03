@@ -224,7 +224,7 @@ function fields(symbology: SymbologyId, data: string, options: PrintSymbolOption
     case "gs1-128": {
       const parts = options.parts && options.parts.length > 1 ? options.parts : [data];
       const step = gs1128Step(options);
-      return parts.flatMap((part, index) => gs1128(part, { ...options, y: y + index * step }));
+      return parts.flatMap((part, index) => gs1128(part, { ...options, y: y + index * step, ...(options.hriKey && index ? { hri: false } : {}) }));
     }
     case "dl-datamatrix": {
       const geometry = encode(symbology, data);

@@ -24,6 +24,7 @@ import {
   sheetProblem,
   syntaxEngine,
   type BatchRow,
+  type Identified,
   type LabelDesign,
   type LabelSheet,
   type SyntaxEngine,
@@ -212,6 +213,31 @@ describe("generating every row", () => {
 
   // The GS1 Logistic Label in ZPL (backlog 4.1, 3.2): every row's label in the one file, written by zplLogisticLabel;
   // another language refuses it, each row naming the reason in the CSV
+  // The editor's choice of human readable text reaches the print file as it reaches the PDF: every element string, the
+  // key's alone, or none (the printer's interpretation line off too)
+  it("prints the human readable text chosen: every element string, the key's alone, or none", () => {
+    const data = engine.parse("(01)09506000134352(10)B42(17)271231") as Identified;
+    const gs1128: LabelDesign = { ...QR, symbology: "gs1-128", environment: "distribution", spec: specificationFor(5, "gs1-128")!, table: 5 };
+    const zpl = (hri: LabelDesign["hri"]) => printFileFor("zpl", labelFor(data, { ...gs1128, hri }, font), { ...gs1128, hri }, 203);
+    expect(zpl("full")).toContain("^FD(01)09506000134352(10)B42(17)271231^FS");
+    expect(zpl("key")).toContain("^FD(01)09506000134352^FS");
+    expect(zpl("key")).not.toContain("(10)B42");
+    expect(zpl("none")).not.toContain("^A0");
+    // Over two symbols, the key's line under the first alone
+    const two: LabelDesign = { ...gs1128, hri: "key", gs1128Starts: [0, 1] };
+    expect(printFileFor("zpl", labelFor(data, two, font), two, 203).match(/\^A0/g)).toHaveLength(1);
+    const last = engine.parse("(01)09506000134352(17)271231(10)B42") as Identified;
+    expect(printFileFor("epl2", labelFor(last, two, font), two, 203).match(/^A\d/gm)).toHaveLength(1);
+    const matrix: LabelDesign = { ...QR, symbology: "gs1-datamatrix", hri: "key" };
+    expect(printFileFor("tspl", labelFor(data, matrix, font), matrix, 203).match(/^TEXT /gm)).toHaveLength(1);
+    expect(printFileFor("zpl", labelFor(data, { ...matrix, hri: "none" }, font), { ...matrix, hri: "none" }, 203)).not.toContain("^A0");
+    const ean: LabelDesign = { ...QR, symbology: "ean13", hri: "none", gtinOnly: true };
+    const drawn = labelFor(data, ean, font);
+    expect(printFileFor("zpl", drawn, ean, 203)).toMatch(/\^BEN,\d+,N,N/);
+    expect(printFileFor("epl2", drawn, ean, 203)).toMatch(/,N,"950600013435"/);
+    expect(printFileFor("tspl", drawn, ean, 203)).toMatch(/"EAN13",\d+,0,/);
+  });
+
   it("writes the GS1 Logistic Label of every row in ZPL, and says another language cannot", async () => {
     const sscc = checkRows(engine, parseDelimited("SSCC,GTIN,Count\n106141411234567897,09506000134376,24\n106141411234567903,09506000134376,12"),
       ["00", "02", "37"], [], "https://id.gs1.org").map((row) => ({ row: row.row, identified: row.identified! }));

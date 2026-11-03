@@ -161,4 +161,6 @@
 - The GS1 Logistic Label in ZPL (backlog 3.2, 4.1): each GS1-128 a `^BC` at the printer profile's dots, the text and the
   rules where the layout puts them; the Export bar's file, the test print and the bulk ZPL file. TSPL, EPL2 and DPL
   refuse it for now, with the reason.
+- The print files now carry the human readable text chosen for the label — every element string, the key's alone, or
+  none — in ZPL, TSPL, EPL2 and DPL; until 3 November they printed every element string whatever was chosen.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

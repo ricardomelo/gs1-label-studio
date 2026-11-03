@@ -265,7 +265,7 @@ that say what is true; together they are the [inventory of features](test-invent
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 11 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 12 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 37 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |

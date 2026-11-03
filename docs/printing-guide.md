@@ -84,7 +84,7 @@ scan it before a production run.
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 as `_1` with `_` declared as the escape character |
 | QR code and Data Matrix with a GS1 Digital Link URI | `^BQ` model 2, `^BX` | At the label's error correction level; `^BY1,3.0,1` before `^BQ`, which prints the symbol as far below `^FO` as `^BY`'s bar height |
 | GS1 DataBar | `^BR` | At its fixed heights; refused where the table asks for more |
-| Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height |
+| Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height; every element string, the key's alone or none, as chosen for the label |
 
 To see a ZPL file without a printer, paste it into Labelary's viewer (<https://labelary.com/viewer.html>) with the
 printer's resolution (8 dpmm is 203 dpi, 12 dpmm is 300 dpi).

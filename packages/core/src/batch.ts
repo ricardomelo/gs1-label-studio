@@ -173,6 +173,7 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
   const stackAbove = parts && design.hriPosition === "split" ? (parts.length - 1) * zplTextAbove({ ...hri, dpi, dotsPerModule: d }, 1) : 0;
   return {
     ...hri,
+    hri: design.hri !== "none", ...(design.hri === "key" ? { hriKey: true } : {}),
     x: quietZone * d + side, y: quietZone * d + t + above, dotsPerModule: d, barHeightDots, dpi,
     widthDots: (symbolWidth + 2 * quietZone) * d + 2 * side,
     heightDots: (parts ? (parts.length - 1) * gs1128StackDots({ barHeightDots, dotsPerModule: d, dpi, ...hri }) + stackAbove : 0) + above +

@@ -252,6 +252,10 @@
      "status": "passed"
     },
     {
+     "name": "generating every row › prints the human readable text chosen: every element string, the key's alone, or none",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › writes the GS1 Logistic Label of every row in ZPL, and says another language cannot",
      "status": "passed"
     },

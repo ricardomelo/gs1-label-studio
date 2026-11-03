@@ -21,6 +21,8 @@ export interface PrintSymbolOptions {
   dpi: number;
   /** Human readable text: the printer's interpretation line for linear symbols, text lines below 2D symbols. */
   hri?: boolean;
+  /** The text carries the key's element string alone (the editor's "key" choice), not every element string. */
+  hriKey?: boolean;
   /**
    * ITF-14's bearer bars (section 5.3.2.4): a frame around the symbol and its quiet zones of 10X, or bars at the top
    * and bottom; `thicknessDots` thick. `x` and `y` stay the symbol's corner.
@@ -70,6 +72,7 @@ export interface TextLine {
 export function textLines(lines: string[], x: number, top: number, bottom: number, widthDots: number, gap: number,
   options: PrintSymbolOptions, join: boolean, language: string): TextLine[] {
   if (!(options.hri ?? true) || !lines.length) return [];
+  if (options.hriKey) lines = lines.slice(0, 1);
   const position = options.hriPosition ?? "below";
   if (position === "left" || position === "right") {
     throw new PrinterUnsupportedError(`${language} places the text below or above the symbol: beside it, the printer's font would set its width.`);
