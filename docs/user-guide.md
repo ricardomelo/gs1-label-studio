@@ -259,8 +259,10 @@ of my own (barcodes and text placed freely)*:
    which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
    own data. A date, such as (17) or (11), is also offered in five formats, each shown with the date it gives:
    `{17:DD/MM/YYYY}` *31/12/2027*, `{17:DD.MM.YYYY}`, `{17:YYYY-MM-DD}`, `{17:MM/YYYY}` and `{17:DD MMM YYYY}`
-   *31 DEC 2027*. Other formats can be typed after the colon, with `DD`, `MM`, `MMM` (JAN to DEC), `YY` and `YYYY`;
-   the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the month's last.
+   *31 DEC 2027*. Other formats can be typed after the colon, with `DD`, `MM`, `MMM` (the month's abbreviation),
+   `YY` and `YYYY`; the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the
+   month's last. When the text has `MMM`, **Month names** chooses its language: *English* (JAN to DEC), *Portuguese*
+   (JAN, FEV … DEZ) or *Spanish* (ENE, FEB … DIC); a new text block starts in the interface's language.
 6. A shape: its **Shape** (*Line across*, *Line down*, *Box* or *Filled box*), **Width (mm)**, **Height (mm)** and
    **Thickness (mm)**, from its top left corner. A line across is as wide as it is long, a line down as high; its other
    side is its thickness, shown but not typed. A box's outline is drawn inside its width and height; a filled box has

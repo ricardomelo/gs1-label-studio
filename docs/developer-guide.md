@@ -281,7 +281,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
-| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 10 |
+| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 11 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 4 |
@@ -297,7 +297,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `table` | CSV and Excel read without a library | 9 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 49 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 50 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 80 |
 

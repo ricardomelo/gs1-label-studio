@@ -1,8 +1,8 @@
 import {
-  boxOf, DATE_FORMATS, formatDate, isDateAi, SIZES, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, DATE_FORMATS, formatDate, isDateAi, MONTH_NAMES, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef } from "react";
-import { formatNumber, t, tm } from "./i18n.ts";
+import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -18,6 +18,16 @@ const TEXT_HEIGHTS = [2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12];
 
 const round = (mm: number) => Math.round(mm / STEP_MM) * STEP_MM;
 
+/** A new text block's month language: the interface's (the owner, 3 November 2026). */
+const interfaceMonths = (): MonthLanguage => (locale() === "pt-BR" ? "pt" : locale() === "es" ? "es" : "en");
+
+/** The month languages a text block offers, each named with its December. */
+const MONTH_LANGUAGES: { id: MonthLanguage; name: () => string }[] = [
+  { id: "en", name: () => t("English ({dec})", { dec: MONTH_NAMES.en[11]! }) },
+  { id: "pt", name: () => t("Portuguese ({dec})", { dec: MONTH_NAMES.pt[11]! }) },
+  { id: "es", name: () => t("Spanish ({dec})", { dec: MONTH_NAMES.es[11]! }) },
+];
+
 function nextId(page: DesignPage): string {
   const used = page.elements.map((e) => Number(e.id.replace(/^e/, "")) || 0);
   return `e${Math.max(0, ...used) + 1}`;
@@ -30,7 +40,7 @@ export function startingPage(symbology: SymbologyId, firstAi: string | undefined
     heightMm: 60,
     elements: [
       { id: "e1", kind: "symbol", symbology, ais: null, size: 100, hri: true, xMm: 2, yMm: 2 },
-      { id: "e2", kind: "text", text: firstAi ? `{${firstAi}}` : t("Text"), heightMm: 3, xMm: 4, yMm: 52 },
+      { id: "e2", kind: "text", text: firstAi ? `{${firstAi}}` : t("Text"), heightMm: 3, months: interfaceMonths(), xMm: 4, yMm: 52 },
     ],
   };
 }
@@ -90,7 +100,7 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "symbol", symbology, ais: null, size: 100, hri: true, xMm: 2, yMm: 2 })}>
         {t("+ Barcode")}
       </button>
-      <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "text", text: t("Text"), heightMm: 3, xMm: 4, yMm: 4 })}>
+      <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "text", text: t("Text"), heightMm: 3, months: interfaceMonths(), xMm: 4, yMm: 4 })}>
         {t("+ Text")}
       </button>
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
@@ -227,9 +237,11 @@ const valueOf = ({ ai, text }: { ai: string; text: string }) => text.slice(ai.le
 
 /**
  * "Insert a field from the data" (backlog 4.2, step c, mock-up B of two): each AI's field, and each date's in the formats
- * offered as well, each with the value it gives; the other mock-up had a date format select beside it.
+ * offered as well, each with the value it gives (its month in the text block's language); the other mock-up had a date
+ * format select beside it. The month's language is the text block's "Month names" (mock-up B of two, 3 November 2026;
+ * A wrote it in each field, {17:DD MMM YYYY:pt}).
  */
-function FieldInsert({ elements, onInsert }: { elements: { ai: string; text: string }[]; onInsert: (field: string) => void }) {
+function FieldInsert({ elements, months, onInsert }: { elements: { ai: string; text: string }[]; months: MonthLanguage; onInsert: (field: string) => void }) {
   const today = new Date();
   return (
     <div>
@@ -242,7 +254,7 @@ function FieldInsert({ elements, onInsert }: { elements: { ai: string; text: str
               <option value={`{${x.ai}}`}>{`{${x.ai}}`} — {valueOf(x)}</option>
               {DATE_FORMATS.map((format) => (
                 <option key={format} value={`{${x.ai}:${format}}`}>
-                  {`{${x.ai}:${format}}`} — {formatDate(valueOf(x), format, today)}
+                  {`{${x.ai}:${format}}`} — {formatDate(valueOf(x), format, { today, months })}
                 </option>
               ))}
             </optgroup>
@@ -370,7 +382,19 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                     <textarea id="el-text" rows={2} value={element.text} onChange={(e) => update({ text: e.target.value })} />
                     <p className="hint">{t("A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.", { field: "{17:DD/MM/YYYY}" })}</p>
                   </div>
-                  <FieldInsert elements={elements} onInsert={(field) => update({ text: element.text + field })} />
+                  <FieldInsert elements={elements} months={element.months ?? "en"} onInsert={(field) => update({ text: element.text + field })} />
+                  {/MMM/.test(element.text) && (
+                    <div>
+                      <label htmlFor="el-months">{t("Month names")}</label>
+                      <select id="el-months" value={element.months ?? "en"} onChange={(e) => update({ months: e.target.value as MonthLanguage })}>
+                        {MONTH_LANGUAGES.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="el-height">{t("Text height")}</label>
                     <select id="el-height" value={element.heightMm} onChange={(e) => update({ heightMm: Number(e.target.value) })}>

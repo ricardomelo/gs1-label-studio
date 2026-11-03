@@ -1124,6 +1124,23 @@ test("a browser in Portuguese opens the studio in Portuguese", async ({ browser 
   await context.close();
 });
 
+// A text block's month names start in the interface's language (the owner, 3 November 2026): DEZ in Portuguese.
+test("a label of one's own in Portuguese: a new text block writes its months in Portuguese", async ({ browser }) => {
+  const context = await browser.newContext({ locale: "pt-BR", viewport: { width: 1400, height: 950 } });
+  const page = await context.newPage();
+  await page.goto("/");
+  await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Preencher" }).click();
+  await page.getByRole("button", { name: "Escolher o símbolo você mesmo" }).click();
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Texto" }).click();
+  await page.fill("#el-text", "VAL {17:MMM YYYY}");
+  await expect(page.locator("#el-months")).toHaveValue("pt");
+  await expect(page.locator('.preview .symbol svg [aria-label="VAL DEZ 2027"]')).toHaveCount(1);
+  await expect(page.locator("label[for=el-months]")).toHaveText("Nomes dos meses");
+  await context.close();
+});
+
 // Item 4.2 (mock-up A of two, 3 November 2026): a label of one's own, barcodes and text blocks placed on a page, each
 // chosen by a click or in the list and moved by dragging; every barcode read back by the scan test.
 test("a label of one's own: barcodes and text placed and moved, read back, exported", async ({ page }) => {
@@ -1151,6 +1168,16 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   await page.selectOption("#el-field", "{17:DD.MM.YYYY}");
   await expect(page.locator("#el-text")).toHaveValue("BATCH {10}\nEXP {17:DD.MM.YYYY}");
   await expect(page.locator('.preview .symbol svg [aria-label="EXP 31.12.2027"]')).toHaveCount(1);
+  // The month's abbreviation in the text block's language: English here, Portuguese or Spanish when chosen
+  await expect(page.locator("#el-months")).toHaveCount(0);
+  await page.fill("#el-text", "VAL {17:DD MMM YYYY}");
+  await expect(page.locator('.preview .symbol svg [aria-label="VAL 31 DEC 2027"]')).toHaveCount(1);
+  await expect(page.locator("#el-months")).toHaveValue("en");
+  await page.selectOption("#el-months", "pt");
+  await expect(page.locator('.preview .symbol svg [aria-label="VAL 31 DEZ 2027"]')).toHaveCount(1);
+  await expect(page.locator('#el-field option[value="{17:DD MMM YYYY}"]')).toHaveText("{17:DD MMM YYYY} — 31 DEZ 2027");
+  await page.selectOption("#el-months", "es");
+  await expect(page.locator('.preview .symbol svg [aria-label="VAL 31 DIC 2027"]')).toHaveCount(1);
   // A format after an AI that is not a date is refused, naming it
   await page.fill("#el-text", "BATCH {10:DD/MM/YYYY}");
   await expect(page.locator("p.error", { hasText: "(10) is not a date, so its field takes no date format." })).toBeVisible();

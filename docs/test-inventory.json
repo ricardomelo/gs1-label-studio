@@ -484,6 +484,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › writes a date's month in the text block's language: English, Portuguese or Spanish",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › prints a date field in its format, in the drawing and in a printer language",
      "status": "passed"
     },
@@ -3859,6 +3863,15 @@
     },
     {
      "name": "a browser in Portuguese opens the studio in Portuguese",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own in Portuguese: a new text block writes its months in Portuguese",
      "status": "listed",
      "projects": [
       "desktop",

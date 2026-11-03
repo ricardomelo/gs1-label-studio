@@ -608,5 +608,9 @@
  "Filled box": "Caixa cheia",
  "Line across {mm} mm": "Linha horizontal de {mm} mm",
  "Line down {mm} mm": "Linha vertical de {mm} mm",
- "A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.": "Uma data aceita um formato depois de dois-pontos, como {field}: DD, MM, MMM, YY e YYYY."
+ "A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.": "Uma data aceita um formato depois de dois-pontos, como {field}: DD, MM, MMM, YY e YYYY.",
+ "Month names": "Nomes dos meses",
+ "English ({dec})": "Inglês ({dec})",
+ "Portuguese ({dec})": "Português ({dec})",
+ "Spanish ({dec})": "Espanhol ({dec})"
 }

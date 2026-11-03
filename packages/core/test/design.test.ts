@@ -11,6 +11,7 @@ import {
   fillFields,
   formatDate,
   generateBatch,
+  MONTH_NAMES,
   InputError,
   labelFor,
   parseDelimited,
@@ -26,6 +27,7 @@ import {
   syntaxEngine,
   xDimension,
   type DesignPage,
+  type DesignText,
   type Identified,
   type SyntaxEngine,
 } from "../src/index.ts";
@@ -209,24 +211,37 @@ describe("a label of one's own", () => {
 
   it("writes a date field in the format it names, the century as section 7.12 chooses it", () => {
     const today = new Date(Date.UTC(2026, 10, 3));
-    expect(fillFields("BEST BEFORE {17:DD.MM.YYYY}", data, today)).toBe("BEST BEFORE 31.12.2027");
-    expect(DATE_FORMATS.map((format) => fillFields(`{17:${format}}`, data, today))).toEqual(["31/12/2027", "31.12.2027", "2027-12-31", "12/2027", "31 DEC 2027"]);
-    expect(fillFields("{17:YYMMDD} {17:MMM YY}", data, today)).toBe("271231 DEC 27");
-    expect(fillFields("{17}", data, today)).toBe("271231"); // without a format, as in the data
-    expect(fillFields("{15:DD/MM/YYYY}", data, today)).toBe(""); // an AI the data does not have
+    expect(fillFields("BEST BEFORE {17:DD.MM.YYYY}", data, { today })).toBe("BEST BEFORE 31.12.2027");
+    expect(DATE_FORMATS.map((format) => fillFields(`{17:${format}}`, data, { today }))).toEqual(["31/12/2027", "31.12.2027", "2027-12-31", "12/2027", "31 DEC 2027"]);
+    expect(fillFields("{17:YYMMDD} {17:MMM YY}", data, { today })).toBe("271231 DEC 27");
+    expect(fillFields("{17}", data, { today })).toBe("271231"); // without a format, as in the data
+    expect(fillFields("{15:DD/MM/YYYY}", data, { today })).toBe(""); // an AI the data does not have
     // Section 7.12: 51 years or more ahead is the last century, 50 or more behind the next; day 00 is the month's last
-    expect(formatDate("770101", "YYYY", today)).toBe("1977");
-    expect(formatDate("760101", "YYYY", today)).toBe("2076");
-    expect(formatDate("300101", "YYYY", new Date(Date.UTC(2080, 0, 1)))).toBe("2130");
-    expect(formatDate("310101", "YYYY", new Date(Date.UTC(2080, 0, 1)))).toBe("2031");
-    expect(formatDate("280200", "DD/MM/YYYY", today)).toBe("29/02/2028");
+    expect(formatDate("770101", "YYYY", { today })).toBe("1977");
+    expect(formatDate("760101", "YYYY", { today })).toBe("2076");
+    expect(formatDate("300101", "YYYY", { today: new Date(Date.UTC(2080, 0, 1)) })).toBe("2130");
+    expect(formatDate("310101", "YYYY", { today: new Date(Date.UTC(2080, 0, 1)) })).toBe("2031");
+    expect(formatDate("280200", "DD/MM/YYYY", { today })).toBe("29/02/2028");
     // A date AI with a time after its date, such as (7003), takes the date's six digits
     const dated = engine.parse("(01)09506000134376(7003)2712311530") as Identified;
-    expect(fillFields("{7003:YYYY-MM-DD}", dated, today)).toBe("2027-12-31");
+    expect(fillFields("{7003:YYYY-MM-DD}", dated, { today })).toBe("2027-12-31");
     // A format after an AI that is not a date, and a format with no date in it, are refused, naming them
     expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow(InputError);
     expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow("(10) is not a date, so its field takes no date format.");
     expect(() => fillFields("{17:dd/mm/yy}", data)).toThrow("The date format “dd/mm/yy” has none of DD, MM, MMM, YY and YYYY.");
+  });
+
+  it("writes a date's month in the text block's language: English, Portuguese or Spanish", () => {
+    const today = new Date(Date.UTC(2026, 10, 3));
+    const month = (months: "en" | "pt" | "es") =>
+      Array.from({ length: 12 }, (_, i) => formatDate(`27${String(i + 1).padStart(2, "0")}15`, "MMM", { today, months })).join(" ");
+    expect(month("en")).toBe("JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC");
+    expect(month("pt")).toBe("JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ");
+    expect(month("es")).toBe("ENE FEB MAR ABR MAY JUN JUL AGO SEP OCT NOV DIC");
+    expect(Object.keys(MONTH_NAMES)).toEqual(["en", "pt", "es"]);
+    expect(fillFields("VAL {17:DD MMM YYYY}", data, { today, months: "pt" })).toBe("VAL 31 DEZ 2027");
+    expect(fillFields("{17:MMM/YY}", data, { today, months: "es" })).toBe("DIC/27");
+    expect(fillFields("{17:DD/MM/YYYY}", data, { today, months: "pt" })).toBe("31/12/2027"); // only MMM changes
   });
 
   it("prints a date field in its format, in the drawing and in a printer language", () => {
@@ -234,6 +249,11 @@ describe("a label of one's own", () => {
     const designed = designLabel(page, data, font, { environment: "distribution" });
     expect(designed.layout.texts.map((t) => t.text)).toEqual(["EXP 31 DEC 2027"]);
     expect(zplPage(printPageFor(designed, 203))).toContain("^FDEXP 31 DEC 2027^FS");
+    // The text block's month language, in the drawing and the print file alike
+    const pt: DesignPage = { ...page, elements: [{ ...(page.elements[0] as DesignText), text: "VAL {17:DD MMM YYYY}", months: "pt" }] };
+    const designedPt = designLabel(pt, data, font, { environment: "distribution" });
+    expect(designedPt.layout.texts.map((t) => t.text)).toEqual(["VAL 31 DEZ 2027"]);
+    expect(zplPage(printPageFor(designedPt, 203))).toContain("^FDVAL 31 DEZ 2027^FS");
   });
 
   it("names an element past the page's edge and a symbol overlapping another element, and still draws the page", () => {

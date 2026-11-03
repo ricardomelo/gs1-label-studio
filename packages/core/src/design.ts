@@ -41,6 +41,8 @@ export interface DesignText {
   text: string;
   /** Its capitals' height in mm. */
   heightMm: number;
+  /** The language of a date's month in its fields (`MMM`): English when not given. */
+  months?: MonthLanguage;
   /** The top left corner of its first line's capitals, in mm. */
   xMm: number;
   yMm: number;
@@ -145,18 +147,32 @@ function boxRects(box: { widthMm: number; heightMm: number; thicknessMm: number 
 export const DATE_FORMATS = ["DD/MM/YYYY", "DD.MM.YYYY", "YYYY-MM-DD", "MM/YYYY", "DD MMM YYYY"] as const;
 
 const DATE_TOKENS = /YYYY|YY|MMM|MM|DD/g;
-// The files made stay in English (ADR 0003), so the month's abbreviation too
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+/** The languages a date's month (`MMM`) can be written in: English, Portuguese and Spanish, the interface's (ADR 0003). */
+export type MonthLanguage = "en" | "pt" | "es";
+
+/** Each language's month abbreviations, in capitals as labels print them (the owner, 3 November 2026). */
+export const MONTH_NAMES: Record<MonthLanguage, readonly string[]> = {
+  en: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+  pt: ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"],
+  es: ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"],
+};
+
+/** What a date is written with: the day its century is chosen from (today), the language of its month (English). */
+export interface DateOptions {
+  today?: Date;
+  months?: MonthLanguage;
+}
 
 /**
- * A YYMMDD date in a format of DD, MM, MMM (JAN to DEC), YY and YYYY, what is between them kept: the century as section
- * 7.12 of the General Specifications chooses it, day 00 the month's last (`isoDate`). A format with none of them raises
- * an `InputError`.
+ * A YYMMDD date in a format of DD, MM, MMM (the month's abbreviation in `MONTH_NAMES`), YY and YYYY, what is between
+ * them kept: the century as section 7.12 of the General Specifications chooses it, day 00 the month's last
+ * (`isoDate`). A format with none of them raises an `InputError`.
  */
-export function formatDate(yymmdd: string, format: string, today = new Date()): string {
+export function formatDate(yymmdd: string, format: string, { today = new Date(), months = "en" }: DateOptions = {}): string {
   if (!format.match(DATE_TOKENS)) throw new InputError(`The date format “${format}” has none of DD, MM, MMM, YY and YYYY.`);
   const [yyyy, mm, dd] = isoDate(yymmdd, today).split("-") as [string, string, string];
-  const parts: Record<string, string> = { YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTHS[Number(mm) - 1] ?? mm, MM: mm, DD: dd };
+  const parts: Record<string, string> = { YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTH_NAMES[months][Number(mm) - 1] ?? mm, MM: mm, DD: dd };
   return format.replace(DATE_TOKENS, (token) => parts[token]!);
 }
 
@@ -165,12 +181,12 @@ export function formatDate(yymmdd: string, format: string, today = new Date()): 
  * (`formatDate`); an AI the data does not have leaves nothing. A format after an AI that is not a date raises an
  * `InputError`.
  */
-export function fillFields(text: string, identified: Pick<Identified, "elements">, today = new Date()): string {
+export function fillFields(text: string, identified: Pick<Identified, "elements">, options: DateOptions = {}): string {
   return text.replace(/\{(\d{2,4})(?::([^{}]*))?\}/g, (_, ai: string, format: string | undefined) => {
     if (format === undefined) return identified.elements.find((e) => e.ai === ai)?.value ?? "";
     if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
     const value = identified.elements.find((e) => e.ai === ai)?.value;
-    return value ? formatDate(value.slice(0, 6), format, today) : "";
+    return value ? formatDate(value.slice(0, 6), format, options) : "";
   });
 }
 
@@ -240,7 +256,7 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: box.widthMm, heightMm: box.heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
-      const lines = fillFields(element.text, identified).split("\n");
+      const lines = fillFields(element.text, identified, { months: element.months }).split("\n");
       lines.forEach((line, index) => {
         if (!line) return;
         texts.push({ text: line, x: u(element.xMm), baseline: u(element.yMm + element.heightMm * (1 + index * LINE_SPACING)), em, linear: false });
