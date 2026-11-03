@@ -72,6 +72,15 @@ export interface DesignedLabel {
    * element (its quiet zones must stay clear); by the elements' ids, for the editor to name them.
    */
   problems: ({ kind: "edge"; id: string } | { kind: "overlap"; ids: [string, string] })[];
+  /**
+   * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
+   * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
+   * corner and height, in mm.
+   */
+  printer: {
+    symbols: { id: string; xMm: number; yMm: number; data: string; options: LabelOptions; layout: Layout }[];
+    texts: { text: string; xMm: number; yMm: number; heightMm: number }[];
+  };
 }
 
 export interface DesignOptions {
@@ -130,9 +139,11 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   const rects: Layout["rects"] = [];
   const texts: LabelText[] = [];
   const placed: PlacedElement[] = [];
+  const printer: DesignedLabel["printer"] = { symbols: [], texts: [] };
   for (const element of page.elements) {
     if (element.kind === "symbol") {
-      const { layout } = symbols.find((s) => s.element === element)!;
+      const { layout, options: o } = symbols.find((s) => s.element === element)!;
+      printer.symbols.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, data: o.data, options: o, layout });
       const scale = layout.xMm / unit;
       const [dx, dy] = [u(element.xMm), u(element.yMm)];
       for (const [x, y, w, h] of layout.rects) rects.push([dx + x * scale, dy + y * scale, w * scale, h * scale]);
@@ -142,7 +153,9 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
       const lines = fillFields(element.text, identified).split("\n");
       lines.forEach((line, index) => {
-        if (line) texts.push({ text: line, x: u(element.xMm), baseline: u(element.yMm + element.heightMm * (1 + index * LINE_SPACING)), em, linear: false });
+        if (!line) return;
+        texts.push({ text: line, x: u(element.xMm), baseline: u(element.yMm + element.heightMm * (1 + index * LINE_SPACING)), em, linear: false });
+        printer.texts.push({ text: line, xMm: element.xMm, yMm: element.yMm + element.heightMm * index * LINE_SPACING, heightMm: element.heightMm });
       });
       const width = Math.max(0, ...lines.map((line) => font.textWidth(line, em))) * unit;
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: width, heightMm: element.heightMm * (1 + (lines.length - 1) * LINE_SPACING) });
@@ -170,5 +183,6 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
     expected: symbols.flatMap((s) => (s.layout.parts ? s.layout.parts.map((part) => `]C1 ${part}`) : expectedReads(s.options))).sort(),
     symbols: symbols.map((s) => ({ id: s.element.id, symbology: s.element.symbology, modules: s.layout.modules, version: s.layout.version })),
     problems,
+    printer,
   };
 }

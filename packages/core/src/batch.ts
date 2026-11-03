@@ -1,4 +1,4 @@
-import { snapToDots } from "./dots.ts";
+import { dotsWithin, MM_PER_INCH, snapToDots } from "./dots.ts";
 import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
@@ -16,9 +16,9 @@ import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { designLabel, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
-import { PrinterUnsupportedError } from "./printers.ts";
+import { PrinterUnsupportedError, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel } from "./epl.ts";
-import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
+import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
 
@@ -126,11 +126,68 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
   };
   const layout = layoutLabel(options, font);
-  // GS1-128 over several symbols: the first one's geometry
-  const geometry = encode(symbology, layout.parts?.[0] ?? data, symbology.endsWith("qrcode")
-    ? { eclevel: design.error.toUpperCase() as "M", ...(design.version ? { version: design.version } : {}), ...(options.qrMode ? { mode: options.qrMode } : {}) }
+  return { data, options, layout, geometry: geometryOf(options, layout) };
+}
+
+/** The symbol's modules as the encoder gives them; GS1-128 over several symbols: the first one's. */
+function geometryOf(options: LabelOptions, layout: Layout): SymbolGeometry {
+  const { symbology } = options;
+  return encode(symbology, layout.parts?.[0] ?? options.data, symbology.endsWith("qrcode")
+    ? { eclevel: (options.error ?? "m").toUpperCase() as "M", ...(options.version ? { version: options.version } : {}), ...(options.qrMode ? { mode: options.qrMode } : {}) }
     : {});
-  return { data, options, layout, geometry };
+}
+
+/** The modules of light before a symbol's first dark one, from the left and from the top. */
+function leadingSpace(geometry: SymbolGeometry): [number, number] {
+  if (geometry.kind === "linear") return [geometry.widths[0] === 0 ? geometry.widths[1]! : 0, 0];
+  const { rows, cols, dark } = geometry;
+  const col = Array.from({ length: cols }, (_, c) => c).find((c) => Array.from({ length: rows }, (_, r) => r).some((r) => dark[r * cols + c])) ?? 0;
+  const row = Array.from({ length: rows }, (_, r) => r).find((r) => dark.slice(r * cols, (r + 1) * cols).some(Boolean)) ?? 0;
+  return [col, row];
+}
+
+/**
+ * A label of one's own in dots at `dpi` (backlog 4.2): each barcode placed and sized as the editor's symbol alone is
+ * in a print file (`zplOptionsFor`), at the whole dots a module within its table's row nearest to the layout's (the
+ * nearest when no row sizes it), its bars' top left corner where the page's layout puts them; each line of text at its
+ * capitals' corner and height. A barcode whose bars would run past the label's edge is refused.
+ */
+export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
+  const dots = (mm: number) => Math.round((mm / MM_PER_INCH) * dpi);
+  const widthDots = dots(designed.layout.width * designed.layout.xMm);
+  const heightDots = dots(designed.layout.height * designed.layout.xMm);
+  const symbols = designed.printer.symbols.map(({ xMm, yMm, data, options, layout }) => {
+    const { symbology, spec } = options;
+    const name = SYMBOLOGIES[symbology].name;
+    let d = snapToDots(layout.xMm, dpi).dots;
+    if (spec) {
+      const choices = dotsWithin(spec.x[0], spec.x[2], dpi);
+      if (!choices.length) throw new PrinterUnsupportedError(`A ${dpi} dpi printer cannot print the ${name} within its table's X-dimensions.`);
+      d = choices.reduce((best, c) => (Math.abs(c.xMm - layout.xMm) < Math.abs(best.xMm - layout.xMm) - 1e-9 ? c : best)).dots;
+    }
+    const alone: LabelDesign = {
+      symbology, hri: options.showHri ? "full" : "none", version: options.version ?? null, error: options.error ?? "m",
+      ...(options.environment ? { environment: options.environment } : {}), size: options.size ?? 100, linear: "none", linearSize: null,
+      ...(spec ? { spec, table: options.table } : {}), bearer: options.bearer ?? "frame", reduction: 0,
+    };
+    const geometry = geometryOf(options, layout);
+    const { widthDots: boxWidth, heightDots: _, ...placement } = zplOptionsFor({ data, options, layout, geometry }, alone, dpi, d);
+    // The bars' (or modules') top left corner in the layout, ITF-14's bearer bars left out; the printer's corner is
+    // the symbol's, which starts with a space in GS1 DataBar (its left guard): that space's modules before it
+    const [from, to] = layout.barRects && layout.barRects[1] > layout.barRects[0] ? layout.barRects : [0, layout.rects.length];
+    const bars = layout.rects.slice(from, to);
+    const [spaceLeft, spaceTop] = leadingSpace(geometry);
+    const x = dots(xMm + Math.min(...bars.map((r) => r[0])) * layout.xMm) - spaceLeft * d;
+    const y = dots(yMm + Math.min(...bars.map((r) => r[1])) * layout.xMm) - spaceTop * d;
+    const right = x + boxWidth - 2 * placement.x; // the symbol's own width: its box less a quiet zone (and frame) each side
+    const bottom = y + (geometry.kind === "matrix" && SYMBOLOGIES[symbology].kind === "matrix" ? geometry.rows * d : placement.barHeightDots);
+    if (x < 0 || y < 0 || right > widthDots || bottom > heightDots) {
+      throw new PrinterUnsupportedError(`The ${name} runs past the label's edge at ${d} dots a module: move it inside the label.`);
+    }
+    return { symbology, data, options: { ...placement, x, y } };
+  });
+  const texts = designed.printer.texts.map((t) => ({ x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), text: t.text }));
+  return { widthDots, heightDots, dpi, symbols, texts };
 }
 
 /**
@@ -141,7 +198,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
 export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number): ZplLabelOptions {
   const { geometry, layout } = drawn;
   if (design.logistic) throw new ZplUnsupportedError("The GS1 Logistic Label has no ZPL template yet: its ZPL file prints it, or its PDF.");
-  if (design.page) throw new ZplUnsupportedError("A label of one's own is not written in printer languages yet: its PDF prints it at its size.");
+  if (design.page) throw new ZplUnsupportedError("A label of one's own has no ZPL template yet: its ZPL file prints it, or its PDF.");
   // The whole dots a module takes: the printer profile's choice within the table's range (backlog 3.1), else the nearest
   const d = dotsPerModule ?? snapToDots(layout.xMm, dpi).dots;
   const linearKind = SYMBOLOGIES[design.symbology].kind !== "matrix";
@@ -186,11 +243,15 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 
 /**
  * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
- * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL (backlog 4.1).
+ * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL and EPL2 (backlog 4.1), a
+ * label of one's own in ZPL (backlog 4.2), each of its barcodes at its own whole dots a module.
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): string {
-  if (drawn.designed) throw new PrinterUnsupportedError("A label of one's own is not written in printer languages yet: its PDF prints it at its size.");
+  if (drawn.designed) {
+    if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL only, for now: its PDF prints it at its size.");
+    return zplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
+  }
   if (drawn.logistic) {
     const d = dotsPerModule ?? snapToDots(drawn.layout.xMm, dpi).dots;
     if (language === "epl2") return eplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});

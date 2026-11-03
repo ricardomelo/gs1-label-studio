@@ -21,12 +21,13 @@ export {
   zplTemplate,
   zplFontHeight,
   zplLogisticLabel,
+  zplPage,
   ZplUnsupportedError,
   type ZplLabelOptions,
   type ZplPlaceholder,
   type ZplTemplate,
 } from "./zpl.ts";
-export { HRI_TEXT_MM, hriTextDots, PrinterUnsupportedError, type PrintLabelOptions, type PrintSymbolOptions } from "./printers.ts";
+export { HRI_TEXT_MM, hriTextDots, PrinterUnsupportedError, type PrintLabelOptions, type PrintPage, type PrintSymbolOptions } from "./printers.ts";
 export { tsplLabel, tsplTestLabel, TsplUnsupportedError } from "./tspl.ts";
 export { dplLabel, dplTestLabel, DplUnsupportedError } from "./dpl.ts";
 export { eplLabel, eplLogisticLabel, eplTestLabel, EplUnsupportedError } from "./epl.ts";
@@ -235,6 +236,7 @@ export {
   upperCaseDomain,
   zplOptionsFor,
   printFileFor,
+  printPageFor,
   printWidthDots,
   type BatchFile,
   type BatchRequest,

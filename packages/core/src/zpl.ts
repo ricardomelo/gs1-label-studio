@@ -4,7 +4,7 @@ import { hasPredefinedLength, parseElementString, type Element } from "./element
 import type { LogisticLabel } from "./logistic.ts";
 import type { Bitmap } from "./raster.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
-import { hriTextDots, PrinterUnsupportedError, textLines, type PrintLabelOptions, type PrintSymbolOptions } from "./printers.ts";
+import { hriTextDots, PrinterUnsupportedError, textLines, type PrintLabelOptions, type PrintPage, type PrintSymbolOptions } from "./printers.ts";
 
 /**
  * ZPL II with the printer's own barcode commands (ADR 0002, decided on 28 October 2026): a few hundred bytes a label,
@@ -127,6 +127,22 @@ export function zplLogisticLabel(label: LogisticLabel, dpi: number, dotsPerModul
 }
 
 const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
+
+/**
+ * A label of one's own (backlog 4.2) with the printer's own commands: each barcode with the commands of a symbol alone
+ * (^BE, ^BC, ^BX, ^BQ…, its text as that symbol has it), where the page puts it; each line of text with ^A0 at its
+ * capitals' height. With `notes`, a test label (backlog 3.1): the ruler and the settings below it.
+ */
+export function zplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
+  const symbols = page.symbols.flatMap((s) => stacked(s.symbology, s.data, s.options, false).commands);
+  const texts = page.texts.map((t) => {
+    const height = zplFontHeight(t.heightDots);
+    return `^FO${t.x},${t.y}^A0N,${height},${height}${fieldData(t.text)}`;
+  });
+  const size = { x: 0, widthDots: page.widthDots, heightDots: page.heightDots, dpi: page.dpi, ...(page.copies ? { copies: page.copies } : {}) };
+  if (!options.notes) return document([...texts, ...symbols], size, []);
+  return document([...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);
+}
 
 /**
  * ^A0's capitals are 0.78 of the height it is given (measured through Labelary, 2 November 2026: 18, 43 and 78 dots for

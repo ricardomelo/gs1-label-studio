@@ -22,6 +22,12 @@ import {
   logisticLabel,
   specificationFor,
   graphicFields,
+  designLabel,
+  printPageFor,
+  syntaxEngine,
+  zplPage,
+  type DesignPage,
+  type Identified,
   type SymbologyId,
 } from "../src/index.ts";
 
@@ -263,6 +269,54 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       const top = Math.min(two.topLeft.y, two.topRight.y);
       expect(Math.abs(top - Math.round(label.printer.twoD!.y * (label.layout.xMm / 25.4) * dpi))).toBeLessThanOrEqual(1);
     });
+
+  // A label of one's own (backlog 4.2): each barcode with the commands of a symbol alone, read back from the whole page
+  // as Labelary prints it; its first bar or module where the page's layout puts it, to the dot (GS1 DataBar's left
+  // guard starts with a space, which the printer's corner includes); the text's capitals at their corner.
+  it.each([
+    [203, "distribution", "(01)09506000134376(10)B42(17)271231", [
+      { id: "t", kind: "text", text: "BATCH {10}", heightMm: 4, xMm: 6, yMm: 6 },
+      { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 94, yMm: 3 },
+      { id: "c", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 100, hri: true, xMm: 4, yMm: 40 },
+      { id: "m", kind: "symbol", symbology: "gs1-datamatrix", ais: ["01", "10"], size: 100, hri: true, xMm: 112, yMm: 44 },
+    ]],
+    [300, "retail", "(01)09506000134352(17)271231(10)B42", [
+      { id: "e", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 2, yMm: 2 },
+      { id: "x", kind: "symbol", symbology: "databar-expanded", ais: null, size: 100, hri: true, xMm: 2, yMm: 32 },
+      { id: "d", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 64, yMm: 4 },
+    ]],
+  ] as const)("a label of one's own at %i dpi: every barcode read back, each where the layout puts it", { timeout: 60000 }, async (dpi, environment, elementString, elements) => {
+    const engine = await syntaxEngine();
+    const page = { widthMm: 150, heightMm: 80, elements: elements as unknown as DesignPage["elements"] };
+    const designed = designLabel(page, engine.parse(elementString) as Identified, hriFont(), { environment });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    const zpl = zplPage(printed);
+    const png = await labelaryPng(zpl, dpi, printed.widthDots, printed.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 6 });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2); // Labelary centres the print width on its page
+    const dark = (x: number, y: number) => grey[y * width + x + offset]! < 128;
+    const dots = (mm: number) => Math.round((mm / 25.4) * dpi);
+    for (const s of designed.printer.symbols) {
+      const range = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.barRects : [0, s.layout.rects.length] as const;
+      const bars = s.layout.rects.slice(...range);
+      const [left, top] = [dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm), dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm)];
+      // From a few dots outside, along a row a few dots below the top and a column inside the first bar
+      let x = left - 8;
+      while (x < left + 8 && !dark(x, top + 4)) x++;
+      let y = top - 8;
+      while (y < top + 8 && !dark(left + 1, y)) y++;
+      expect([s.id, x, y]).toEqual([s.id, left, top]);
+    }
+    for (const t of page.elements.filter((e) => e.kind === "text")) {
+      let y = dots(t.yMm) - 8;
+      const row = (yy: number) => Array.from({ length: dots(20) }, (_, i) => dots(t.xMm) + i).some((xx) => dark(xx, yy));
+      while (y < dots(t.yMm) + 8 && !row(y)) y++;
+      expect(Math.abs(y - dots(t.yMm))).toBeLessThanOrEqual(1);
+    }
+  });
 
   // The test label of a printer profile (backlog 3.1): its 50 mm ruler measures 400 dots at 8 dots a millimetre.
   it("a test label: the symbol reads and the ruler is 50 mm", { timeout: 30000 }, async () => {

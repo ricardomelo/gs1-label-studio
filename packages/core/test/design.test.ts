@@ -12,6 +12,10 @@ import {
   labelFor,
   parseDelimited,
   printFileFor,
+  printPageFor,
+  printWidthDots,
+  snapToDots,
+  zplFontHeight,
   type LabelDesign,
   labelPdf,
   labelSvg,
@@ -85,6 +89,50 @@ describe("a label of one's own", () => {
     expect(await read(drawPdf(await labelPdf(label.options, label.layout, font), 300))).toEqual(label.expected);
   }, SLOW);
 
+  // In ZPL (backlog 4.2): each barcode with the commands of a symbol alone at its own whole dots a module, its bars'
+  // corner where the layout puts them; each line of text with ^A0 at its capitals' corner and height (Labelary prints
+  // it in labelary.test.ts)
+  it("writes the page in ZPL: each barcode as a symbol alone, where the layout puts it, and the text with ^A0", () => {
+    const design: LabelDesign = {
+      symbology: "dl-qrcode", hri: "full", version: null, error: "m", environment: "distribution", size: 100, linear: "none",
+      linearSize: null, bearer: "frame", reduction: 0, page: PAGE,
+    };
+    const drawn = labelFor(data, design, font);
+    const dots = (mm: number) => Math.round((mm / 25.4) * 203);
+    const zpl = printFileFor("zpl", drawn, design, 203);
+    expect(zpl).toContain(`^PW${dots(130)}\n^LL${dots(80)}`);
+    expect(zpl).toContain(`^FO${dots(6)},${dots(6)}^A0N,${zplFontHeight(dots(5))},${zplFontHeight(dots(5))}^FDFinest Truffle Tapenade^FS`);
+    expect(zpl).toContain(`^FO${dots(6)},${dots(18 + 3.5 * 1.4)}^A0N,${zplFontHeight(dots(3.5))},${zplFontHeight(dots(3.5))}^FDBEST BEFORE 271231^FS`);
+    // The QR code's modules and the GS1-128's bars start where the layout's do; the GS1-128 carries (01) and (17) with
+    // its text below, the QR code none
+    const page = printPageFor(drawn.designed!, 203);
+    for (const [index, s] of drawn.designed!.printer.symbols.entries()) {
+      const bars = s.layout.rects.slice(...(s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.barRects : [0, s.layout.rects.length]));
+      expect([page.symbols[index]!.options.x, page.symbols[index]!.options.y]).toEqual([
+        dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm), dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm),
+      ]);
+    }
+    expect(zpl).toMatch(/\^BQN,2,\d+\^FDMA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\^FS/);
+    expect(zpl).toContain("^FD>;>8010950600013437617271231^FS");
+    expect(zpl).toContain("^FD(01)09506000134376(17)271231^FS");
+    expect(zpl.match(/\^A0/g)).toHaveLength(4);
+    // Each at the whole dots within its table's row nearest to the layout's module
+    expect(page.symbols.map((s) => s.options.dotsPerModule)).toEqual([snapToDots(drawn.designed!.printer.symbols[0]!.layout.xMm, 203).dots, 4]);
+    // A test label adds the ruler; the print width is the page's
+    expect(printFileFor("zpl", drawn, design, 203, undefined, ["a note"])).toContain("50 mm: measure this line");
+    expect(printWidthDots(drawn, design, 203)).toBe(dots(130));
+    // GS1 DataBar starts with a space, its left guard's: the printer's corner a module before the first bar
+    const databar: DesignPage = { widthMm: 80, heightMm: 30, elements: [{ id: "x", kind: "symbol", symbology: "databar-expanded", ais: ["01", "17"], size: 100, hri: false, xMm: 2, yMm: 2 }] };
+    const bar = designLabel(databar, data, font, { environment: "retail" });
+    const first = Math.min(...bar.printer.symbols[0]!.layout.rects.map((r) => r[0])) * bar.printer.symbols[0]!.layout.xMm;
+    const d = printPageFor(bar, 300).symbols[0]!.options;
+    expect(d.x).toBe(Math.round(((2 + first) / 25.4) * 300) - d.dotsPerModule);
+    // Another language says it cannot write it yet; a barcode past the label's edge is refused, not cut
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL only/);
+    const past: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "b1" ? { ...e, xMm: 40 } : e)) } };
+    expect(() => printFileFor("zpl", labelFor(data, past, font), past, 203)).toThrow(/The GS1-128 runs past the label's edge at 4 dots a module/);
+  });
+
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {
     expect(fillFields("BATCH {10} · SERIAL {21}", data)).toBe("BATCH B42 · SERIAL ");
     expect(fillFields("{01}", data)).toBe("09506000134376");
@@ -107,8 +155,8 @@ describe("a label of one's own", () => {
     expect(designLabel(ean, data, font, { environment: "retail" }).expected).toEqual(["]E0 9506000134376"]);
   });
 
-  // In bulk (backlog 2.4): every row's page with its own data in the text and the barcodes; no printer language yet
-  it("draws every row's page in bulk, each with its own data, and says the printer languages cannot write it yet", async () => {
+  // In bulk (backlog 2.4): every row's page with its own data in the text and the barcodes, in the drawing and in ZPL
+  it("draws every row's page in bulk, each with its own data, in the files and in ZPL", async () => {
     const rows = checkRows(engine, parseDelimited("GTIN,Batch,Expiry\n09506000134376,B42,271231\n09506000134376,C7,280630"), ["01", "10", "17"], [], "https://id.gs1.org")
       .map((row) => ({ row: row.row, identified: row.identified! }));
     const design: LabelDesign = {
@@ -122,7 +170,11 @@ describe("a label of one's own", () => {
     expect(batch.generated).toBe(2);
     const files = unzip(batch.zip);
     expect(new TextDecoder().decode(files.get("C7.svg"))).toContain('aria-label="BATCH C7"');
-    expect(() => printFileFor("zpl", drawn[0]!, design, 203)).toThrow(/not written in printer languages yet/);
+    const zpl = await generateBatch(rows, { design, files: [], pattern: "{10}", pdf: false, zplDpi: 203 }, font);
+    const file = new TextDecoder().decode(unzip(zpl.zip).get("labels_dl-qrcode_203dpi.zpl"));
+    expect(file.match(/\^XA/g)).toHaveLength(2);
+    expect(file).toContain("^FDBATCH C7^FS");
+    expect(file).toContain("^FDMA,https://id.gs1.org/01/09506000134376/10/C7?17=280630^FS");
     expect(() => labelFor(rows[0]!.identified, { ...design, page: { ...PAGE, elements: PAGE.elements.filter((e) => e.kind === "text") } }, font)).toThrow(/needs a barcode/);
   }, SLOW);
 });

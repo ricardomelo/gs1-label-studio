@@ -468,6 +468,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › writes the page in ZPL: each barcode as a symbol alone, where the layout puts it, and the text with ^A0",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › fills a text's fields from the data, an AI it does not have leaving nothing",
      "status": "passed"
     },
@@ -480,7 +484,7 @@
      "status": "passed"
     },
     {
-     "name": "a label of one's own › draws every row's page in bulk, each with its own data, and says the printer languages cannot write it yet",
+     "name": "a label of one's own › draws every row's page in bulk, each with its own data, in the files and in ZPL",
      "status": "passed"
     }
    ],
@@ -1549,6 +1553,14 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label with a dl-qrcode at 300 dpi: every symbol read back",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: every barcode read back, each where the layout puts it",
      "status": "passed"
     },
     {

@@ -1172,15 +1172,34 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText(
     "✓ Read as intended: ]C1 (01)09506000134376(17)271231 and ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 });
-  // Exported as PDF; a printer language says it cannot write it yet
+  // Exported as PDF; in ZPL a 150 mm label is wider than the 104 mm printer prints
   await on(page, "export");
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("A label of one's own is not written in printer languages yet");
+  await expect(page.locator(".error.small")).toContainText("The label is 150.0 mm wide");
   // Deleting the selected element takes it off the page
   await on(page, "label");
   await page.locator(".design-list button", { hasText: "GS1-128" }).click();
   await page.getByRole("button", { name: "Delete" }).click();
   await expect(page.locator(".caption")).toHaveText("A label of my own 150 × 90 mm · QR code (GS1 Digital Link)");
+  // On a 100 mm label the QR code, at 112 mm, would print past the edge: refused; moved inside, the ZPL has the printer's
+  // own commands, each element where the page puts it
+  await page.fill("#page-width", "100");
+  await on(page, "export");
+  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("runs past the label's edge");
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "QR code" }).click();
+  await page.fill("#el-x", "5");
+  await page.fill("#el-y", "5");
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  const dots = (mm: number) => Math.round((mm / 25.4) * 203);
+  expect(file).toContain(`^PW${dots(100)}\n^LL${dots(90)}`);
+  expect(file).toContain(`^FO${dots(70)},${dots(6)}^A0N`);
+  expect(file).toContain("^FDBATCH B42^FS");
+  expect(file).toMatch(/\^BQN,2,\d+\^FDMA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\^FS/);
+  await expect(page.locator(".error.small")).toHaveCount(0);
 });

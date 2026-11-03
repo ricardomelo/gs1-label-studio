@@ -161,6 +161,11 @@
 - The GS1 Logistic Label in ZPL (backlog 3.2, 4.1): each GS1-128 a `^BC` at the printer profile's dots, the text and the
   rules where the layout puts them; the Export bar's file, the test print and the bulk ZPL file. TSPL, EPL2 and DPL
   refuse it for now, with the reason.
+- A label of one's own (backlog 4.2, mock-up A of two): in step 3, *Label* offers *A label of my own* — barcodes and
+  text blocks placed on a page of any size, chosen and dragged on the canvas or set in the panel; text with `{AI}`
+  fields filled from the data, so in bulk each row's label shows its own data; one layout, so SVG, PNG, PDF, EPS and the
+  files in bulk draw it, every barcode read back. In ZPL since 3 November: each barcode with the commands of the symbol
+  alone, its bars where the page puts them (to the dot through Labelary), the text with `^A0`.
 - The print files now carry the human readable text chosen for the label — every element string, the key's alone, or
   none — in ZPL, TSPL, EPL2 and DPL; until 3 November they printed every element string whatever was chosen.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

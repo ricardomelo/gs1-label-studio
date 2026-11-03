@@ -1,5 +1,6 @@
 import { MM_PER_INCH } from "./dots.ts";
 import type { QrMode } from "./encode.ts";
+import type { SymbologyId } from "./symbologies.ts";
 
 /**
  * What every printer language shares (ADR 0002): the symbol's place and size in whole dots, the label's size, the
@@ -46,6 +47,19 @@ export interface PrintLabelOptions extends PrintSymbolOptions {
   widthDots: number;
   heightDots: number;
   copies?: number;
+}
+
+/**
+ * A label of one's own (backlog 4.2) in dots: several symbols, each placed and sized as a symbol alone is, and lines of
+ * text, each with its capitals' top left corner and height. What a printer language writes the designer's page from.
+ */
+export interface PrintPage {
+  widthDots: number;
+  heightDots: number;
+  dpi: number;
+  copies?: number;
+  symbols: { symbology: SymbologyId; data: string; options: PrintSymbolOptions }[];
+  texts: { x: number; y: number; heightDots: number; text: string }[];
 }
 
 export const HRI_TEXT_MM = 2.2;

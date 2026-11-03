@@ -261,7 +261,10 @@ of my own (barcodes and text placed freely)*:
 
 A barcode past the label's edge, or overlapping another element (its quiet zones must stay clear), is named in red under
 the size; the label is still drawn. **Scan test** reads every barcode. The label exports as SVG, PNG, PDF and EPS and
-in bulk; the printer languages do not write it yet (its PDF prints it at its size).
+in bulk, and in ZPL with the printer's own commands (the Export bar's file, its test print and the bulk ZPL file): each
+barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
+row), its bars where the label puts them; each line of text with `^A0` at its capitals' height. A barcode whose bars
+would run past the label's edge at those dots is refused. TSPL, EPL2 and DPL do not write it yet.
 
 ## 6. The label's options
 
@@ -506,7 +509,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
-| *A label of one's own is not written in printer languages yet* | A print file of a label of one's own | Print its PDF at its size |
+| *A label of one's own is written in ZPL only, for now* | A TSPL, EPL2 or DPL profile | Use a ZPL profile, or print its PDF at its size |
+| *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *Table … does not allow …* | A barcode on a label of one's own that the scanning environment's table does not have | Choose another symbol, or another environment (or another answer in step 2) |
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |
