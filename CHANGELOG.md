@@ -199,4 +199,8 @@
   bytes, a dot whose bit is 0 black as Zebra says (Labelize, the emulator of the tests, prints them the other way round,
   so the tests invert them); the print file is then bytes, downloaded and joined in bulk unchanged. Every dot checked
   through Labelize at 203 and 300 dpi; not yet on an EPL2 printer.
+- Rotation on a label of one's own in EPL2 (backlog 4.2, 4 November): a turned barcode or line of text with `A`'s and
+  `B`'s rotation, its point of origin turned with it as the guide's figure 2 shows (Labelize places a turned field
+  otherwise, so its tests move the origin); ITF-14's bearer bars turned with it; a turned Data Matrix refused (`b` has
+  no rotation). Every dot of each symbol's bars checked through Labelize at 203 and 300 dpi.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -561,5 +561,6 @@
  "ZPL prints a QR code upright only (^BQ has no orientation): turn it back to 0°. A QR code is read in any direction.": "ZPL imprime un código QR solo derecho (^BQ no tiene orientación): vuelva a ponerlo a 0°. Un código QR se lee en cualquier dirección.",
  "A line of text runs past the label's edge: move it inside the label.": "Una línea de texto sobrepasa el borde de la etiqueta: muévala dentro de la etiqueta.",
  "A barcode's text runs past the label's edge: move the barcode inside the label.": "El texto de un código de barras sobrepasa el borde de la etiqueta: mueva el código dentro de la etiqueta.",
- "The studio's EPL2 file prints barcodes and text upright only, for now: its ZPL or PDF prints them turned.": "El archivo EPL2 del estudio imprime códigos y texto solo derechos, por ahora: su ZPL o su PDF los imprime girados."
+ "EPL2 prints a Data Matrix upright only (its b command has no rotation): turn it back to 0°, or print its ZPL or PDF.": "EPL2 imprime un Data Matrix solo derecho (su comando b no tiene rotación): vuélvalo a 0° o imprima su ZPL o PDF.",
+ "no turn for the EPL2 command {command}": "ninguna rotación para el comando EPL2 {command}"
 }

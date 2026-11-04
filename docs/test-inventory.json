@@ -480,7 +480,7 @@
      "status": "passed"
     },
     {
-     "name": "a label of one's own › turns a barcode, a text block and an image about their box, in the drawing and in ZPL",
+     "name": "a label of one's own › turns a barcode, a text block and an image about their box, in the drawing, in ZPL and in EPL2",
      "status": "passed"
     },
     {
@@ -2384,6 +2384,34 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi: a distribution gs1-128 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi: a retail ean13 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi: a distribution itf14 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi: a retail upce turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi: a retail ean8 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi: a line of text turned each way, where the page puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi: a line of text turned each way, where the page puts it",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason",
      "status": "passed"
     },
@@ -4125,7 +4153,7 @@
      ]
     },
     {
-     "name": "a label of one's own: a barcode and a text turned, printed in ZPL and kept in the work",
+     "name": "a label of one's own: a barcode and a text turned, printed in ZPL and EPL2 and kept in the work",
      "status": "listed",
      "projects": [
       "desktop",

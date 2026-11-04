@@ -484,8 +484,9 @@ complete.
   4 November (mock-up A of two, taken under the owner's rule; B turned the chosen element a quarter at a time from a
   button over the label): **Rotation** 0°, 90°, 180° or 270° in a barcode's, a text block's or an image's properties,
   its box's corner kept; in ZPL each field with its orientation (`R`, `I`, `B`), every dot of each symbol as the
-  upright one turned through Labelary; a QR code stays upright (`^BQ` has no orientation). Not yet: TSPL and DPL;
-  rotation in EPL2; saving the label is 4.3*
+  upright one turned through Labelary; a QR code stays upright (`^BQ` has no orientation); in EPL2 since 4 November with
+  `A`'s and `B`'s rotation, the origin turned with the object as the guide shows (Labelize places it otherwise; a
+  turned Data Matrix refused, `b` has no rotation). Not yet: TSPL and DPL; saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

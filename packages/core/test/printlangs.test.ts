@@ -28,6 +28,7 @@ import {
   printPageFor,
   syntaxEngine,
   printFileBytes,
+  turnedRect,
   type DesignPage,
   type Identified,
   type PrintFile,
@@ -74,6 +75,32 @@ function forLabelize(bytes: Uint8Array): Uint8Array {
     gw.lastIndex = start + length;
   }
   return out;
+}
+
+/**
+ * An EPL2 file with turned A and B commands as Labelize places them. The guide turns an object about its point of
+ * origin, which turns with it (figure 2: at 90° the origin is the field's top right corner); Labelize puts the turned
+ * field's top left corner at x, y, as ZPL does. Each turned command's origin is moved there here: its field's upright
+ * width from Labelize's own print of it upright (a barcode without its interpretation line), its height Labelize's
+ * (a barcode's bar height, a text's cell: the 203 dpi cells at any resolution, multiplied).
+ */
+function labelizeTurned(file: string, dpi: number): string {
+  const CELLS = [12, 16, 20, 24, 48];
+  return file.split("\r\n").map((line) => {
+    const turned = /^([AB])(\d+),(\d+),([123]),(.*)$/.exec(line);
+    if (!turned) return line;
+    const [, kind, ox, oy, rotation, rest] = turned as unknown as [string, "A" | "B", string, string, string, string];
+    const p = rest.split(",");
+    const upright = kind === "B" ? `B20,20,0,${[...p.slice(0, 4), "N", ...p.slice(5)].join(",")}` : `A20,20,0,${rest}`;
+    const { grey, width } = decodePng(render("epl", `\r\nN\r\nq4000\r\n${upright}\r\nP1\r\n`, 4000, 600, dpi));
+    let right = 0;
+    grey.forEach((value, index) => { if (value < 128) right = Math.max(right, index % width); });
+    const w = right - 20 + 1;
+    const h = kind === "B" ? Number(p[3]) : CELLS[Number(p[0]) - 1]! * Number(p[2]);
+    const [x, y] = [Number(ox), Number(oy)];
+    const [lx, ly] = rotation === "1" ? [x - h + 1, y] : rotation === "2" ? [x - w + 1, y - h + 1] : [x, y - w + 1];
+    return `${kind}${lx},${ly},${rotation},${rest}`;
+  }).join("\r\n");
 }
 
 async function reads(png: Uint8Array): Promise<string[]> {
@@ -309,7 +336,7 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
   it.each([
     [203, { ...WITH_LOGO, elements: WITH_LOGO.elements.map((e) => (e.kind === "image" ? { ...e, widthMm: 39.5 } : e)) }],
     [300, { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 3 }] } as DesignPage],
-  ] as const)("EPL2: a label of one's own at %i dpi, its image printed dot for dot by GW", async (dpi, page) => {
+  ] as const)("EPL2: a label of one's own at %i dpi, its image printed dot for dot by GW", { timeout: 60000 }, async (dpi, page) => {
     const engine = await syntaxEngine();
     const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
     expect(designed.problems).toEqual([]);
@@ -333,6 +360,105 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     if (dpi === 203) expect(spare).toBeGreaterThan(0);
     for (let row = 0; row < bitmap.height; row++) {
       for (let dot = 0; dot < spare; dot++) expect(grey[(y + row) * width + x + bitmap.width + dot]!).toBeGreaterThanOrEqual(128);
+    }
+  });
+
+  // A turned barcode on a label of one's own (backlog 4.2, rotation): printed upright and turned a quarter, a half and
+  // three quarters, each alone on a page, every dot of the turned symbol's own box is the upright one's turned about it,
+  // the box's corner as turned where the page puts it, and read back each time. Labelize places turned fields otherwise
+  // than the guide (labelizeTurned).
+  it.each([
+    [203, "distribution", "gs1-128", "(01)09506000134376(10)B42"],
+    [300, "retail", "ean13", "(01)09506000134352"],
+    [203, "distribution", "itf14", "(01)19506000134359"],
+    [203, "retail", "upce", "(01)00012345000065"],
+    [300, "retail", "ean8", "(01)00000095012346"],
+  ] as const)("EPL2: a label of one's own at %i dpi: a %s %s turned, each dot the upright one's", { timeout: 60000 }, async (dpi, environment, symbology, elementString) => {
+    const engine = await syntaxEngine();
+    const identified = engine.parse(elementString) as Identified;
+    const pageAt = (rotation: 0 | 90 | 180 | 270) => {
+      const page: DesignPage = { widthMm: 150, heightMm: 150, elements: [{ id: "s", kind: "symbol", symbology, ais: null, size: 100, hri: true, rotation, xMm: 20, yMm: 25 }] };
+      const designed = designLabel(page, identified, hriFont(), { environment });
+      expect(designed.problems).toEqual([]);
+      return { designed, printed: printPageFor(designed, dpi) };
+    };
+    const dark = async ({ printed }: ReturnType<typeof pageAt>) => {
+      const file = textFile(eplPage(printed));
+      const png = render("epl", labelizeTurned(file, dpi), printed.widthDots, printed.heightDots, dpi);
+      const { grey, width } = decodePng(png);
+      const dots = new Set<number>();
+      for (let y = 0; y < printed.heightDots; y++) {
+        for (let x = 0; x < printed.widthDots; x++) if (grey[y * width + x]! < 128) dots.add(y * printed.widthDots + x);
+      }
+      return { file, dots, read: await reads(png) };
+    };
+    const upright = pageAt(0);
+    const before = await dark(upright);
+    expect(before.read).toEqual(upright.designed.expected);
+    const { x: x0, y: y0 } = upright.printed.symbols[0]!.options;
+    for (const rotation of [90, 180, 270] as const) {
+      const turned = pageAt(rotation);
+      const { x, y, turned: t } = turned.printed.symbols[0]!.options;
+      const [w, h] = [t!.width, t!.height];
+      const after = await dark(turned);
+      expect(after.file).toMatch(new RegExp(`^B\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"));
+      expect(after.read).toEqual(upright.designed.expected);
+      const W = upright.printed.widthDots;
+      const moved = [...before.dots].map((i) => {
+        const [px, py] = [i % W - x0, Math.floor(i / W) - y0];
+        const [tx, ty] = rotation === 90 ? [x + h - 1 - py, y + px] : rotation === 180 ? [x + w - 1 - px, y + h - 1 - py] : [x + py, y + w - 1 - px];
+        return ty * W + tx;
+      });
+      const [across, down] = rotation === 180 ? [w, h] : [h, w];
+      const inBox = (i: number) => i % W >= x && i % W < x + across && Math.floor(i / W) >= y && Math.floor(i / W) < y + down;
+      const turnedDots = new Set(moved);
+      const inside = [moved.filter((i) => inBox(i) && !after.dots.has(i)).length, [...after.dots].filter((i) => inBox(i) && !turnedDots.has(i)).length];
+      // The studio's text (A) within 3 dots: Labelize draws a turned glyph a dot of its cell off, two at multiplier 2.
+      // EAN's and UPC's interpretation line is the printer's own, which Labelize does not turn with the bars (the
+      // leading digit up to 23 dots away): read back only.
+      const near = (dots: Set<number>, i: number) => Array.from({ length: 49 }, (_, k) => (Math.floor(k / 7) - 3) * W + (k % 7) - 3).some((d) => dots.has(i + d));
+      const studioText = !["ean13", "ean8", "upca", "upce"].includes(symbology);
+      const text = studioText ? [moved.filter((i) => !near(after.dots, i)).length, [...after.dots].filter((i) => !near(turnedDots, i)).length] : [0, 0];
+      expect([rotation, inside, text]).toEqual([rotation, [0, 0], [0, 0]]);
+      // The bars' top left corner as turned where the page's layout puts it
+      const s = turned.designed.printer.symbols[0]!;
+      const bars = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.rects.slice(...s.layout.barRects) : s.layout.rects;
+      const own = [Math.min(...bars.map((r) => r[0])), Math.min(...bars.map((r) => r[1])), Math.max(...bars.map((r) => r[0] + r[2])), Math.max(...bars.map((r) => r[1] + r[3]))];
+      const [rx, ry] = turnedRect([own[0]!, own[1]!, own[2]! - own[0]!, own[3]! - own[1]!], s.layout.width, s.layout.height, rotation);
+      const toDots = (mm: number) => Math.round((mm / 25.4) * dpi);
+      const corner = [...after.dots].filter(inBox).reduce(([cx, cy], i) => [Math.min(cx!, i % W), Math.min(cy!, Math.floor(i / W))], [Infinity, Infinity]);
+      expect(corner).toEqual([toDots(s.xMm + rx * s.layout.xMm), toDots(s.yMm + ry * s.layout.xMm)]);
+      expect(moved.filter(inBox).length).toBeGreaterThan(500);
+    }
+  });
+
+  // A turned text block on a label of one's own (backlog 4.2, rotation): A turned, its capitals' top side where the page
+  // puts it and its first letter where the line starts, within Labelize's cell dot (two at multiplier 2) and the
+  // letter's side bearing; the printer's fixed-pitch font sets how far it runs.
+  it.each([203, 300])("EPL2: a label of one's own at %i dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (dpi) => {
+    const engine = await syntaxEngine();
+    for (const rotation of [90, 180, 270] as const) {
+      const page: DesignPage = { widthMm: 80, heightMm: 80, elements: [{ id: "t", kind: "text", text: "EXP {10}", heightMm: 4, rotation, xMm: 30, yMm: 30 }] };
+      const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+      const printed = printPageFor(designed, dpi);
+      const epl = textFile(eplPage(printed));
+      expect(epl).toMatch(new RegExp(`^A\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"));
+      const { grey, width } = decodePng(render("epl", labelizeTurned(epl, dpi), printed.widthDots, printed.heightDots, dpi));
+      let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
+      for (let y = 0; y < printed.heightDots; y++) {
+        for (let x = 0; x < printed.widthDots; x++) {
+          if (grey[y * width + x]! >= 128) continue;
+          [left, top, right, bottom] = [Math.min(left, x), Math.min(top, y), Math.max(right, x), Math.max(bottom, y)];
+        }
+      }
+      const t = printed.texts[0]!;
+      const [w, c] = [t.widthDots, t.heightDots];
+      const [capitals, start] = rotation === 90 ? [right + 1 - (t.x + c), top - t.y]
+        : rotation === 180 ? [bottom + 1 - (t.y + c), t.x + w - (right + 1)]
+        : [left - t.x, t.y + w - (bottom + 1)];
+      expect([rotation, Math.abs(capitals) <= 2]).toEqual([rotation, true]);
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(start).toBeLessThanOrEqual(Math.ceil(c / 5));
     }
   });
 

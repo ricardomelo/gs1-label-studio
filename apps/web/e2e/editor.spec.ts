@@ -1506,8 +1506,9 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
 });
 
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
-// label turned with them, printed in ZPL with its field orientation and kept in the work; a QR code stays upright.
-test("a label of one's own: a barcode and a text turned, printed in ZPL and kept in the work", async ({ page }) => {
+// label turned with them, printed in ZPL with its field orientation and in EPL2 with its rotation, and kept in the work;
+// a QR code stays upright.
+test("a label of one's own: a barcode and a text turned, printed in ZPL and EPL2 and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1547,6 +1548,13 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL and kept
   const file = readFileSync((await zpl.path())!, "utf8");
   expect(file).toMatch(/\^BCR,/);
   expect(file).toMatch(/\^A0B,\d+,\d+\^FB\d+,1,0,L\^FDBATCH B42\^FS/);
+  // In EPL2 too, B and A with their rotation (1 a quarter, 3 three quarters)
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "epl2-203");
+  const [epl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "EPL2 (203 dpi)" }).click()]);
+  const eplFile = readFileSync((await epl.path())!, "utf8");
+  expect(eplFile).toMatch(/^B\d+,\d+,1,1E,/m);
+  expect(eplFile).toMatch(/^A\d+,\d+,3,\d,\d,\d,N,"BATCH B42"/m);
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);

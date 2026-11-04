@@ -293,7 +293,9 @@ dots is refused. In EPL2 too, each line of text in the printer's font whose capi
 keeps it within the width the label gives it, each line and filled box with `LO`, each outlined box with `X` and each
 image with `GW`, whose dots go as raw bytes: the EPL2 file of a label with an image is then not a text file, and is sent
 to the printer as it is, unchanged (see the printing guide). EPL2 refuses what it refuses for a symbol alone (GS1
-DataMatrix, the QR code, GS1 DataBar), and a turned barcode or text for now. TSPL and DPL do not write it yet.
+DataMatrix, the QR code, GS1 DataBar). A turned barcode or text goes in EPL2 with its rotation, its point of origin
+turned with it as the guide says; a Data Matrix has no rotation in EPL2, so one turned is refused there. TSPL and DPL
+do not write it yet.
 
 ## 6. The label's options
 
@@ -565,8 +567,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *… is not an image this browser can read* | **+ Image** or **Replace…** given a file that is not a PNG, JPEG, GIF, WebP or SVG image, or a damaged one | Choose the image file, or save it again as PNG |
 | *An image runs past the label's edge* | An image of a label of one's own past the label's edge, in a print file | Move it inside the label, or make it narrower |
 | *ZPL prints a QR code upright only…* | A QR code of a label of one's own turned (in a work file made by hand), in ZPL | Turn it back to 0°: a QR code reads in any direction |
-| *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text, past the label's edge, in ZPL | Move it inside the label |
-| *The studio's EPL2 file prints barcodes and text upright only, for now…* | A label of one's own with a turned barcode or text, in EPL2 | Print its ZPL or its PDF |
+| *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text or ITF-14 frame, past the label's edge, in ZPL or EPL2 | Move it inside the label |
+| *EPL2 prints a Data Matrix upright only…* | A turned Data Matrix of a label of one's own, in EPL2 | Turn it back to 0°, or print its ZPL or its PDF |
 | *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
 | *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |
 | *This file is not a work saved by GS1 Label Studio.* | **Open…** was given another file (a spreadsheet, an image) | Open a `.gs1-work.json` file saved here, or a ZPL downloaded here |

@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 1 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 55 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
-| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 82 |
+| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 89 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

@@ -260,8 +260,8 @@ describe("a label of one's own", () => {
 
   // Rotation (backlog 4.2): a barcode, a text block and an image turned a quarter, a half or three quarters about their
   // box, whose top left corner as turned stays where the page puts it; drawn turned in every output, read back, and in
-  // ZPL each field with its orientation; ^BQ and EPL2 refuse what they cannot print turned
-  it("turns a barcode, a text block and an image about their box, in the drawing and in ZPL", async () => {
+  // ZPL and EPL2 each field with its orientation; ^BQ and EPL2's b refuse what they cannot print turned
+  it("turns a barcode, a text block and an image about their box, in the drawing, in ZPL and in EPL2", async () => {
     expect(turnedRect([1, 2, 3, 4], 10, 20, 90, 100, 200)).toEqual([114, 201, 4, 3]);
     expect(turnedRect([1, 2, 3, 4], 10, 20, 180, 100, 200)).toEqual([106, 214, 3, 4]);
     expect(turnedRect([1, 2, 3, 4], 10, 20, 270, 100, 200)).toEqual([102, 206, 4, 3]);
@@ -344,9 +344,31 @@ describe("a label of one's own", () => {
     expect(zpl).toMatch(/\^A0R,.*\^FB\d+,1,0,C\^FD\(01\)/);
     expect(zpl).toMatch(/\^A0B,\d+,\d+\^FB\d+,1,0,L\^FDBATCH B42/);
     expect(zpl).not.toMatch(/\^(A0|B[A-Z0-9])N/);
-    expect(() => eplPage({ ...printed, images: [] })).toThrow(/upright only, for now/);
-    expect(() => eplPage({ ...printed, images: [], symbols: [] })).toThrow(/upright only, for now/);
-    expect(eplPage({ ...printed, images: [], symbols: [], texts: [] })).toMatch(/^N$/m);
+    // In EPL2 (Labelize prints them in printlangs.test.ts): B and A with their rotation, each origin the dot its
+    // upright top left one was, turned about the symbol's box or the text's capitals' box; a Data Matrix refused turned
+    expect(() => eplPage({ ...printed, images: [] })).toThrow(/no FNC1/);
+    const epl = textFile(eplPage({ ...printed, images: [], symbols: printed.symbols.slice(0, 1) }));
+    const c = printed.symbols[0]!.options;
+    expect(epl).toContain(`\r\nB${c.x + c.turned!.height - 1},${c.y},1,1E,`);
+    expect(epl.match(/^A\d+,\d+,1,/gm)).toHaveLength(1);
+    const lineAt = printed.texts.map((t) => `\r\nA${t.x},${t.y + t.widthDots - 1},3,`);
+    for (const at of lineAt) expect(epl).toContain(at);
+    expect(epl).not.toMatch(/^[AB]\d+,\d+,0,/m);
+    const dm: DesignPage = { widthMm: 60, heightMm: 60, elements: [{ id: "d", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, rotation: 90, xMm: 4, yMm: 4 }] };
+    const dmPrinted = printPageFor(designLabel(dm, data, font, { environment: "distribution" }), 203);
+    expect(() => eplPage(dmPrinted)).toThrow(/EPL2 prints a Data Matrix upright only \(its b command has no rotation\)/);
+    expect(textFile(eplPage({ ...dmPrinted, symbols: dmPrinted.symbols.map((s) => ({ ...s, options: { ...s.options, turned: undefined } })) }))).toMatch(/^b\d+,\d+,D,/m);
+    // An ITF-14 turned a quarter by the label's top edge: its bearer frame, left of its bars upright, would start above
+    // the label, refused; a little lower, the frame's top on the edge
+    const itf = (y: number, kind: "frame" | "bars" = "frame") => eplPage({
+      widthDots: 800, heightDots: 800, dpi: 203, texts: [], boxes: [],
+      symbols: [{ symbology: "itf14", data: "19506000134359", options: { x: 100, y, dotsPerModule: 2, barHeightDots: 100, dpi: 203, hri: true, bearer: { kind, thicknessDots: 8 }, turned: { rotation: 90, width: 270, height: 100 } } }],
+    });
+    expect(() => itf(27)).toThrow(/A barcode's text runs past the label's edge/);
+    expect(textFile(itf(28))).toMatch(/^X\d+,0,8,/m);
+    // Its bearer bars (LO, 310 dots long with the quiet zones, 8 thick, above and below the bars) turned beside them:
+    // the top one right of the 100-dot bars, the bottom one left
+    expect(textFile(itf(28, "bars")).match(/^LO.*$/gm)).toEqual(["LO200,8,8,310", "LO92,8,8,310"]);
     const qr: DesignPage = { widthMm: 60, heightMm: 60, elements: [{ id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, rotation: 90, xMm: 4, yMm: 4 }] };
     const qrLabel = designLabel(qr, data, font, { environment: "distribution" });
     expect(() => zplPage(printPageFor(qrLabel, 203))).toThrow(/ZPL prints a QR code upright only/);

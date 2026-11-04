@@ -126,17 +126,25 @@ const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 
  * A label of one's own (backlog 4.2) with EPL2's own commands, as ZPL writes it: each barcode with the commands of a
  * symbol alone where the page puts it; each line of text with A in the fixed-pitch font whose capitals come nearest its
  * height and that keeps it within the width the page gives it; each line and filled box with LO, each outlined box with
- * X; each image with GW, whose dots are raw bytes, so a page with an image is a print file of bytes (`PrintFile`). With
- * `notes`, a test label (backlog 3.1).
+ * X; each image with GW, whose dots are raw bytes, so a page with an image is a print file of bytes (`PrintFile`). A
+ * turned barcode or line of text with A's and B's rotation (`turnAbout`); a Data Matrix has none, so one turned is
+ * refused. With `notes`, a test label (backlog 3.1).
  */
 export function eplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): PrintFile {
-  // EPL2's rotation (B's and A's second parameter) is not yet shown to print where the page puts it (ADR 0002)
-  if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) {
-    throw new EplUnsupportedError("The studio's EPL2 file prints barcodes and text upright only, for now: its ZPL or PDF prints them turned.");
-  }
   const images = (page.images ?? []).map((image) => directGraphic(image.bitmap, image.x, image.y));
-  const symbols = page.symbols.flatMap((s) => fields(s.symbology, s.data, s.options));
-  const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L", page.dpi));
+  // A turned symbol: its commands written upright from its corner, then turned with it about its own box
+  const symbols = page.symbols.flatMap(({ symbology, data, options: { turned, ...upright } }) => {
+    if (turned && symbology === "dl-datamatrix") {
+      throw new EplUnsupportedError("EPL2 prints a Data Matrix upright only (its b command has no rotation): turn it back to 0°, or print its ZPL or PDF.");
+    }
+    const commands = fields(symbology, data, upright);
+    return turned ? turnAbout(commands, { x: upright.x, y: upright.y, width: turned.width, height: turned.height }, turned.rotation, BARCODE_TEXT_PAST) : commands;
+  });
+  // A turned line of text: its A command turned about its capitals' box, the text's start where the page puts it
+  const texts = page.texts.flatMap((t) => {
+    const commands = text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L", page.dpi);
+    return t.rotation ? turnAbout(commands, { x: t.x, y: t.y, width: t.widthDots, height: t.heightDots }, t.rotation, TEXT_PAST) : commands;
+  });
   // LO fills a rectangle (a line, a filled box); X draws a box's outline, its ends the box's outer edges
   const boxes = page.boxes.map((b) => b.thickness >= Math.min(b.width, b.height)
     ? `LO${b.x},${b.y},${b.width},${b.height}`
@@ -144,6 +152,48 @@ export function eplPage(page: PrintPage, options: { notes?: readonly string[] } 
   const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
   const commands = [...images, ...boxes, ...texts, ...symbols];
   return options.notes ? withRuler(commands, size, options.notes) : document(commands, size);
+}
+
+const BARCODE_TEXT_PAST = "A barcode's text runs past the label's edge: move the barcode inside the label.";
+const TEXT_PAST = "A line of text runs past the label's edge: move it inside the label.";
+/** EPL2's rotation for a turn clockwise (guide, A and B commands, p3). */
+const EPL_ROTATIONS = { 90: 1, 180: 2, 270: 3 } as const;
+
+/**
+ * Commands written upright from a box's corner, turned clockwise with it about the box (backlog 4.2), whose top left
+ * corner as turned is `box`'s `x` and `y` and whose upright size is its `width` and `height`. In EPL2 "the point of
+ * origin for a non-rotated object is the upper left corner; as an object rotates, the point of origin rotates with the
+ * object" (guide, Placing Elements in the Print Image, figure 2: a text turned 90° has its origin at its top right
+ * corner, 270° at its bottom left): so an A or B command keeps its own field and takes its origin, the dot its upright
+ * top left dot was, turned about the box, with its rotation (p3). LO and X have no rotation: their rectangle is turned.
+ * Labelize places a turned field's top left corner at x, y instead, as ZPL does: its tests move each origin there.
+ */
+function turnAbout(commands: string[], box: { x: number; y: number; width: number; height: number }, rotation: 90 | 180 | 270, past: string): string[] {
+  const { x, y, width: w, height: h } = box;
+  // A rectangle's top left corner and size as turned; a dot is a rectangle one dot square
+  const rect = (rx: number, ry: number, rw: number, rh: number): [number, number, number, number] => {
+    const [u, v] = [rx - x, ry - y];
+    const turned: [number, number, number, number] = rotation === 90 ? [x + h - v - rh, y + u, rh, rw]
+      : rotation === 180 ? [x + w - u - rw, y + h - v - rh, rw, rh]
+      : [x + v, y + w - u - rw, rh, rw];
+    if (turned[0] < 0 || turned[1] < 0) throw new EplUnsupportedError(past);
+    return turned;
+  };
+  return commands.map((command) => {
+    const field = /^([AB])(-?\d+),(-?\d+),0,/.exec(command);
+    if (field) {
+      const [nx, ny] = rect(Number(field[2]), Number(field[3]), 1, 1);
+      return `${field[1]}${nx},${ny},${EPL_ROTATIONS[rotation]},${command.slice(field[0].length)}`;
+    }
+    const line = /^LO(-?\d+),(-?\d+),(\d+),(\d+)$/.exec(command);
+    if (line) return `LO${rect(Number(line[1]), Number(line[2]), Number(line[3]), Number(line[4])).join(",")}`;
+    const box = /^X(-?\d+),(-?\d+),(\d+),(-?\d+),(-?\d+)$/.exec(command);
+    if (box) {
+      const [bx, by, bw, bh] = rect(Number(box[1]), Number(box[2]), Number(box[4]) - Number(box[1]), Number(box[5]) - Number(box[2]));
+      return `X${bx},${by},${box[3]},${bx + bw},${by + bh}`;
+    }
+    throw new Error(`no turn for the EPL2 command ${command}`);
+  });
 }
 
 /**
