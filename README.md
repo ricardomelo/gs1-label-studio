@@ -479,12 +479,13 @@ complete.
   corner, it goes 5 mm right and down, and again — done the same day. Images since 4 November (mock-up A of two, taken
   under the owner's rule; B added an empty image to fill in its properties, with a preview): **+ Image** takes a file
   at once and places it 20 mm wide, its height from its proportions, in black and white as label printers print; in
-  ZPL `^GFA`, every dot checked through Labelary; EPL2 refuses it for now (`GW` takes raw bytes). Rotation since
+  ZPL `^GFA`, every dot checked through Labelary; in EPL2 since 4 November as `GW` with raw bytes (a print file of
+  bytes; 0 prints black, as Zebra says, the other way round in Labelize, so its tests invert the bits). Rotation since
   4 November (mock-up A of two, taken under the owner's rule; B turned the chosen element a quarter at a time from a
   button over the label): **Rotation** 0°, 90°, 180° or 270° in a barcode's, a text block's or an image's properties,
   its box's corner kept; in ZPL each field with its orientation (`R`, `I`, `B`), every dot of each symbol as the
   upright one turned through Labelary; a QR code stays upright (`^BQ` has no orientation). Not yet: TSPL and DPL;
-  images and rotation in EPL2; saving the label is 4.3*
+  rotation in EPL2; saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

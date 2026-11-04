@@ -29,7 +29,7 @@ import {
   type LabelSheet,
   type SyntaxEngine,
 } from "../src/index.ts";
-import { drawPdf, unzip } from "./files.ts";
+import { drawPdf, textFile, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
 
 // Outputs in bulk (backlog 2.4): one design drawn for every row, the files of each row named by a pattern, one PDF a
@@ -225,11 +225,11 @@ describe("generating every row", () => {
     expect(zpl("none")).not.toContain("^A0");
     // Over two symbols, the key's line under the first alone
     const two: LabelDesign = { ...gs1128, hri: "key", gs1128Starts: [0, 1] };
-    expect(printFileFor("zpl", labelFor(data, two, font), two, 203).match(/\^A0/g)).toHaveLength(1);
+    expect(textFile(printFileFor("zpl", labelFor(data, two, font), two, 203)).match(/\^A0/g)).toHaveLength(1);
     const last = engine.parse("(01)09506000134352(17)271231(10)B42") as Identified;
-    expect(printFileFor("epl2", labelFor(last, two, font), two, 203).match(/^A\d/gm)).toHaveLength(1);
+    expect(textFile(printFileFor("epl2", labelFor(last, two, font), two, 203)).match(/^A\d/gm)).toHaveLength(1);
     const matrix: LabelDesign = { ...QR, symbology: "gs1-datamatrix", hri: "key" };
-    expect(printFileFor("tspl", labelFor(data, matrix, font), matrix, 203).match(/^TEXT /gm)).toHaveLength(1);
+    expect(textFile(printFileFor("tspl", labelFor(data, matrix, font), matrix, 203)).match(/^TEXT /gm)).toHaveLength(1);
     expect(printFileFor("zpl", labelFor(data, { ...matrix, hri: "none" }, font), { ...matrix, hri: "none" }, 203)).not.toContain("^A0");
     const ean: LabelDesign = { ...QR, symbology: "ean13", hri: "none", gtinOnly: true };
     const drawn = labelFor(data, ean, font);
@@ -255,7 +255,7 @@ describe("generating every row", () => {
     expect(printFileFor("zpl", drawn, design, 203, 4, ["a note"])).toContain("50 mm: measure this line");
     expect(printWidthDots(drawn, design, 203)).toBe(Math.round((148 / 25.4) * 203));
     expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL and EPL2 only/);
-    expect(printFileFor("epl2", drawn, design, 203).match(/,1E,/g)).toHaveLength(2); // EPL2 writes it (backlog 4.1)
+    expect(textFile(printFileFor("epl2", drawn, design, 203)).match(/,1E,/g)).toHaveLength(2); // EPL2 writes it (backlog 4.1)
     const tspl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
     expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL and EPL2 only/);
     // With a QR code beside the middle block: each row's own GS1 Digital Link URI, in the drawing and in the ZPL

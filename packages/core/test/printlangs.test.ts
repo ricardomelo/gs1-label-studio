@@ -4,7 +4,8 @@ import { lz_render_lang } from "@goodboy008/labelize-wasm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import { hriFont } from "./font.ts";
-import { GRAPHICS } from "./fixtures/graphics.ts";
+import { GRAPHICS, logo, WITH_LOGO } from "./fixtures/graphics.ts";
+import { textFile } from "./files.ts";
 import { decodePng, drawnBox } from "./png.ts";
 import {
   dplLabel,
@@ -26,8 +27,10 @@ import {
   eplPage,
   printPageFor,
   syntaxEngine,
+  printFileBytes,
   type DesignPage,
   type Identified,
+  type PrintFile,
   type SymbologyId,
 } from "../src/index.ts";
 
@@ -49,9 +52,28 @@ const WRITERS = { tspl: tsplLabel, epl: eplLabel, dpl: dplLabel };
  * Labelize's PNG of a print file, at the printer's dots a millimetre. DPL counts rows from the label's bottom, so its
  * canvas is made exactly the label's dots high at Labelize's whole dots a millimetre, or every row would move.
  */
-function render(language: Language, file: string, widthDots: number, heightDots: number, dpi: number): Uint8Array {
+function render(language: Language, file: PrintFile, widthDots: number, heightDots: number, dpi: number): Uint8Array {
   const mm = (dots: number) => (language === "dpl" ? dots / Math.round(dpi / 25.4) : (dots / dpi) * 25.4);
-  return lz_render_lang(new TextEncoder().encode(file), mm(widthDots), mm(heightDots), Math.round(dpi / 25.4), false, false, language);
+  return lz_render_lang(forLabelize(printFileBytes(file)), mm(widthDots), mm(heightDots), Math.round(dpi / 25.4), false, false, language);
+}
+
+/**
+ * The print file as Labelize takes it. EPL2's GW prints a dot black where its bit is 0 (Zebra's support note on GW);
+ * Labelize 1.10.0 prints it black where the bit is 1, as ZPL's ^GF does, so each GW's data bytes are inverted here,
+ * found from the command's own width and height, and nothing else in the file is touched.
+ */
+function forLabelize(bytes: Uint8Array): Uint8Array {
+  const out = bytes.slice();
+  const text = new TextDecoder("latin1").decode(bytes);
+  const gw = /(?:^|\n)GW(\d+),(\d+),(\d+),(\d+),/g;
+  let match: RegExpExecArray | null;
+  while ((match = gw.exec(text))) {
+    const start = match.index + match[0].length;
+    const length = Number(match[3]) * Number(match[4]);
+    for (let i = start; i < start + length; i++) out[i] = ~out[i]! & 0xff;
+    gw.lastIndex = start + length;
+  }
+  return out;
 }
 
 async function reads(png: Uint8Array): Promise<string[]> {
@@ -271,7 +293,7 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     const engine = await syntaxEngine();
     const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
     const printed = printPageFor(designed, dpi);
-    const epl = eplPage(printed);
+    const epl = textFile(eplPage(printed));
     expect(epl.match(/^X\d/gm)).toHaveLength(2);
     expect(epl.match(/^LO\d/gm)).toHaveLength(3);
     const png = render("epl", epl, printed.widthDots, printed.heightDots, dpi);
@@ -279,6 +301,39 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     const { grey, width } = decodePng(png);
     const dark = (x: number, y: number) => grey[y * width + x]! < 128;
     expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
+  });
+
+  // An image on a label of one's own (backlog 4.2): GW sends its dots as raw bytes, so the print file is bytes; every
+  // dot printed where the page puts it, the symbol beside it read back. The logo 39.5 mm wide is not a whole number of
+  // bytes at 203 dpi, so its last byte's spare dots are white; a picture 1 134 dots square goes as one GW of 142 bytes a row.
+  it.each([
+    [203, { ...WITH_LOGO, elements: WITH_LOGO.elements.map((e) => (e.kind === "image" ? { ...e, widthMm: 39.5 } : e)) }],
+    [300, { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 3 }] } as DesignPage],
+  ] as const)("EPL2: a label of one's own at %i dpi, its image printed dot for dot by GW", async (dpi, page) => {
+    const engine = await syntaxEngine();
+    const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    const file = eplPage(printed);
+    expect(file).toBeInstanceOf(Uint8Array);
+    const { x, y, bitmap } = printed.images![0]!;
+    expect(new TextDecoder().decode((file as Uint8Array).subarray(0, 40))).toContain(`\r\nGW${x},${y},${Math.ceil(bitmap.width / 8)},${bitmap.height},`);
+    const png = render("epl", file, printed.widthDots, printed.heightDots, dpi);
+    expect(await reads(png)).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    let differ = 0;
+    for (let i = 0; i < bitmap.width * bitmap.height; i++) {
+      const dark = grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width)]! < 128;
+      if (Number(dark) !== bitmap.dark[i]) differ++;
+    }
+    expect(differ).toBe(0);
+    expect(bitmap.dark.reduce((a, b) => a + b, 0)).toBeGreaterThan(1000);
+    // Nothing printed in the spare dots right of the image
+    const spare = 8 * Math.ceil(bitmap.width / 8) - bitmap.width;
+    if (dpi === 203) expect(spare).toBeGreaterThan(0);
+    for (let row = 0; row < bitmap.height; row++) {
+      for (let dot = 0; dot < spare; dot++) expect(grey[(y + row) * width + x + bitmap.width + dot]!).toBeGreaterThanOrEqual(128);
+    }
   });
 
   it("EPL2: the GS1 Logistic Label refused where EPL2 cannot write it, with the reason", () => {

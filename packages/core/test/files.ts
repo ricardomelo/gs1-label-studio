@@ -51,3 +51,9 @@ export function unzip(zip: Uint8Array): Map<string, Uint8Array> {
   return files;
 }
 
+
+/** A print file the test expects as text (no GW image in it): its text, else the test fails. */
+export function textFile(file: string | Uint8Array): string {
+  expect(typeof file, "a print file of text").toBe("string");
+  return file as string;
+}

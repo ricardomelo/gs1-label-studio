@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GENERIC_PROFILES, moduleChoice, printWidthProblem, profileProblem, zplLabel, zplTestAreaDots, zplTestLabel } from "../src/index.ts";
+import { GENERIC_PROFILES, joinPrintFiles, moduleChoice, printFileBytes, printWidthProblem, profileProblem, zplLabel, zplTestAreaDots, zplTestLabel } from "../src/index.ts";
 
 // Printer profiles (backlog 3.1): whole dots a module within the table's range, the print width, a test label.
 
@@ -46,5 +46,17 @@ describe("a test label", () => {
     expect(zpl).toContain("^FD50 mm: measure this line^FS");
     expect(zpl).toContain("^FDModule: 3 dots^FS");
     expect(zpl).toContain(zplLabel("gs1-128", "(01)09506000134352", o).split("\n").find((l) => l.includes("^BCN"))!);
+  });
+});
+
+// A print file is text, or bytes when EPL2 sends an image (GW): in bulk every label's file goes into one, a line feed
+// between them, bytes when any one is, its text as UTF-8 and its bytes untouched
+describe("print files of text and bytes", () => {
+  it("joins text as text and text with bytes as bytes, the bytes as they were", () => {
+    expect(joinPrintFiles(["A", "B"])).toBe("A\nB");
+    const bytes = Uint8Array.from([0x47, 0x57, 0x00, 0xff, 0x0a, 0x80]);
+    expect(joinPrintFiles(["é", bytes, "C"])).toEqual(Uint8Array.from([0xc3, 0xa9, 0x0a, ...bytes, 0x0a, 0x43]));
+    expect(printFileBytes("é")).toEqual(Uint8Array.from([0xc3, 0xa9]));
+    expect(printFileBytes(bytes)).toBe(bytes);
   });
 });

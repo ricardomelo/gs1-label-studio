@@ -118,6 +118,9 @@ function download(name: string, content: string | Uint8Array<ArrayBuffer>, type:
   URL.revokeObjectURL(url);
 }
 
+// A print file is text, or bytes when EPL2 sends an image (GW): then not text, so that nothing changes its bytes
+const printFileType = (file: string | Uint8Array) => (typeof file === "string" ? "text/plain" : "application/octet-stream");
+
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 // In bulk, the columns chosen for a file are kept for the next file with the same headers (localStorage: a convenience
@@ -450,7 +453,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         : printFileFor(language.id, d, design, settings.dpi, module?.chosen.dots);
       if (zplWidthProblem) throw new Error(zplWidthProblem);
       // The ZPL carries the work in comments, so that Open… takes it back (backlog 4.3)
-      download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, !template && language.id === "zpl" ? zplWithWork(file, currentWork()) : file, "text/plain");
+      download(`${name}${template ? "-template.zpl" : `.${language.extension}`}`, !template && typeof file === "string" && language.id === "zpl" ? zplWithWork(file, currentWork()) : file, printFileType(file));
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
@@ -470,7 +473,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         `${SYMBOLOGIES[symbology].name}: ${data.length > 60 ? `${data.slice(0, 57)}...` : data}`,
         `GS1 Label Studio, ${new Date().toISOString().slice(0, 10)}`,
       ];
-      download(`${name}-test-${settings.dpi}dpi.${language.extension}`, printFileFor(language.id, d, design, settings.dpi, module.chosen.dots, notes), "text/plain");
+      const file = printFileFor(language.id, d, design, settings.dpi, module.chosen.dots, notes);
+      download(`${name}-test-${settings.dpi}dpi.${language.extension}`, file, printFileType(file));
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));

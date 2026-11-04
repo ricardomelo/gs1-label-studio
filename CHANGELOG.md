@@ -195,4 +195,8 @@
   moment after each change and when the page is left; the next visit asks in a bar under the header, with the time it
   was kept and the key's element string, whether to **Continue it** or **Start anew**, never bringing it back unasked
   and keeping nothing over it until answered. A first visit's work keeps nothing; Start over empties it.
+- An image on a label of one's own in EPL2 (backlog 4.2, 4 November): `GW` at the image's corner with its dots as raw
+  bytes, a dot whose bit is 0 black as Zebra says (Labelize, the emulator of the tests, prints them the other way round,
+  so the tests invert them); the print file is then bytes, downloaded and joined in bulk unchanged. Every dot checked
+  through Labelize at 203 and 300 dpi; not yet on an EPL2 printer.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -555,7 +555,6 @@
  "the symbol picked in step 2": "símbolo elegido en el paso 2",
  "An image needs a width greater than 0 mm.": "Una imagen necesita un ancho mayor que 0 mm.",
  "An image runs past the label's edge: move it inside the label.": "Una imagen sobrepasa el borde de la etiqueta: muévala dentro de la etiqueta.",
- "EPL2 sends an image as raw bytes, which the studio's EPL2 file does not carry yet: its ZPL or PDF prints it.": "EPL2 envía una imagen como bytes sin formato, que el archivo EPL2 del estudio aún no lleva: su ZPL o su PDF la imprimen.",
  "The image has no pixels.": "La imagen no tiene píxeles.",
  "The image's pixels are damaged.": "Los píxeles de la imagen están dañados.",
  "The image is {width} × {height} pixels: an image on the label takes at most {PICTURE_MAX_SIDE} pixels a side.": "La imagen tiene {width} × {height} píxeles: una imagen en la etiqueta tiene como máximo {PICTURE_MAX_SIDE} píxeles por lado.",

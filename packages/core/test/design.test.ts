@@ -34,7 +34,7 @@ import {
 } from "../src/index.ts";
 import { bitmapRects, graphicFields, labelPixels, labelPng, pictureBitmap, resample, turnedPicture, turnedRect } from "../src/index.ts";
 import { WITH_LOGO } from "./fixtures/graphics.ts";
-import { drawPdf, unzip } from "./files.ts";
+import { drawPdf, textFile, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
 
 // A label of one's own (backlog 4.2): barcodes and text blocks placed on a page in millimetres, one Layout drawn by the
@@ -108,7 +108,7 @@ describe("a label of one's own", () => {
     };
     const drawn = labelFor(data, design, font);
     const dots = (mm: number) => Math.round((mm / 25.4) * 203);
-    const zpl = printFileFor("zpl", drawn, design, 203);
+    const zpl = textFile(printFileFor("zpl", drawn, design, 203));
     expect(zpl).toContain(`^PW${dots(130)}\n^LL${dots(80)}`);
     expect(zpl).toContain(`^FO${dots(6)},${dots(6)}^A0N,${zplFontHeight(dots(5))},${zplFontHeight(dots(5))}^FDFinest Truffle Tapenade^FS`);
     expect(zpl).toContain(`^FO${dots(6)},${dots(18 + 3.5 * 1.4)}^A0N,${zplFontHeight(dots(3.5))},${zplFontHeight(dots(3.5))}^FDBEST BEFORE 271231^FS`);
@@ -208,8 +208,8 @@ describe("a label of one's own", () => {
   }, SLOW);
 
   // An image (backlog 4.2, step d): a logo as a one-bit picture, drawn where the page puts it in every output and sent
-  // to a ZPL printer as a graphic field at its dots; EPL2 refuses it rather than print it wrong
-  it("draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF", async () => {
+  // to a ZPL printer as a graphic field at its dots, to an EPL2 printer as GW's raw bytes
+  it("draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF and in EPL2 as GW", async () => {
     const label = designLabel(WITH_LOGO, data, font, { environment: "distribution" });
     const { layout } = label;
     expect(label.problems).toEqual([]);
@@ -235,7 +235,20 @@ describe("a label of one's own", () => {
       const at = { x: dots(4), y: dots(4), bitmap: resample(bitmap, dots(44) - dots(4), dots(24) - dots(4)) };
       expect(page.images).toEqual([at]);
       expect(zplPage(page)).toContain(graphicFields(at.bitmap, at.x, at.y).join("\n"));
-      expect(() => eplPage(page)).toThrow(/EPL2 sends an image as raw bytes/);
+      // EPL2's GW: its corner, its bytes a row and its rows, then each dot a bit, 0 where it is dark (Zebra), the last
+      // byte's spare dots 1; the rest of the file as text
+      const epl = eplPage(page) as Uint8Array;
+      const header = `GW${at.x},${at.y},${Math.ceil(at.bitmap.width / 8)},${at.bitmap.height},`;
+      const start = new TextDecoder("latin1").decode(epl).indexOf(`\r\n${header}`) + 2 + header.length;
+      const row = Math.ceil(at.bitmap.width / 8);
+      for (let yy = 0; yy < at.bitmap.height; yy++) {
+        for (let xx = 0; xx < row * 8; xx++) {
+          const bit = (epl[start + yy * row + (xx >> 3)]! >> (7 - (xx & 7))) & 1;
+          if (bit !== (xx < at.bitmap.width && at.bitmap.dark[yy * at.bitmap.width + xx] ? 0 : 1)) throw new Error(`dot ${xx},${yy} at ${dpi} dpi`);
+        }
+      }
+      expect(new TextDecoder().decode(epl.subarray(start + row * at.bitmap.height))).toMatch(/^\r\nb\d+,\d+,D,/);
+      expect(typeof eplPage({ ...page, images: [] })).toBe("string");
     }
     // Past the label's edge: named in the editor, refused in a print file
     const past = designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 99 }] }, data, font, { environment: "distribution" });

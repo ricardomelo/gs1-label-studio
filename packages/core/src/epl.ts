@@ -2,12 +2,15 @@ import { dotsWithin, MM_PER_INCH } from "./dots.ts";
 import { encode, widthInModules } from "./encode.ts";
 import { hasPredefinedLength, parseElementString } from "./elementString.ts";
 import type { LogisticLabel } from "./logistic.ts";
+import type { Bitmap } from "./raster.ts";
 import {
   bitmapFontFor,
+  concatBytes,
   hriTextDots,
   PrinterUnsupportedError,
   textLines,
   type BitmapFont,
+  type PrintFile,
   type PrintLabelOptions,
   type PrintPage,
   type PrintSymbolOptions,
@@ -123,15 +126,15 @@ const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 
  * A label of one's own (backlog 4.2) with EPL2's own commands, as ZPL writes it: each barcode with the commands of a
  * symbol alone where the page puts it; each line of text with A in the fixed-pitch font whose capitals come nearest its
  * height and that keeps it within the width the page gives it; each line and filled box with LO, each outlined box with
- * X. With `notes`, a test label (backlog 3.1).
+ * X; each image with GW, whose dots are raw bytes, so a page with an image is a print file of bytes (`PrintFile`). With
+ * `notes`, a test label (backlog 3.1).
  */
-export function eplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
-  // GW sends an image's dots as raw bytes, which a text file cannot carry unchanged: refused rather than printed wrong
-  if (page.images?.length) throw new EplUnsupportedError("EPL2 sends an image as raw bytes, which the studio's EPL2 file does not carry yet: its ZPL or PDF prints it.");
+export function eplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): PrintFile {
   // EPL2's rotation (B's and A's second parameter) is not yet shown to print where the page puts it (ADR 0002)
   if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) {
     throw new EplUnsupportedError("The studio's EPL2 file prints barcodes and text upright only, for now: its ZPL or PDF prints them turned.");
   }
+  const images = (page.images ?? []).map((image) => directGraphic(image.bitmap, image.x, image.y));
   const symbols = page.symbols.flatMap((s) => fields(s.symbology, s.data, s.options));
   const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L", page.dpi));
   // LO fills a rectangle (a line, a filled box); X draws a box's outline, its ends the box's outer edges
@@ -139,11 +142,32 @@ export function eplPage(page: PrintPage, options: { notes?: readonly string[] } 
     ? `LO${b.x},${b.y},${b.width},${b.height}`
     : `X${b.x},${b.y},${b.thickness},${b.x + b.width},${b.y + b.height}`);
   const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
-  return options.notes ? withRuler([...boxes, ...texts, ...symbols], size, options.notes) : document([...boxes, ...texts, ...symbols], size);
+  const commands = [...images, ...boxes, ...texts, ...symbols];
+  return options.notes ? withRuler(commands, size, options.notes) : document(commands, size);
 }
 
+/**
+ * An image with GW (guide, Direct Graphic Write): its corner, its width in bytes (eight dots a byte), its height in
+ * dots, then the dots as raw bytes, a row at a time, the leftmost dot in the highest bit. A dot whose bit is 0 prints
+ * black and 1 leaves it white (Zebra's support note on GW; the guide does not say), so the dots past the image's width
+ * in its last byte are 1s. Labelize prints the bits the other way round, so its tests invert them first.
+ */
+function directGraphic(bitmap: Bitmap, x: number, y: number): Uint8Array<ArrayBuffer> {
+  const row = Math.ceil(bitmap.width / 8);
+  const bits = new Uint8Array(row * bitmap.height).fill(0xff);
+  for (let yy = 0; yy < bitmap.height; yy++) {
+    for (let xx = 0; xx < bitmap.width; xx++) if (bitmap.dark[yy * bitmap.width + xx]) bits[yy * row + (xx >> 3)]! &= ~(0x80 >> (xx & 7));
+  }
+  return concatBytes([`GW${x},${y},${row},${bitmap.height},`, bits]);
+}
+
+/** A command: its text, or its bytes where it carries raw binary data (GW). */
+type Command = string | Uint8Array<ArrayBuffer>;
+
 /** The commands, then a 50 mm ruler below the label with a tick every 10 mm and the settings as text. */
-function withRuler(commands: string[], options: PrintLabelOptions, notes: readonly string[]): string {
+function withRuler(commands: string[], options: PrintLabelOptions, notes: readonly string[]): string;
+function withRuler(commands: Command[], options: PrintLabelOptions, notes: readonly string[]): PrintFile;
+function withRuler(commands: Command[], options: PrintLabelOptions, notes: readonly string[]): PrintFile {
   const dpi = options.dpi;
   const mm = (value: number) => Math.round((value / MM_PER_INCH) * dpi);
   const top = options.heightDots + mm(2);
@@ -160,9 +184,14 @@ function withRuler(commands: string[], options: PrintLabelOptions, notes: readon
   return document([...commands, ...ruler], { ...options, widthDots: Math.max(options.widthDots, x + mm(52)) });
 }
 
-function document(commands: string[], options: PrintLabelOptions): string {
+/** The print file: text, or bytes when a command carries raw binary data. */
+function document(commands: string[], options: PrintLabelOptions): string;
+function document(commands: Command[], options: PrintLabelOptions): PrintFile;
+function document(commands: Command[], options: PrintLabelOptions): PrintFile {
   // A blank line first ends whatever the printer was given before (guide, N); q sets the print width in dots
-  return ["", "N", `q${options.widthDots}`, ...commands, `P${options.copies ?? 1}`, ""].join("\r\n");
+  const lines = ["", "N", `q${options.widthDots}`, ...commands, `P${options.copies ?? 1}`, ""];
+  if (lines.every((line) => typeof line === "string")) return lines.join("\r\n");
+  return concatBytes(lines.flatMap((line, index) => (index ? ["\r\n", line] : [line])));
 }
 
 /**

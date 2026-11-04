@@ -171,7 +171,7 @@ Each module, in the order of the flow above.
 | `zip.ts`, `deflate.ts` | `labelZip` with its README; deflate through Compression Streams |
 | `dots.ts` | `snapToDots`, `dotsWithin`: the printer's dot grid |
 | `zpl.ts` | `zplLabel`, `zplTemplate`, `fillTemplate`, `zplTestLabel`, `gs1128FieldData` (mode N, FNC1, code sets), graphic fields in stripes, `zplPage` (a label of one's own, its turned fields: `zplTurnedField`) |
-| `printers.ts` | What every printer language shares: `PrintSymbolOptions`, `PrintLabelOptions`, `PrinterUnsupportedError`, the text lines around a symbol (`textLines`), the bitmap font nearest a height |
+| `printers.ts` | What every printer language shares: `PrintSymbolOptions`, `PrintLabelOptions`, `PrinterUnsupportedError`, `PrintFile` (text, or bytes where EPL2's `GW` carries an image) with `printFileBytes` and `joinPrintFiles`, the text lines around a symbol (`textLines`), the bitmap font nearest a height |
 | `tspl.ts`, `epl.ts`, `dpl.ts` | TSPL/TSPL2, EPL2 and DPL with the printer's commands (`tsplLabel`, `eplLabel`, `dplLabel` and their test labels); DPL's positions in tenths of a millimetre from the label's bottom left corner; what Labelize does not read back refused |
 | `printFile.ts` | `PRINTER_LANGUAGES` (name, extension, printers, how checked, templates), `printLabel` and `printTestLabel` by language |
 | `printer.ts` | `GENERIC_PROFILES`, `profileProblem`, `moduleChoice`, `printWidthProblem` |
@@ -288,7 +288,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 5 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
-| `printer` | the module in whole dots, profiles, the test label | 4 |
+| `printer` | the module in whole dots, profiles, the test label | 5 |
 | `pyformat` | Python's fixed-point rounding | 2 |
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 1 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 55 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
-| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 80 |
+| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 82 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

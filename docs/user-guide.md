@@ -290,9 +290,10 @@ row), its bars where the label puts them; each line of text with `^A0` at its ca
 image's pixel under its centre; a turned barcode or text with its field turned (`R`, `I`, `B`) and a turned image sent
 turned. A barcode whose bars, or a line, box or image, would run past the label's edge at those
 dots is refused. In EPL2 too, each line of text in the printer's font whose capitals come nearest its height and that
-keeps it within the width the label gives it, each line and filled box with `LO` and each outlined box with `X`; EPL2
-refuses what it refuses for a symbol alone (GS1 DataMatrix, the QR code, GS1 DataBar), and an image or a turned element
-for now (its `GW` command sends raw bytes). TSPL and DPL do not write it yet.
+keeps it within the width the label gives it, each line and filled box with `LO`, each outlined box with `X` and each
+image with `GW`, whose dots go as raw bytes: the EPL2 file of a label with an image is then not a text file, and is sent
+to the printer as it is, unchanged (see the printing guide). EPL2 refuses what it refuses for a symbol alone (GS1
+DataMatrix, the QR code, GS1 DataBar), and a turned barcode or text for now. TSPL and DPL do not write it yet.
 
 ## 6. The label's options
 
@@ -563,7 +564,6 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *A line or box needs a length, a width and a thickness greater than 0 mm* | A line or box of a label of one's own with a size of 0 | Give it a size |
 | *… is not an image this browser can read* | **+ Image** or **Replace…** given a file that is not a PNG, JPEG, GIF, WebP or SVG image, or a damaged one | Choose the image file, or save it again as PNG |
 | *An image runs past the label's edge* | An image of a label of one's own past the label's edge, in a print file | Move it inside the label, or make it narrower |
-| *EPL2 sends an image as raw bytes…* | A label of one's own with an image, in EPL2 | Print its ZPL or its PDF |
 | *ZPL prints a QR code upright only…* | A QR code of a label of one's own turned (in a work file made by hand), in ZPL | Turn it back to 0°: a QR code reads in any direction |
 | *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text, past the label's edge, in ZPL | Move it inside the label |
 | *The studio's EPL2 file prints barcodes and text upright only, for now…* | A label of one's own with a turned barcode or text, in EPL2 | Print its ZPL or its PDF |

@@ -17,7 +17,7 @@ import { fileName, zipArchive } from "./zip.ts";
 import { designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { pictureBitmap, resample } from "./picture.ts";
-import { PrinterUnsupportedError, type PrintPage } from "./printers.ts";
+import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel, eplPage } from "./epl.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
@@ -276,10 +276,11 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 /**
  * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
  * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL and EPL2 (backlog 4.1), a
- * label of one's own in ZPL and EPL2 (backlog 4.2), each of its barcodes at its own whole dots a module.
+ * label of one's own in ZPL and EPL2 (backlog 4.2), each of its barcodes at its own whole dots a module: text, or bytes
+ * when EPL2 sends an image (GW).
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
-  notes?: readonly string[]): string {
+  notes?: readonly string[]): PrintFile {
   if (drawn.designed) {
     if (language === "epl2") return eplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
     if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL and EPL2 only, for now: its PDF prints it at its size.");
@@ -419,7 +420,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
   const made = new Map<BatchRow, string[]>();
   const notes = new Map<BatchRow, string[]>();
   const note = (row: BatchRow, text: string) => notes.set(row, [...(notes.get(row) ?? []), text]);
-  const zpl: string[] = [];
+  const zpl: PrintFile[] = [];
   let done = 0;
   for (const d of ready) {
     const { options, layout } = d.label!;
@@ -461,7 +462,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
   }
   if (request.zplDpi && zpl.length) {
     const name = `${stem}_${request.zplDpi}dpi.${PRINTER_LANGUAGES[language].extension}`;
-    files.push({ name, bytes: utf8(zpl.join("\n")) });
+    files.push({ name, bytes: printFileBytes(joinPrintFiles(zpl)) });
     for (const d of ready) if (!notes.get(d.row)?.some((n) => n.startsWith(`${languageName}:`))) made.get(d.row)!.push(name);
   }
   const csv = toDelimited([

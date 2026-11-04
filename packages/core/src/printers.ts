@@ -11,6 +11,35 @@ import type { SymbologyId } from "./symbologies.ts";
  */
 export class PrinterUnsupportedError extends Error {}
 
+/**
+ * A print file: text, or bytes where a command carries raw binary data that text cannot hold unchanged (EPL2's GW, an
+ * image's dots). Its text is written as UTF-8 either way, as a text file is saved.
+ */
+export type PrintFile = string | Uint8Array<ArrayBuffer>;
+
+/** A print file's bytes: its text as UTF-8, or its bytes as they are. */
+export function printFileBytes(file: PrintFile): Uint8Array<ArrayBuffer> {
+  return typeof file === "string" ? new TextEncoder().encode(file) : file;
+}
+
+/** Print files one after the other, a line feed between them: text when every one is text, else bytes. */
+export function joinPrintFiles(files: readonly PrintFile[]): PrintFile {
+  if (files.every((file) => typeof file === "string")) return files.join("\n");
+  return concatBytes(files.flatMap((file, index) => (index ? ["\n", file] : [file])));
+}
+
+/** Text and bytes one after the other, the text as UTF-8. */
+export function concatBytes(parts: readonly PrintFile[]): Uint8Array<ArrayBuffer> {
+  const bytes = parts.map(printFileBytes);
+  const all = new Uint8Array(bytes.reduce((n, b) => n + b.length, 0));
+  let at = 0;
+  for (const b of bytes) {
+    all.set(b, at);
+    at += b.length;
+  }
+  return all;
+}
+
 export interface PrintSymbolOptions {
   /** Top left corner of the symbol (not of its quiet zone), in dots. */
   x: number;

@@ -1442,8 +1442,9 @@ test("the last work kept in this browser and offered on the next visit; Start an
 });
 
 // Item 4.2, step d (mock-up A of two, 3 November 2026): + Image takes a file at once and places it 20 mm wide, as high as
-// its proportions make it, in black and white; it prints in ZPL as a graphic field and is kept in the work file.
-test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL and kept in the work", async ({ page }) => {
+// its proportions make it, in black and white; it prints in ZPL as a graphic field, in EPL2 with GW's raw bytes, and is
+// kept in the work file.
+test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL and EPL2 and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1475,6 +1476,23 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   const dots = (mm: number) => Math.round((mm / 25.4) * 203);
   expect(file).toContain(`^FO${dots(50)},${dots(4)}^GFA,`);
   expect(file).toMatch(new RegExp(`\\^GFA,(\\d+),\\1,${Math.ceil((dots(90) - dots(50)) / 8)},`));
+  // In EPL2, GW with the dots as raw bytes, each byte as it was sent (a file of bytes, not of text); EPL2 has no QR
+  // code, so the page's becomes a Data Matrix first
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  await page.selectOption("#el-symbol", "dl-datamatrix");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "epl2-203");
+  const [epl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "EPL2 (203 dpi)" }).click()]);
+  const bytes = readFileSync((await epl.path())!);
+  const latin1 = bytes.toString("latin1");
+  const gw = /\r\nGW(\d+),(\d+),(\d+),(\d+),/.exec(latin1)!;
+  expect([Number(gw[1]), Number(gw[2]), Number(gw[3])]).toEqual([dots(50), dots(4), Math.ceil((dots(90) - dots(50)) / 8)]);
+  const end = gw.index + gw[0].length + Number(gw[3]) * Number(gw[4]);
+  expect(latin1.slice(end)).toMatch(/^\r\n(?:B|A|LO|X)/);
+  expect(latin1.endsWith("P1\r\n")).toBe(true);
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
