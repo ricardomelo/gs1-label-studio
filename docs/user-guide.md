@@ -294,8 +294,11 @@ keeps it within the width the label gives it, each line and filled box with `LO`
 image with `GW`, whose dots go as raw bytes: the EPL2 file of a label with an image is then not a text file, and is sent
 to the printer as it is, unchanged (see the printing guide). EPL2 refuses what it refuses for a symbol alone (GS1
 DataMatrix, the QR code, GS1 DataBar). A turned barcode or text goes in EPL2 with its rotation, its point of origin
-turned with it as the guide says; a Data Matrix has no rotation in EPL2, so one turned is refused there. TSPL and DPL
-do not write it yet.
+turned with it as the guide says; a Data Matrix has no rotation in EPL2, so one turned is refused there. In TSPL too,
+each line of text with `TEXT` in the dot font whose capitals come nearest its height and that keeps it within its
+width, each line and filled box with `BAR`, each outlined box with `BOX` and each image with `BITMAP`, its dots as raw
+bytes as in EPL2; TSPL refuses what it refuses for a symbol alone (GS1-128, EAN-8, UPC, GS1 DataBar), and a turned
+barcode or text for now. DPL does not write it yet.
 
 ## 6. The label's options
 
@@ -560,7 +563,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
-| *A label of one's own is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
+| *A label of one's own is written in ZPL, EPL2 and TSPL only, for now* | A DPL profile | Use a ZPL, EPL2 or TSPL profile, or print its PDF at its size |
+| *The studio's TSPL file prints barcodes and text upright only, for now…* | A turned barcode or text on a label of one's own, in TSPL | Turn it back to 0°, or print its ZPL, EPL2 or PDF |
 | *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *A line or box runs past the label's edge* | A line or box of a label of one's own past the label's edge, in a print file | Move it inside the label, or shorten it |
 | *A line or box needs a length, a width and a thickness greater than 0 mm* | A line or box of a label of one's own with a size of 0 | Give it a size |

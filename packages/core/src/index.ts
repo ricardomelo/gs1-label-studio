@@ -30,7 +30,7 @@ export {
   type ZplTemplate,
 } from "./zpl.ts";
 export { HRI_TEXT_MM, hriTextDots, joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintLabelOptions, type PrintPage, type PrintSymbolOptions } from "./printers.ts";
-export { tsplLabel, tsplTestLabel, TsplUnsupportedError } from "./tspl.ts";
+export { tsplLabel, tsplPage, tsplTestLabel, TsplUnsupportedError } from "./tspl.ts";
 export { dplLabel, dplTestLabel, DplUnsupportedError } from "./dpl.ts";
 export { eplLabel, eplLogisticLabel, eplPage, eplTestLabel, EplUnsupportedError } from "./epl.ts";
 export { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage, type PrinterLanguageInfo } from "./printFile.ts";

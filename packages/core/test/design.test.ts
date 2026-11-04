@@ -7,6 +7,7 @@ import {
   checkRows,
   designLabel,
   eplPage,
+  tsplPage,
   DATE_FORMATS,
   fillFields,
   formatDate,
@@ -143,8 +144,27 @@ describe("a label of one's own", () => {
     expect(epl).toContain(`q${dots(130)}`);
     expect(epl).toMatch(new RegExp(`^A${dots(6)},${dots(6)},0,\\d,\\d,\\d,N,"Finest Truffle Tapenade"$`, "m"));
     expect(epl).toMatch(/^B\d+,\d+,0,1E,4,4,\d+,N,"010950600013437617271231"$/m);
+    // TSPL writes it too (printlangs.test.ts prints it): its GS1-128 refused with the reason, as for a symbol alone; each
+    // line of text with TEXT in the dot font whose capitals (0.75 of its cell) come nearest, from its corner
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/encodes "!102" as text/);
+    const noLinear: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.filter((e) => e.id !== "b1") } };
+    const tspl = textFile(printFileFor("tspl", labelFor(data, noLinear, font), noLinear, 203));
+    expect(tspl).toMatch(/^SIZE 130 mm,79.95 mm\r$/m); // the label's dots, 639 at 203 dpi
+    // Each line from its capitals' corner, in the tallest cell within a tenth of its capitals / 0.75 that keeps it within
+    // the width the page gives it: 5 mm (40 dots) asks a 53-dot cell; font 1 at 4 (48 dots) would run 736 dots wide
+    const tsplPrinted = printPageFor(labelFor(data, noLinear, font).designed!, 203);
+    const PITCH = { 1: 8, 2: 12, 3: 16, 4: 24, 5: 32 } as Record<string, number>;
+    const CELL = { 1: 12, 2: 20, 3: 24, 4: 32, 5: 48 } as Record<string, number>;
+    for (const t of tsplPrinted.texts) {
+      const [, f, m] = tspl.match(new RegExp(`^TEXT ${t.x},${t.y},"(\\d)",0,(\\d+),\\2,"${t.text}"\r$`, "m"))!;
+      expect([...t.text].length * PITCH[f!]! * Number(m)).toBeLessThanOrEqual(t.widthDots);
+      expect(CELL[f!]! * Number(m)).toBeLessThanOrEqual(Math.round(t.heightDots / 0.75) * 1.1);
+    }
+    expect(tspl).toContain('TEXT 48,48,"2",0,2,2,"Finest Truffle Tapenade"');
+    expect(tspl).toMatch(/^QRCODE \d+,\d+,M,\d+,A,0,"https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231"\r$/m);
+    expect(textFile(printFileFor("tspl", labelFor(data, noLinear, font), noLinear, 203, undefined, ["a note"]))).toContain("50 mm: measure this line");
     // Another language says it cannot write it yet; a barcode past the label's edge is refused, not cut
-    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL and EPL2 only/);
+    expect(() => printFileFor("dpl", drawn, design, 203)).toThrow(/written in ZPL, EPL2 and TSPL only/);
     const past: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "b1" ? { ...e, xMm: 40 } : e)) } };
     expect(() => printFileFor("zpl", labelFor(data, past, font), past, 203)).toThrow(/The GS1-128 runs past the label's edge at 4 dots a module/);
   });
@@ -197,6 +217,10 @@ describe("a label of one's own", () => {
     const epl = eplPage(page);
     expect(epl).toContain(`\r\nX${dots(2)},${dots(2)},${dots(0.8)},${dots(128)},${dots(78)}\r\n`);
     expect(epl).toContain(`\r\nLO${dots(110)},${dots(8)},${dots(120) - dots(110)},${dots(14) - dots(8)}\r\n`);
+    // TSPL: BOX's far corner is the box's outer edge, BAR fills
+    const tspl = tsplPage({ ...page, symbols: [] });
+    expect(tspl).toContain(`\r\nBOX ${dots(2)},${dots(2)},${dots(128)},${dots(78)},${dots(0.8)}\r\n`);
+    expect(tspl).toContain(`\r\nBAR ${dots(110)},${dots(8)},${dots(120) - dots(110)},${dots(14) - dots(8)}\r\n`);
     // A line past the label's edge is named in the editor and refused in a print file, not cut
     const past: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 2), { id: "long", kind: "line", vertical: false, lengthMm: 130, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
     const pastLabel = designLabel(past, data, font, { environment: "distribution" });
@@ -249,6 +273,13 @@ describe("a label of one's own", () => {
       }
       expect(new TextDecoder().decode(epl.subarray(start + row * at.bitmap.height))).toMatch(/^\r\nb\d+,\d+,D,/);
       expect(typeof eplPage({ ...page, images: [] })).toBe("string");
+      // TSPL's BITMAP: the same bits after its corner, bytes a row, rows and mode 0 (overwrite)
+      const tspl = tsplPage(page) as Uint8Array;
+      const bitmapHeader = `BITMAP ${at.x},${at.y},${row},${at.bitmap.height},0,`;
+      const from = new TextDecoder("latin1").decode(tspl).indexOf(`\r\n${bitmapHeader}`) + 2 + bitmapHeader.length;
+      expect(tspl.subarray(from, from + row * at.bitmap.height)).toEqual(epl.subarray(start, start + row * at.bitmap.height));
+      expect(new TextDecoder().decode(tspl.subarray(from + row * at.bitmap.height))).toMatch(/^\r\nDMATRIX \d+,\d+,/);
+      expect(typeof tsplPage({ ...page, images: [] })).toBe("string");
     }
     // Past the label's edge: named in the editor, refused in a print file
     const past = designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 99 }] }, data, font, { environment: "distribution" });
@@ -358,6 +389,11 @@ describe("a label of one's own", () => {
     const dmPrinted = printPageFor(designLabel(dm, data, font, { environment: "distribution" }), 203);
     expect(() => eplPage(dmPrinted)).toThrow(/EPL2 prints a Data Matrix upright only \(its b command has no rotation\)/);
     expect(textFile(eplPage({ ...dmPrinted, symbols: dmPrinted.symbols.map((s) => ({ ...s, options: { ...s.options, turned: undefined } })) }))).toMatch(/^b\d+,\d+,D,/m);
+    // TSPL refuses a turned barcode or line of text for now, upright not
+    const dmUpright = { ...dmPrinted, symbols: dmPrinted.symbols.map((s) => ({ ...s, options: { ...s.options, turned: undefined } })) };
+    expect(() => tsplPage(dmPrinted)).toThrow(/TSPL file prints barcodes and text upright only, for now/);
+    expect(() => tsplPage({ ...dmUpright, texts: printed.texts })).toThrow(/TSPL file prints barcodes and text upright only, for now/);
+    expect(textFile(tsplPage(dmUpright))).toMatch(/^DMATRIX \d+,\d+,/m);
     // An ITF-14 turned a quarter by the label's top edge: its bearer frame, left of its bars upright, would start above
     // the label, refused; a little lower, the frame's top on the edge
     const itf = (y: number, kind: "frame" | "bars" = "frame") => eplPage({

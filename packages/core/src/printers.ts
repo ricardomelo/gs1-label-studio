@@ -108,6 +108,19 @@ export interface PrintPage {
   images?: { x: number; y: number; bitmap: Bitmap }[];
 }
 
+/**
+ * An image's dots as raw bytes, a row at a time in whole bytes, the leftmost dot in the highest bit, a dark dot a 0 bit
+ * and every other a 1 (the spare dots in a row's last byte too): as EPL2's GW and TSPL's BITMAP take them.
+ */
+export function darkAsZeros(bitmap: Bitmap): Uint8Array<ArrayBuffer> {
+  const row = Math.ceil(bitmap.width / 8);
+  const bits = new Uint8Array(row * bitmap.height).fill(0xff);
+  for (let y = 0; y < bitmap.height; y++) {
+    for (let x = 0; x < bitmap.width; x++) if (bitmap.dark[y * bitmap.width + x]) bits[y * row + (x >> 3)]! &= ~(0x80 >> (x & 7));
+  }
+  return bits;
+}
+
 export const HRI_TEXT_MM = 2.2;
 
 /** The human readable text's height in dots at `dpi`. */
@@ -160,6 +173,25 @@ export interface BitmapFont {
  * The font and whole multiplier whose cell height comes closest to `heightDots` without passing it by more than a
  * tenth (a bitmap font cannot be scaled finely); the smallest font at multiplier 1 when none is that small.
  */
+/**
+ * The font and multiplier for a line of `text` whose capitals are `capitalsDots` high, in a printer's fixed-pitch fonts
+ * whose capitals are `capitals` of their cell: the cell that much larger, as `bitmapFontFor` picks it; when that runs
+ * wider than `widthDots`, the tallest cell within a tenth of it that keeps the line within its width (multipliers 1 to
+ * `most`), else the smallest. `pitch` is a character's width in a font at a multiplier.
+ */
+export function fittingFont(fonts: readonly BitmapFont[], text: string, capitalsDots: number, widthDots: number, capitals: number,
+  pitch: (font: BitmapFont, multiplier: number) => number, most: number): { font: BitmapFont; multiplier: number } {
+  const chars = [...text].length;
+  const cell = Math.round(capitalsDots / capitals);
+  const best = bitmapFontFor(fonts, cell);
+  if (chars * pitch(best.font, best.multiplier) <= widthDots) return best;
+  const fitting = fonts.flatMap((font) => Array.from({ length: most }, (_, i) => ({ font, multiplier: i + 1, height: font.height * (i + 1) })))
+    .filter((c) => c.height <= cell * 1.1 && chars * pitch(c.font, c.multiplier) <= widthDots)
+    .sort((a, b) => b.height - a.height);
+  const { font, multiplier } = fitting[0] ?? { font: fonts[0]!, multiplier: 1 };
+  return { font, multiplier };
+}
+
 export function bitmapFontFor(fonts: readonly BitmapFont[], heightDots: number): { font: BitmapFont; multiplier: number } {
   let best = { font: fonts[0]!, multiplier: 1 };
   let bestHeight = 0;

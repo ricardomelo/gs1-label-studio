@@ -1442,9 +1442,9 @@ test("the last work kept in this browser and offered on the next visit; Start an
 });
 
 // Item 4.2, step d (mock-up A of two, 3 November 2026): + Image takes a file at once and places it 20 mm wide, as high as
-// its proportions make it, in black and white; it prints in ZPL as a graphic field, in EPL2 with GW's raw bytes, and is
-// kept in the work file.
-test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL and EPL2 and kept in the work", async ({ page }) => {
+// its proportions make it, in black and white; it prints in ZPL as a graphic field, in EPL2 with GW's raw bytes, in TSPL
+// with BITMAP's, and is kept in the work file.
+test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1493,6 +1493,18 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   const end = gw.index + gw[0].length + Number(gw[3]) * Number(gw[4]);
   expect(latin1.slice(end)).toMatch(/^\r\n(?:B|A|LO|X)/);
   expect(latin1.endsWith("P1\r\n")).toBe(true);
+  // In TSPL, BITMAP with the same bytes (a dark dot a 0 bit in both), then the text and the Data Matrix
+  await page.selectOption("#prn-profile", "tspl-203");
+  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const tsplBytes = readFileSync((await tspl.path())!);
+  const tsplText = tsplBytes.toString("latin1");
+  const bitmap = /\r\nBITMAP (\d+),(\d+),(\d+),(\d+),0,/.exec(tsplText)!;
+  expect(bitmap.slice(1).map(Number)).toEqual(gw.slice(1).map(Number));
+  const from = bitmap.index + bitmap[0].length;
+  const length = Number(gw[3]) * Number(gw[4]);
+  expect(tsplBytes.subarray(from, from + length).equals(bytes.subarray(gw.index + gw[0].length, end))).toBe(true);
+  expect(tsplText.slice(from + length)).toMatch(/^\r\nTEXT [^]*\r\nDMATRIX /);
+  expect(tsplText.endsWith("PRINT 1\r\n")).toBe(true);
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);

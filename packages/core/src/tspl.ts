@@ -1,13 +1,18 @@
 import { MM_PER_INCH } from "./dots.ts";
 import { encode } from "./encode.ts";
 import { hasPredefinedLength, parseElementString } from "./elementString.ts";
+import type { Bitmap } from "./raster.ts";
 import {
-  bitmapFontFor,
+  concatBytes,
+  darkAsZeros,
+  fittingFont,
   hriTextDots,
   PrinterUnsupportedError,
   textLines,
   type BitmapFont,
+  type PrintFile,
   type PrintLabelOptions,
+  type PrintPage,
   type PrintSymbolOptions,
   type TextLine,
 } from "./printers.ts";
@@ -53,7 +58,51 @@ export function tsplLabel(symbology: SymbologyId, data: string, options: PrintLa
 
 /** A test label (backlog 3.1): the label, then a 50 mm ruler with a tick every 10 mm and the settings as text. */
 export function tsplTestLabel(symbology: SymbologyId, data: string, options: PrintLabelOptions, notes: readonly string[]): string {
-  const commands = fields(symbology, data, options);
+  return withRuler(fields(symbology, data, options), options, notes);
+}
+
+/**
+ * A label of one's own (backlog 4.2) with TSPL's own commands, as ZPL and EPL2 write it: each barcode with the commands
+ * of a symbol alone where the page puts it; each line of text with TEXT in the dot font whose capitals come nearest its
+ * height and that keeps it within the width the page gives it; each line and filled box with BAR, each outlined box with
+ * BOX; each image with BITMAP, whose dots are raw bytes, so a page with an image is a print file of bytes (`PrintFile`).
+ * A turned barcode or line of text is refused for now. With `notes`, a test label (backlog 3.1).
+ */
+export function tsplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): PrintFile {
+  if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) {
+    throw new TsplUnsupportedError("The studio's TSPL file prints barcodes and text upright only, for now: turn them back to 0°, or print its ZPL, EPL2 or PDF.");
+  }
+  const images = (page.images ?? []).map((image) => bitmap(image.bitmap, image.x, image.y));
+  const symbols = page.symbols.flatMap(({ symbology, data, options: o }) => fields(symbology, data, o));
+  const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L"));
+  // BAR fills a rectangle (a line, a filled box); BOX draws a box's outline inside its corners, the far one exclusive
+  const boxes: string[] = [];
+  for (const b of page.boxes) {
+    if (b.thickness >= Math.min(b.width, b.height)) boxes.push(`BAR ${b.x},${b.y},${b.width},${b.height}`);
+    else boxes.push(`BOX ${b.x},${b.y},${b.x + b.width},${b.y + b.height},${b.thickness}`);
+  }
+  const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
+  const commands = [...images, ...boxes, ...texts, ...symbols];
+  return options.notes ? withRuler(commands, size, options.notes) : document(commands, size);
+}
+
+/**
+ * An image with BITMAP (manual, BITMAP): its corner, its width in bytes (eight dots a byte), its height in dots, mode 0
+ * (overwrite), then the dots as raw bytes, a row at a time, the leftmost dot in the highest bit; a dot whose bit is 0
+ * prints black, as Labelize draws it (its parser: "TSC BITMAP prints cleared bits"), so the spare dots in a row's last
+ * byte are 1s.
+ */
+function bitmap(picture: Bitmap, x: number, y: number): Uint8Array<ArrayBuffer> {
+  return concatBytes([`BITMAP ${x},${y},${Math.ceil(picture.width / 8)},${picture.height},0,`, darkAsZeros(picture)]);
+}
+
+/** A command: its text, or its bytes where it carries raw binary data (BITMAP). */
+type Command = string | Uint8Array<ArrayBuffer>;
+
+/** The commands, then a 50 mm ruler below the label with a tick every 10 mm and the settings as text. */
+function withRuler(commands: string[], options: PrintLabelOptions, notes: readonly string[]): string;
+function withRuler(commands: Command[], options: PrintLabelOptions, notes: readonly string[]): PrintFile;
+function withRuler(commands: Command[], options: PrintLabelOptions, notes: readonly string[]): PrintFile {
   const dpi = options.dpi;
   const mm = (value: number) => Math.round((value / MM_PER_INCH) * dpi);
   const top = options.heightDots + mm(2);
@@ -71,24 +120,40 @@ export function tsplTestLabel(symbology: SymbologyId, data: string, options: Pri
   return document([...commands, ...ruler], { ...options, widthDots: Math.max(options.widthDots, x + mm(52)), heightDots: height });
 }
 
-function document(commands: string[], options: PrintLabelOptions): string {
+/** The print file: text, or bytes when a command carries raw binary data. */
+function document(commands: string[], options: PrintLabelOptions): string;
+function document(commands: Command[], options: PrintLabelOptions): PrintFile;
+function document(commands: Command[], options: PrintLabelOptions): PrintFile {
   const mm = (dots: number) => Number(((dots / options.dpi) * MM_PER_INCH).toFixed(2));
-  return [
+  const lines = [
     `SIZE ${mm(options.widthDots)} mm,${mm(options.heightDots)} mm`,
     "CODEPAGE UTF-8",
     "CLS",
     ...commands,
     `PRINT ${options.copies ?? 1}`,
     "",
-  ].join("\r\n");
+  ];
+  if (lines.every((line) => typeof line === "string")) return lines.join("\r\n");
+  return concatBytes(lines.flatMap((line, index) => (index ? ["\r\n", line] : [line])));
 }
 
-/** A line of text in the dot font closest to its height, centred in its box or from its left edge. */
+/**
+ * The dot fonts' capitals are this much of their cell (Labelize, 4 November 2026: 9, 15, 18, 24 and 36 dots in cells
+ * of 12, 20, 24, 32 and 48, twice as many at multiplier 2, the same at 203 and 300 dpi; their top at the TEXT command's
+ * y). The studio's text heights are its capitals' (section 4.14), so the cell asked for is this much larger.
+ */
+const TSPL_CAPITALS = 0.75;
+
+/**
+ * A line of text in the dot font whose capitals come closest to its height, no wider than `line.width` where a font
+ * that tall fits it (else the narrowest); centred in its box with alignment 2, or from its left edge with no alignment
+ * (the default, which every firmware takes; alignment came with V6.73 EZ).
+ */
 function text(line: TextLine, align: "C" | "L"): string[] {
-  const { font, multiplier } = bitmapFontFor(FONTS, line.height);
+  const { font, multiplier } = fittingFont(FONTS, line.text, line.height, line.width, TSPL_CAPITALS, (f, m) => f.width * m, 10);
   return align === "C"
     ? [`TEXT ${line.x + Math.round(line.width / 2)},${line.y},"${font.name}",0,${multiplier},${multiplier},2,${quoted(line.text)}`]
-    : [`TEXT ${line.x},${line.y},"${font.name}",0,${multiplier},${multiplier},1,${quoted(line.text)}`];
+    : [`TEXT ${line.x},${line.y},"${font.name}",0,${multiplier},${multiplier},${quoted(line.text)}`];
 }
 
 function around(lines: string[], x: number, top: number, bottom: number, width: number, gap: number, options: PrintSymbolOptions, join: boolean, align: "C" | "L" = "C"): string[] {

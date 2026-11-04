@@ -19,6 +19,7 @@ import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD
 import { pictureBitmap, resample } from "./picture.ts";
 import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel, eplPage } from "./epl.ts";
+import { tsplPage } from "./tspl.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
@@ -276,14 +277,15 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 /**
  * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
  * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL and EPL2 (backlog 4.1), a
- * label of one's own in ZPL and EPL2 (backlog 4.2), each of its barcodes at its own whole dots a module: text, or bytes
- * when EPL2 sends an image (GW).
+ * label of one's own in ZPL, EPL2 and TSPL (backlog 4.2), each of its barcodes at its own whole dots a module: text, or
+ * bytes when EPL2 or TSPL sends an image (GW, BITMAP).
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): PrintFile {
   if (drawn.designed) {
     if (language === "epl2") return eplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
-    if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL and EPL2 only, for now: its PDF prints it at its size.");
+    if (language === "tspl") return tsplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
+    if (language !== "zpl") throw new PrinterUnsupportedError("A label of one's own is written in ZPL, EPL2 and TSPL only, for now: its PDF prints it at its size.");
     return zplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
   }
   if (drawn.logistic) {

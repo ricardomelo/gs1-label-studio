@@ -4,8 +4,9 @@ import { hasPredefinedLength, parseElementString } from "./elementString.ts";
 import type { LogisticLabel } from "./logistic.ts";
 import type { Bitmap } from "./raster.ts";
 import {
-  bitmapFontFor,
   concatBytes,
+  darkAsZeros,
+  fittingFont,
   hriTextDots,
   PrinterUnsupportedError,
   textLines,
@@ -203,12 +204,7 @@ function turnAbout(commands: string[], box: { x: number; y: number; width: numbe
  * in its last byte are 1s. Labelize prints the bits the other way round, so its tests invert them first.
  */
 function directGraphic(bitmap: Bitmap, x: number, y: number): Uint8Array<ArrayBuffer> {
-  const row = Math.ceil(bitmap.width / 8);
-  const bits = new Uint8Array(row * bitmap.height).fill(0xff);
-  for (let yy = 0; yy < bitmap.height; yy++) {
-    for (let xx = 0; xx < bitmap.width; xx++) if (bitmap.dark[yy * bitmap.width + xx]) bits[yy * row + (xx >> 3)]! &= ~(0x80 >> (xx & 7));
-  }
-  return concatBytes([`GW${x},${y},${row},${bitmap.height},`, bits]);
+  return concatBytes([`GW${x},${y},${Math.ceil(bitmap.width / 8)},${bitmap.height},`, darkAsZeros(bitmap)]);
 }
 
 /** A command: its text, or its bytes where it carries raw binary data (GW). */
@@ -260,18 +256,7 @@ const EPL_CAPITALS = 0.75;
 function text(line: TextLine, align: "C" | "L", dpi: number): string[] {
   const fonts = dpi < 250 ? FONTS_203 : FONTS_300;
   const chars = [...line.text].length;
-  const cell = line.height / EPL_CAPITALS;
-  const widthOf = (font: BitmapFont, multiplier: number) => chars * font.width * horizontal(multiplier);
-  let best = { ...bitmapFontFor(fonts, Math.round(cell)), height: 0 };
-  best.height = best.font.height * best.multiplier;
-  if (widthOf(best.font, best.multiplier) > line.width) {
-    // The tallest cell within a tenth of the height asked that keeps the line within its width
-    const fitting = fonts.flatMap((font) => Array.from({ length: 9 }, (_, i) => ({ font, multiplier: i + 1, height: font.height * (i + 1) })))
-      .filter((c) => c.height <= Math.round(cell) * 1.1 && widthOf(c.font, c.multiplier) <= line.width)
-      .sort((a, b) => b.height - a.height);
-    best = fitting[0] ?? { font: fonts[0]!, multiplier: 1, height: fonts[0]!.height };
-  }
-  const { font, multiplier } = best;
+  const { font, multiplier } = fittingFont(fonts, line.text, line.height, line.width, EPL_CAPITALS, (f, m) => f.width * horizontal(m), 9);
   const v = Math.min(9, multiplier);
   const h = horizontal(multiplier);
   const width = chars * font.width * h;

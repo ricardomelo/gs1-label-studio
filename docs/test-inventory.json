@@ -2154,6 +2154,10 @@
     {
      "name": "print files of text and bytes › joins text as text and text with bytes as bytes, the bytes as they were",
      "status": "passed"
+    },
+    {
+     "name": "a fixed-pitch font for a line of text › takes the cell nearest the capitals asked, else the tallest within a tenth of it that keeps the line within its width",
+     "status": "passed"
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
@@ -2360,27 +2364,51 @@
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, every barcode read back, each where the layout puts it",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 300 dpi, every barcode read back, each where the layout puts it",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi, its lines and boxes drawn by LO and X where the page puts them",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, its lines and boxes drawn by LO and X where the page puts them",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, every barcode read back, each where the layout puts it",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 203 dpi, its image printed dot for dot by GW",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, its lines and boxes drawn where the page puts them",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › EPL2: a label of one's own at 300 dpi, its image printed dot for dot by GW",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 300 dpi, its lines and boxes drawn where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 203 dpi, its lines and boxes drawn where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, its lines and boxes drawn where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, its image printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 300 dpi, its image printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 203 dpi, its image printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, its image printed dot for dot",
      "status": "passed"
     },
     {
@@ -4144,7 +4172,7 @@
      ]
     },
     {
-     "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL and EPL2 and kept in the work",
+     "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL and kept in the work",
      "status": "listed",
      "projects": [
       "desktop",

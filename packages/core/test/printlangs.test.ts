@@ -25,6 +25,7 @@ import {
   TsplUnsupportedError,
   designLabel,
   eplPage,
+  tsplPage,
   printPageFor,
   syntaxEngine,
   printFileBytes,
@@ -48,6 +49,7 @@ beforeAll(async () => {
 
 type Language = "tspl" | "epl" | "dpl";
 const WRITERS = { tspl: tsplLabel, epl: eplLabel, dpl: dplLabel };
+const PAGES = { epl: eplPage, tspl: tsplPage };
 
 /**
  * Labelize's PNG of a print file, at the printer's dots a millimetre. DPL counts rows from the label's bottom, so its
@@ -270,27 +272,38 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     expect(await reads(render("epl", file, width, height, dpi))).toEqual(expected);
   });
 
-  // A label of one's own (backlog 4.2) in EPL2, as in ZPL: each barcode read back from the whole page, its first bar
-  // where the page's layout puts it, to the dot; the text's capitals at their corner. Labelize draws the Data Matrix
-  // without the one-module quiet zone the guide says the printer adds (b command), so a module up and left there.
+  // A label of one's own (backlog 4.2) in EPL2 and TSPL, as in ZPL: each barcode read back from the whole page, its first
+  // bar where the page's layout puts it, to the dot; the text's capitals at their corner, as high as the font nearest
+  // allows. Labelize draws EPL2's Data Matrix without the one-module quiet zone the guide says the printer adds (b
+  // command), so a module up and left there.
   it.each([
-    [203, "distribution", [
+    ["epl", 203, "distribution", [
       { id: "t", kind: "text", text: "BATCH {10}", heightMm: 4, xMm: 6, yMm: 4 },
       { id: "c", kind: "symbol", symbology: "gs1-128", ais: null, size: 100, hri: true, xMm: 2, yMm: 36 },
       { id: "m", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 90, yMm: 3 },
     ]],
-    [300, "retail", [
+    ["epl", 300, "retail", [
       { id: "e", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 30 },
       { id: "t", kind: "text", text: "BEST BEFORE {17}\nBATCH {10}", heightMm: 3, xMm: 4, yMm: 4 },
       { id: "m", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
     ]],
-  ] as const)("EPL2: a label of one's own at %i dpi, every barcode read back, each where the layout puts it", async (dpi, environment, elements) => {
+    ["tspl", 203, "distribution", [
+      { id: "t", kind: "text", text: "BATCH {10}", heightMm: 4, xMm: 6, yMm: 4 },
+      { id: "i", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 22 },
+      { id: "g", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: true, xMm: 120, yMm: 3 },
+    ]],
+    ["tspl", 300, "retail", [
+      { id: "e", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 30 },
+      { id: "t", kind: "text", text: "BEST BEFORE {17}\nBATCH {10}", heightMm: 3, xMm: 4, yMm: 4 },
+      { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
+    ]],
+  ] as const)("%s: a label of one's own at %i dpi, every barcode read back, each where the layout puts it", async (language, dpi, environment, elements) => {
     const engine = await syntaxEngine();
-    const page = { widthMm: 130, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };
+    const page = { widthMm: 170, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };
     const designed = designLabel(page, engine.parse("(01)09506000134376(17)271231(10)B42") as Identified, hriFont(), { environment });
     expect(designed.problems).toEqual([]);
     const printed = printPageFor(designed, dpi);
-    const png = render("epl", eplPage(printed), printed.widthDots, printed.heightDots, dpi);
+    const png = render(language, PAGES[language](printed), printed.widthDots, printed.heightDots, dpi);
     expect(await reads(png)).toEqual(designed.expected);
     const { grey, width } = decodePng(png);
     const dark = (x: number, y: number) => grey[y * width + x]! < 128;
@@ -298,54 +311,65 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     for (const [index, s] of designed.printer.symbols.entries()) {
       const range = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.barRects : [0, s.layout.rects.length] as const;
       const bars = s.layout.rects.slice(...range);
-      const early = s.options.symbology === "dl-datamatrix" ? printed.symbols[index]!.options.dotsPerModule : 0;
+      const early = language === "epl" && s.options.symbology === "dl-datamatrix" ? printed.symbols[index]!.options.dotsPerModule : 0;
       const [left, top] = [dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm) - early, dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm) - early];
       let x = left - 12;
       while (x < left + 12 && !dark(x, top + 4)) x++;
-      let y = top - 12;
-      while (y < top + 12 && !dark(left + 1, y)) y++;
-      expect([s.id, x, y]).toEqual([s.id, left, top]);
+      // ITF-14's bearer frame lies on its bars: the column meets the frame first, its thickness above them
+      const frame = printed.symbols[index]!.options.bearer?.thicknessDots ?? 0;
+      let y = top - frame - 12;
+      while (y < top - frame + 12 && !dark(left + 1, y)) y++;
+      expect([s.id, x, y]).toEqual([s.id, left, top - frame]);
     }
     for (const t of page.elements.filter((e) => e.kind === "text")) {
       let y = dots(t.yMm) - 8;
       const row = (yy: number) => Array.from({ length: dots(20) }, (_, i) => dots(t.xMm) + i).some((xx) => dark(xx, yy));
       while (y < dots(t.yMm) + 8 && !row(y)) y++;
       expect(Math.abs(y - dots(t.yMm))).toBeLessThanOrEqual(1);
+      // Its first line's capitals (no descenders in these) as high as asked, within the tenth a dot font's cells allow;
+      // not EPL2 at 300 dpi, where Labelize draws the 203 dpi cells (EPL_CAPITALS)
+      if (language === "epl" && dpi === 300) continue;
+      let bottom = y;
+      while (row(bottom + 1)) bottom++;
+      expect(Math.abs(bottom + 1 - y - dots(t.heightMm))).toBeLessThanOrEqual(Math.max(2, Math.ceil(dots(t.heightMm) / 10)));
     }
   });
 
-  // Lines and boxes on a label of one's own (backlog 4.2): LO fills a line and a filled box, X draws an outline whose
-  // ends are the box's outer edges; each where the page puts it, to the dot
-  it.each([203, 300])("EPL2: a label of one's own at %i dpi, its lines and boxes drawn by LO and X where the page puts them", async (dpi) => {
+  // Lines and boxes on a label of one's own (backlog 4.2): in EPL2 LO fills a line and a filled box, X draws an outline
+  // whose ends are the box's outer edges; in TSPL BAR and BOX; each where the page puts it, to the dot
+  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300]] as const)("%s: a label of one's own at %i dpi, its lines and boxes drawn where the page puts them", async (language, dpi) => {
     const engine = await syntaxEngine();
     const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
     const printed = printPageFor(designed, dpi);
-    const epl = textFile(eplPage(printed));
-    expect(epl.match(/^X\d/gm)).toHaveLength(2);
-    expect(epl.match(/^LO\d/gm)).toHaveLength(3);
-    const png = render("epl", epl, printed.widthDots, printed.heightDots, dpi);
+    const file = textFile(PAGES[language](printed));
+    expect(file.match(language === "epl" ? /^X\d/gm : /^BOX \d/gm)).toHaveLength(2);
+    expect(file.match(language === "epl" ? /^LO\d/gm : /^BAR \d/gm)).toHaveLength(3);
+    const png = render(language, file, printed.widthDots, printed.heightDots, dpi);
     expect(await reads(png)).toEqual(designed.expected);
     const { grey, width } = decodePng(png);
     const dark = (x: number, y: number) => grey[y * width + x]! < 128;
     expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
   });
 
-  // An image on a label of one's own (backlog 4.2): GW sends its dots as raw bytes, so the print file is bytes; every
-  // dot printed where the page puts it, the symbol beside it read back. The logo 39.5 mm wide is not a whole number of
-  // bytes at 203 dpi, so its last byte's spare dots are white; a picture 1 134 dots square goes as one GW of 142 bytes a row.
+  // An image on a label of one's own (backlog 4.2): EPL2's GW and TSPL's BITMAP send its dots as raw bytes, so the print
+  // file is bytes; every dot printed where the page puts it, the symbol beside it read back. The logo 39.5 mm wide is not
+  // a whole number of bytes at 203 dpi, so its last byte's spare dots are white; a picture 1 134 dots square goes as one
+  // command of 142 bytes a row.
+  const SMALL_LOGO = { ...WITH_LOGO, elements: WITH_LOGO.elements.map((e) => (e.kind === "image" ? { ...e, widthMm: 39.5 } : e)) };
+  const BIG_PICTURE = { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 3 }] } as DesignPage;
   it.each([
-    [203, { ...WITH_LOGO, elements: WITH_LOGO.elements.map((e) => (e.kind === "image" ? { ...e, widthMm: 39.5 } : e)) }],
-    [300, { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 3 }] } as DesignPage],
-  ] as const)("EPL2: a label of one's own at %i dpi, its image printed dot for dot by GW", { timeout: 60000 }, async (dpi, page) => {
+    ["epl", 203, SMALL_LOGO], ["epl", 300, BIG_PICTURE], ["tspl", 203, SMALL_LOGO], ["tspl", 300, BIG_PICTURE],
+  ] as const)("%s: a label of one's own at %i dpi, its image printed dot for dot", { timeout: 60000 }, async (language, dpi, page) => {
     const engine = await syntaxEngine();
     const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
     expect(designed.problems).toEqual([]);
     const printed = printPageFor(designed, dpi);
-    const file = eplPage(printed);
+    const file = PAGES[language](printed);
     expect(file).toBeInstanceOf(Uint8Array);
     const { x, y, bitmap } = printed.images![0]!;
-    expect(new TextDecoder().decode((file as Uint8Array).subarray(0, 40))).toContain(`\r\nGW${x},${y},${Math.ceil(bitmap.width / 8)},${bitmap.height},`);
-    const png = render("epl", file, printed.widthDots, printed.heightDots, dpi);
+    const header = language === "epl" ? `GW${x},${y},${Math.ceil(bitmap.width / 8)},${bitmap.height},` : `BITMAP ${x},${y},${Math.ceil(bitmap.width / 8)},${bitmap.height},0,`;
+    expect(new TextDecoder().decode((file as Uint8Array).subarray(0, 80))).toContain(`\r\n${header}`);
+    const png = render(language, file, printed.widthDots, printed.heightDots, dpi);
     expect(await reads(png)).toEqual(designed.expected);
     const { grey, width } = decodePng(png);
     let differ = 0;
