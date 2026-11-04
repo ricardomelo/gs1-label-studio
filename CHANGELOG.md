@@ -191,4 +191,8 @@
   Expanded, Limited, Stacked and Expanded Stacked, both Data Matrix) and a turned line of text's capitals to the dot,
   through Labelary at 203 and 300 dpi; an image is sent turned. A QR code stays upright (`^BQ` has no orientation); the
   studio's EPL2 file refuses a turned element for now. Kept in the work file.
+- The last work kept in this browser (backlog 4.3 (c), 4 November; mock-up A of two): the work file kept in IndexedDB a
+  moment after each change and when the page is left; the next visit asks in a bar under the header, with the time it
+  was kept and the key's element string, whether to **Continue it** or **Start anew**, never bringing it back unasked
+  and keeping nothing over it until answered. A first visit's work keeps nothing; Start over empties it.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

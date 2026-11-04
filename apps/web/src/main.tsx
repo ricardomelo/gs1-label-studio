@@ -11,7 +11,7 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 }
 
 // "Start over" (the owner, 30 October 2026): a new App, as on a first visit; what this browser keeps (the screen's
-// calibration, the columns of known files, the GCP table) stays.
+// calibration, the columns of known files, the GCP table) stays; the last work kept for the next visit is forgotten.
 // The language (ADR 0003): the one chosen in this browser before, or the browser's own; changing it redraws the page
 // in place, keeping what was typed.
 setLocale(initialLocale(), false);

@@ -1755,6 +1755,26 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "lastwork",
+   "file": "apps/web/test/lastwork.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the last work kept in this browser (backlog 4.3 (c)) › is not kept while it is a first visit's work, and kept with its time once it changes",
+     "status": "passed"
+    },
+    {
+     "name": "the last work kept in this browser (backlog 4.3 (c)) › offers nothing when nothing is kept, or what is kept cannot be read",
+     "status": "passed"
+    },
+    {
+     "name": "the last work kept in this browser (backlog 4.3 (c)) › is told apart by its key's element string",
+     "status": "passed"
+    }
+   ],
+   "area": "The work saved on one's own computer and opened again"
+  },
+  {
    "program": "layout",
    "file": "packages/core/test/layout.test.ts",
    "kind": "unit",
@@ -4067,6 +4087,15 @@
     },
     {
      "name": "the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the last work kept in this browser and offered on the next visit; Start anew and Start over forget it",
      "status": "listed",
      "projects": [
       "desktop",

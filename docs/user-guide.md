@@ -367,6 +367,12 @@ correctly is refused with the reason, never printed wrong (section 16). How to u
 4. The ZPL the Export bar downloads carries the same work in comments (`^FX GS1 Label Studio work 1/3 …`), which
    printers and Labelary ignore: **Open…** takes that ZPL back too. A ZPL made elsewhere cannot be opened — its printer
    commands do not keep the fields, the meaning of the data or the sizes in millimetres; Labelary's viewer draws it.
+5. This browser also keeps the last work by itself, a moment after each change. On the next visit a bar under the
+   header asks about it — *Your last work, of 4 November 2026 at 14:30, is kept in this browser.*, with the key's
+   element string and, for a label of one's own, *a label of your own*: **Continue it** brings it back as **Open…**
+   would (in bulk, take the spreadsheet again); **Start anew** forgets it. Nothing comes back unasked, and nothing is
+   kept over it until you answer. **Start over** forgets it too. A private window, or a browser that blocks storage,
+   keeps nothing; the work file of step 1 is still the way to keep a work for good or take it to another computer.
 
 ## 9. The GS1 Logistic Label
 

@@ -300,10 +300,14 @@ header.top .work { display: inline-flex; gap: 8px; opacity: 1; font-size: inheri
 header.top .work .start-over { margin-left: 0; }
 header.top .lang + .work { margin-left: 8px; }
 header.top .work + .start-over { margin-left: 8px; }
-.work-note { display: flex; align-items: center; gap: 12px; margin: 12px 24px 0; padding: 8px 12px; border: 1.5px solid var(--navy); border-radius: 6px; background: var(--card); color: var(--navy); font-size: 14px; }
+.work-note, .kept-work { display: flex; align-items: center; gap: 12px; margin: 12px 24px 0; padding: 8px 12px; border: 1.5px solid var(--navy); border-radius: 6px; background: var(--card); color: var(--navy); font-size: 14px; }
 .work-note.error { border-color: var(--error); color: var(--error); }
-.work-note span { flex: 1; overflow-wrap: anywhere; }
-.work-note button { border: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.work-note span, .kept-work span { flex: 1; overflow-wrap: anywhere; }
+/* The last work kept in this browser, offered on arrival (backlog 4.3 (c)): its two answers wrap below on a phone */
+.kept-work { flex-wrap: wrap; }
+.kept-work span { flex: 1 1 320px; }
+.kept-work .kept-actions { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.work-note > button { border: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
 
 /* About, at the foot of the page (the owner, 31 October 2026) */
 footer.about { margin: 4px 20px 24px; padding: 16px 4px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
@@ -351,7 +355,7 @@ footer.about .hint { margin-top: 12px; }
   .settings .lang { display: flex; align-items: center; gap: 8px; margin: 0; flex: 1 1 220px; }
   .settings .lang select { flex: 1; }
   .settings .work { display: flex; gap: 8px; flex: 1 1 100%; }
-  .work-note { margin: 10px 12px 0; }
+  .work-note, .kept-work { margin: 10px 12px 0; }
   .settings .install { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; flex: 1 1 100%; }
   .settings .install .hint { margin: 0; flex: 1 1 200px; }
   footer.about { max-width: 760px; margin: 0 auto 12px; background: var(--card); border: 0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 18px 20px; }

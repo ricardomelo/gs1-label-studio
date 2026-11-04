@@ -1361,6 +1361,86 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   await expect(page.locator(".work-note")).toHaveCount(0);
 });
 
+/** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
+async function keptWorkText(page: Page): Promise<string | null> {
+  return page.evaluate(() => new Promise<string | null>((resolve) => {
+    const request = indexedDB.open("gs1-label-studio", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("kept");
+    request.onsuccess = () => {
+      const get = request.result.transaction("kept", "readonly").objectStore("kept").get("work");
+      get.onsuccess = () => {
+        request.result.close();
+        resolve((get.result as string | undefined) ?? null);
+      };
+    };
+  }));
+}
+
+// Backlog 4.3 (c), mock-up A of two (4 November 2026): the last work is kept in this browser as it changes and offered
+// on the next visit in a bar under the header, never brought back unasked; a first visit's work, Start anew and Start
+// over keep nothing to offer.
+test("the last work kept in this browser and offered on the next visit; Start anew and Start over forget it", async ({ page }) => {
+  const offer = page.getByRole("region", { name: "Your last work" });
+  // A first visit's work, untouched, is not kept
+  await page.waitForTimeout(800);
+  expect(await keptWorkText(page)).toBeNull();
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await expect(offer).toHaveCount(0);
+
+  await page.fill("#paste", "(01)09506000134352(10)LOT9(17)280930");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-text", "LOTE {10}");
+  await expect.poll(async () => (await keptWorkText(page))?.includes("LOTE {10}") ?? false).toBe(true);
+  expect(JSON.parse((await keptWorkText(page))!) as { format: string }).toMatchObject({ format: "gs1-label-studio.work" });
+
+  await page.reload();
+  await expect(offer).toBeVisible();
+  await expect(offer).toContainText(/^Your last work, of .+, is kept in this browser\. \(01\) 09506000134352 · a label of your own/);
+  // Nothing brought back unasked, and nothing kept over it while the question is open
+  await on(page, "data");
+  await expect(page.locator("#q-10")).toHaveValue("B42");
+  await page.fill("#q-10", "OTHER");
+  await page.waitForTimeout(800);
+  expect(await keptWorkText(page)).toContain("LOT9");
+  await offer.getByRole("button", { name: "Continue it" }).click();
+  await expect(offer).toHaveCount(0);
+  await expect(page.locator(".work-note")).toHaveText("Your last work is back.×");
+  await expect(page.locator("#q-10")).toHaveValue("LOT9");
+  await on(page, "label");
+  await expect(page.locator(".caption")).toHaveText("A label of my own 100 × 60 mm · QR code (GS1 Digital Link)");
+  await expect(page.locator('.preview .symbol svg [aria-label="LOTE LOT9"]')).toHaveCount(1);
+
+  // Still kept after it came back; Start anew forgets it
+  await page.reload();
+  await expect(offer).toBeVisible();
+  await offer.getByRole("button", { name: "Start anew" }).click();
+  await expect(offer).toHaveCount(0);
+  await expect.poll(() => keptWorkText(page)).toBeNull();
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await expect(offer).toHaveCount(0);
+
+  // Start over forgets it too, and the new visit asks nothing
+  await on(page, "data");
+  await page.fill("#q-10", "LOT10");
+  await expect.poll(async () => (await keptWorkText(page))?.includes("LOT10") ?? false).toBe(true);
+  await on(page, "more");
+  await page.getByRole("button", { name: "Start over" }).click();
+  await on(page, "data");
+  await expect(page.locator("#q-10")).toHaveValue("B42");
+  await expect(offer).toHaveCount(0);
+  expect(await keptWorkText(page)).toBeNull();
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await expect(offer).toHaveCount(0);
+});
+
 // Item 4.2, step d (mock-up A of two, 3 November 2026): + Image takes a file at once and places it 20 mm wide, as high as
 // its proportions make it, in black and white; it prints in ZPL as a graphic field and is kept in the work file.
 test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL and kept in the work", async ({ page }) => {

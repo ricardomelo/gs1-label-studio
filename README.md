@@ -495,8 +495,11 @@ complete.
   version. (b) The ZPL the Export bar downloads carries the same work in `^FX` comments, which printers and Labelary
   ignore, so Open… takes the studio's own ZPL back too. A ZPL made elsewhere is refused: Labelary draws any ZPL but
   recovers no design, and a printer's commands lose what the studio needs (the fields such as `{17:DD/MM/YYYY}`, the
-  GS1 meaning of the data, sizes in millimetres rather than dots at one resolution). (c) Later: the last work kept in
-  this browser and offered again on the next visit. Templates tied to a project perhaps later still (the owner, 3
+  GS1 meaning of the data, sizes in millimetres rather than dots at one resolution). (c) The last work kept in
+  this browser and offered again on the next visit, done 4 November (mock-up A of two, taken under the owner's rule;
+  B asked in a dialog over the page): the work file kept in IndexedDB a moment after each change; the next visit asks
+  in a bar under the header (its time, the key's element string, a label of one's own), **Continue it** or **Start
+  anew**; a first visit's work and Start over keep nothing. Templates tied to a project perhaps later still (the owner, 3
   November 2026: not needed now)*
 
 **Phase 5 — beyond the browser** (if needed)

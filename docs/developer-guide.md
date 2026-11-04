@@ -219,7 +219,8 @@ Each module, in the order of the flow above.
 | `src/PrinterSection.tsx` | Printer profiles, the module's dots, the test print |
 | `src/EpcSection.tsx`, `src/NfcWriter.tsx` | RFID and NFC: the EPC formats, the GCP table, writing an NFC tag through Web NFC or the NDEF file |
 | `src/SignSection.tsx` | The digital signature and credentials |
-| `src/keep.ts` | IndexedDB for the GCP table |
+| `src/keep.ts` | IndexedDB for the GCP table and the last work |
+| `src/lastwork.ts` | The last work kept in this browser: kept once it is not a first visit's, read back with its time, its key's element string to tell it apart |
 | `src/texts.ts` | The page's texts kept apart from the code (keys, qualifiers, environments, guide, bulk), in English; `aiText`, `aiTitle` |
 | `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
 | `src/locales/` | `pt-BR.json`, `es.json` (the page), `pt-BR.messages.json`, `es.messages.json` (the core and the Syntax Engine), `ai-titles.pt-BR.json` (the AIs' Portuguese names, the resolver's) |
@@ -238,6 +239,7 @@ Nothing is sent anywhere. What the browser keeps, for convenience only — the p
 | The bulk generation's choices | localStorage | set by `GeneratePanel.tsx` |
 | Printer profiles of one's own | localStorage | set by `PrinterSection.tsx` |
 | GS1's GCP length table | IndexedDB `gs1-label-studio` / `kept` | `gcp` |
+| The last work (its work file), offered on the next visit; emptied by *Start over* | IndexedDB `gs1-label-studio` / `kept` | `work` |
 | Every file of the application | Cache Storage | `gs1-label-studio-<hash>` |
 
 A signing key is never kept: the person saves it as a JWK and loads it again.
@@ -301,9 +303,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
+| `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 1 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 54 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 55 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 80 |
 

@@ -87,10 +87,11 @@ import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
 import { keepProfiles, keptProfiles, PrinterSection } from "./PrinterSection.tsx";
 import { DEFAULT_STEM, openedSettings, savedSettings, START_SETTINGS } from "./work.ts";
+import { keptWork, LAST_WORK, workKey, workSummary, workToKeep, type KeptWork } from "./lastwork.ts";
 import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
-import { kept } from "./keep.ts";
+import { keep, kept } from "./keep.ts";
 import { elementName } from "./Designer.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
@@ -172,9 +173,12 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const openInput = useRef<HTMLInputElement>(null);
   // Step 1 keeps its rows of fields itself: a work opened draws it anew from the data opened
   const [opened, setOpened] = useState(0);
-
+  // The last work kept in this browser (backlog 4.3 (c)): read on arrival ("reading"), offered until the person answers,
+  // and nothing kept meanwhile, so that the work offered is not replaced by the first visit's.
+  const [offer, setOffer] = useState<KeptWork | "reading" | null>("reading");
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
+    kept(LAST_WORK).then((text) => setOffer(keptWork(text)), () => setOffer(null));
     syntaxEngine().then(setEngine, (e: unknown) => console.error(e));
     fetch(fontUrl)
       .then((response) => response.arrayBuffer())
@@ -599,6 +603,17 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       setWorkNote({ text: `${file.name}: ${tm(errorText(error))}`, error: true });
       return;
     }
+    takeWork(work);
+    setWorkNote({
+      text: work.mode === "bulk" && !dataTable
+        ? t("Opened {file}. Take the spreadsheet again: its columns are chosen as they were saved.", { file: file.name })
+        : t("Opened {file}.", { file: file.name }),
+      error: false,
+    });
+  }
+  /** A work opened from a file or from this browser: the data, the answers, the label, the printer and the columns. */
+  function takeWork(work: Work) {
+    setOffer(null);
     setMode(work.mode);
     setId(work.identification);
     setOpened(opened + 1);
@@ -624,13 +639,40 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         setFixed(work.columns.fixed);
       }
     }
+  }
+
+  // The work kept in this browser as it changes (backlog 4.3 (c)), a moment after the last change and when the page is
+  // left; a first visit's work keeps nothing.
+  const startWork = useRef<string | null>(null);
+  startWork.current ??= workKey(currentWork());
+  const workNow = offer === null ? workKey(currentWork()) : null;
+  useEffect(() => {
+    if (workNow === null) return;
+    const store = () => {
+      const work = JSON.parse(workNow) as Work;
+      void keep(LAST_WORK, workToKeep(work, startWork.current!));
+    };
+    const timer = window.setTimeout(store, 500);
+    window.addEventListener("pagehide", store);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", store);
+    };
+  }, [workNow]);
+  function continueKept(kept: KeptWork) {
+    takeWork(kept.work);
     setWorkNote({
-      text: work.mode === "bulk" && !dataTable
-        ? t("Opened {file}. Take the spreadsheet again: its columns are chosen as they were saved.", { file: file.name })
-        : t("Opened {file}.", { file: file.name }),
+      text: kept.work.mode === "bulk" && !dataTable
+        ? t("Your last work is back. Take the spreadsheet again: its columns are chosen as they were.")
+        : t("Your last work is back."),
       error: false,
     });
   }
+  // Start anew: the question closes and keeping resumes, so what is kept becomes the work now (nothing, at first)
+  const startAnew = () => setOffer(null);
+  const keptTime = offer && offer !== "reading" && offer.saved
+    ? new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle: "short" }).format(offer.saved)
+    : null;
   const workButtons = (
     <span className="work">
       <button type="button" className={phone ? "btn" : "start-over"} title={t("Opens a work saved here (.json), or a ZPL downloaded here")} onClick={() => openInput.current?.click()}>
@@ -668,6 +710,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   );
   const startOverClick = () => {
     if (dataTable && !window.confirm(t("Clear the rows, the fixes and every choice, and start over?"))) return;
+    // What is kept is emptied before the new visit reads it: IndexedDB runs the two in the order they were asked
+    void keep(LAST_WORK, null);
     onStartOver?.();
   };
   // In the header on a computer and a tablet; on a phone a round reload icon at the right of the live preview's bar
@@ -711,6 +755,25 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         {!phone && workButtons}
         {!phone && startOver}
       </header>
+      {offer && offer !== "reading" && (
+        <div className="kept-work" role="region" aria-label={t("Your last work")}>
+          <span>
+            {keptTime
+              ? t("Your last work, of {time}, is kept in this browser.", { time: keptTime })
+              : t("Your last work is kept in this browser.")}
+            {workSummary(offer.work) && <> <b>{workSummary(offer.work)}</b></>}
+            {offer.work.page && <> · {t("a label of your own")}</>}
+          </span>
+          <span className="kept-actions">
+            <button type="button" className="btn primary" onClick={() => continueKept(offer)}>
+              {t("Continue it")}
+            </button>
+            <button type="button" className="btn" onClick={startAnew}>
+              {t("Start anew")}
+            </button>
+          </span>
+        </div>
+      )}
       {workNote && (
         <div className={`work-note${workNote.error ? " error" : ""}`} role={workNote.error ? "alert" : "status"}>
           <span>{workNote.text}</span>

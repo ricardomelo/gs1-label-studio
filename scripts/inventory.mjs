@@ -24,7 +24,7 @@ export const AREAS = [
   ["In bulk: rows, the report, sequences, generation", ["table", "bulk", "report", "sequence", "batch"]],
   ["Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL", ["dots", "printer", "zpl", "labelary", "printlangs"]],
   ["RFID, NFC and digital signatures", ["epc", "ndef", "sign"]],
-  ["The work saved on one's own computer and opened again", ["work", "opened"]],
+  ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish", ["i18n"]],
   ["The documents", ["docs"]],
   ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts"]],

@@ -631,5 +631,13 @@
  "“{name}” is not an image this browser can read: choose a PNG, JPEG, GIF, WebP or SVG file.": "“{name}” não é uma imagem que este navegador consiga ler: escolha um arquivo PNG, JPEG, GIF, WebP ou SVG.",
  "Rotation": "Rotação",
  "{degrees}°": "{degrees}°",
- "A QR code reads in any direction, so it stays upright.": "Um QR code é lido em qualquer direção, então fica em pé."
+ "A QR code reads in any direction, so it stays upright.": "Um QR code é lido em qualquer direção, então fica em pé.",
+ "Your last work": "Seu último trabalho",
+ "Your last work, of {time}, is kept in this browser.": "Seu último trabalho, de {time}, está guardado neste navegador.",
+ "Your last work is kept in this browser.": "Seu último trabalho está guardado neste navegador.",
+ "a label of your own": "uma etiqueta própria",
+ "Continue it": "Continuar",
+ "Start anew": "Começar do zero",
+ "Your last work is back.": "Seu último trabalho voltou.",
+ "Your last work is back. Take the spreadsheet again: its columns are chosen as they were.": "Seu último trabalho voltou. Carregue a planilha de novo: as colunas são escolhidas como estavam."
 }
