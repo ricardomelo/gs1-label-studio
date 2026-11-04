@@ -1361,6 +1361,52 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   await expect(page.locator(".work-note")).toHaveCount(0);
 });
 
+// Item 4.2, step d (mock-up A of two, 3 November 2026): + Image takes a file at once and places it 20 mm wide, as high as
+// its proportions make it, in black and white; it prints in ZPL as a graphic field and is kept in the work file.
+test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL and kept in the work", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await expect(page.getByRole("button", { name: "+ Image" })).toBeVisible();
+  const drawing = () => page.locator(".preview .symbol svg").evaluate((svg) => svg.outerHTML.length);
+  const before = await drawing();
+  await page.getByTestId("image-file").setInputFiles(new URL("./fixtures/logo.png", import.meta.url).pathname);
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image logo");
+  await expect(page.locator(".image-file")).toContainText("360 × 150 pixels");
+  await expect(page.locator("#el-width")).toHaveValue("20");
+  await expect(page.locator("#el-height-mm")).toBeDisabled();
+  await expect(page.locator("#el-height-mm")).toHaveValue("8.3");
+  await expect.poll(drawing).toBeGreaterThan(before + 2000); // the logo's dark rectangles drawn
+  await page.fill("#el-width", "40");
+  await expect(page.locator("#el-height-mm")).toHaveValue("16.7");
+  await page.fill("#el-x", "50");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  // A file that is not an image is refused with the reason, the image kept
+  await page.getByTestId("image-replace").setInputFiles({ name: "notes.png", mimeType: "image/png", buffer: Buffer.from("not an image") });
+  await expect(page.getByRole("alert")).toHaveText("“notes.png” is not an image this browser can read: choose a PNG, JPEG, GIF, WebP or SVG file.");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image logo");
+  // In ZPL, a graphic field at its corner, 40 mm wide at 203 dpi
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  const dots = (mm: number) => Math.round((mm / 25.4) * 203);
+  expect(file).toContain(`^FO${dots(50)},${dots(4)}^GFA,`);
+  expect(file).toMatch(new RegExp(`\\^GFA,(\\d+),\\1,${Math.ceil((dots(90) - dots(50)) / 8)},`));
+  // Kept in the work file and opened again
+  await on(page, "more");
+  const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
+  const work = JSON.parse(readFileSync((await saved.path())!, "utf8")) as { page: { elements: { kind: string; widthMm?: number }[] } };
+  expect(work.page.elements.find((e) => e.kind === "image")?.widthMm).toBe(40);
+  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByLabel("Open a saved work").setInputFiles((await saved.path())!);
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "Image logo" }).press("Enter");
+  await expect(page.locator("#el-height-mm")).toHaveValue("16.7");
+});
+
 // The owner, 3 November 2026: a new element never lands exactly on another, so that the person sees it was made — a
 // step of 5 mm right and down from one at its corner.
 test("a label of one's own: each new element a step right and down from one already at its corner", async ({ page }) => {

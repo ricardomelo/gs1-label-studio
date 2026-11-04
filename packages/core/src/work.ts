@@ -2,6 +2,7 @@ import type { ColumnMapping, FixedValue } from "./bulk.ts";
 import type { DesignElement, DesignPage, MonthLanguage } from "./design.ts";
 import type { Answers } from "./guide.ts";
 import type { Identification } from "./identify.ts";
+import { pictureBitmap, type Picture } from "./picture.ts";
 import type { PrinterProfile } from "./printer.ts";
 import { PRINTER_LANGUAGES, type PrinterLanguage } from "./printFile.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -145,8 +146,25 @@ function element(value: unknown, at: string): DesignElement {
     case "box":
       if (!isNumber(value.widthMm) || !isNumber(value.heightMm) || !isNumber(value.thicknessMm) || typeof value.filled !== "boolean") damaged(at);
       return { id, kind: "box", widthMm: value.widthMm as number, heightMm: value.heightMm as number, thicknessMm: value.thicknessMm as number, filled: value.filled as boolean, xMm, yMm };
+    case "image": {
+      const picture = value.picture;
+      if (!isString(value.name) || !isNumber(value.widthMm) || !isRecord(picture) || !isNumber(picture.width)
+        || !isNumber(picture.height) || !isString(picture.bits) || !isPicture(picture as unknown as Picture)) damaged(at);
+      const p = picture as unknown as Picture;
+      return { id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits }, widthMm: value.widthMm as number, xMm, yMm };
+    }
     default:
       return damaged(at);
+  }
+}
+
+/** Whether the picture's bits fill its size (pictureBitmap refuses one that does not). */
+function isPicture(picture: Picture): boolean {
+  try {
+    pictureBitmap(picture);
+    return true;
+  } catch {
+    return false;
   }
 }
 

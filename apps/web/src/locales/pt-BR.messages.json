@@ -552,5 +552,11 @@
  "the mode": "modo",
  "the printer": "impressora",
  "the spreadsheet's columns": "colunas da planilha",
- "the symbol picked in step 2": "símbolo escolhido no passo 2"
+ "the symbol picked in step 2": "símbolo escolhido no passo 2",
+ "An image needs a width greater than 0 mm.": "Uma imagem precisa de largura maior que 0 mm.",
+ "An image runs past the label's edge: move it inside the label.": "Uma imagem passa da borda da etiqueta: mova-a para dentro da etiqueta.",
+ "EPL2 sends an image as raw bytes, which the studio's EPL2 file does not carry yet: its ZPL or PDF prints it.": "O EPL2 envia uma imagem como bytes brutos, que o arquivo EPL2 do estúdio ainda não leva: o ZPL ou o PDF a imprimem.",
+ "The image has no pixels.": "A imagem não tem pixels.",
+ "The image's pixels are damaged.": "Os pixels da imagem estão danificados.",
+ "The image is {width} × {height} pixels: an image on the label takes at most {PICTURE_MAX_SIDE} pixels a side.": "A imagem tem {width} × {height} pixels: uma imagem na etiqueta tem no máximo {PICTURE_MAX_SIDE} pixels de lado."
 }

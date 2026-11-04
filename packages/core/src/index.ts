@@ -3,6 +3,7 @@ export { DATABAR, SYMBOLOGIES, type Symbology, type SymbologyId } from "./symbol
 export { encode, EncodeError, QR_MODES, qrModeProblem, stackedRows, widthInModules, type EncodeOptions, type QrMode, type SymbolGeometry } from "./encode.ts";
 export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
+export { bitmapRects, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, pictureBitmap, pictureOf, resample, type Picture } from "./picture.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
 export { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 export {
@@ -281,7 +282,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, DATE_FORMATS, designLabel, fillFields, formatDate, MONTH_NAMES, type DateOptions, type MonthLanguage, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, DATE_FORMATS, designLabel, imageHeightMm, type DesignImage, fillFields, formatDate, MONTH_NAMES, type DateOptions, type MonthLanguage, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {

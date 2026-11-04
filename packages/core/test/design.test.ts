@@ -31,6 +31,8 @@ import {
   type Identified,
   type SyntaxEngine,
 } from "../src/index.ts";
+import { bitmapRects, graphicFields, pictureBitmap, resample } from "../src/index.ts";
+import { WITH_LOGO } from "./fixtures/graphics.ts";
 import { drawPdf, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
 
@@ -202,6 +204,44 @@ describe("a label of one's own", () => {
     // A line or box without a size or thickness is refused, naming what it needs
     const flat: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 1), { id: "z", kind: "line", vertical: false, lengthMm: 0, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
     expect(() => designLabel(flat, data, font, { environment: "distribution" })).toThrow(/A line or box needs a length, a width and a thickness greater than 0 mm/);
+  }, SLOW);
+
+  // An image (backlog 4.2, step d): a logo as a one-bit picture, drawn where the page puts it in every output and sent
+  // to a ZPL printer as a graphic field at its dots; EPL2 refuses it rather than print it wrong
+  it("draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF", async () => {
+    const label = designLabel(WITH_LOGO, data, font, { environment: "distribution" });
+    const { layout } = label;
+    expect(label.problems).toEqual([]);
+    const image = WITH_LOGO.elements[0]!;
+    if (image.kind !== "image") throw new Error("the fixture's first element is its image");
+    expect(label.placed.find((p) => p.id === "logo")).toEqual({ id: "logo", xMm: 4, yMm: 4, widthMm: 40, heightMm: 20 });
+    // Its rectangles after the symbol's: the picture's, each pixel 40 / 120 mm
+    const bitmap = pictureBitmap(image.picture);
+    const pixel = 40 / 120;
+    const mm = (r: number[]) => r.map((v) => Math.round(v * 1000) / 1000);
+    expect(layout.rects.slice(layout.symbolRects).map((r) => mm(r.map((v) => v * layout.xMm))))
+      .toEqual(bitmapRects(bitmap).map(([x, y, w, h]) => mm([4 + x * pixel, 4 + y * pixel, w * pixel, h * pixel])));
+    // Still read back beside it
+    const svg = labelSvg(label.options, layout, font);
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(label.expected);
+    // Over the symbol, an overlap
+    const over: DesignPage = { ...WITH_LOGO, elements: [{ ...image, xMm: 50 }, WITH_LOGO.elements[1]!] };
+    expect(designLabel(over, data, font, { environment: "distribution" }).problems).toEqual([{ kind: "overlap", ids: ["logo", "m"] }]);
+    // The print file: its edges at the nearest dots, each dot the picture's pixel under its centre
+    for (const dpi of [203, 300]) {
+      const dots = (v: number) => Math.round((v / 25.4) * dpi);
+      const page = printPageFor(label, dpi);
+      const at = { x: dots(4), y: dots(4), bitmap: resample(bitmap, dots(44) - dots(4), dots(24) - dots(4)) };
+      expect(page.images).toEqual([at]);
+      expect(zplPage(page)).toContain(graphicFields(at.bitmap, at.x, at.y).join("\n"));
+      expect(() => eplPage(page)).toThrow(/EPL2 sends an image as raw bytes/);
+    }
+    // Past the label's edge: named in the editor, refused in a print file
+    const past = designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 99 }] }, data, font, { environment: "distribution" });
+    expect(past.problems).toEqual([{ kind: "edge", id: "logo" }]);
+    expect(() => printPageFor(past, 203)).toThrow(/An image runs past the label's edge/);
+    // Without a width, refused
+    expect(() => designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 0 }] }, data, font, { environment: "distribution" })).toThrow(/An image needs a width greater than 0 mm/);
   }, SLOW);
 
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {

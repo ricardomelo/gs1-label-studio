@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InputError, readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work } from "../src/index.ts";
-import { GRAPHICS } from "./fixtures/graphics.ts";
+import { GRAPHICS, WITH_LOGO } from "./fixtures/graphics.ts";
 
 // The work saved on one's own computer and opened again (backlog 4.3): a JSON work file, and the studio's own ZPL with
 // the same work in ^FX comments. What is opened is what was saved; what the studio did not write is refused.
@@ -20,6 +20,7 @@ const WORK: Work = {
       ...GRAPHICS.elements,
       { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", xMm: 8, yMm: 8 },
       { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, xMm: 4, yMm: 4 },
+      { ...WITH_LOGO.elements[0]!, id: "i" },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },
@@ -99,6 +100,12 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(element(6, { months: "fr" })).toBe(at("element 7 of the label's page"));
     expect(element(1, { thicknessMm: "0.5" })).toBe(at("element 2 of the label's page"));
     expect(element(3, { filled: 1 })).toBe(at("element 4 of the label's page"));
+    // An image whose picture's bits do not fill its size, or without its name
+    const picture = page.elements[8]!.picture as Record<string, unknown>;
+    expect(element(8, { picture: { ...picture, height: (picture.height as number) + 1 } })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { picture: { ...picture, bits: "%" } })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { name: 7 })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { widthMm: "40" })).toBe(at("element 9 of the label's page"));
     expect(element(2, { id: "frame" })).toBe(at("the label's page"));
     expect(changed((c) => { (c.page as Record<string, unknown>).widthMm = null; })).toBe(at("the label's page"));
     expect(changed((c) => { ((c.printer as Record<string, unknown>).profile as Record<string, unknown>).language = "pcl"; })).toBe(at("the printer"));

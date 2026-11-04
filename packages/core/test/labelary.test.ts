@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import { hriFont } from "./font.ts";
-import { GRAPHICS } from "./fixtures/graphics.ts";
+import { GRAPHICS, logo, WITH_LOGO } from "./fixtures/graphics.ts";
 import { decodePng, drawnBox } from "./png.ts";
 import {
   encode,
@@ -336,6 +336,43 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const offset = Math.floor((width - printed.widthDots) / 2); // Labelary centres the print width on its page
     const dark = (x: number, y: number) => grey[y * width + x + offset]! < 128;
     expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
+  });
+
+  // An image on a label of one's own (backlog 4.2, step d): ^GFA prints every dot of the picture where the page puts
+  // it, the symbol beside it still read back; a picture larger than one graphic field goes as stripes that meet
+  it.each([203, 300])("a label of one's own at %i dpi: its image printed dot for dot by ^GF", { timeout: 60000 }, async (dpi) => {
+    const engine = await syntaxEngine();
+    const designed = designLabel(WITH_LOGO, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    const png = await labelaryPng(zplPage(printed), dpi, printed.widthDots, printed.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2);
+    const { x, y, bitmap } = printed.images![0]!;
+    const drawn = Uint8Array.from({ length: bitmap.width * bitmap.height }, (_, i) =>
+      Number(grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width) + offset]! < 128));
+    expect(drawn.filter((d, i) => d !== bitmap.dark[i]).length).toBe(0);
+    expect(bitmap.dark.reduce((a, b) => a + b, 0)).toBeGreaterThan(1000);
+  });
+
+  it("a label of one's own with an image larger than one graphic field: its stripes meet, every dot printed", { timeout: 60000 }, async () => {
+    const page: DesignPage = { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 2 }] };
+    const designed = designLabel(page, { elements: [] } as unknown as Identified, hriFont(), { environment: "distribution" });
+    const printed = printPageFor(designed, 300);
+    const zpl = zplPage(printed);
+    expect(zpl.match(/\^GFA/g)!.length).toBeGreaterThan(1);
+    const png = await labelaryPng(zpl, 300, printed.widthDots, printed.heightDots);
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2);
+    const { x, y, bitmap } = printed.images![0]!;
+    let differ = 0;
+    for (let i = 0; i < bitmap.width * bitmap.height; i++) {
+      const dark = grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width) + offset]! < 128;
+      if (Number(dark) !== bitmap.dark[i]) differ++;
+    }
+    expect(differ).toBe(0);
   });
 
   // The work carried in the studio's ZPL (backlog 4.3): its ^FX comments change nothing the printer draws

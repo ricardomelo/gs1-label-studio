@@ -1,5 +1,5 @@
 {
- "date": "2026-11-03",
+ "date": "2026-11-04",
  "skipped": 0,
  "programs": [
   {
@@ -473,6 +473,10 @@
     },
     {
      "name": "a label of one's own › draws lines and boxes, a frame clear of a barcode's quiet zones not an overlap, and writes them in ZPL and EPL2",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF",
      "status": "passed"
     },
     {
@@ -1431,6 +1435,18 @@
    "area": "Input and identification: the Syntax Engine, keys, qualifiers, attributes"
   },
   {
+   "program": "imagefile",
+   "file": "apps/web/test/imagefile.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the size an image is drawn at › its own when it fits, else its longest side the core's limit, its proportions kept",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "labelary",
    "file": "packages/core/test/labelary.test.ts",
    "kind": "unit",
@@ -1585,6 +1601,18 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: its lines and boxes drawn by ^GB where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: its image printed dot for dot by ^GF",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: its image printed dot for dot by ^GF",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own with an image larger than one graphic field: its stripes meet, every dot printed",
      "status": "passed"
     },
     {
@@ -1937,6 +1965,34 @@
     }
    ],
    "area": "The work saved on one's own computer and opened again"
+  },
+  {
+   "program": "picture",
+   "file": "packages/core/test/picture.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a picture › is dark where a pixel's grey over white is below half way, a transparent pixel light",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › keeps each row in whole bytes, leftmost pixel in the highest bit, and gives back the same pixels",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › refuses an image without pixels, one larger than the studio takes, and bits that do not fill it",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is resampled to a printer's dots, each dot the pixel under its centre",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is drawn as rectangles that cover its dark pixels and nothing else, a run the row above has growing down",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
   },
   {
    "program": "place",
@@ -3959,6 +4015,15 @@
     },
     {
      "name": "the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL and kept in the work",
      "status": "listed",
      "projects": [
       "desktop",

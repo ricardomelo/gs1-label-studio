@@ -476,8 +476,11 @@ complete.
   with the date it gives; any format of DD, MM, MMM, YY and YYYY typed; the month's abbreviation in English, Portuguese
   or Spanish, chosen for each text block, the interface's language first). A new element never lands exactly on
   another (the owner, 3 November 2026: one made over another went unnoticed): where an element already has its
-  corner, it goes 5 mm right and down, and again — done the same day. Not yet: TSPL and DPL, images, rotation;
-  saving the label is 4.3*
+  corner, it goes 5 mm right and down, and again — done the same day. Images since 4 November (mock-up A of two, taken
+  under the owner's rule; B added an empty image to fill in its properties, with a preview): **+ Image** takes a file
+  at once and places it 20 mm wide, its height from its proportions, in black and white as label printers print; in
+  ZPL `^GFA`, every dot checked through Labelary; EPL2 refuses it for now (`GW` takes raw bytes). Not yet: TSPL and
+  DPL, rotation; images in EPL2; saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

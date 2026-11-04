@@ -1,8 +1,9 @@
 import {
-  boxOf, DATE_FORMATS, formatDate, isDateAi, MONTH_NAMES, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, DATE_FORMATS, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
+import { pictureFromFile } from "./picture.ts";
 import { freeCorner } from "./place.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
@@ -11,11 +12,16 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // "+ Text" over the canvas; under it the page's size, the elements and the selected one's properties. Then (step b,
 // mock-up B of two, the owner's choice of 3 November 2026) "+ Shape" beside them: a line across or down, a box
 // outlined or filled, the shape chosen in its properties. Then (step c) a date field in a format, {17:DD/MM/YYYY}.
+// Then (step d, mock-up A of two, taken under the owner's rule of 29 October) "+ Image": the file chosen at once and
+// placed 20 mm wide, its height from its proportions, in black and white as label printers print it; B added an empty
+// image to choose its file in the properties, with a preview of the black and white.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
 const STEP_MM = 0.5; // dragging moves an element by half millimetres
 const TEXT_HEIGHTS = [2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12];
+const IMAGE_WIDTH_MM = 20; // a new image's width
+const IMAGE_FILES = "image/png,image/jpeg,image/gif,image/webp,image/svg+xml";
 
 const round = (mm: number) => Math.round(mm / STEP_MM) * STEP_MM;
 
@@ -50,6 +56,7 @@ export function startingPage(symbology: SymbologyId, firstAi: string | undefined
 export function elementName(element: DesignElement): string {
   if (element.kind === "symbol") return tm(SYMBOLOGIES[element.symbology].name);
   if (element.kind === "text") return `“${element.text.split("\n")[0] || t("Text")}”`;
+  if (element.kind === "image") return t("Image {name}", { name: element.name });
   if (element.kind === "line") {
     const mm = formatNumber(element.lengthMm);
     return element.vertical ? t("Line down {mm} mm", { mm }) : t("Line across {mm} mm", { mm });
@@ -62,6 +69,7 @@ export function elementName(element: DesignElement): string {
 function elementIcon(element: DesignElement): string {
   if (element.kind === "symbol") return "▥";
   if (element.kind === "text") return "T";
+  if (element.kind === "image") return "▨";
   return "◇";
 }
 
@@ -93,12 +101,27 @@ interface ToolsProps {
   onChange: (page: DesignPage, selected: string | null) => void;
 }
 
-/** + Barcode, + Text, + Shape and Delete, over the canvas. */
+/** The image file's name, without its extension, as the element is named. */
+const imageName = (file: File) => file.name.replace(/\.[^.]+$/, "") || file.name;
+
+/** + Barcode, + Text, + Shape, + Image and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange }: ToolsProps) {
+  const file = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   // A new element never lands exactly on another: a step right and down from one at its corner (place.ts)
   const add = (element: DesignElement) => {
     const placed = { ...element, ...freeCorner(page, element.xMm, element.yMm) };
     onChange({ ...page, elements: [...page.elements, placed] }, placed.id);
+  };
+  const addImage = async (chosen: File | undefined) => {
+    if (!chosen) return;
+    try {
+      const picture = await pictureFromFile(chosen);
+      setProblem(null);
+      add({ id: nextId(page), kind: "image", name: imageName(chosen), picture, widthMm: IMAGE_WIDTH_MM, xMm: 4, yMm: 4 });
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : String(error));
+    }
   };
   return (
     <div className="design-tools" data-pane="label" data-beside="">
@@ -111,10 +134,29 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
         {t("+ Shape")}
       </button>
+      <button type="button" className="btn" onClick={() => file.current?.click()}>
+        {t("+ Image")}
+      </button>
+      <input
+        ref={file}
+        type="file"
+        accept={IMAGE_FILES}
+        hidden
+        data-testid="image-file"
+        onChange={(e) => {
+          void addImage(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
       <span className="grow" />
       <button type="button" className="btn" disabled={!selected} onClick={() => onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null)}>
         {t("Delete")}
       </button>
+      {problem && (
+        <p className="hint error wide" role="alert">
+          {problem}
+        </p>
+      )}
     </div>
   );
 }
@@ -232,6 +274,63 @@ function ShapeFields({ element, onChange }: { element: DesignLine | DesignBox; o
       <div>
         <label htmlFor="el-thickness">{t("Thickness (mm)")}</label>
         <input id="el-thickness" type="number" min={0.1} step={0.1} disabled={shape === "filled"} value={element.thicknessMm} onChange={(e) => onChange({ ...element, thicknessMm: positive(e.target.value, element.thicknessMm) })} />
+      </div>
+    </>
+  );
+}
+
+/**
+ * An image's properties (mock-up A): its file, replaced by another at the same place and width; its width, its height
+ * following its proportions; a note that it prints in black and white.
+ */
+function ImageFields({ element, onChange }: { element: DesignImage; onChange: (element: DesignImage) => void }) {
+  const file = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const replace = async (chosen: File | undefined) => {
+    if (!chosen) return;
+    try {
+      const picture = await pictureFromFile(chosen);
+      setProblem(null);
+      onChange({ ...element, name: imageName(chosen), picture });
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : String(error));
+    }
+  };
+  return (
+    <>
+      <div className="wide">
+        <span className="label">{t("Image")}</span>
+        <p className="image-file">
+          <span>{element.name}</span> <span className="hint">{t("{w} × {h} pixels", { w: element.picture.width, h: element.picture.height })}</span>{" "}
+          <button type="button" className="btn" onClick={() => file.current?.click()}>
+            {t("Replace…")}
+          </button>
+        </p>
+        <input
+          ref={file}
+          type="file"
+          accept={IMAGE_FILES}
+          hidden
+          data-testid="image-replace"
+          onChange={(e) => {
+            void replace(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        {problem && (
+          <p className="hint error" role="alert">
+            {problem}
+          </p>
+        )}
+        <p className="hint">{t("It prints in black and white, as label printers print: a light colour may vanish, so a logo in black works best.")}</p>
+      </div>
+      <div>
+        <label htmlFor="el-width">{t("Width (mm)")}</label>
+        <input id="el-width" type="number" min={STEP_MM} step={STEP_MM} value={element.widthMm} onChange={(e) => onChange({ ...element, widthMm: positive(e.target.value, element.widthMm) })} />
+      </div>
+      <div>
+        <label htmlFor="el-height-mm">{t("Height (mm)")}</label>
+        <input id="el-height-mm" type="number" disabled value={Math.round(imageHeightMm(element) * 10) / 10} />
       </div>
     </>
   );
@@ -380,6 +479,8 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                 </>
               ) : element.kind === "line" || element.kind === "box" ? (
                 <ShapeFields element={element} onChange={(shape) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? shape : e)) }, selected)} />
+              ) : element.kind === "image" ? (
+                <ImageFields element={element} onChange={(image) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? image : e)) }, selected)} />
               ) : (
                 <>
                   <div className="wide">

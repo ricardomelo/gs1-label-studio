@@ -142,9 +142,12 @@ export function zplPage(page: PrintPage, options: { notes?: readonly string[] } 
   });
   // ^GB draws a box's outline inside its width and height, filled when the thickness is its narrower side
   const boxes = page.boxes.map((b) => `^FO${b.x},${b.y}^GB${b.width},${b.height},${b.thickness}^FS`);
+  // An image as a graphic field (^GFA, the dots in hexadecimal), in stripes when it passes one field's bytes
+  const images = (page.images ?? []).flatMap((image) => graphicFields(image.bitmap, image.x, image.y));
   const size = { x: 0, widthDots: page.widthDots, heightDots: page.heightDots, dpi: page.dpi, ...(page.copies ? { copies: page.copies } : {}) };
-  if (!options.notes) return document([...boxes, ...texts, ...symbols], size, []);
-  return document([...boxes, ...texts, ...symbols, ...ruler(size, options.notes)], testArea(size, options.notes), []);
+  const commands = [...images, ...boxes, ...texts, ...symbols];
+  if (!options.notes) return document(commands, size, []);
+  return document([...commands, ...ruler(size, options.notes)], testArea(size, options.notes), []);
 }
 
 /**

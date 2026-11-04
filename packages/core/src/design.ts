@@ -3,6 +3,7 @@ import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
 import { BARS, layoutLabel, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
+import { bitmapRects, pictureBitmap, type Picture } from "./picture.ts";
 import { expectedReads } from "./scan.ts";
 import { isoDate } from "./sign.ts";
 import { specificationFor, type SpecSymbol } from "./specifications.ts";
@@ -10,7 +11,7 @@ import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 import { dataFor, InputError } from "./syntax.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): a page in millimetres with barcodes and text
-// blocks placed on it, and lines and boxes. Each barcode is laid out as the editor lays out a symbol alone — its quiet zones and text, at the
+// blocks placed on it, lines and boxes, and images. Each barcode is laid out as the editor lays out a symbol alone — its quiet zones and text, at the
 // scanning environment's X-dimension — and the page is one Layout, in units of the smallest module, so that the SVG,
 // PNG, PDF and EPS draw it as they draw a symbol. Every place has its own label (the owner), so the designer, not
 // ready-made templates, is what the studio offers.
@@ -71,7 +72,27 @@ export interface DesignBox {
   yMm: number;
 }
 
-export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox;
+/**
+ * An image (backlog 4.2, step d): a logo, as a one-bit picture (picture.ts), `widthMm` wide from its top left corner and
+ * as high as its proportions make it (`imageHeightMm`).
+ */
+export interface DesignImage {
+  id: string;
+  kind: "image";
+  /** The file's name, to tell the images apart in the editor. */
+  name: string;
+  picture: Picture;
+  widthMm: number;
+  xMm: number;
+  yMm: number;
+}
+
+export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox | DesignImage;
+
+/** An image's height in mm: its width's, in its picture's proportions. */
+export function imageHeightMm(element: Pick<DesignImage, "picture" | "widthMm">): number {
+  return (element.widthMm * element.picture.height) / element.picture.width;
+}
 
 export interface DesignPage {
   widthMm: number;
@@ -106,12 +127,13 @@ export interface DesignedLabel {
    * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
    * corner, height and width in the HRI font, in mm; each line and box as a box with its outline's thickness (a line,
-   * and a filled box, as thick as their narrower side).
+   * and a filled box, as thick as their narrower side); each image with its corner, size and picture.
    */
   printer: {
     symbols: { id: string; xMm: number; yMm: number; data: string; options: LabelOptions; layout: Layout }[];
     texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number }[];
     boxes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; thicknessMm: number }[];
+    images: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; picture: Picture }[];
   };
 }
 
@@ -230,8 +252,8 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   const rects: Layout["rects"] = [];
   const texts: LabelText[] = [];
   const placed: PlacedElement[] = [];
-  const printer: DesignedLabel["printer"] = { symbols: [], texts: [], boxes: [] };
-  // The rules and boxes after the symbols' rectangles, so that `symbolRects` counts the symbols' alone
+  const printer: DesignedLabel["printer"] = { symbols: [], texts: [], boxes: [], images: [] };
+  // The rules, boxes and images after the symbols' rectangles, so that `symbolRects` counts the symbols' alone
   const graphics: Layout["rects"] = [];
   // Each element's dark rectangles in mm where they are not its whole box (a box's outline): what overlaps a symbol
   const dark = new Map<string, [number, number, number, number][]>();
@@ -254,6 +276,16 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       dark.set(element.id, rectsMm);
       printer.boxes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, ...box });
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: box.widthMm, heightMm: box.heightMm });
+    } else if (element.kind === "image") {
+      if (!(element.widthMm > 0)) throw new InputError("An image needs a width greater than 0 mm.");
+      const bitmap = pictureBitmap(element.picture);
+      const pixel = element.widthMm / bitmap.width;
+      for (const [x, y, w, h] of bitmapRects(bitmap)) {
+        graphics.push([u(element.xMm + x * pixel), u(element.yMm + y * pixel), u(w * pixel), u(h * pixel)]);
+      }
+      const heightMm = imageHeightMm(element);
+      printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: element.widthMm, heightMm, picture: element.picture });
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: element.widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
       const lines = fillFields(element.text, identified, { months: element.months }).split("\n");

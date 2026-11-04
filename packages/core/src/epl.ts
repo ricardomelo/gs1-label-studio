@@ -126,6 +126,8 @@ const LOGISTIC_HRI_MM = 3; // section 4.14, rule 5c: no less than 3 mm on a GS1 
  * X. With `notes`, a test label (backlog 3.1).
  */
 export function eplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
+  // GW sends an image's dots as raw bytes, which a text file cannot carry unchanged: refused rather than printed wrong
+  if (page.images?.length) throw new EplUnsupportedError("EPL2 sends an image as raw bytes, which the studio's EPL2 file does not carry yet: its ZPL or PDF prints it.");
   const symbols = page.symbols.flatMap((s) => fields(s.symbology, s.data, s.options));
   const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L", page.dpi));
   // LO fills a rectangle (a line, a filled box); X draws a box's outline, its ends the box's outer edges

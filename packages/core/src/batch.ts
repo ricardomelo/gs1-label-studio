@@ -16,6 +16,7 @@ import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { designLabel, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
+import { pictureBitmap, resample } from "./picture.ts";
 import { PrinterUnsupportedError, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel, eplPage } from "./epl.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
@@ -199,7 +200,16 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     }
     return { x, y, width, height, thickness };
   });
-  return { widthDots, heightDots, dpi, symbols, texts, boxes };
+  // Each image at the dots its edges round to, as a line or box is, each dot the picture's pixel under its centre
+  const images = designed.printer.images.map((image) => {
+    const [x, y] = [dots(image.xMm), dots(image.yMm)];
+    const [width, height] = [Math.max(1, dots(image.xMm + image.widthMm) - x), Math.max(1, dots(image.yMm + image.heightMm) - y)];
+    if (x < 0 || y < 0 || x + width > widthDots || y + height > heightDots) {
+      throw new PrinterUnsupportedError("An image runs past the label's edge: move it inside the label.");
+    }
+    return { x, y, bitmap: resample(pictureBitmap(image.picture), width, height) };
+  });
+  return { widthDots, heightDots, dpi, symbols, texts, boxes, images };
 }
 
 /**

@@ -129,6 +129,11 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.fill("#el-width", "100");
   await page.fill("#el-x", "6");
   await page.fill("#el-y", "38");
+  // A logo beside the text (step d)
+  await page.getByTestId("image-file").setInputFiles(new URL("../e2e/fixtures/logo.png", import.meta.url).pathname);
+  await page.fill("#el-width", "30");
+  await page.fill("#el-x", "76");
+  await page.fill("#el-y", "18");
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await shot(label(page).locator(".panel"), "designer");
 });

@@ -154,7 +154,8 @@ Each module, in the order of the flow above.
 | `layout.ts` | `layoutLabel` (the resolver's `_layout` and `_place_linear`, and `layoutBars` for symbols sized by their table's row), `labelSvg`, the text's position and height, bar width reduction, ITF-14's bearer bars |
 | `gs1128.ts` | `splitGs1128` and `dataCharacters` (48 data characters and 165.10 mm a symbol); the stack is laid out by `layout.ts` |
 | `logistic.ts` | `logisticLabel`: the GS1 Logistic Label as one `Layout` (6.6) |
-| `design.ts` | `designLabel`: a label of one's own, barcodes and text blocks placed on a page, as one `Layout` (backlog 4.2) |
+| `design.ts` | `designLabel`: a label of one's own, barcodes, text blocks, lines, boxes and images placed on a page, as one `Layout` (backlog 4.2) |
+| `picture.ts` | `pictureOf`, `pictureBitmap`, `resample`, `bitmapRects`: an image as a one-bit picture, at a printer's dots, as rectangles |
 | `hri.ts` | `HriFont`: Liberation Sans through opentype.js, contours drawn as fontTools does, glyph points cached |
 | `pyformat.ts` | `pyFixed`: Python's `%.3f` with ties to even, so the SVG equals the resolver's |
 | `scan.ts` | `expectedReads`: the symbology identifier and data each symbol of a label should read as |
@@ -277,11 +278,12 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 51 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 54 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
-| `design` | a label of one's own: barcodes and text blocks on a page, read back, in bulk | 11 |
+| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 12 |
+| `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 5 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 4 |
@@ -300,7 +302,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 52 |
+| `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 1 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 53 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 80 |
 

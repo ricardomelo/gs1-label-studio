@@ -1,5 +1,6 @@
 import { MM_PER_INCH } from "./dots.ts";
 import type { QrMode } from "./encode.ts";
+import type { Bitmap } from "./raster.ts";
 import type { SymbologyId } from "./symbologies.ts";
 
 /**
@@ -51,7 +52,7 @@ export interface PrintLabelOptions extends PrintSymbolOptions {
 
 /**
  * A label of one's own (backlog 4.2) in dots: several symbols, each placed and sized as a symbol alone is, lines of
- * text, each with its capitals' top left corner and height, and lines and boxes. What a printer language writes the
+ * text, each with its capitals' top left corner and height, lines and boxes, and images. What a printer language writes the
  * designer's page from.
  */
 export interface PrintPage {
@@ -64,6 +65,8 @@ export interface PrintPage {
   texts: { x: number; y: number; heightDots: number; widthDots: number; text: string }[];
   /** The page's lines and boxes: each a box's top left corner and outer size, its outline as thick as its narrower side when filled. */
   boxes: { x: number; y: number; width: number; height: number; thickness: number }[];
+  /** The page's images (a logo): each its top left corner and its picture at the printer's dots. */
+  images?: { x: number; y: number; bitmap: Bitmap }[];
 }
 
 export const HRI_TEXT_MM = 2.2;
