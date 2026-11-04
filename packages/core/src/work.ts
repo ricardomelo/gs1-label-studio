@@ -1,5 +1,5 @@
 import type { ColumnMapping, FixedValue } from "./bulk.ts";
-import type { DesignElement, DesignPage, MonthLanguage } from "./design.ts";
+import { ROTATIONS, type DesignElement, type DesignPage, type MonthLanguage, type Rotation } from "./design.ts";
 import type { Answers } from "./guide.ts";
 import type { Identification } from "./identify.ts";
 import { pictureBitmap, type Picture } from "./picture.ts";
@@ -132,14 +132,18 @@ const isSymbology = (value: unknown): value is SymbologyId => isString(value) &&
 function element(value: unknown, at: string): DesignElement {
   if (!isRecord(value) || !isString(value.id) || !isNumber(value.xMm) || !isNumber(value.yMm)) damaged(at);
   const { id, xMm, yMm } = value as { id: string; xMm: number; yMm: number };
+  // A barcode, a text block or an image may be turned (backlog 4.2); a line or box is not
+  const turns = value.kind === "symbol" || value.kind === "text" || value.kind === "image";
+  if (value.rotation !== undefined && !(turns && ROTATIONS.includes(value.rotation as Rotation))) damaged(at);
+  const rotation = value.rotation ? { rotation: value.rotation as Rotation } : {};
   switch (value.kind) {
     case "symbol":
       if (!isSymbology(value.symbology) || !(value.ais === null || (Array.isArray(value.ais) && value.ais.every(isString)))
         || !isNumber(value.size) || typeof value.hri !== "boolean") damaged(at);
-      return { id, kind: "symbol", symbology: value.symbology, ais: value.ais === null ? null : [...(value.ais as string[])], size: value.size as number, hri: value.hri as boolean, xMm, yMm };
+      return { id, kind: "symbol", symbology: value.symbology, ais: value.ais === null ? null : [...(value.ais as string[])], size: value.size as number, hri: value.hri as boolean, ...rotation, xMm, yMm };
     case "text":
       if (!isString(value.text) || !isNumber(value.heightMm) || (value.months !== undefined && !MONTHS.includes(value.months as MonthLanguage))) damaged(at);
-      return { id, kind: "text", text: value.text, heightMm: value.heightMm as number, ...(value.months ? { months: value.months as MonthLanguage } : {}), xMm, yMm };
+      return { id, kind: "text", text: value.text, heightMm: value.heightMm as number, ...(value.months ? { months: value.months as MonthLanguage } : {}), ...rotation, xMm, yMm };
     case "line":
       if (typeof value.vertical !== "boolean" || !isNumber(value.lengthMm) || !isNumber(value.thicknessMm)) damaged(at);
       return { id, kind: "line", vertical: value.vertical, lengthMm: value.lengthMm as number, thicknessMm: value.thicknessMm as number, xMm, yMm };
@@ -151,7 +155,7 @@ function element(value: unknown, at: string): DesignElement {
       if (!isString(value.name) || !isNumber(value.widthMm) || !isRecord(picture) || !isNumber(picture.width)
         || !isNumber(picture.height) || !isString(picture.bits) || !isPicture(picture as unknown as Picture)) damaged(at);
       const p = picture as unknown as Picture;
-      return { id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits }, widthMm: value.widthMm as number, xMm, yMm };
+      return { id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits }, widthMm: value.widthMm as number, ...rotation, xMm, yMm };
     }
     default:
       return damaged(at);

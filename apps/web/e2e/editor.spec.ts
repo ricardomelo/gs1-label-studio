@@ -1407,6 +1407,60 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   await expect(page.locator("#el-height-mm")).toHaveValue("16.7");
 });
 
+// Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
+// label turned with them, printed in ZPL with its field orientation and kept in the work; a QR code stays upright.
+test("a label of one's own: a barcode and a text turned, printed in ZPL and kept in the work", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.fill("#page-height", "110");
+  await page.selectOption("#page-env", "distribution");
+  await page.locator(".design-list button").first().click();
+  const rotation = page.getByRole("group", { name: "Rotation" });
+  // A QR code reads in any direction: no rotation offered, and one turned before stands upright
+  await page.selectOption("#el-symbol", "gs1-128");
+  await rotation.getByRole("button", { name: "180°", exact: true }).click();
+  await page.selectOption("#el-symbol", "dl-qrcode");
+  await expect(rotation).toHaveCount(0);
+  await expect(page.getByText("A QR code reads in any direction, so it stays upright.")).toBeVisible();
+  await page.selectOption("#el-symbol", "gs1-128");
+  await expect(rotation.getByRole("button", { name: "0°", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const box = async () => {
+    const rect = page.locator(".design-overlay rect.selected");
+    return [Number(await rect.getAttribute("width")), Number(await rect.getAttribute("height"))];
+  };
+  const [w, h] = await box();
+  expect(w).toBeGreaterThan(h!);
+  await rotation.getByRole("button", { name: "90°", exact: true }).click();
+  await expect(rotation.getByRole("button", { name: "90°", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(box).toEqual([h, w]);
+  await expect(page.locator("#el-x")).toHaveValue("2");
+  // A text block read upwards
+  await page.locator(".design-list button").nth(1).click();
+  await page.fill("#el-text", "BATCH {10}");
+  await page.fill("#el-x", "80");
+  await rotation.getByRole("button", { name: "270°", exact: true }).click();
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  expect(file).toMatch(/\^BCR,/);
+  expect(file).toMatch(/\^A0B,\d+,\d+\^FB\d+,1,0,L\^FDBATCH B42\^FS/);
+  // Kept in the work file and opened again
+  await on(page, "more");
+  const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
+  const work = JSON.parse(readFileSync((await saved.path())!, "utf8")) as { page: { elements: { kind: string; rotation?: number }[] } };
+  expect(work.page.elements.map((e) => e.rotation)).toEqual([90, 270]);
+  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByLabel("Open a saved work").setInputFiles((await saved.path())!);
+  await on(page, "label");
+  await page.locator(".design-list button").first().press("Enter");
+  await expect(page.getByRole("group", { name: "Rotation" }).getByRole("button", { name: "90°", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
 // The owner, 3 November 2026: a new element never lands exactly on another, so that the person sees it was made — a
 // step of 5 mm right and down from one at its corner.
 test("a label of one's own: each new element a step right and down from one already at its corner", async ({ page }) => {

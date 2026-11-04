@@ -27,11 +27,12 @@ import {
   syntaxEngine,
   xDimension,
   type DesignPage,
+  type DesignSymbol,
   type DesignText,
   type Identified,
   type SyntaxEngine,
 } from "../src/index.ts";
-import { bitmapRects, graphicFields, pictureBitmap, resample } from "../src/index.ts";
+import { bitmapRects, graphicFields, labelPixels, labelPng, pictureBitmap, resample, turnedPicture, turnedRect } from "../src/index.ts";
 import { WITH_LOGO } from "./fixtures/graphics.ts";
 import { drawPdf, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
@@ -242,6 +243,101 @@ describe("a label of one's own", () => {
     expect(() => printPageFor(past, 203)).toThrow(/An image runs past the label's edge/);
     // Without a width, refused
     expect(() => designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 0 }] }, data, font, { environment: "distribution" })).toThrow(/An image needs a width greater than 0 mm/);
+  }, SLOW);
+
+  // Rotation (backlog 4.2): a barcode, a text block and an image turned a quarter, a half or three quarters about their
+  // box, whose top left corner as turned stays where the page puts it; drawn turned in every output, read back, and in
+  // ZPL each field with its orientation; ^BQ and EPL2 refuse what they cannot print turned
+  it("turns a barcode, a text block and an image about their box, in the drawing and in ZPL", async () => {
+    expect(turnedRect([1, 2, 3, 4], 10, 20, 90, 100, 200)).toEqual([114, 201, 4, 3]);
+    expect(turnedRect([1, 2, 3, 4], 10, 20, 180, 100, 200)).toEqual([106, 214, 3, 4]);
+    expect(turnedRect([1, 2, 3, 4], 10, 20, 270, 100, 200)).toEqual([102, 206, 4, 3]);
+    const image = WITH_LOGO.elements[0]!;
+    if (image.kind !== "image") throw new Error("the fixture's first element is its image");
+    const page: DesignPage = {
+      widthMm: 150, heightMm: 120,
+      elements: [
+        { id: "c", kind: "symbol", symbology: "gs1-128", ais: ["01", "10"], size: 100, hri: true, rotation: 90, xMm: 4, yMm: 4 },
+        { id: "m", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: true, rotation: 180, xMm: 60, yMm: 70 },
+        { id: "t", kind: "text", text: "BATCH {10}\nEXP {17:DD.MM.YYYY}", heightMm: 4, rotation: 270, xMm: 120, yMm: 10 },
+        { ...image, rotation: 90, xMm: 60, yMm: 4 },
+      ],
+    };
+    const label = designLabel(page, data, font, { environment: "distribution" });
+    expect(label.problems).toEqual([]);
+    const upright = designLabel({ ...page, elements: page.elements.map((e) => ({ ...e, rotation: 0 as const })) }, data, font, { environment: "distribution" });
+    // Each box as turned: its width and height the other way round for a quarter turn, its corner where the page puts it
+    for (const p of label.placed) {
+      const u = upright.placed.find((q) => q.id === p.id)!;
+      const element = page.elements.find((e) => e.id === p.id)!;
+      const turn = "rotation" in element ? element.rotation : 0;
+      expect([p.xMm, p.yMm, p.widthMm, p.heightMm]).toEqual(turn === 180 ? [u.xMm, u.yMm, u.widthMm, u.heightMm] : [u.xMm, u.yMm, u.heightMm, u.widthMm]);
+    }
+    // Every dark rectangle inside its element's box; the image's the picture turned
+    const { layout } = label;
+    const inside = (r: number[], p: { xMm: number; yMm: number; widthMm: number; heightMm: number }) =>
+      r[0]! * layout.xMm >= p.xMm - 1e-6 && r[1]! * layout.xMm >= p.yMm - 1e-6
+      && (r[0]! + r[2]!) * layout.xMm <= p.xMm + p.widthMm + 1e-6 && (r[1]! + r[3]!) * layout.xMm <= p.yMm + p.heightMm + 1e-6;
+    expect(layout.rects.every((r) => label.placed.some((p) => inside(r, p)))).toBe(true);
+    const turned = turnedPicture(image.picture, 90);
+    expect([turned.width, turned.height]).toEqual([image.picture.height, image.picture.width]);
+    expect(turnedPicture(turnedPicture(turned, 180), 90)).toEqual(image.picture);
+    const pixel = 40 / 120;
+    const mm = (r: number[]) => r.map((v) => Math.round(v * 1000) / 1000);
+    expect(layout.rects.slice(layout.symbolRects).map((r) => mm(r.map((v) => v * layout.xMm))))
+      .toEqual(bitmapRects(pictureBitmap(turned)).map(([x, y, w, h]) => mm([60 + x * pixel, 4 + y * pixel, w * pixel, h * pixel])));
+    // The text turned with its block: read upwards, its capitals' top on the left and its descenders on the right, its
+    // glyphs inside the block's box but for those and a round letter's overshoot
+    const lines = layout.texts.filter((t) => t.turn === 3);
+    expect(lines.map((t) => t.text)).toEqual(["BATCH B42", "EXP 31.12.2027"]);
+    const box = label.placed.find((p) => p.id === "t")!;
+    for (const t of lines) {
+      for (const c of font.commands(t.text, t.x, t.baseline, t.em, t.turn).filter((c) => c.type !== "Z")) {
+        expect(c.x! * layout.xMm).toBeGreaterThanOrEqual(box.xMm - 0.1);
+        expect(c.x! * layout.xMm).toBeLessThanOrEqual(box.xMm + box.widthMm + 1.5);
+        expect(c.y! * layout.xMm).toBeGreaterThanOrEqual(box.yMm - 1e-6);
+        expect(c.y! * layout.xMm).toBeLessThanOrEqual(box.yMm + box.heightMm + 1e-6);
+      }
+    }
+    // Every turned text, the barcodes' too, inside its element's box: a turned line drawn upright would run out of it
+    for (const t of layout.texts) {
+      const points = font.commands(t.text, t.x, t.baseline, t.em, t.turn).filter((c) => c.type !== "Z").map((c) => [c.x! * layout.xMm, c.y! * layout.xMm]);
+      const near = 0.3; // a round letter's overshoot
+      expect(label.placed.some((p) => points.every(([x, y]) => x! >= p.xMm - near && x! <= p.xMm + p.widthMm + near && y! >= p.yMm - near && y! <= p.yMm + p.heightMm + near))).toBe(true);
+    }
+    // Upside down by the label's left edge, the text's ^FB block ends at the edge
+    const edge = designLabel({ widthMm: 60, heightMm: 30, elements: [{ id: "e", kind: "text", text: "BATCH {10}", heightMm: 4, rotation: 180, xMm: 1, yMm: 10 }] }, data, font, { environment: "distribution" });
+    expect(zplPage(printPageFor(edge, 203))).toMatch(/\^FO0,\d+\^A0I,/);
+    // The PNG draws the text turned too: nothing dark right of its block, where an upright line would run
+    const pixels = labelPixels(layout, font, 4);
+    const px = (mm: number) => Math.round((mm / layout.xMm) * 4);
+    let past = 0;
+    for (let y = px(box.yMm); y < px(box.yMm + box.heightMm); y++) {
+      for (let x = px(box.xMm + box.widthMm + 2); x < pixels.width; x++) if (pixels.grey[y * pixels.width + x]! < 128) past++;
+    }
+    expect(past).toBe(0);
+    // Read back turned from the SVG, the PNG and the PDF
+    const svg = labelSvg(label.options, layout, font);
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(label.expected);
+    expect(await read(await labelPng(layout, font))).toEqual(label.expected);
+    expect(await read(drawPdf(await labelPdf(label.options, layout, font), 300))).toEqual(label.expected);
+    expect(labelSvg(label.options, layout, font, true)).toContain(`transform="rotate(270 `);
+    // In ZPL: each field turned (Labelary prints them in labelary.test.ts); a QR code refused turned, upright not
+    const printed = printPageFor(label, 203);
+    expect(printed.symbols.map((s) => s.options.turned?.rotation)).toEqual([90, 180]);
+    const zpl = zplPage(printed);
+    expect(zpl).toMatch(/\^BCR,/);
+    expect(zpl).toMatch(/\^BXI,/);
+    expect(zpl).toMatch(/\^A0R,.*\^FB\d+,1,0,C\^FD\(01\)/);
+    expect(zpl).toMatch(/\^A0B,\d+,\d+\^FB\d+,1,0,L\^FDBATCH B42/);
+    expect(zpl).not.toMatch(/\^(A0|B[A-Z0-9])N/);
+    expect(() => eplPage({ ...printed, images: [] })).toThrow(/upright only, for now/);
+    expect(() => eplPage({ ...printed, images: [], symbols: [] })).toThrow(/upright only, for now/);
+    expect(eplPage({ ...printed, images: [], symbols: [], texts: [] })).toMatch(/^N$/m);
+    const qr: DesignPage = { widthMm: 60, heightMm: 60, elements: [{ id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, rotation: 90, xMm: 4, yMm: 4 }] };
+    const qrLabel = designLabel(qr, data, font, { environment: "distribution" });
+    expect(() => zplPage(printPageFor(qrLabel, 203))).toThrow(/ZPL prints a QR code upright only/);
+    expect(zplPage(printPageFor(designLabel({ ...qr, elements: [{ ...(qr.elements[0] as DesignSymbol), rotation: 0 }] }, data, font, { environment: "distribution" }), 203))).toMatch(/\^BQN/);
   }, SLOW);
 
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {

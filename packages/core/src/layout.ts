@@ -113,7 +113,12 @@ export interface LabelText {
   em: number;
   /** EAN/UPC digits (OCR-B when the text is real text). */
   linear: boolean;
+  /** Quarter turns clockwise about its baseline's left end (backlog 4.2, rotation): none when not given. */
+  turn?: Turn;
 }
+
+/** Quarter turns clockwise: 90°, 180° or 270°. */
+export type Turn = 1 | 2 | 3;
 
 export interface Layout {
   width: number;
@@ -650,12 +655,13 @@ export function labelSvg(options: LabelOptions, layout: Layout, font: HriFont, h
   ];
   for (const t of layout.texts) {
     if (hriText) {
+      const turn = t.turn ? ` transform="rotate(${t.turn * 90} ${pyFixed(t.x, 4)} ${pyFixed(t.baseline, 4)})"` : "";
       parts.push(
         `<text x="${pyFixed(t.x, 4)}" y="${pyFixed(t.baseline, 4)}" font-family="${t.linear ? OCR_B : HRI_FONT_FAMILY}" ` +
-          `font-size="${pyFixed(t.em, 4)}" fill="#000">${xml(t.text)}</text>`,
+          `font-size="${pyFixed(t.em, 4)}" fill="#000"${turn}>${xml(t.text)}</text>`,
       );
     } else {
-      parts.push(`<path fill="#000" aria-label="${xml(t.text)}" d="${font.svgPath(t.text, t.x, t.baseline, t.em)}"/>`);
+      parts.push(`<path fill="#000" aria-label="${xml(t.text)}" d="${font.svgPath(t.text, t.x, t.baseline, t.em, t.turn)}"/>`);
     }
   }
   parts.push("</svg>");

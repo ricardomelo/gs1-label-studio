@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { designLabel, type DesignedLabel, type DesignPage } from "./design.ts";
+import { designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { pictureBitmap, resample } from "./picture.ts";
 import { PrinterUnsupportedError, type PrintPage } from "./printers.ts";
@@ -158,7 +158,7 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
   const dots = (mm: number) => Math.round((mm / MM_PER_INCH) * dpi);
   const widthDots = dots(designed.layout.width * designed.layout.xMm);
   const heightDots = dots(designed.layout.height * designed.layout.xMm);
-  const symbols = designed.printer.symbols.map(({ xMm, yMm, data, options, layout }) => {
+  const symbols = designed.printer.symbols.map(({ xMm, yMm, rotation, data, options, layout }) => {
     const { symbology, spec } = options;
     const name = SYMBOLOGIES[symbology].name;
     let d = snapToDots(layout.xMm, dpi).dots;
@@ -179,16 +179,26 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     const [from, to] = layout.barRects && layout.barRects[1] > layout.barRects[0] ? layout.barRects : [0, layout.rects.length];
     const bars = layout.rects.slice(from, to);
     const [spaceLeft, spaceTop] = leadingSpace(geometry);
-    const x = dots(xMm + Math.min(...bars.map((r) => r[0])) * layout.xMm) - spaceLeft * d;
-    const y = dots(yMm + Math.min(...bars.map((r) => r[1])) * layout.xMm) - spaceTop * d;
-    const right = x + boxWidth - 2 * placement.x; // the symbol's own width: its box less a quiet zone (and frame) each side
-    const bottom = y + (geometry.kind === "matrix" && SYMBOLOGIES[symbology].kind === "matrix" ? geometry.rows * d : placement.barHeightDots);
+    // The symbol's own box in dots, upright: its box less a quiet zone (and frame) each side, its bars' or modules' height
+    const width = boxWidth - 2 * placement.x;
+    const height = geometry.kind === "matrix" && SYMBOLOGIES[symbology].kind === "matrix" ? geometry.rows * d : placement.barHeightDots;
+    // Turned (backlog 4.2), the bars' box as the page turns it, its top left corner where the page puts it; the
+    // printer language places its field from there (zpl.ts, zplTurnedField)
+    const [bx, by] = [Math.min(...bars.map((r) => r[0])), Math.min(...bars.map((r) => r[1]))];
+    const own = [bx, by, Math.max(...bars.map((r) => r[0] + r[2])) - bx, Math.max(...bars.map((r) => r[1] + r[3])) - by];
+    const [rx, ry] = turnedRect(own, layout.width, layout.height, rotation);
+    const x = dots(xMm + rx * layout.xMm) - (rotation === 0 ? spaceLeft * d : 0);
+    const y = dots(yMm + ry * layout.xMm) - (rotation === 0 ? spaceTop * d : 0);
+    const [right, bottom] = rotation === 90 || rotation === 270 ? [x + height, y + width] : [x + width, y + height];
     if (x < 0 || y < 0 || right > widthDots || bottom > heightDots) {
       throw new PrinterUnsupportedError(`The ${name} runs past the label's edge at ${d} dots a module: move it inside the label.`);
     }
-    return { symbology, data, options: { ...placement, x, y } };
+    return { symbology, data, options: { ...placement, x, y, ...(rotation ? { turned: { rotation, width, height } } : {}) } };
   });
-  const texts = designed.printer.texts.map((t) => ({ x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), widthDots: Math.floor((t.widthMm / MM_PER_INCH) * dpi), text: t.text }));
+  const texts = designed.printer.texts.map((t) => ({
+    x: dots(t.xMm), y: dots(t.yMm), heightDots: dots(t.heightMm), widthDots: Math.floor((t.widthMm / MM_PER_INCH) * dpi), text: t.text,
+    ...(t.rotation ? { rotation: t.rotation } : {}),
+  }));
   // Each line and box from the dots its edges round to, so that boxes side by side meet; its outline at least a dot
   const boxes = designed.printer.boxes.map((b) => {
     const [x, y] = [dots(b.xMm), dots(b.yMm)];

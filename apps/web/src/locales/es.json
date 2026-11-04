@@ -628,5 +628,8 @@
  "{w} × {h} pixels": "{w} × {h} píxeles",
  "Replace…": "Cambiar…",
  "It prints in black and white, as label printers print: a light colour may vanish, so a logo in black works best.": "Se imprime en blanco y negro, como imprimen las impresoras de etiquetas: un color claro puede desaparecer, por eso un logotipo en negro funciona mejor.",
- "“{name}” is not an image this browser can read: choose a PNG, JPEG, GIF, WebP or SVG file.": "“{name}” no es una imagen que este navegador pueda leer: elija un archivo PNG, JPEG, GIF, WebP o SVG."
+ "“{name}” is not an image this browser can read: choose a PNG, JPEG, GIF, WebP or SVG file.": "“{name}” no es una imagen que este navegador pueda leer: elija un archivo PNG, JPEG, GIF, WebP o SVG.",
+ "Rotation": "Rotación",
+ "{degrees}°": "{degrees}°",
+ "A QR code reads in any direction, so it stays upright.": "Un código QR se lee en cualquier dirección, así que queda derecho."
 }

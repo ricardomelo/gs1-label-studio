@@ -184,4 +184,11 @@
   scaled down); **Replace…** changes its file. Drawn in SVG, PNG, PDF and EPS; in ZPL as a graphic field (`^GFA`) at the
   printer's dots, in stripes when larger than one field, every dot checked through Labelary; kept in the work file.
   EPL2 refuses it for now (`GW` sends raw bytes, which the studio's text file does not carry).
+- Rotation on a label of one's own (backlog 4.2, 4 November; mock-up A of two): **Rotation** 0°, 90°, 180° or 270° in
+  the properties of a barcode, a text block or an image, which turns about its box, the box's top left corner kept.
+  Drawn turned in SVG, PNG, PDF and EPS; in ZPL each field with its orientation (`R`, `I`, `B`) where the page puts it:
+  every dot of each symbol the upright print's turned (GS1-128, EAN-13, UPC-E, ITF-14 with its bearer bars, GS1 DataBar
+  Expanded, Limited, Stacked and Expanded Stacked, both Data Matrix) and a turned line of text's capitals to the dot,
+  through Labelary at 203 and 300 dpi; an image is sent turned. A QR code stays upright (`^BQ` has no orientation); the
+  studio's EPL2 file refuses a turned element for now. Kept in the work file.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

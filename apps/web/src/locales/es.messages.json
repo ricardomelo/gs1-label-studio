@@ -558,5 +558,9 @@
  "EPL2 sends an image as raw bytes, which the studio's EPL2 file does not carry yet: its ZPL or PDF prints it.": "EPL2 envía una imagen como bytes sin formato, que el archivo EPL2 del estudio aún no lleva: su ZPL o su PDF la imprimen.",
  "The image has no pixels.": "La imagen no tiene píxeles.",
  "The image's pixels are damaged.": "Los píxeles de la imagen están dañados.",
- "The image is {width} × {height} pixels: an image on the label takes at most {PICTURE_MAX_SIDE} pixels a side.": "La imagen tiene {width} × {height} píxeles: una imagen en la etiqueta tiene como máximo {PICTURE_MAX_SIDE} píxeles por lado."
+ "The image is {width} × {height} pixels: an image on the label takes at most {PICTURE_MAX_SIDE} pixels a side.": "La imagen tiene {width} × {height} píxeles: una imagen en la etiqueta tiene como máximo {PICTURE_MAX_SIDE} píxeles por lado.",
+ "ZPL prints a QR code upright only (^BQ has no orientation): turn it back to 0°. A QR code is read in any direction.": "ZPL imprime un código QR solo derecho (^BQ no tiene orientación): vuelva a ponerlo a 0°. Un código QR se lee en cualquier dirección.",
+ "A line of text runs past the label's edge: move it inside the label.": "Una línea de texto sobrepasa el borde de la etiqueta: muévala dentro de la etiqueta.",
+ "A barcode's text runs past the label's edge: move the barcode inside the label.": "El texto de un código de barras sobrepasa el borde de la etiqueta: mueva el código dentro de la etiqueta.",
+ "The studio's EPL2 file prints barcodes and text upright only, for now: its ZPL or PDF prints them turned.": "El archivo EPL2 del estudio imprime códigos y texto solo derechos, por ahora: su ZPL o su PDF los imprime girados."
 }

@@ -41,6 +41,12 @@ export interface PrintSymbolOptions {
   /** The human readable text's place and height in mm (backlog 1.16): below and 2.2 mm when not given. */
   hriPosition?: "below" | "above" | "split" | "left" | "right";
   hriHeightMm?: number;
+  /**
+   * The symbol turned clockwise (backlog 4.2, a label of one's own): `x` and `y` are then the top left corner of its
+   * box as turned — the symbol's own box, its bars or modules and a leading space (GS1 DataBar's left guard), without
+   * its text or quiet zones — and `width` and `height` that box's size upright, in dots. Its text turns with it.
+   */
+  turned?: { rotation: 90 | 180 | 270; width: number; height: number };
 }
 
 export interface PrintLabelOptions extends PrintSymbolOptions {
@@ -61,8 +67,12 @@ export interface PrintPage {
   dpi: number;
   copies?: number;
   symbols: { symbology: SymbologyId; data: string; options: PrintSymbolOptions }[];
-  /** Each line's width as the page lays it out: a printer whose fonts are fixed-pitch picks one that fits it. */
-  texts: { x: number; y: number; heightDots: number; widthDots: number; text: string }[];
+  /**
+   * Each line's width as the page lays it out: a printer whose fonts are fixed-pitch picks one that fits it. Turned
+   * (backlog 4.2), `x` and `y` are the top left corner of its capitals' box as turned, `widthDots` and `heightDots` its
+   * own width and height, upright.
+   */
+  texts: { x: number; y: number; heightDots: number; widthDots: number; text: string; rotation?: 90 | 180 | 270 }[];
   /** The page's lines and boxes: each a box's top left corner and outer size, its outline as thick as its narrower side when filled. */
   boxes: { x: number; y: number; width: number; height: number; thickness: number }[];
   /** The page's images (a logo): each its top left corner and its picture at the printer's dots. */

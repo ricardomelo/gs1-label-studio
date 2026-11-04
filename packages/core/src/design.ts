@@ -3,7 +3,7 @@ import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
 import { BARS, layoutLabel, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
-import { bitmapRects, pictureBitmap, type Picture } from "./picture.ts";
+import { bitmapRects, pictureBitmap, turnedPicture, type Picture } from "./picture.ts";
 import { expectedReads } from "./scan.ts";
 import { isoDate } from "./sign.ts";
 import { specificationFor, type SpecSymbol } from "./specifications.ts";
@@ -27,7 +27,9 @@ export interface DesignSymbol {
   size: number;
   /** Its human readable text below it. */
   hri: boolean;
-  /** The top left corner of the symbol with its quiet zones, in mm from the page's. */
+  /** Turned clockwise about its box (backlog 4.2): upright when not given. */
+  rotation?: Rotation;
+  /** The top left corner of the symbol with its quiet zones (of its box as turned), in mm from the page's. */
   xMm: number;
   yMm: number;
 }
@@ -44,7 +46,9 @@ export interface DesignText {
   heightMm: number;
   /** The language of a date's month in its fields (`MMM`): English when not given. */
   months?: MonthLanguage;
-  /** The top left corner of its first line's capitals, in mm. */
+  /** Turned clockwise about its box (backlog 4.2): upright when not given. */
+  rotation?: Rotation;
+  /** The top left corner of its first line's capitals (of its box as turned), in mm. */
   xMm: number;
   yMm: number;
 }
@@ -82,14 +86,46 @@ export interface DesignImage {
   /** The file's name, to tell the images apart in the editor. */
   name: string;
   picture: Picture;
+  /** Its own width, before it is turned. */
   widthMm: number;
+  /** Turned clockwise about its box (backlog 4.2): upright when not given. */
+  rotation?: Rotation;
+  /** The top left corner of its box as turned. */
   xMm: number;
   yMm: number;
 }
 
 export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox | DesignImage;
 
-/** An image's height in mm: its width's, in its picture's proportions. */
+/**
+ * How far a barcode, a text block or an image is turned clockwise (backlog 4.2): a quarter turn reads downwards, a half
+ * turn upside down, three quarters upwards. A line or box needs none: it is drawn across or down, wide or tall.
+ */
+export type Rotation = 0 | 90 | 180 | 270;
+
+/** The rotations an element can take. */
+export const ROTATIONS: readonly Rotation[] = [0, 90, 180, 270];
+
+/**
+ * A rectangle `[x, y, width, height]` of a box `w` × `h` from its top left corner, where it lands when the box is turned
+ * `rotation` and its own corner put at (x0, y0): the box as turned keeps its top left corner there.
+ */
+export function turnedRect([x, y, rw, rh]: readonly number[], w: number, h: number, rotation: Rotation, x0 = 0, y0 = 0): [number, number, number, number] {
+  if (rotation === 90) return [x0 + h - y! - rh!, y0 + x!, rh!, rw!];
+  if (rotation === 180) return [x0 + w - x! - rw!, y0 + h - y! - rh!, rw!, rh!];
+  if (rotation === 270) return [x0 + y!, y0 + w - x! - rw!, rh!, rw!];
+  return [x0 + x!, y0 + y!, rw!, rh!];
+}
+
+/** A point of a box `w` × `h` from its top left corner, where it lands when the box is turned as `turnedRect` turns it. */
+function turnedPoint(x: number, y: number, w: number, h: number, rotation: Rotation, x0: number, y0: number): [number, number] {
+  const [px, py] = turnedRect([x, y, 0, 0], w, h, rotation);
+  return [x0 + px, y0 + py];
+}
+
+const turnOf = (rotation: Rotation | undefined): { turn?: 1 | 2 | 3 } => (rotation ? { turn: (rotation / 90) as 1 | 2 | 3 } : {});
+
+/** An image's own height in mm, before it is turned: its width's, in its picture's proportions. */
 export function imageHeightMm(element: Pick<DesignImage, "picture" | "widthMm">): number {
   return (element.widthMm * element.picture.height) / element.picture.width;
 }
@@ -126,12 +162,15 @@ export interface DesignedLabel {
   /**
    * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
-   * corner, height and width in the HRI font, in mm; each line and box as a box with its outline's thickness (a line,
-   * and a filled box, as thick as their narrower side); each image with its corner, size and picture.
+   * corner, height and width in the HRI font, in mm, each with how far it is turned; each line and box as a box with its
+   * outline's thickness (a line, and a filled box, as thick as their narrower side); each image with its corner, size
+   * and picture, turned already.
    */
   printer: {
-    symbols: { id: string; xMm: number; yMm: number; data: string; options: LabelOptions; layout: Layout }[];
-    texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number }[];
+    /** Its box's top left corner as turned, and its own layout, upright. */
+    symbols: { id: string; xMm: number; yMm: number; rotation: Rotation; data: string; options: LabelOptions; layout: Layout }[];
+    /** Each line's capitals: their box's top left corner as turned, and their own width and height, upright. */
+    texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number; rotation: Rotation }[];
     boxes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; thicknessMm: number }[];
     images: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; picture: Picture }[];
   };
@@ -260,12 +299,18 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   for (const element of page.elements) {
     if (element.kind === "symbol") {
       const { layout, options: o } = symbols.find((s) => s.element === element)!;
-      printer.symbols.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, data: o.data, options: o, layout });
+      const rotation = element.rotation ?? 0;
+      printer.symbols.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, rotation, data: o.data, options: o, layout });
       const scale = layout.xMm / unit;
       const [dx, dy] = [u(element.xMm), u(element.yMm)];
-      for (const [x, y, w, h] of layout.rects) rects.push([dx + x * scale, dy + y * scale, w * scale, h * scale]);
-      for (const t of layout.texts) texts.push({ ...t, x: dx + t.x * scale, baseline: dy + t.baseline * scale, em: t.em * scale });
-      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: layout.width * layout.xMm, heightMm: layout.height * layout.xMm });
+      const [w, h] = [layout.width * scale, layout.height * scale];
+      for (const r of layout.rects) rects.push(turnedRect(r.map((v) => v * scale), w, h, rotation, dx, dy));
+      for (const t of layout.texts) {
+        const [x, baseline] = turnedPoint(t.x * scale, t.baseline * scale, w, h, rotation, dx, dy);
+        texts.push({ ...t, x, baseline, em: t.em * scale, ...turnOf(rotation) });
+      }
+      const [, , widthMm, heightMm] = turnedRect([0, 0, layout.width * layout.xMm, layout.height * layout.xMm], 0, 0, rotation);
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else if (element.kind === "line" || element.kind === "box") {
       const box = boxOf(element);
       if (!(box.widthMm > 0 && box.heightMm > 0 && box.thicknessMm > 0)) {
@@ -278,24 +323,34 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: box.widthMm, heightMm: box.heightMm });
     } else if (element.kind === "image") {
       if (!(element.widthMm > 0)) throw new InputError("An image needs a width greater than 0 mm.");
-      const bitmap = pictureBitmap(element.picture);
-      const pixel = element.widthMm / bitmap.width;
+      // Turned, the picture itself is turned: then it is drawn and printed as an upright one is
+      const picture = turnedPicture(element.picture, element.rotation ?? 0);
+      const bitmap = pictureBitmap(picture);
+      const pixel = element.widthMm / element.picture.width;
       for (const [x, y, w, h] of bitmapRects(bitmap)) {
         graphics.push([u(element.xMm + x * pixel), u(element.yMm + y * pixel), u(w * pixel), u(h * pixel)]);
       }
-      const heightMm = imageHeightMm(element);
-      printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: element.widthMm, heightMm, picture: element.picture });
-      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: element.widthMm, heightMm });
+      const [widthMm, heightMm] = [picture.width * pixel, picture.height * pixel];
+      printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm, picture });
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
       const lines = fillFields(element.text, identified, { months: element.months }).split("\n");
+      const rotation = element.rotation ?? 0;
+      // The block's own box, upright: its widest line, its first line's capitals to its last's baseline
+      const width = Math.max(0, ...lines.map((line) => font.textWidth(line, em))) * unit;
+      const height = element.heightMm * (1 + (lines.length - 1) * LINE_SPACING);
       lines.forEach((line, index) => {
         if (!line) return;
-        texts.push({ text: line, x: u(element.xMm), baseline: u(element.yMm + element.heightMm * (1 + index * LINE_SPACING)), em, linear: false });
-        printer.texts.push({ text: line, xMm: element.xMm, yMm: element.yMm + element.heightMm * index * LINE_SPACING, heightMm: element.heightMm, widthMm: font.textWidth(line, em) * unit });
+        const top = element.heightMm * index * LINE_SPACING;
+        const [x, baseline] = turnedPoint(0, top + element.heightMm, width, height, rotation, element.xMm, element.yMm);
+        texts.push({ text: line, x: u(x), baseline: u(baseline), em, linear: false, ...turnOf(rotation) });
+        const lineWidth = font.textWidth(line, em) * unit;
+        const [xMm, yMm] = turnedRect([0, top, lineWidth, element.heightMm], width, height, rotation, element.xMm, element.yMm);
+        printer.texts.push({ text: line, xMm, yMm, heightMm: element.heightMm, widthMm: lineWidth, rotation });
       });
-      const width = Math.max(0, ...lines.map((line) => font.textWidth(line, em))) * unit;
-      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm: width, heightMm: element.heightMm * (1 + (lines.length - 1) * LINE_SPACING) });
+      const [, , widthMm, heightMm] = turnedRect([0, 0, width, height], 0, 0, rotation);
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     }
   }
 

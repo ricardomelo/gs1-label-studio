@@ -1,5 +1,6 @@
 /// <reference path="./opentype.d.ts" />
 import { parse, type Font, type GlyphPoint, type PathCommand } from "opentype.js";
+import type { Turn } from "./layout.ts";
 import { pyFixed } from "./pyformat.ts";
 
 function drawContour(contour: GlyphPoint[], at: (p: GlyphPoint) => [number, number], out: PathCommand[]): void {
@@ -77,14 +78,20 @@ export class HriFont {
    * exactly as fontTools draws a TrueType glyph (`_g_l_y_f.Glyph.draw` through a TransformPen): each contour rotated to
    * end on its first on-curve point, which the move goes to; lines, and quadratic curves split at the implied points
    * (the middle of two off-curve points, taken after the transform); the line back to the start left to the close.
+   * `turn` quarter turns clockwise about (x, baseline) (backlog 4.2, rotation): reading down, right to left upside
+   * down, or up.
    */
-  commands(text: string, x: number, baseline: number, em: number): PathCommand[] {
+  commands(text: string, x: number, baseline: number, em: number, turn?: Turn): PathCommand[] {
     const out: PathCommand[] = [];
     const scale = em / this.unitsPerEm;
+    const turned = (dx: number, dy: number): [number, number] =>
+      turn === 1 ? [x - dy, baseline + dx] : turn === 2 ? [x - dx, baseline - dy] : [x + dy, baseline - dx];
     let cursor = x;
     for (const char of text) {
       const { points, advance } = this.glyph(char);
-      const at = (p: GlyphPoint): [number, number] => [scale * p.x + cursor, -scale * p.y + baseline];
+      const at = (p: GlyphPoint): [number, number] => turn
+        ? turned(scale * p.x + cursor - x, -scale * p.y)
+        : [scale * p.x + cursor, -scale * p.y + baseline];
       let contour: GlyphPoint[] = [];
       for (const point of points) {
         contour.push(point);
@@ -98,14 +105,14 @@ export class HriFont {
   }
 
   /** The outlines as SVG path data. */
-  svgPath(text: string, x: number, baseline: number, em: number): string {
+  svgPath(text: string, x: number, baseline: number, em: number, turn?: Turn): string {
     // The resolver's ntos: f"{v:.3f}" without trailing zeros (so -0.0004 is "-0", as in Python).
     const ntos = (v: number) => pyFixed(v, 3).replace(/0+$/, "").replace(/\.$/, "");
     const out: string[] = [];
     let last: string | null = null;
     let lastX: number | null = null;
     let lastY: number | null = null;
-    for (const c of this.commands(text, x, baseline, em)) {
+    for (const c of this.commands(text, x, baseline, em, turn)) {
       if (c.type === "M") {
         if (last === "M") out.pop();
         out.push(`M${ntos(c.x!)} ${ntos(c.y!)}`);

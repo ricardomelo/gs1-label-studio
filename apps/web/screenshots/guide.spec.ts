@@ -134,6 +134,12 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.fill("#el-width", "30");
   await page.fill("#el-x", "76");
   await page.fill("#el-y", "18");
+  // A line read upwards by the right edge (rotation)
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-text", "PRODUCT OF ITALY");
+  await page.fill("#el-x", "138");
+  await page.fill("#el-y", "42");
+  await page.getByRole("group", { name: "Rotation" }).getByRole("button", { name: "270°", exact: true }).click();
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await shot(label(page).locator(".panel"), "designer");
 });

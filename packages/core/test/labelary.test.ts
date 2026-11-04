@@ -27,8 +27,10 @@ import {
   printPageFor,
   syntaxEngine,
   zplPage,
+  zplTurnedField,
   zplWithWork,
   readWork,
+  turnedRect,
   type DesignPage,
   type Identified,
   type SymbologyId,
@@ -373,6 +375,111 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       if (Number(dark) !== bitmap.dark[i]) differ++;
     }
     expect(differ).toBe(0);
+  });
+
+  // A turned barcode on a label of one's own (backlog 4.2, rotation): printed upright and turned a quarter, a half and
+  // three quarters, each alone on a page, every dot of the turned symbol's own box is the upright one's turned about
+  // it, the box's corner as turned where the page puts it, and read back each time. Its text, which the printer's font
+  // draws turned, may differ by a dot at a glyph's edge: each dot that differs touches one of the other print's.
+  const TURNED = [
+    [203, "distribution", "gs1-128", "(01)09506000134376(10)B42", true],
+    [300, "retail", "ean13", "(01)09506000134352", true],
+    [203, "distribution", "itf14", "(01)19506000134359", true],
+    [300, "distribution", "databar-expanded", "(01)09506000134376(10)B42", true],
+    [203, "distribution", "gs1-datamatrix", "(01)09506000134376(10)B42", true],
+    [300, "distribution", "dl-datamatrix", "https://id.gs1.org/01/09506000134376/10/B42", false],
+    [203, "distribution", "databar-limited", "(01)09506000134376", true],
+    [203, "distribution", "databar-stacked", "(01)09506000134376", true],
+    [300, "distribution", "databar-expanded-stacked", "(01)09506000134376(17)271231(21)ABCDEFGH", true],
+    [203, "retail", "upce", "(01)00012345000065", true],
+  ] as const;
+  it.each(TURNED)("a label of one's own at %i dpi: a %s %s turned, each dot the upright one's", { timeout: 90000 }, async (dpi, environment, symbology, elementString, hri) => {
+    const engine = await syntaxEngine();
+    const identified = engine.parse(elementString) as Identified;
+    const pageAt = (rotation: 0 | 90 | 180 | 270) => {
+      const page: DesignPage = { widthMm: 200, heightMm: 200, elements: [{ id: "s", kind: "symbol", symbology, ais: null, size: 100, hri, rotation, xMm: 15, yMm: 20 }] };
+      const designed = designLabel(page, identified, hriFont(), { environment });
+      expect(designed.problems).toEqual([]);
+      return { designed, printed: printPageFor(designed, dpi) };
+    };
+    const dark = async ({ printed }: ReturnType<typeof pageAt>) => {
+      const png = await labelaryPng(zplPage(printed), dpi, printed.widthDots, printed.heightDots);
+      const { grey, width } = decodePng(png);
+      const offset = Math.floor((width - printed.widthDots) / 2); // Labelary centres the print width on its page
+      const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+      const dots = new Set<number>();
+      for (let y = 0; y < printed.heightDots; y++) {
+        for (let x = 0; x < printed.widthDots; x++) if (grey[y * width + x + offset]! < 128) dots.add(y * printed.widthDots + x);
+      }
+      return { dots, read: results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort() };
+    };
+    const upright = pageAt(0);
+    const before = await dark(upright);
+    expect(before.read).toEqual(upright.designed.expected);
+    const { x: x0, y: y0 } = upright.printed.symbols[0]!.options;
+    for (const rotation of [90, 180, 270] as const) {
+      const turned = pageAt(rotation);
+      const { symbology: printedAs, data, options: printed } = turned.printed.symbols[0]!;
+      expect(printed.turned?.rotation).toBe(rotation);
+      const { x, y, width: w, height: h } = zplTurnedField(printedAs, data, printed);
+      // The corner as turned where the page puts its bars' box (the leading space of GS1 DataBar's guard added)
+      const s = turned.designed.printer.symbols[0]!;
+      const bars = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.rects.slice(...s.layout.barRects) : s.layout.rects;
+      const own = [Math.min(...bars.map((r) => r[0])), Math.min(...bars.map((r) => r[1])), Math.max(...bars.map((r) => r[0] + r[2])), Math.max(...bars.map((r) => r[1] + r[3]))];
+      const [rx, ry] = turnedRect([own[0]!, own[1]!, own[2]! - own[0]!, own[3]! - own[1]!], s.layout.width, s.layout.height, rotation);
+      const toDots = (mm: number) => Math.round((mm / 25.4) * dpi);
+      const after = await dark(turned);
+      expect(after.read).toEqual(upright.designed.expected);
+      const W = upright.printed.widthDots;
+      const moved = [...before.dots].map((i) => {
+        const [px, py] = [i % W - x0, Math.floor(i / W) - y0];
+        const [tx, ty] = rotation === 90 ? [x + h - 1 - py, y + px] : rotation === 180 ? [x + w - 1 - px, y + h - 1 - py] : [x + py, y + w - 1 - px];
+        return ty * W + tx;
+      });
+      const [across, down] = rotation === 180 ? [w, h] : [h, w];
+      const inBox = (i: number) => i % W >= x && i % W < x + across && Math.floor(i / W) >= y && Math.floor(i / W) < y + down;
+      const near = (dots: Set<number>, i: number) => [-W - 1, -W, -W + 1, -1, 0, 1, W - 1, W, W + 1].some((d) => dots.has(i + d));
+      const turnedDots = new Set(moved);
+      const inside = [moved.filter((i) => inBox(i) && !after.dots.has(i)).length, [...after.dots].filter((i) => inBox(i) && !turnedDots.has(i)).length];
+      const text = [moved.filter((i) => !near(after.dots, i)).length, [...after.dots].filter((i) => !near(turnedDots, i)).length];
+      expect([rotation, inside, text]).toEqual([rotation, [0, 0], [0, 0]]);
+      // The printed bars' top left corner as turned where the page's layout puts it
+      const corner = moved.filter(inBox).reduce(([cx, cy], i) => [Math.min(cx!, i % W), Math.min(cy!, Math.floor(i / W))], [Infinity, Infinity]);
+      expect(corner).toEqual([toDots(s.xMm + rx * s.layout.xMm), toDots(s.yMm + ry * s.layout.xMm)]);
+      expect(moved.filter(inBox).length).toBeGreaterThan(500);
+    }
+  });
+
+  // A turned text block on a label of one's own (backlog 4.2, rotation): ^A0 turned, its capitals' top side where the
+  // page puts it, to a dot, and its first letter where the line starts, within the letter's side bearing; the printer's
+  // font sets how far it runs.
+  it.each([203, 300])("a label of one's own at %i dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (dpi) => {
+    const engine = await syntaxEngine();
+    for (const rotation of [90, 180, 270] as const) {
+      const page: DesignPage = { widthMm: 80, heightMm: 80, elements: [{ id: "t", kind: "text", text: "EXP {10}", heightMm: 4, rotation, xMm: 30, yMm: 30 }] };
+      const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+      const printed = printPageFor(designed, dpi);
+      const zpl = zplPage(printed);
+      expect(zpl).toContain(`^A0${{ 90: "R", 180: "I", 270: "B" }[rotation]},`);
+      const { grey, width } = decodePng(await labelaryPng(zpl, dpi, printed.widthDots, printed.heightDots));
+      const offset = Math.floor((width - printed.widthDots) / 2);
+      let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
+      for (let y = 0; y < printed.heightDots; y++) {
+        for (let x = 0; x < printed.widthDots; x++) {
+          if (grey[y * width + x + offset]! >= 128) continue;
+          [left, top, right, bottom] = [Math.min(left, x), Math.min(top, y), Math.max(right, x), Math.max(bottom, y)];
+        }
+      }
+      const t = printed.texts[0]!;
+      const [w, c] = [t.widthDots, t.heightDots];
+      // The capitals' top side, and where the first letter starts (its side bearing at most a fifth of the height)
+      const [capitals, start] = rotation === 90 ? [right + 1 - (t.x + c), top - t.y]
+        : rotation === 180 ? [bottom + 1 - (t.y + c), t.x + w - (right + 1)]
+        : [left - t.x, t.y + w - (bottom + 1)];
+      expect([rotation, Math.abs(capitals) <= 1]).toEqual([rotation, true]);
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(start).toBeLessThanOrEqual(Math.ceil(c / 5));
+    }
   });
 
   // The work carried in the studio's ZPL (backlog 4.3): its ^FX comments change nothing the printer draws

@@ -1,5 +1,5 @@
 import {
-  boxOf, DATE_FORMATS, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, DATE_FORMATS, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
@@ -14,7 +14,10 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // outlined or filled, the shape chosen in its properties. Then (step c) a date field in a format, {17:DD/MM/YYYY}.
 // Then (step d, mock-up A of two, taken under the owner's rule of 29 October) "+ Image": the file chosen at once and
 // placed 20 mm wide, its height from its proportions, in black and white as label printers print it; B added an empty
-// image to choose its file in the properties, with a preview of the black and white.
+// image to choose its file in the properties, with a preview of the black and white. Then rotation (mock-up A of two,
+// taken under the owner's rule): a barcode, a text block or an image turned 0°, 90°, 180° or 270° by four buttons in its
+// properties, its box's top left corner kept; B turned the chosen element a quarter at a time from a button over the
+// canvas. A QR code stays upright: it reads in any direction, and ZPL prints it upright only.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -336,6 +339,28 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
   );
 }
 
+/** Rotation (mock-up A): four buttons, the element's turn pressed; none for a QR code, which stays upright. */
+function RotationField({ element, onChange }: { element: DesignSymbol | DesignText | DesignImage; onChange: (rotation: Rotation) => void }) {
+  if (element.kind === "symbol" && element.symbology === "dl-qrcode") {
+    return <p className="hint wide">{t("A QR code reads in any direction, so it stays upright.")}</p>;
+  }
+  const rotation = element.rotation ?? 0;
+  return (
+    <div className="wide">
+      <span className="label" id="el-rotation">
+        {t("Rotation")}
+      </span>
+      <span className="seg" role="group" aria-labelledby="el-rotation">
+        {ROTATIONS.map((r) => (
+          <button key={r} type="button" aria-pressed={r === rotation} onClick={() => onChange(r)}>
+            {t("{degrees}°", { degrees: r })}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 /** A field's value in the data: "(17)271231" without its AI. */
 const valueOf = ({ ai, text }: { ai: string; text: string }) => text.slice(ai.length + 2);
 
@@ -376,7 +401,7 @@ function FieldInsert({ elements, months, onInsert }: { elements: { ai: string; t
 /** The page's size, its elements and the selected one's properties, under the canvas. */
 export function DesignerPanel({ page, selected, elements, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
-  const update = (patch: Partial<DesignSymbol> | Partial<DesignText>) =>
+  const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
   const mm = (value: string, fallback: number) => millimetres(value, fallback);
   return (
@@ -432,7 +457,15 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                 <>
                   <div>
                     <label htmlFor="el-symbol">{t("Symbol")}</label>
-                    <select id="el-symbol" value={element.symbology} onChange={(e) => update({ symbology: e.target.value as SymbologyId })}>
+                    <select
+                      id="el-symbol"
+                      value={element.symbology}
+                      onChange={(e) => {
+                        const symbology = e.target.value as SymbologyId;
+                        // A QR code stays upright (RotationField)
+                        update(symbology === "dl-qrcode" ? { symbology, rotation: 0 } : { symbology });
+                      }}
+                    >
                       {OFFERED.map((symbology) => (
                         <option key={symbology.id} value={symbology.id}>
                           {tm(symbology.name)}
@@ -521,6 +554,9 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                 <label htmlFor="el-y">{t("Top (mm)")}</label>
                 <input id="el-y" type="number" step={STEP_MM} value={element.yMm} onChange={(e) => update({ yMm: mm(e.target.value, element.yMm) })} />
               </div>
+              {(element.kind === "symbol" || element.kind === "text" || element.kind === "image") && (
+                <RotationField element={element} onChange={(rotation) => update({ rotation })} />
+              )}
             </div>
           )}
         </div>

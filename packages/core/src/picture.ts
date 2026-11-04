@@ -76,6 +76,37 @@ export function pictureBitmap(picture: Picture): Bitmap {
   return { width, height, dark };
 }
 
+/** A bitmap as a picture: one bit a pixel, rows in whole bytes, leftmost pixel in the highest bit, base64. */
+function pictureFrom(bitmap: Bitmap): Picture {
+  const { width, height, dark } = bitmap;
+  const row = bytesPerRow(width);
+  const bytes = new Uint8Array(row * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) if (dark[y * width + x]) bytes[y * row + (x >> 3)]! |= 0x80 >> (x & 7);
+  }
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return { width, height, bits: btoa(binary) };
+}
+
+/**
+ * The picture turned clockwise by `rotation` degrees, a quarter turn at a time (backlog 4.2): the printer is sent the
+ * picture as turned, as no printer language turns a graphic field.
+ */
+export function turnedPicture(picture: Picture, rotation: 0 | 90 | 180 | 270): Picture {
+  if (!rotation) return picture;
+  const { width: w, height: h, dark } = pictureBitmap(picture);
+  const [width, height] = rotation === 180 ? [w, h] : [h, w];
+  const turned = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const [tx, ty] = rotation === 90 ? [h - 1 - y, x] : rotation === 180 ? [w - 1 - x, h - 1 - y] : [y, w - 1 - x];
+      turned[ty * width + tx] = dark[y * w + x]!;
+    }
+  }
+  return pictureFrom({ width, height, dark: turned });
+}
+
 /** The bitmap at `width` × `height` (a printer's dots): each dot takes the pixel under its centre. */
 export function resample(bitmap: Bitmap, width: number, height: number): Bitmap {
   const dark = new Uint8Array(width * height);

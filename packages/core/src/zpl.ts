@@ -138,7 +138,8 @@ export function zplPage(page: PrintPage, options: { notes?: readonly string[] } 
   const symbols = page.symbols.flatMap((s) => stacked(s.symbology, s.data, s.options, false).commands);
   const texts = page.texts.map((t) => {
     const height = zplFontHeight(t.heightDots);
-    return `^FO${t.x},${t.y}^A0N,${height},${height}${fieldData(t.text)}`;
+    if (!t.rotation) return `^FO${t.x},${t.y}^A0N,${height},${height}${fieldData(t.text)}`;
+    return turnedText(t, height);
   });
   // ^GB draws a box's outline inside its width and height, filled when the thickness is its narrower side
   const boxes = page.boxes.map((b) => `^FO${b.x},${b.y}^GB${b.width},${b.height},${b.thickness}^FS`);
@@ -148,6 +149,115 @@ export function zplPage(page: PrintPage, options: { notes?: readonly string[] } 
   const commands = [...images, ...boxes, ...texts, ...symbols];
   if (!options.notes) return document(commands, size, []);
   return document([...commands, ...ruler(size, options.notes)], testArea(size, options.notes), []);
+}
+
+/**
+ * A line of the page's text turned (backlog 4.2), through ^A0's orientation, its capitals' top side and its start where
+ * the page puts them. ^FO is the top left corner of the field as turned (Labelary, 4 November 2026), whose own height is
+ * ^A0's and whose capitals start at its own top: so their top side, which R puts on the right, I at the bottom and B on
+ * the left, is that height from ^FO's side or on it. Upside down or reading upwards the text starts at the field's far
+ * end, which the printer's font sets, so the field is a one-line ^FB block of a known width, left-aligned, the text's
+ * start at its own left end.
+ */
+function turnedText(t: PrintPage["texts"][number], height: number): string {
+  const { x, y, heightDots: caps, widthDots: width, rotation } = t;
+  // The block: the line's width with room for a printer's font wider than the page's, no further than the label's edge
+  const room = rotation === 180 ? x + width : y + width;
+  const block = Math.min(width + 2 * height, room);
+  const [fx, fy] = rotation === 90 ? [x + caps - height, y] : rotation === 180 ? [x + width - block, y + caps - height] : [x, y + width - block];
+  if (fx < 0 || fy < 0) throw new ZplUnsupportedError("A line of text runs past the label's edge: move it inside the label.");
+  const orientation = ORIENTATIONS[rotation!];
+  const field = rotation === 90 ? "" : `^FB${block},1,0,L`;
+  return `^FO${fx},${fy}^A0${orientation},${height},${height}${field}${fieldData(t.text)}`;
+}
+
+/** ZPL's field orientation for a turn clockwise: R reads downwards, I upside down, B upwards. */
+const ORIENTATIONS = { 90: "R", 180: "I", 270: "B" } as const;
+
+/**
+ * A symbol's fields turned (backlog 4.2): each field — the barcode, its text lines, ITF-14's bearer bars — written
+ * upright from the symbol's corner, then turned with it about the symbol's own box. ^FO is the top left corner of a field
+ * as turned, for a barcode its bars' or modules' box without the printer's interpretation line (Labelary, 4 November
+ * 2026: ^BC, ^BE, ^B2, ^BR and ^BX, at every orientation); a text line's field is its ^FB block, ^A0's height high; a
+ * box (^GB) takes its width and height the other way round. ^BQ prints a QR code upright only, so one turned is refused.
+ */
+function turnFields(symbology: SymbologyId, data: string, commands: string[], options: ZplSymbolOptions): string[] {
+  const { rotation } = options.turned!;
+  const { x, y } = options;
+  const orientation = ORIENTATIONS[rotation];
+  const { x: tx, y: ty, width: w, height: h } = zplTurnedField(symbology, data, options, commands);
+  return commands.map((command) => {
+    const at = /\^FO(-?\d+),(-?\d+)/.exec(command)!;
+    const [fx, fy] = [Number(at[1]), Number(at[2])];
+    const box = /\^GB(\d+),(\d+),(\d+)/.exec(command);
+    const text = /\^A0N,(\d+),\d+\^FB(\d+),1,0,([LC])/.exec(command);
+    const barcode = /\^(B[E8U92XRC])N/.exec(command);
+    let field: [number, number] | null;
+    let turned = command;
+    if (box) {
+      field = [Number(box[1]), Number(box[2])];
+      if (rotation !== 180) turned = turned.replace(box[0], `^GB${box[2]},${box[1]},${box[3]}`);
+    } else if (text) {
+      field = [Number(text[2]), Number(text[1])];
+      turned = turned.replace("^A0N", `^A0${orientation}`);
+    } else if (barcode) {
+      const own = barcodeField(symbology, data, command, options)!;
+      field = [own.width, own.height];
+      turned = turned.replace(barcode[0], `^${barcode[1]}${orientation}`);
+    } else {
+      throw new ZplUnsupportedError("ZPL prints a QR code upright only (^BQ has no orientation): turn it back to 0°. A QR code is read in any direction.");
+    }
+    let [fw, fh] = field;
+    // A left-aligned block (the text below a GS1 DataMatrix) is wider than its text: upside down or reading upwards its
+    // far end, where nothing is printed, is shortened to stay on the label
+    const slack = rotation === 180 ? tx + w - (fx + fw - x) : rotation === 270 ? ty + w - (fx + fw - x) : 0;
+    if (text?.[3] === "L" && slack < 0) {
+      turned = turned.replace(`^FB${fw},`, `^FB${fw + slack},`);
+      fw += slack;
+    }
+    const [nx, ny] = rotation === 90 ? [tx + h - (fy + fh - y), ty + (fx - x)]
+      : rotation === 180 ? [tx + w - (fx + fw - x), ty + h - (fy + fh - y)]
+      : [tx + (fy - y), ty + w - (fx + fw - x)];
+    if (nx < 0 || ny < 0) throw new ZplUnsupportedError("A barcode's text runs past the label's edge: move the barcode inside the label.");
+    return turned.replace(at[0], `^FO${nx},${ny}`);
+  });
+}
+
+/**
+ * The field a turned symbol turns about, in dots: its (first) barcode's field as the printer prints it
+ * (`barcodeField`), its own width and height, upright, and its top left corner as turned — the symbol's `x` and `y`,
+ * its bars' corner as turned, less the light space the turn puts at the field's top or left (a quarter turn puts the
+ * field's leading space at the top, a half turn its trailing space on the left, three quarters at the top). A QR code,
+ * which ZPL prints upright only, is refused.
+ */
+export function zplTurnedField(symbology: SymbologyId, data: string, options: ZplSymbolOptions, commands?: string[]): { x: number; y: number; width: number; height: number } {
+  const { turned: _, ...upright } = options;
+  const main = (commands ?? stacked(symbology, data, upright, false).commands).map((command) => barcodeField(symbology, data, command, options)).find(Boolean);
+  if (!main) throw new ZplUnsupportedError("ZPL prints a QR code upright only (^BQ has no orientation): turn it back to 0°. A QR code is read in any direction.");
+  const { rotation } = options.turned!;
+  const [left, top] = rotation === 90 ? [0, main.lead] : rotation === 180 ? [main.trail, 0] : [0, main.trail];
+  return { x: options.x - left, y: options.y - top, width: main.width, height: main.height };
+}
+
+/**
+ * A barcode field's own width and height in dots as the printer prints it, from its corner (^FO); null when the command
+ * is not a barcode that turns. GS1-128's stacked symbols are each as wide as their own field data; ^BR prints GS1
+ * DataBar at its own height, whatever the bar height asked (`databar`), from its leading space to its last bar, and
+ * Expanded (Stacked too) a module further, its right guard's space (Labelary, 4 November 2026); the others are the
+ * symbol's box.
+ */
+function barcodeField(symbology: SymbologyId, data: string, command: string, options: ZplSymbolOptions): { width: number; height: number; lead: number; trail: number } | null {
+  const { dotsPerModule: d, turned } = options;
+  const code128 = /\^BCN,(\d+),.*?\^FD(.*?)\^FS/.exec(command);
+  if (code128) return { width: gs1128Modules(code128[2]!) * d, height: Number(code128[1]), lead: 0, trail: 0 };
+  if (/\^BRN/.test(command)) {
+    // Its leading space, the left guard's, before its first bar, and Expanded's trailing one after its last
+    const geometry = encode(symbology, data);
+    const lead = geometry.kind === "linear" && geometry.widths[0] === 0 ? geometry.widths[1]! * d : 0;
+    const trail = symbology.startsWith("databar-expanded") ? d : 0;
+    return { width: databarWidth(geometry, d, trail) ?? turned!.width + trail, height: databarHeight(symbology, geometry, d), lead, trail };
+  }
+  return /\^B[E8U92X]N/.test(command) ? { width: turned!.width, height: turned!.height, lead: 0, trail: 0 } : null;
 }
 
 /**
@@ -168,7 +278,12 @@ export function gs1128StackDots(options: Pick<ZplSymbolOptions, "barHeightDots" 
 }
 
 /** One symbol's fields, or GS1-128's symbols stacked from the top, each with its own element strings. */
-function stacked(symbology: SymbologyId, data: string, options: ZplSymbolOptions, template: boolean) {
+function stacked(symbology: SymbologyId, data: string, options: ZplSymbolOptions, template: boolean): { commands: string[]; placeholders: ZplPlaceholder[] } {
+  if (options.turned) {
+    const { turned: _, ...upright } = options;
+    const { commands, placeholders } = stacked(symbology, data, upright, template);
+    return { commands: turnFields(symbology, data, commands, options), placeholders };
+  }
   if (symbology !== "gs1-128" || !options.parts || options.parts.length < 2) return fields(symbology, data, options, template);
   // Split, each symbol's attributes go above it: room for their line between the symbols
   const step = gs1128StackDots(options) + (options.hriPosition === "split" ? zplTextAbove(options, 1) : 0);
@@ -433,10 +548,24 @@ function databar(symbology: SymbologyId, data: string, geometry: SymbolGeometry,
         return v;
       })();
   const segments = symbology === "databar-expanded-stacked" ? EXPANDED_STACKED_SEGMENTS : 22;
-  const height = (modules ?? (geometry.kind === "matrix" ? geometry.rows : 34)) * d;
+  const height = databarHeight(symbology, geometry, d);
   const widthDots = widthInModules(geometry) * d;
   const text = textAround(type === 6 ? shown : [shown[0]!], x, y, y + height, widthDots, Math.round((HRI_GAP_MM / MM_PER_INCH) * options.dpi), options, true);
   return [`^FO${x},${y}^BRN,${type},${d},1,${h},${segments}${fieldData(fd)}`, ...text];
+}
+
+/** The height ^BR prints a GS1 DataBar symbol at, in dots: its type's modules, or a stacked Expanded's rows. */
+function databarHeight(symbology: SymbologyId, geometry: SymbolGeometry, d: number): number {
+  return (DATABAR[symbology]!.modules ?? (geometry.kind === "matrix" ? geometry.rows : 34)) * d;
+}
+
+/** The width of ^BR's field for a GS1 DataBar symbol in a row, in dots: to its last bar, and its trailing space. */
+function databarWidth(geometry: SymbolGeometry, d: number, trail: number): number | null {
+  if (geometry.kind !== "linear") return null;
+  const { widths } = geometry;
+  let last = widths.length - 1;
+  while (last > 0 && (last % 2 || !widths[last])) last--;
+  return widths.slice(0, last + 1).reduce((a, b) => a + b, 0) * d + trail;
 }
 
 function aiDescription(ai: string, escaping: string): string {

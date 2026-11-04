@@ -1,6 +1,6 @@
 import { crc32, deflate } from "./deflate.ts";
 import type { HriFont } from "./hri.ts";
-import type { Layout } from "./layout.ts";
+import type { Layout, Turn } from "./layout.ts";
 import { MM_PER_INCH } from "./dots.ts";
 
 // The label as PNG, as the resolver's render_png drew it (ADR 0004): a whole number of pixels per module, so that every
@@ -96,10 +96,10 @@ function fillOutlines(grey: Uint8Array, width: number, height: number, contours:
 }
 
 /** Glyph outlines as polygons: quadratic curves flattened to within a twentieth of a pixel. */
-function outlines(font: HriFont, text: string, x: number, baseline: number, em: number): [number, number][][] {
+function outlines(font: HriFont, text: string, x: number, baseline: number, em: number, turn?: Turn): [number, number][][] {
   const contours: [number, number][][] = [];
   let current: [number, number][] = [];
-  for (const c of font.commands(text, x, baseline, em)) {
+  for (const c of font.commands(text, x, baseline, em, turn)) {
     if (c.type === "M") {
       current = [[c.x!, c.y!]];
       contours.push(current);
@@ -134,7 +134,7 @@ export function labelPixels(layout: Layout, font: HriFont, pixelsPerModule = PNG
   // As Pillow placed it: a whole-pixel font size, the baseline's left end on a whole pixel.
   for (const t of layout.texts) {
     const em = Math.max(1, pyRound(t.em * pixelsPerModule));
-    fillOutlines(grey, width, height, outlines(font, t.text, p(t.x), p(t.baseline), em));
+    fillOutlines(grey, width, height, outlines(font, t.text, p(t.x), p(t.baseline), em, t.turn));
   }
   return { width, height, grey };
 }

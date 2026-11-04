@@ -480,6 +480,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › turns a barcode, a text block and an image about their box, in the drawing and in ZPL",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › fills a text's fields from the data, an AI it does not have leaving nothing",
      "status": "passed"
     },
@@ -1613,6 +1617,54 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › a label of one's own with an image larger than one graphic field: its stripes meet, every dot printed",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution gs1-128 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a retail ean13 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution itf14 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a distribution databar-expanded turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution gs1-datamatrix turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a distribution dl-datamatrix turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution databar-limited turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution databar-stacked turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a distribution databar-expanded-stacked turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a retail upce turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a line of text turned each way, where the page puts it",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a line of text turned each way, where the page puts it",
      "status": "passed"
     },
     {
@@ -4024,6 +4076,15 @@
     },
     {
      "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL and kept in the work",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: a barcode and a text turned, printed in ZPL and kept in the work",
      "status": "listed",
      "projects": [
       "desktop",

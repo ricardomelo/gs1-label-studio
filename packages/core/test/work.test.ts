@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InputError, readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work } from "../src/index.ts";
+import { InputError, readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type DesignImage, type Work } from "../src/index.ts";
 import { GRAPHICS, WITH_LOGO } from "./fixtures/graphics.ts";
 
 // The work saved on one's own computer and opened again (backlog 4.3): a JSON work file, and the studio's own ZPL with
@@ -18,9 +18,9 @@ const WORK: Work = {
     ...GRAPHICS,
     elements: [
       ...GRAPHICS.elements,
-      { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", xMm: 8, yMm: 8 },
-      { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, xMm: 4, yMm: 4 },
-      { ...WITH_LOGO.elements[0]!, id: "i" },
+      { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 8, yMm: 8 },
+      { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, rotation: 90, xMm: 4, yMm: 4 },
+      { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180 },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },
@@ -100,6 +100,10 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(element(6, { months: "fr" })).toBe(at("element 7 of the label's page"));
     expect(element(1, { thicknessMm: "0.5" })).toBe(at("element 2 of the label's page"));
     expect(element(3, { filled: 1 })).toBe(at("element 4 of the label's page"));
+    // A rotation other than a quarter turn's, or on a line or box, which are drawn across or down instead
+    expect(element(6, { rotation: 45 })).toBe(at("element 7 of the label's page"));
+    expect(element(7, { rotation: "90" })).toBe(at("element 8 of the label's page"));
+    expect(element(1, { rotation: 90 })).toBe(at("element 2 of the label's page"));
     // An image whose picture's bits do not fill its size, or without its name
     const picture = page.elements[8]!.picture as Record<string, unknown>;
     expect(element(8, { picture: { ...picture, height: (picture.height as number) + 1 } })).toBe(at("element 9 of the label's page"));

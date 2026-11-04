@@ -245,7 +245,7 @@ choose; **Automatic** goes back.
 Every place has its own label, so the studio has an editor rather than ready-made ones. In **Label**, choose *A label
 of my own (barcodes and text placed freely)*:
 
-![A label of one's own: a QR code, a GS1-128, text blocks, a logo, a frame and a rule on a 150 × 90 mm page](images/guide/designer.png)
+![A label of one's own: a QR code, a GS1-128, text blocks, a logo, a frame, a rule and a line read upwards on a 150 × 90 mm page](images/guide/designer.png)
 
 1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
    step 2's guided choice, its table does).
@@ -273,8 +273,12 @@ of my own (barcodes and text placed freely)*:
    kept in black and white, as label printers print: each pixel whose grey over white is below half way is dark, a
    transparent one light, so a light colour (yellow, a pale grey) vanishes and a logo in black works best. An image
    larger than 600 pixels a side is scaled down to it. **Replace…** takes another file at the same place and width.
-8. A frame around the whole label, or around a barcode clear of its quiet zones, is not an overlap.
-9. **Delete** takes the chosen element off the label.
+8. **Rotation** turns a barcode, a text block or an image: *0°*, *90°* (reading downwards), *180°* (upside down) or
+   *270°* (reading upwards). It turns about its box, whose top left corner stays at **Left** and **Top**. A QR code
+   reads in any direction, so it stays upright. A line or box needs none: choose *Line across* or *Line down*, or swap
+   its width and height.
+9. A frame around the whole label, or around a barcode clear of its quiet zones, is not an overlap.
+10. **Delete** takes the chosen element off the label.
 
 A barcode, line, box or image past the label's edge, or a barcode overlapping another element (its quiet zones must stay
 clear; a box's outline counts only where it is drawn), is named in red under
@@ -283,11 +287,12 @@ in bulk, and in ZPL with the printer's own commands (the Export bar's file, its 
 barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
 row), its bars where the label puts them; each line of text with `^A0` at its capitals' height; each line and box with
 `^GB`, its edges at the nearest dots; each image as a graphic field (`^GFA`) at the printer's dots, each dot the
-image's pixel under its centre. A barcode whose bars, or a line, box or image, would run past the label's edge at those
+image's pixel under its centre; a turned barcode or text with its field turned (`R`, `I`, `B`) and a turned image sent
+turned. A barcode whose bars, or a line, box or image, would run past the label's edge at those
 dots is refused. In EPL2 too, each line of text in the printer's font whose capitals come nearest its height and that
 keeps it within the width the label gives it, each line and filled box with `LO` and each outlined box with `X`; EPL2
-refuses what it refuses for a symbol alone (GS1 DataMatrix, the QR code, GS1 DataBar), and an image for now (its `GW`
-command sends raw bytes). TSPL and DPL do not write it yet.
+refuses what it refuses for a symbol alone (GS1 DataMatrix, the QR code, GS1 DataBar), and an image or a turned element
+for now (its `GW` command sends raw bytes). TSPL and DPL do not write it yet.
 
 ## 6. The label's options
 
@@ -553,6 +558,9 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *… is not an image this browser can read* | **+ Image** or **Replace…** given a file that is not a PNG, JPEG, GIF, WebP or SVG image, or a damaged one | Choose the image file, or save it again as PNG |
 | *An image runs past the label's edge* | An image of a label of one's own past the label's edge, in a print file | Move it inside the label, or make it narrower |
 | *EPL2 sends an image as raw bytes…* | A label of one's own with an image, in EPL2 | Print its ZPL or its PDF |
+| *ZPL prints a QR code upright only…* | A QR code of a label of one's own turned (in a work file made by hand), in ZPL | Turn it back to 0°: a QR code reads in any direction |
+| *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text, past the label's edge, in ZPL | Move it inside the label |
+| *The studio's EPL2 file prints barcodes and text upright only, for now…* | A label of one's own with a turned barcode or text, in EPL2 | Print its ZPL or its PDF |
 | *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
 | *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |
 | *This file is not a work saved by GS1 Label Studio.* | **Open…** was given another file (a spreadsheet, an image) | Open a `.gs1-work.json` file saved here, or a ZPL downloaded here |

@@ -39,7 +39,7 @@ export function pdfContent(layout: Layout, font: HriFont): { content: string; wi
     // fontTools' BasePen: a quadratic segment becomes the cubic with control points two thirds of the way to its own.
     let cx = 0;
     let cy = 0;
-    for (const c of font.commands(t.text, t.x, t.baseline, t.em)) {
+    for (const c of font.commands(t.text, t.x, t.baseline, t.em, t.turn)) {
       if (c.type === "M" || c.type === "L") {
         ops.push(`${point(c.x!, c.y!)} ${c.type === "M" ? "m" : "l"}`);
         [cx, cy] = [c.x!, c.y!];
