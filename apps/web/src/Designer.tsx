@@ -1,9 +1,9 @@
 import {
-  boxOf, DATE_FORMATS, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  boxOf, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
-import { pictureFromFile } from "./picture.ts";
+import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { freeCorner } from "./place.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
@@ -17,7 +17,9 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // image to choose its file in the properties, with a preview of the black and white. Then rotation (mock-up A of two,
 // taken under the owner's rule): a barcode, a text block or an image turned 0°, 90°, 180° or 270° by four buttons in its
 // properties, its box's top left corner kept; B turned the chosen element a quarter at a time from a button over the
-// canvas. A QR code stays upright: it reads in any direction, and ZPL prints it upright only.
+// canvas. A QR code stays upright: it reads in any direction, and ZPL prints it upright only. Then an image's darkness
+// (mock-up A of two, 6 November 2026, taken under the owner's rule): a slider from lighter to darker in its properties,
+// 5 to 95 per cent; B offered five steps in a list.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -294,7 +296,7 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
   const replace = async (chosen: File | undefined) => {
     if (!chosen) return;
     try {
-      const picture = await pictureFromFile(chosen);
+      const picture = await pictureFromFile(chosen, element.threshold);
       setProblem(null);
       onChange({ ...element, name: imageName(chosen), picture });
     } catch (error) {
@@ -329,6 +331,7 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
         )}
         <p className="hint">{t("It prints in black and white, as label printers print: a light colour may vanish, so a logo in black works best.")}</p>
       </div>
+      <DarknessField element={element} onChange={onChange} />
       <div>
         <label htmlFor="el-width">{t("Width (mm)")}</label>
         <input id="el-width" type="number" min={STEP_MM} step={STEP_MM} value={element.widthMm} onChange={(e) => onChange({ ...element, widthMm: positive(e.target.value, element.widthMm) })} />
@@ -338,6 +341,39 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
         <input id="el-height-mm" type="number" disabled value={Math.round(imageHeightMm(element) * 10) / 10} />
       </div>
     </>
+  );
+}
+
+/**
+ * The image's darkness (mock-up A): a slider from lighter to darker, the black and white made again from the file's
+ * grey levels as it moves; after a reload they are gone, so the slider waits for the file to be chosen again.
+ */
+function DarknessField({ element, onChange }: { element: DesignImage; onChange: (element: DesignImage) => void }) {
+  const threshold = element.threshold ?? PICTURE_THRESHOLD;
+  const percent = percentOf(threshold);
+  const can = canDarken(element.picture);
+  const change = (value: string) => {
+    const next = thresholdOf(Number(value));
+    const picture = darkened(element.picture, next);
+    if (!picture) return;
+    const { threshold: _, ...rest } = element;
+    onChange({ ...rest, picture, ...(next === PICTURE_THRESHOLD ? {} : { threshold: next }) });
+  };
+  return (
+    <div className="wide darkness">
+      <label htmlFor="el-darkness">{t("Darkness")}</label>
+      <span className="range">
+        <span className="hint">{t("Lighter")}</span>
+        <input id="el-darkness" type="range" min={5} max={95} step={5} value={percent} disabled={!can} onChange={(e) => change(e.target.value)} />
+        <span className="hint">{t("Darker")}</span>
+        <output htmlFor="el-darkness">{formatNumber(percent)} %</output>
+      </span>
+      <p className="hint">
+        {can
+          ? t("Darker prints more of the image's light colours in black; lighter, fewer.")
+          : t("To change its darkness, choose its file again with Replace…: the work keeps only the black and white.")}
+      </p>
+    </div>
   );
 }
 

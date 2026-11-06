@@ -86,6 +86,11 @@ export interface DesignImage {
   /** The file's name, to tell the images apart in the editor. */
   name: string;
   picture: Picture;
+  /**
+   * The grey level below which the file's pixels were made dark (`pictureFromGrey`), when its darkness was changed in
+   * the editor: `PICTURE_THRESHOLD` when not given. The picture is already made with it; the editor shows it.
+   */
+  threshold?: number;
   /** Its own width, before it is turned. */
   widthMm: number;
   /** Turned clockwise about its box (backlog 4.2): upright when not given. */

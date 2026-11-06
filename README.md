@@ -500,7 +500,10 @@ complete.
   in a second list): in bulk, **Insert a field from the data** also offers each column holding no AI, such as
   `{Produto}`, with the row shown's value; each row's label and print file show its own cell; a name no column has
   stays as typed; the bulk **File names** take a column's header too, such as `{Produto}_{10}`, on any label (6
-  November, session 22). Saving the label is 4.3*
+  November, session 22). An image's darkness since 6 November (mock-up A of two, taken under the owner's rule; B
+  offered five steps in a list): **Darkness**, a slider from lighter to darker in the image's properties, makes the
+  black and white again from the file's grey levels, kept in the page's memory only (the work keeps the picture and
+  its threshold; after a reload the file is chosen again to change it). Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

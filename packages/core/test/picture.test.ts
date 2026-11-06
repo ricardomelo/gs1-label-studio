@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bitmapRects, InputError, PICTURE_MAX_SIDE, pictureBitmap, pictureOf, resample, type Bitmap } from "../src/index.ts";
+import { bitmapRects, greyLevels, InputError, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, resample, type Bitmap } from "../src/index.ts";
 import { logo } from "./fixtures/graphics.ts";
 
 // An image on a label of one's own (backlog 4.2, step d): a one-bit picture, as label printers print it.
@@ -11,6 +11,23 @@ describe("a picture", () => {
   it("is dark where a pixel's grey over white is below half way, a transparent pixel light", () => {
     const picture = pictureOf(row([0, 0, 0, 255], [255, 255, 255, 255], [127, 127, 127, 255], [128, 128, 128, 255], [0, 0, 0, 0], [0, 0, 0, 120], [0, 0, 0, 140], [255, 214, 0, 255], [27, 94, 32, 255]), 9, 1);
     expect([...pictureBitmap(picture).dark]).toEqual([1, 0, 1, 0, 0, 0, 1, 0, 1]);
+  });
+
+  it("is made from the grey levels the pixels show on paper, darker as the threshold rises (the image's darkness)", () => {
+    const rgba = row([0, 0, 0, 255], [255, 255, 255, 255], [127, 127, 127, 255], [128, 128, 128, 255], [0, 0, 0, 0], [0, 0, 0, 120], [200, 200, 200, 255], [255, 214, 0, 255], [27, 94, 32, 255]);
+    const grey = greyLevels(rgba, 9, 1);
+    expect([...grey]).toEqual([0, 255, 127, 128, 255, 135, 200, 202, 67]);
+    const dark = (threshold?: number) => [...pictureBitmap(pictureFromGrey(grey, 9, 1, threshold)).dark];
+    expect(dark()).toEqual([...pictureBitmap(pictureOf(rgba, 9, 1)).dark]);
+    expect(dark(PICTURE_THRESHOLD)).toEqual([1, 0, 1, 0, 0, 0, 0, 0, 1]);
+    expect(dark(128)).toEqual(dark(PICTURE_THRESHOLD));
+    expect(dark(PICTURE_THRESHOLD_MIN)).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0]); // only what is near black
+    expect(dark(136)).toEqual([1, 0, 1, 1, 0, 1, 0, 0, 1]); // a grey at 128 and the half-transparent black join in
+    expect(dark(PICTURE_THRESHOLD_MAX)).toEqual([1, 0, 1, 1, 0, 1, 1, 1, 1]); // the light grey and the yellow too; white never
+    expect(pictureOf(rgba, 9, 1, 136)).toEqual(pictureFromGrey(grey, 9, 1, 136));
+    expect(() => pictureFromGrey(grey, 8, 1)).toThrow("The image has no pixels.");
+    expect(() => greyLevels(rgba, 8, 1)).toThrow("The image has no pixels.");
+    expect(() => pictureFromGrey(new Uint8Array(PICTURE_MAX_SIDE + 1), PICTURE_MAX_SIDE + 1, 1)).toThrow(`at most ${PICTURE_MAX_SIDE} pixels a side`);
   });
 
   it("keeps each row in whole bytes, leftmost pixel in the highest bit, and gives back the same pixels", () => {

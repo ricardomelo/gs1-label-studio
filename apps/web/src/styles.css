@@ -407,4 +407,7 @@ footer.about .hint { margin-top: 12px; }
 .design-list button { display: block; width: 100%; text-align: left; padding: 7px 10px; margin: 0 0 4px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .design-list button[aria-pressed="true"] { border-color: #1a73e8; background: rgba(26, 115, 232, 0.1); }
 .design-problems { margin: 8px 0 0; padding-left: 18px; }
+.designer .darkness .range { display: flex; align-items: center; gap: 8px; }
+.designer .darkness input[type="range"] { flex: 1; min-width: 0; accent-color: #1a73e8; }
+.designer .darkness output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 700px) { .design-columns { grid-template-columns: 1fr; } }

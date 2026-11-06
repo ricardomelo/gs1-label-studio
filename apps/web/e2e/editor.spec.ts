@@ -1629,6 +1629,90 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   await expect(page.locator("#el-height-mm")).toHaveValue("16.7");
 });
 
+// An image's darkness (backlog 4.2, mock-up A of two, 6 November 2026): a slider from lighter to darker makes the black
+// and white again from the file's grey levels, kept in this page's memory only; the work keeps the picture and its
+// threshold, so after a reload the slider waits for the file to be chosen again, which keeps the darkness chosen.
+test("a label of one's own: an image's darkness changed by its slider, printed and kept, and changed again after a reload once its file is chosen again", async ({ page }) => {
+  const shades = new URL("./fixtures/shades.png", import.meta.url).pathname; // a black circle, squares at grey 110 and 180, a grey ramp
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByTestId("image-file").setInputFiles(shades);
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image shades");
+  await page.fill("#el-x", "50");
+  const slider = page.locator("#el-darkness");
+  await expect(slider).toBeEnabled();
+  await expect(slider).toHaveValue("50");
+  await expect(page.locator(".darkness output")).toHaveText("50 %");
+  await expect(page.getByText("Darker prints more of the image's light colours in black; lighter, fewer.")).toBeVisible();
+  /** The image's pixels as the kept work holds them: whether (x, y) is dark, and how many are. */
+  const kept = async () => {
+    const work = JSON.parse((await keptWorkText(page))!) as { page: { elements: { kind: string; threshold?: number; picture?: { width: number; bits: string } }[] } };
+    const image = work.page.elements.find((e) => e.kind === "image")!;
+    const bytes = Buffer.from(image.picture!.bits, "base64");
+    const row = Math.ceil(image.picture!.width / 8);
+    const dark = (x: number, y: number) => (bytes[y * row + (x >> 3)]! & (0x80 >> (x & 7))) !== 0;
+    let count = 0;
+    for (const byte of bytes) for (let bit = 0; bit < 8; bit++) count += (byte >> bit) & 1;
+    return { threshold: image.threshold, circle: dark(55, 55), mid: dark(175, 55), light: dark(297, 55), count };
+  };
+  await expect.poll(async () => (await keptWorkText(page))?.includes("shades") ?? false).toBe(true);
+  const usual = await kept();
+  expect(usual).toMatchObject({ threshold: undefined, circle: true, mid: true, light: false });
+  const zplOf = async () => {
+    await on(page, "export");
+    const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    await on(page, "label");
+    return /\^GFA,[^]*?\^FS/.exec(readFileSync((await zpl.path())!, "utf8"))![0];
+  };
+  const usualZpl = await zplOf();
+  // Darker: the light grey square prints too, and the drawing and the ZPL follow
+  await page.locator(".design-list button", { hasText: "Image shades" }).press("Enter");
+  await slider.fill("80");
+  await expect(page.locator(".darkness output")).toHaveText("80 %");
+  await expect.poll(async () => (await kept()).light).toBe(true);
+  const darker = await kept();
+  expect(darker).toMatchObject({ threshold: 205, circle: true, mid: true });
+  expect(darker.count).toBeGreaterThan(usual.count);
+  expect(await zplOf()).not.toBe(usualZpl);
+  // Lighter: the grey 110 square goes as well; back at 50 % the picture is the first one, no threshold kept
+  await page.locator(".design-list button", { hasText: "Image shades" }).press("Enter");
+  await slider.fill("25");
+  await expect.poll(async () => (await kept()).mid).toBe(false);
+  expect(await kept()).toMatchObject({ threshold: 64, circle: true, light: false });
+  await slider.fill("50");
+  await expect.poll(async () => (await kept()).threshold).toBeUndefined();
+  expect(await kept()).toEqual(usual);
+  await slider.fill("80");
+  await expect.poll(async () => (await kept()).threshold).toBe(205);
+  // After a reload the work is back with its darkness, but its grey levels are not: the slider waits for the file
+  await page.reload();
+  await page.getByRole("region", { name: "Your last work" }).getByRole("button", { name: "Continue it" }).click();
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "Image shades" }).press("Enter");
+  await expect(slider).toBeDisabled();
+  await expect(slider).toHaveValue("80");
+  await expect(page.getByText("To change its darkness, choose its file again with Replace…: the work keeps only the black and white.")).toBeVisible();
+  expect(await kept()).toEqual(darker);
+  // Chosen again, the file is made at the darkness kept, and the slider works again
+  await page.getByTestId("image-replace").setInputFiles(shades);
+  await expect(slider).toBeEnabled();
+  await expect(slider).toHaveValue("80");
+  await page.waitForTimeout(800); // the work is kept half a second after it changes
+  expect(await kept()).toEqual(darker);
+  await slider.fill("50");
+  await expect.poll(async () => (await kept()).light).toBe(false);
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(page.locator('label[for="el-darkness"]')).toHaveText("Escurecimento");
+  await expect(page.getByText("Mais escura imprime em preto mais das cores claras da imagem; mais clara, menos.")).toBeVisible();
+});
+
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
 // label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
 // in the work; a QR code stays upright.

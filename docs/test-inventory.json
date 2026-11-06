@@ -1466,6 +1466,14 @@
     {
      "name": "the size an image is drawn at › its own when it fits, else its longest side the core's limit, its proportions kept",
      "status": "passed"
+    },
+    {
+     "name": "the image's darkness › in per cent from 5 to 95 is the core's range of thresholds, 50 its usual one, and back",
+     "status": "passed"
+    },
+    {
+     "name": "the image's darkness › cannot be changed for a picture whose file was not chosen in this page (one opened from a work)",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -2065,6 +2073,10 @@
    "tests": [
     {
      "name": "a picture › is dark where a pixel's grey over white is below half way, a transparent pixel light",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is made from the grey levels the pixels show on paper, darker as the threshold rises (the image's darkness)",
      "status": "passed"
     },
     {
@@ -4340,6 +4352,15 @@
     },
     {
      "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL, refused in DPL, and kept in the work",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an image's darkness changed by its slider, printed and kept, and changed again after a reload once its file is chosen again",
      "status": "listed",
      "projects": [
       "desktop",

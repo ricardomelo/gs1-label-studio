@@ -278,6 +278,11 @@ of my own (barcodes and text placed freely)*:
    kept in black and white, as label printers print: each pixel whose grey over white is below half way is dark, a
    transparent one light, so a light colour (yellow, a pale grey) vanishes and a logo in black works best. An image
    larger than 600 pixels a side is scaled down to it. **Replace…** takes another file at the same place and width.
+   **Darkness** moves that half way: towards *Darker* more of the image's light colours print black (a pale grey logo
+   comes out), towards *Lighter* fewer (only what is near black), from 5 % to 95 %, 50 % the usual. The label is
+   redrawn as the slider moves. The studio keeps the file's greys only while the page is open: after a reload, or a
+   work opened again, the darkness chosen is kept but the slider is greyed out until **Replace…** takes the same file
+   again, which brings it back at that darkness.
 8. **Rotation** turns a barcode, a text block or an image: *0°*, *90°* (reading downwards), *180°* (upside down) or
    *270°* (reading upwards). It turns about its box, whose top left corner stays at **Left** and **Top**. A QR code
    reads in any direction, so it stays upright. A line or box needs none: choose *Line across* or *Line down*, or swap

@@ -19,8 +19,12 @@ export interface Picture {
  */
 export const PICTURE_MAX_SIDE = 600;
 
-/** The grey level, 0 (black) to 255 (white), below which a pixel prints dark: half way. */
+/** The grey level, 0 (black) to 255 (white), below which a pixel prints dark: half way, unless the image's darkness is changed. */
 export const PICTURE_THRESHOLD = 128;
+
+/** The thresholds the image's darkness may take (backlog 4.2): none so low that nothing prints, nor so high that all does. */
+export const PICTURE_THRESHOLD_MIN = 13;
+export const PICTURE_THRESHOLD_MAX = 243;
 
 const bytesPerRow = (width: number) => Math.ceil(width / 8);
 
@@ -34,25 +38,37 @@ function checkSize(width: number, height: number): void {
 }
 
 /**
- * The picture of `rgba` (four bytes a pixel, as a canvas gives them): each pixel's grey (ITU-R BT.601's weights) over
- * white by its transparency, dark below `threshold`. A transparent pixel is light, as the label's paper is.
+ * The grey each pixel of `rgba` (four bytes a pixel, as a canvas gives them) shows on the label's paper, 0 (black) to
+ * 255 (white): its grey by ITU-R BT.601's weights, over white by its transparency, so a transparent pixel is light.
+ * The editor keeps these while the file is open, so that the image's darkness can be changed (`pictureFromGrey`).
  */
-export function pictureOf(rgba: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD): Picture {
+export function greyLevels(rgba: ArrayLike<number>, width: number, height: number): Uint8Array {
   checkSize(width, height);
   if (rgba.length !== width * height * 4) throw new InputError("The image has no pixels.");
-  const row = bytesPerRow(width);
-  const bytes = new Uint8Array(row * height);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      const grey = 0.299 * rgba[i]! + 0.587 * rgba[i + 1]! + 0.114 * rgba[i + 2]!;
-      const seen = 255 - (rgba[i + 3]! / 255) * (255 - grey);
-      if (Math.round(seen) < threshold) bytes[y * row + (x >> 3)]! |= 0x80 >> (x & 7);
-    }
+  const grey = new Uint8Array(width * height);
+  for (let p = 0; p < width * height; p++) {
+    const i = p * 4;
+    const own = 0.299 * rgba[i]! + 0.587 * rgba[i + 1]! + 0.114 * rgba[i + 2]!;
+    grey[p] = Math.round(255 - (rgba[i + 3]! / 255) * (255 - own));
   }
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return { width, height, bits: btoa(binary) };
+  return grey;
+}
+
+/**
+ * The picture of the grey levels `grey` (`greyLevels`), a pixel dark below `threshold`: the higher the threshold, the
+ * more of a logo's light colours print dark (the image's darkness, backlog 4.2).
+ */
+export function pictureFromGrey(grey: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD): Picture {
+  checkSize(width, height);
+  if (grey.length !== width * height) throw new InputError("The image has no pixels.");
+  const dark = new Uint8Array(width * height);
+  for (let p = 0; p < width * height; p++) if (grey[p]! < threshold) dark[p] = 1;
+  return pictureFrom({ width, height, dark });
+}
+
+/** The picture of `rgba` (four bytes a pixel, as a canvas gives them): its `greyLevels`, dark below `threshold`. */
+export function pictureOf(rgba: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD): Picture {
+  return pictureFromGrey(greyLevels(rgba, width, height), width, height, threshold);
 }
 
 /** The picture's pixels, `dark[y * width + x]`; a picture whose bits do not fill its size raises an `InputError`. */

@@ -2,7 +2,7 @@ import type { ColumnMapping, FixedValue } from "./bulk.ts";
 import { ROTATIONS, type DesignElement, type DesignPage, type MonthLanguage, type Rotation } from "./design.ts";
 import type { Answers } from "./guide.ts";
 import type { Identification } from "./identify.ts";
-import { pictureBitmap, type Picture } from "./picture.ts";
+import { PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, type Picture } from "./picture.ts";
 import type { PrinterProfile } from "./printer.ts";
 import { PRINTER_LANGUAGES, type PrinterLanguage } from "./printFile.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -154,8 +154,13 @@ function element(value: unknown, at: string): DesignElement {
       const picture = value.picture;
       if (!isString(value.name) || !isNumber(value.widthMm) || !isRecord(picture) || !isNumber(picture.width)
         || !isNumber(picture.height) || !isString(picture.bits) || !isPicture(picture as unknown as Picture)) damaged(at);
+      const { threshold } = value;
+      if (threshold !== undefined && !(Number.isInteger(threshold) && (threshold as number) >= PICTURE_THRESHOLD_MIN && (threshold as number) <= PICTURE_THRESHOLD_MAX)) damaged(at);
       const p = picture as unknown as Picture;
-      return { id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits }, widthMm: value.widthMm as number, ...rotation, xMm, yMm };
+      return {
+        id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits },
+        ...(threshold !== undefined ? { threshold: threshold as number } : {}), widthMm: value.widthMm as number, ...rotation, xMm, yMm,
+      };
     }
     default:
       return damaged(at);

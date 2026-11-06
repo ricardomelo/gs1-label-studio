@@ -642,5 +642,10 @@
  "Continue it": "Continuar",
  "Start anew": "Empezar de cero",
  "Your last work is back.": "Su último trabajo ha vuelto.",
- "Your last work is back. Take the spreadsheet again: its columns are chosen as they were.": "Su último trabajo ha vuelto. Cargue la hoja de cálculo de nuevo: sus columnas se eligen como estaban."
+ "Your last work is back. Take the spreadsheet again: its columns are chosen as they were.": "Su último trabajo ha vuelto. Cargue la hoja de cálculo de nuevo: sus columnas se eligen como estaban.",
+ "Darkness": "Oscuridad",
+ "Lighter": "Más clara",
+ "Darker": "Más oscura",
+ "Darker prints more of the image's light colours in black; lighter, fewer.": "Más oscura imprime en negro más colores claros de la imagen; más clara, menos.",
+ "To change its darkness, choose its file again with Replace…: the work keeps only the black and white.": "Para cambiar la oscuridad, elija el archivo de nuevo con Cambiar…: el trabajo guarda solo el blanco y negro."
 }

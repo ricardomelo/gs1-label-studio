@@ -241,4 +241,7 @@
 - File names from spreadsheet columns (backlog 4.2, 6 November): in bulk, **File names** takes any column's header in
   braces, such as `{Produto}`, for the row's cell, on any label; accents dropped. The message for an unknown name in
   the pattern is now translated too (it was shown in English).
+- An image's darkness (backlog 4.2, 6 November): **Darkness** in an image's properties, a slider from lighter to
+  darker (5 to 95 %), makes its black and white again from the file's grey levels, so a pale logo can print; the work
+  keeps the threshold chosen, and after a reload **Replace…** with the same file lets it change again.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

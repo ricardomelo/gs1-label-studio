@@ -20,7 +20,7 @@ const WORK: Work = {
       ...GRAPHICS.elements,
       { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 8, yMm: 8 },
       { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, rotation: 90, xMm: 4, yMm: 4 },
-      { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180 },
+      { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180, threshold: 160 },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },
@@ -110,6 +110,17 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(element(8, { picture: { ...picture, bits: "%" } })).toBe(at("element 9 of the label's page"));
     expect(element(8, { name: 7 })).toBe(at("element 9 of the label's page"));
     expect(element(8, { widthMm: "40" })).toBe(at("element 9 of the label's page"));
+    // A darkness's threshold that is not a whole grey level within the editor's range (backlog 4.2)
+    expect(element(8, { threshold: 12 })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { threshold: 244 })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { threshold: 160.5 })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { threshold: "160" })).toBe(at("element 9 of the label's page"));
+    const kept = (threshold: number) => {
+      const copy = structuredClone(saved);
+      Object.assign((copy.page as typeof page).elements[8]!, { threshold });
+      return (readWork(JSON.stringify(copy)).page!.elements[8] as DesignImage).threshold;
+    };
+    expect([kept(13), kept(243)]).toEqual([13, 243]);
     expect(element(2, { id: "frame" })).toBe(at("the label's page"));
     expect(changed((c) => { (c.page as Record<string, unknown>).widthMm = null; })).toBe(at("the label's page"));
     expect(changed((c) => { ((c.printer as Record<string, unknown>).profile as Record<string, unknown>).language = "pcl"; })).toBe(at("the printer"));

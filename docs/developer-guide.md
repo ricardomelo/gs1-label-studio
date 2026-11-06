@@ -285,7 +285,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
 | `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 14 |
-| `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 5 |
+| `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 6 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
 | `printer` | the module in whole dots, profiles, the test label | 6 |
@@ -305,8 +305,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
 | `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
-| `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 1 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 58 |
+| `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 59 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 
