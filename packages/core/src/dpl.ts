@@ -138,10 +138,10 @@ export function dplTestLabel(symbology: SymbologyId, value: string, options: Pri
  * A label of one's own (backlog 4.2) with DPL's own records, as ZPL, EPL2 and TSPL write it: each barcode with the
  * records of a symbol alone where the page puts it; each line of text in the internal font whose capitals come nearest
  * its height and that keeps it within the width the page gives it; each line and filled box as an X record's line `l`,
- * each outlined box as its box `b`. Rows count up from the label's bottom, in tenths of a millimetre, so each edge is
- * within half a tenth of the page's. An image is refused: DPL prints one stored in the printer's memory first (`<STX>I`,
- * then a Y record), which Labelize, the emulator the tests print DPL with, does not draw. A turned element is refused
- * for now. With `notes`, a test label (backlog 3.1).
+ * each outlined box as its box `b`. Rows count up from the label's bottom, in tenths of a millimetre, a rectangle's
+ * position and size each within half a tenth of the page's. An image is refused: DPL prints one stored in the
+ * printer's memory first (`<STX>I`, then a Y record), which Labelize, the emulator the tests print DPL with, does not
+ * draw. A turned element is refused for now. With `notes`, a test label (backlog 3.1).
  */
 export function dplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
   if (page.images?.length) throw new DplUnsupportedError(MESSAGES.image);
@@ -170,8 +170,7 @@ function withRuler(records: (frame: Frame) => string[], options: PrintLabelOptio
   const x = Math.max(mm(2), Math.min(options.x, options.widthDots - mm(50) - mm(2)));
   const line = Math.max(2, mm(0.3));
   const ruler = [
-    // DPL's unit is the tenth of a millimetre: the line is 50.0 mm exactly, its ticks at whole millimetres
-    rule(frame, x, top + mm(3), mm(50), line).replace(/l\d{4}/, "l0500"),
+    rule(frame, x, top + mm(3), mm(50), line),
     ...[0, 10, 20, 30, 40, 50].map((at) => rule(frame, x + mm(at) - (at === 50 ? line : 0), top, line, mm(at % 50 ? 2.5 : 4))),
     ...text(frame, { x, y: top + mm(5), width: mm(50), height: t, text: "50 mm: measure this line" }, "C"),
     ...notes.flatMap((note, index) => text(frame, { x: mm(2), y: top + mm(10) + index * step, width: options.widthDots, height: t, text: note }, "L")),
@@ -185,14 +184,12 @@ function document(records: string[], options: PrintLabelOptions): string {
 }
 
 /**
- * A rectangle's bottom left corner and size in tenths of a millimetre, each edge rounded on its own, so that every edge
- * is within half a tenth of the page's (sizes rounded apart would add their errors to the far edges).
+ * A rectangle's bottom left corner and size in tenths of a millimetre, each rounded on its own: the printer turns each
+ * into its dots (Labelize does), so a size rounded on its own prints as many dots as asked where a tenth is less than a
+ * dot, and the far edges stay where the page puts them.
  */
 function edges(frame: Frame, x: number, y: number, width: number, h: number): { position: string; size: string } {
-  const position = place(frame, y + h, x); // refuses a corner outside the label
-  const [left, right] = [tenths(x, frame.dpi), tenths(x + width, frame.dpi)];
-  const [bottom, top] = [tenths(frame.heightDots - y - h, frame.dpi), tenths(frame.heightDots - y, frame.dpi)];
-  return { position, size: pad(Math.max(1, right - left), 4) + pad(Math.max(1, top - bottom), 4) };
+  return { position: place(frame, y + h, x), size: pad(Math.max(1, tenths(width, frame.dpi)), 4) + pad(Math.max(1, tenths(h, frame.dpi)), 4) };
 }
 
 /** A filled line or bar (an X record's l): its top left corner, width and height in dots. */

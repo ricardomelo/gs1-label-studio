@@ -215,7 +215,7 @@
   dpi.
 - A label of one's own in DPL (backlog 4.2, 6 November): each barcode as the symbol alone, each line of text in the
   internal font whose capitals come nearest its height and that fits its width, lines and boxes as `X` records, each
-  by its bottom left corner in tenths of a millimetre, each edge rounded on its own. DPL's text, the symbols' too, now
+  by its bottom left corner in tenths of a millimetre, its corner and size each rounded on its own. DPL's text, the symbols' too, now
   has its capitals at the height asked: Labelize draws the internal fonts' capitals at 0.72 of their cell, their top at
   the cell's. Every barcode read back and every line and box checked through Labelize at 8 and 12 dots a millimetre;
   an image refused (Labelize does not draw DPL's stored images), a turned element refused in DPL for now.

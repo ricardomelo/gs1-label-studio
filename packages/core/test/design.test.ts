@@ -244,13 +244,13 @@ describe("a label of one's own", () => {
     const tspl = tsplPage({ ...page, symbols: [] });
     expect(tspl).toContain(`\r\nBOX ${dots(2)},${dots(2)},${dots(128)},${dots(78)},${dots(0.8)}\r\n`);
     expect(tspl).toContain(`\r\nBAR ${dots(110)},${dots(8)},${dots(120) - dots(110)},${dots(14) - dots(8)}\r\n`);
-    // DPL: an X record's box b and line l by their bottom left corner, rows up from the label's bottom, each edge in
-    // tenths of a millimetre rounded on its own (so the sizes are the differences)
+    // DPL: an X record's box b and line l by their bottom left corner, rows up from the label's bottom, the corner and
+    // the size each in tenths of a millimetre rounded on its own
     const dpl = dplPage({ ...page, symbols: [] });
     const tenth = (d: number) => Math.round((d / 203) * 254);
     const four = (v: number) => String(v).padStart(4, "0");
     const corner = (left: number, bottom: number) => four(tenth(page.heightDots - bottom)) + four(tenth(left));
-    const size = (left: number, top: number, right: number, bottom: number) => four(tenth(right) - tenth(left)) + four(tenth(page.heightDots - top) - tenth(page.heightDots - bottom));
+    const size = (left: number, top: number, right: number, bottom: number) => four(tenth(right - left)) + four(tenth(bottom - top));
     expect(dpl).toContain(`\r1X11000${corner(dots(2), dots(78))}b${size(dots(2), dots(2), dots(128), dots(78))}${four(tenth(dots(0.8)))}${four(tenth(dots(0.8)))}\r`);
     expect(dpl).toContain(`\r1X11000${corner(dots(110), dots(14))}l${size(dots(110), dots(8), dots(120), dots(14))}\r`);
     // A line past the label's edge is named in the editor and refused in a print file, not cut
