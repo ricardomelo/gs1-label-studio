@@ -296,8 +296,8 @@ the size; the label is still drawn. **Scan test** reads every barcode. The label
 in bulk, and in ZPL with the printer's own commands (the Export bar's file, its test print and the bulk ZPL file): each
 barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
 row), its bars where the label puts them; each line of text with `^A0` at its capitals' height; each line and box with
-`^GB`, its edges at the nearest dots; each image as a graphic field (`^GFA`) at the printer's dots, each dot the
-image's pixel under its centre; a turned barcode or text with its field turned (`R`, `I`, `B`) and a turned image sent
+`^GB`, its edges at the nearest dots; each image as a graphic field (`^GFA`, in ZPL's own compression, which every
+ZPL II printer reads) at the printer's dots, each dot the image's pixel under its centre; a turned barcode or text with its field turned (`R`, `I`, `B`) and a turned image sent
 turned. A barcode whose bars, or a line, box or image, would run past the label's edge at those
 dots is refused. In EPL2 too, each line of text in the printer's font whose capitals come nearest its height and that
 keeps it within the width the label gives it, each line and filled box with `LO`, each outlined box with `X` and each

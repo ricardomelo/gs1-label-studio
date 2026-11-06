@@ -143,7 +143,7 @@ export function zplPage(page: PrintPage, options: { notes?: readonly string[] } 
   });
   // ^GB draws a box's outline inside its width and height, filled when the thickness is its narrower side
   const boxes = page.boxes.map((b) => `^FO${b.x},${b.y}^GB${b.width},${b.height},${b.thickness}^FS`);
-  // An image as a graphic field (^GFA, the dots in hexadecimal), in stripes when it passes one field's bytes
+  // An image as a graphic field (^GFA, the dots in compressed hexadecimal), in stripes when it passes one field's bytes
   const images = (page.images ?? []).flatMap((image) => graphicFields(image.bitmap, image.x, image.y));
   const size = { x: 0, widthDots: page.widthDots, heightDots: page.heightDots, dpi: page.dpi, ...(page.copies ? { copies: page.copies } : {}) };
   const commands = [...images, ...boxes, ...texts, ...symbols];
@@ -679,11 +679,19 @@ export function upcaManufacturerAndProduct(upce: string): string {
  */
 export const MAX_GRAPHIC_FIELD_BYTES = 99999;
 
-/** Rows `fromRow` (inclusive) to `toRow` (exclusive) of `bitmap` as one ^GFA, eight dots a byte, leftmost dot first. */
-export function bitmapToGraphicField(bitmap: Bitmap, fromRow = 0, toRow = bitmap.height): string {
+/**
+ * Rows `fromRow` (inclusive) to `toRow` (exclusive) of `bitmap` as one ^GFA, eight dots a byte, leftmost dot first.
+ * `compressed` (the default) writes the dots with ZPL's own ASCII compression (rowData), which every ZPL II printer
+ * reads; the byte counts stay the image's own, as ^GF asks of ASCII data.
+ */
+export function bitmapToGraphicField(bitmap: Bitmap, fromRow = 0, toRow = bitmap.height, compressed = true): string {
   const bytesPerRow = Math.ceil(bitmap.width / 8);
-  let hex = "";
+  const total = bytesPerRow * (toRow - fromRow);
+  if (total > MAX_GRAPHIC_FIELD_BYTES) throw new Error(`a graphic field holds at most ${MAX_GRAPHIC_FIELD_BYTES} bytes`);
+  let data = "";
+  let previous: string | undefined;
   for (let y = fromRow; y < toRow; y++) {
+    let hex = "";
     for (let byte = 0; byte < bytesPerRow; byte++) {
       let value = 0;
       for (let bit = 0; bit < 8; bit++) {
@@ -692,20 +700,56 @@ export function bitmapToGraphicField(bitmap: Bitmap, fromRow = 0, toRow = bitmap
       }
       hex += value.toString(16).toUpperCase().padStart(2, "0");
     }
+    data += !compressed ? hex : hex === previous ? ":" : rowData(hex);
+    previous = hex;
   }
-  const total = bytesPerRow * (toRow - fromRow);
-  if (total > MAX_GRAPHIC_FIELD_BYTES) throw new Error(`a graphic field holds at most ${MAX_GRAPHIC_FIELD_BYTES} bytes`);
-  return `^GFA,${total},${total},${bytesPerRow},${hex}`;
+  return `^GFA,${total},${total},${bytesPerRow},${data}`;
 }
 
-/** The bitmap placed at (x, y) in dots, as one field or as stripes that each fit a graphic field. */
-export function graphicFields(bitmap: Bitmap, x: number, y: number): string[] {
+/**
+ * One row of a graphic field in ZPL's ASCII compression (ZPL II Programming Guide, "Alternative Data Compression Scheme
+ * for ~DG and ~DB Commands", which ^GF's ASCII data reads too): the row's trailing white is a comma and its trailing
+ * black an exclamation mark, each filling the row's last bytes, so an odd number of such digits keeps one before it;
+ * any other run of three or more of a digit is its count in letters before it, G to Y for 1 to 19 and g to z for 20 to
+ * 400, added together ("vMB" is 327 B's). A row the same as the one above is a colon (bitmapToGraphicField).
+ */
+function rowData(hex: string): string {
+  let end = hex.length;
+  let fill = "";
+  const last = hex[end - 1]!;
+  if (last === "0" || last === "F") {
+    let start = end;
+    while (start > 0 && hex[start - 1] === last) start--;
+    // The fill takes whole bytes: an odd run keeps its first digit, which ends the byte before it
+    const kept = (end - start) % 2 ? start + 1 : start;
+    if (end - kept >= 2) [end, fill] = [kept, last === "0" ? "," : "!"];
+  }
+  let out = "";
+  for (let i = 0; i < end; ) {
+    let j = i;
+    while (j < end && hex[j] === hex[i]) j++;
+    const n = j - i;
+    out += n < 3 ? hex.slice(i, j) : repeatCount(n) + hex[i];
+    i = j;
+  }
+  return out + fill;
+}
+
+/** A repeat count in ZPL's ASCII compression: z for each 400, then g to y for the twenties, then G to Y for the rest. */
+function repeatCount(n: number): string {
+  const tens = Math.floor((n % 400) / 20);
+  const units = n % 20;
+  return "z".repeat(Math.floor(n / 400)) + (tens ? String.fromCharCode(102 + tens) : "") + (units ? String.fromCharCode(70 + units) : "");
+}
+
+/** The bitmap placed at (x, y) in dots, as one field or as stripes that each fit a graphic field, compressed or not. */
+export function graphicFields(bitmap: Bitmap, x: number, y: number, compressed = true): string[] {
   const rowsPerField = Math.floor(MAX_GRAPHIC_FIELD_BYTES / Math.ceil(bitmap.width / 8));
   if (rowsPerField < 1) throw new Error("the image is too wide for a graphic field");
   const fields: string[] = [];
   for (let row = 0; row < bitmap.height; row += rowsPerField) {
     const end = Math.min(bitmap.height, row + rowsPerField);
-    fields.push(`^FO${x},${y + row}${bitmapToGraphicField(bitmap, row, end)}^FS`);
+    fields.push(`^FO${x},${y + row}${bitmapToGraphicField(bitmap, row, end, compressed)}^FS`);
   }
   return fields;
 }

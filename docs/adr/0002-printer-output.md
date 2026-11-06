@@ -158,7 +158,12 @@ commands (label length, sensor, speed, heat) are not sent: the printer keeps its
 - ZPL: Zebra's *ZPL II, ZBI 2, Set-Get-Do, Mirror, WML Programming Guide*, P1134473-11EN Rev A
   (https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf).
   Its `^GF` takes byte counts from 1 to 99999: a larger image (a logo) is sent as horizontal stripes, one graphic
-  field each (`graphicFields()`).
+  field each (`graphicFields()`). Each field's ASCII data is written with the guide's *Alternative Data Compression
+  Scheme* (6 November 2026): repeat counts G to Y and g to z, a row's trailing white `,` and black `!` (from a whole
+  byte), a repeated row `:`. Every ZPL II printer reads it, unlike `:Z64:` (deflate and Base64, which needs newer
+  firmware and an asynchronous deflate in the browser); every dot of a field using each token is as Labelary prints it
+  at 600 dpi. Labelary also prints a fill after an odd number of digits, which the guide does not allow: the studio keeps
+  the guide's rule.
 - No physical printer is available for now. ZPL is checked with **Labelary** (labelary.com), which renders what
   Zebra firmware prints; emulations by other brands are proven only on their own hardware.
 - TSPL, EPL2 and DPL are checked with **Labelize** (github.com/GOODBOY008/labelize), an open-source emulator. It is young (version 1.10.0, October 2026) and an approximation of the firmware, which it says itself;

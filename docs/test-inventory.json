@@ -1746,6 +1746,10 @@
     {
      "name": "ZPL printed by Labelary and read back › prints an image (a logo) larger than one graphic field, in stripes",
      "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › prints a compressed graphic field dot for dot: repeat counts, row fills and repeated rows",
+     "status": "passed"
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
@@ -2985,6 +2989,18 @@
     },
     {
      "name": "exports › packs a graphic field row by row, eight dots a byte",
+     "status": "passed"
+    },
+    {
+     "name": "exports › compresses a graphic field with ZPL's repeat counts, row fills and repeated rows",
+     "status": "passed"
+    },
+    {
+     "name": "exports › expands every compressed graphic field, by the guide's rules, to the dots it holds",
+     "status": "passed"
+    },
+    {
+     "name": "exports › makes an image's graphic fields several times smaller",
      "status": "passed"
     }
    ],

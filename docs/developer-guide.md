@@ -170,7 +170,7 @@ Each module, in the order of the flow above.
 | `eps.ts` | `labelEps`: the PDF's content stream under a PostScript prolog |
 | `zip.ts`, `deflate.ts` | `labelZip` with its README; deflate through Compression Streams |
 | `dots.ts` | `snapToDots`, `dotsWithin`: the printer's dot grid |
-| `zpl.ts` | `zplLabel`, `zplTemplate`, `fillTemplate`, `zplTestLabel`, `gs1128FieldData` (mode N, FNC1, code sets), graphic fields in stripes, `zplPage` (a label of one's own, its turned fields: `zplTurnedField`) |
+| `zpl.ts` | `zplLabel`, `zplTemplate`, `fillTemplate`, `zplTestLabel`, `gs1128FieldData` (mode N, FNC1, code sets), graphic fields in stripes and in ZPL's ASCII compression, `zplPage` (a label of one's own, its turned fields: `zplTurnedField`) |
 | `printers.ts` | What every printer language shares: `PrintSymbolOptions`, `PrintLabelOptions`, `PrinterUnsupportedError`, `PrintFile` (text, or bytes where EPL2's `GW` carries an image) with `printFileBytes` and `joinPrintFiles`, the text lines around a symbol (`textLines`), the bitmap font nearest a height |
 | `tspl.ts`, `epl.ts`, `dpl.ts` | TSPL/TSPL2, EPL2 and DPL with the printer's commands (`tsplLabel`, `eplLabel`, `dplLabel` and their test labels; a label of one's own with `tsplPage` and `eplPage`, a fixed-pitch font fitted to a line's capitals and width by `fittingFont` in `printers.ts`); DPL's positions in tenths of a millimetre from the label's bottom left corner; what Labelize does not read back refused |
 | `printFile.ts` | `PRINTER_LANGUAGES` (name, extension, printers, how checked, templates), `printLabel` and `printTestLabel` by language |
@@ -280,7 +280,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 66 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 67 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
@@ -293,7 +293,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
 | `report` | the validation report and its CSVs | 11 |
-| `roundtrip` | every symbology encoded, rasterised and read back; SVG; graphic fields | 22 |
+| `roundtrip` | every symbology encoded, rasterised and read back; SVG; graphic fields | 25 |
 | `sequence` | serial numbers and SSCCs | 6 |
 | `sign` | the signed payload, JWS, workflows, saved keys, credentials | 8 |
 | `specifications` | every row of tables 1 to 13 against the standard's text | 143 |

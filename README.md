@@ -503,7 +503,9 @@ complete.
   November, session 22). An image's darkness since 6 November (mock-up A of two, taken under the owner's rule; B
   offered five steps in a list): **Darkness**, a slider from lighter to darker in the image's properties, makes the
   black and white again from the file's grey levels, kept in the page's memory only (the work keeps the picture and
-  its threshold; after a reload the file is chosen again to change it). Saving the label is 4.3*
+  its threshold; after a reload the file is chosen again to change it). Images in ZPL in ZPL's own compression since 6
+  November (repeat counts, `,`, `!` and `:`, which every ZPL II printer reads; several times smaller, every dot checked
+  through Labelary). Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

@@ -573,4 +573,38 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     expect(result?.symbologyIdentifier).toBe("]d2");
     expect(result?.text).toBe("(01)09506000134352(21)ABCDEFGH12345");
   });
+
+  // ZPL's ASCII compression in ^GFA (ZPL II Programming Guide, "Alternative Data Compression Scheme"): rows that use
+  // each of its tokens — repeat counts up to z (Labelary prints at most 2,000 dots across, so a row of 800 digits, z z,
+  // is checked by the guide's rules only), a comma, an exclamation mark after an odd run, a colon — print every dot as
+  // the uncompressed field does
+  it("prints a compressed graphic field dot for dot: repeat counts, row fills and repeated rows", { timeout: 30000 }, async () => {
+    const width = 1920;
+    const kinds: ((x: number) => boolean)[] = [
+      (x) => x >= 2 && x < 1650, // a run of 411 F's after a 3, then a comma
+      (x) => x >= 4, // a 0, then an odd run of F's: one kept before the exclamation mark
+      (x) => x < 800 || x >= 1600, // 200 F's, 200 0's, then F's to the end
+      (x) => x % 4 !== 1, // 480 B's: z j B
+      (x) => (x >> 3) % 3 === 0, // no run long enough to count
+      () => false, // a comma alone
+      (x) => x % 97 < 40, // runs of every length
+    ];
+    const height = kinds.length * 6;
+    const dark = Uint8Array.from({ length: width * height }, (_, i) => Number(kinds[Math.floor(i / width / 6)]!(i % width)));
+    const bitmap = { width, height, dark };
+    const fields = graphicFields(bitmap, 20, 20);
+    const data = fields[0]!.slice(fields[0]!.indexOf(",", fields[0]!.indexOf(",", fields[0]!.indexOf(",", fields[0]!.indexOf(",") + 1) + 1) + 1));
+    for (const token of ["zjB", "!", ",", ":"]) expect(data).toContain(token);
+    expect(fields.join("").length * 20).toBeLessThan(graphicFields(bitmap, 20, 20, false).join("").length);
+    // ^PW: the print width, which Labelary centres on its page as for the other labels
+    const png = await labelaryPng([`^XA^PW${width + 40}`, ...fields, "^XZ"].join("\n"), 600, width + 40, height + 40);
+    const { grey, width: pngWidth } = decodePng(png);
+    const offset = Math.floor((pngWidth - (width + 40)) / 2);
+    let differ = 0;
+    for (let i = 0; i < width * height; i++) {
+      const printed = grey[(20 + Math.floor(i / width)) * pngWidth + 20 + (i % width) + offset]! < 128;
+      if (Number(printed) !== dark[i]) differ++;
+    }
+    expect(differ).toBe(0);
+  });
 });

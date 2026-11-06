@@ -244,4 +244,7 @@
 - An image's darkness (backlog 4.2, 6 November): **Darkness** in an image's properties, a slider from lighter to
   darker (5 to 95 %), makes its black and white again from the file's grey levels, so a pale logo can print; the work
   keeps the threshold chosen, and after a reload **Replace…** with the same file lets it change again.
+- Smaller ZPL for images (backlog 4.2, 6 November): every graphic field (`^GFA`) is written with ZPL's own ASCII
+  compression — repeat counts, a row's trailing white or black filled by `,` or `!`, a repeated row as `:` — which
+  every ZPL II printer reads; a logo's field is several times smaller, every dot printed as before (Labelary).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

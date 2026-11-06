@@ -103,4 +103,98 @@ describe("exports", () => {
     const field = bitmapToGraphicField({ width: 9, height: 1, dark: Uint8Array.from([1, 0, 0, 0, 0, 0, 0, 1, 1]) });
     expect(field).toBe("^GFA,2,2,2,8180");
   });
+
+  // ZPL's ASCII compression (ZPL II Programming Guide, "Alternative Data Compression Scheme"): each token as the guide
+  // writes it, and every field expanded again by the guide's rules to the uncompressed dots
+  it("compresses a graphic field with ZPL's repeat counts, row fills and repeated rows", () => {
+    const rows = (width: number, ...dark: ((x: number) => boolean)[]) => ({
+      width, height: dark.length, dark: Uint8Array.from(dark.flatMap((d) => Array.from({ length: width }, (_, x) => Number(d(x))))),
+    });
+    // 64 dots, 16 digits a row: trailing white of an odd count keeps one 0; the same row again; trailing black of an
+    // odd count keeps one F; 16 eights; a white row; a black row; a row ending in 14 white digits
+    const small = rows(64, (x) => x < 4, (x) => x < 4, (x) => x >= 4, (x) => x % 4 === 0, () => false, () => true, (x) => x < 8);
+    expect(bitmapToGraphicField(small)).toBe("^GFA,56,56,8,F0,:0F!V8,!FF,");
+    expect(bitmapToGraphicField(small, 0, small.height, false)).toBe(
+      "^GFA,56,56,8,F000000000000000F0000000000000000FFFFFFFFFFFFFFF8888888888888888" + "0".repeat(16) + "F".repeat(16) + "FF" + "0".repeat(14));
+    // Runs past 19 and 400 digits: 26 B's (g L), the guide's 327 (v M), 850 (z z h P); a row of 1308 dots ends in
+    // half a byte of padding, a single 0 left as it is
+    const b = (x: number) => x % 4 !== 1;
+    const data = (field: string) => field.split(",").slice(4).join(",");
+    expect(data(bitmapToGraphicField(rows(104, b)))).toBe("gLB");
+    expect(data(bitmapToGraphicField(rows(1308, b)))).toBe("vMB0");
+    expect(data(bitmapToGraphicField(rows(3400, b)))).toBe("zzhPB");
+    // Runs of two are as short as they are, a single trailing 0 too; two trailing F's are an exclamation mark, two 0s a
+    // comma; four F's are J F
+    expect(data(bitmapToGraphicField(rows(16, (x) => x < 4 || (x >= 8 && x < 12))))).toBe("F0F0");
+    expect(data(bitmapToGraphicField(rows(16, (x) => x < 4 || (x >= 8 && x < 16))))).toBe("F0!");
+    expect(data(bitmapToGraphicField(rows(16, (x) => x < 8)))).toBe("FF,");
+    expect(data(bitmapToGraphicField(rows(24, (x) => x < 16)))).toBe("JF,");
+  });
+
+  it("expands every compressed graphic field, by the guide's rules, to the dots it holds", () => {
+    let seed = 7;
+    const random = () => ((seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
+    for (let n = 0; n < 200; n++) {
+      // Rows of a few dark runs, often the row above again, at widths that are and are not whole bytes
+      const width = 1 + Math.floor(random() * 900);
+      const height = 1 + Math.floor(random() * 12);
+      const dark = new Uint8Array(width * height);
+      for (let y = 0; y < height; y++) {
+        if (y > 0 && random() < 0.3) dark.copyWithin(y * width, (y - 1) * width, y * width);
+        else for (let run = Math.floor(random() * 5); run > 0; run--) {
+          const from = Math.floor(random() * width);
+          dark.fill(1, y * width + from, y * width + Math.min(width, from + Math.floor(random() * width)));
+        }
+      }
+      const bitmap = { width, height, dark };
+      const [, , , bytesPerRow, plain] = bitmapToGraphicField(bitmap, 0, height, false).split(",");
+      const data = bitmapToGraphicField(bitmap).split(",").slice(4).join(",");
+      expect(expandGraphicData(data, Number(bytesPerRow))).toBe(plain);
+      expect(data.length).toBeLessThanOrEqual(plain!.length);
+    }
+  });
+
+  it("makes an image's graphic fields several times smaller", () => {
+    const bitmap = rasterize(encode("gs1-datamatrix", "(01)09506000134352(21)ABCDEFGH12345"), { dotsPerModule: 24, quietZone: 3 });
+    const compressed = graphicFields(bitmap, 0, 0).join("");
+    const plain = graphicFields(bitmap, 0, 0, false).join("");
+    expect(compressed.match(/\^GFA,\d+,\d+,\d+,/g)).toEqual(plain.match(/\^GFA,\d+,\d+,\d+,/g));
+    expect(compressed.length * 10).toBeLessThan(plain.length);
+  });
 });
+
+/**
+ * A graphic field's ASCII data expanded as the ZPL II Programming Guide describes it, independently of the studio's
+ * writer: G to Y count 1 to 19 and g to z 20 to 400, added together until a digit; a comma fills the row with 0 and an
+ * exclamation mark with F, each from a whole byte; a colon at a row's start repeats the row above.
+ */
+function expandGraphicData(data: string, bytesPerRow: number): string {
+  const rows: string[] = [];
+  let row = "";
+  let count = 0;
+  const digits = bytesPerRow * 2;
+  for (const c of data) {
+    if (c === ":") {
+      expect(row).toBe("");
+      expect(rows.length).toBeGreaterThan(0);
+      rows.push(rows[rows.length - 1]!);
+      continue;
+    }
+    if (c === "," || c === "!") {
+      expect(row.length % 2).toBe(0);
+      expect(count).toBe(0);
+      row = row.padEnd(digits, c === "," ? "0" : "F");
+    } else if (c >= "G" && c <= "Y") count += c.charCodeAt(0) - 70;
+    else if (c >= "g" && c <= "z") count += (c.charCodeAt(0) - 102) * 20;
+    else {
+      expect(c).toMatch(/[0-9A-F]/);
+      row += c.repeat(count || 1);
+      count = 0;
+    }
+    expect(row.length).toBeLessThanOrEqual(digits);
+    if (row.length === digits) [rows[rows.length], row] = [row, ""];
+  }
+  expect(row).toBe("");
+  return rows.join("");
+}
+
