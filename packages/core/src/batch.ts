@@ -86,8 +86,9 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     const designed = designLabel(design.page, identified, font, {
       environment: design.environment ?? "retail", ...(design.table ? { table: design.table } : {}), error: design.error,
     });
-    const first = designed.symbols[0]!;
-    return { data: identified.elementString, options: designed.options, layout: designed.layout, geometry: encode(first.symbology, dataFor(first.symbology, identified)), designed };
+    // The first barcode's geometry from the data it carries (an ITF-14 the GTIN alone, its element strings chosen)
+    const first = designed.printer.symbols[0]!;
+    return { data: identified.elementString, options: designed.options, layout: designed.layout, geometry: encode(first.options.symbology, first.data), designed };
   }
   if (design.logistic) {
     if (!design.spec) throw new InputError("A GS1 Logistic Label takes GS1-128 at its table's row.");

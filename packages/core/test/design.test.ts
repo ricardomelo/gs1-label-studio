@@ -7,6 +7,7 @@ import {
   checkRows,
   designLabel,
   dplPage,
+  encode,
   eplPage,
   tsplPage,
   DATE_FORMATS,
@@ -109,6 +110,10 @@ describe("a label of one's own", () => {
       linearSize: null, bearer: "frame", reduction: 0, page: PAGE,
     };
     const drawn = labelFor(data, design, font);
+    // A first barcode that carries the GTIN alone (an ITF-14 with its element strings chosen) is drawn from that, not
+    // refused for the data's other element strings
+    const itfFirst: LabelDesign = { ...design, page: { ...PAGE, elements: [{ id: "i", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 40 }, ...PAGE.elements.filter((e) => e.kind !== "symbol")] } };
+    expect(labelFor(data, itfFirst, font).geometry).toEqual(encode("itf14", "09506000134376"));
     const dots = (mm: number) => Math.round((mm / 25.4) * 203);
     const zpl = textFile(printFileFor("zpl", drawn, design, 203));
     expect(zpl).toContain(`^PW${dots(130)}\n^LL${dots(80)}`);

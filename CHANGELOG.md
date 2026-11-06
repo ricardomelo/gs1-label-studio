@@ -219,4 +219,6 @@
   has its capitals at the height asked: Labelize draws the internal fonts' capitals at 0.72 of their cell, their top at
   the cell's. Every barcode read back and every line and box checked through Labelize at 8 and 12 dots a millimetre;
   an image refused (Labelize does not draw DPL's stored images), a turned element refused in DPL for now.
+- Fixed (6 November): a label of one's own whose first barcode carries the GTIN alone (an ITF-14 or EAN/UPC with the
+  data's other element strings unticked) was refused for those element strings, so nothing could be exported.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
