@@ -2376,6 +2376,26 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: the GS1 Logistic Label of an SSCC at 203 dpi, every symbol read back (a 2D symbol: null)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: the GS1 Logistic Label of an SSCC at 300 dpi, every symbol read back (a 2D symbol: gs1-datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: the GS1 Logistic Label of an SSCC at 203.2 dpi, every symbol read back (a 2D symbol: dl-qrcode)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: the GS1 Logistic Label of an SSCC at 304.8 dpi, every symbol read back (a 2D symbol: null)",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: the GS1 Logistic Label of an SSCC at 304.8 dpi, every symbol read back (a 2D symbol: dl-datamatrix)",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
      "status": "passed"
     },
@@ -4192,6 +4212,15 @@
     },
     {
      "name": "the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label of an SSCC alone in TSPL and DPL",
      "status": "listed",
      "projects": [
       "desktop",

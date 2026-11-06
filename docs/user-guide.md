@@ -412,7 +412,9 @@ where the layout puts them, the 2D symbol as `^BQ` or `^BX` at whole dots within
 in, or a printer profile of your own that prints wider. In EPL2 too: each GS1-128 as UCC/EAN 128, the text in the
 printer's font that fits the room the layout gives it, and a Data Matrix with the GS1 Digital Link URI beside the data;
 EPL2 refuses an element string of no predefined length that is not the last of its symbol (as `(37)` before `(10)`),
-a GS1 DataMatrix and a QR code, saying why. TSPL, DPL and a ZPL template do not write it yet (its PDF prints it). Data
+a GS1 DataMatrix and a QR code, saying why. In TSPL and DPL for an SSCC alone, the element string their GS1-128
+carries: the same text, rules and 2D symbol, with what each refuses for a symbol alone refused here too (other element
+strings, a GS1 QR Code; in DPL a GS1 DataMatrix). A ZPL template does not write it yet (its PDF prints it). Data
 titles in a second language are not there yet.
 
 ## 10. Printer (ZPL, TSPL, EPL2, DPL)
@@ -569,7 +571,6 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *ZPL writes the QR code in the printer's automatic mode* | One QR mode could not be shown to print in ZPL | Automatic mode for ZPL; the PDF keeps the mode |
 | *^BR prints … at 1 to 10 dots a module* | GS1 DataBar in ZPL at this size | Another size, or the PDF |
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
-| *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
 | *DPL prints an image stored in the printer's memory first…* | An image on a label of one's own, in DPL | Print its ZPL, EPL2, TSPL or PDF |
 | *DPL's Data Matrix is printed upright only for now…* | A turned Data Matrix on a label of one's own, in DPL | Turn it back to 0°, or print its ZPL, TSPL or PDF |
 | *TSPL's QR code is printed upright only for now…* | A turned QR code on a label of one's own (from a work file), in TSPL | Turn it back to 0°: a QR code is read in any direction |
@@ -592,7 +593,7 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *The label is 148.0 mm wide; … prints 104 mm* | An A5 or A6 GS1 Logistic Label on a 4-inch printer | Choose 4 × 6 in, or a profile of a wider printer |
 | *… is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it* (or EPL2) | No test has read that symbol back in that language | Use a ZPL profile, or print the PDF |
 | *EPL2's Data Matrix (the b command) has no FNC1…*, *EPL2's QR code is for Japanese printer models only* | The language cannot print it | Use a ZPL profile, or print the PDF |
-| *DPL's GS1-128 is offered for an SSCC (00) alone…*, *DPL's Data Matrix (W1c) has no FNC1…* | DPL cannot print it, or no test has read it back | Use a ZPL profile, or print the PDF |
+| *DPL's GS1-128 is offered for an SSCC (00) alone…*, *TSPL's GS1-128 is offered for an SSCC (00) alone…*, *DPL's Data Matrix (W1c) has no FNC1…* | DPL or TSPL cannot print it, or no test has read it back (a GS1 Logistic Label with more than an SSCC too) | Use a ZPL or EPL2 profile, or print the PDF |
 | *DPL sizes a QR code's module in tenths of a millimetre…* | The module's dots fall between DPL's sizes | Choose another size or printer |
 | *the A6 label is 148 mm high* (too short) | The page cannot hold its symbols | A larger page (A5, 6 × 8 in) |
 | *Not a name the pattern knows: {…}* | A file name pattern with an unknown name | `{row}`, `{symbol}`, `{key}` or an AI |

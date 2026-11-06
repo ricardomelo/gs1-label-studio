@@ -288,6 +288,6 @@ export {
   type PlacedElement,
 } from "./design.ts";
 export {
-  LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
+  LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, logisticPage, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
 } from "./logistic.ts";
 export { readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work, type WorkValue } from "./work.ts";

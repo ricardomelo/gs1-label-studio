@@ -254,10 +254,16 @@ describe("generating every row", () => {
     expect(drawn.logistic?.parts).toEqual(["(02)09506000134376(37)24", "(00)106141411234567897"]);
     expect(printFileFor("zpl", drawn, design, 203, 4, ["a note"])).toContain("50 mm: measure this line");
     expect(printWidthDots(drawn, design, 203)).toBe(Math.round((148 / 25.4) * 203));
-    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/written in ZPL and EPL2 only/);
+    // TSPL and DPL write it where their GS1-128 carries it, an SSCC alone (printlangs.test.ts prints it): this one's
+    // (02) and (37) refused with the reason, in the bulk file's report too
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/TSPL's GS1-128 is offered for an SSCC \(00\) alone/);
+    expect(() => printFileFor("dpl", drawn, design, 203)).toThrow(/DPL's GS1-128 is offered for an SSCC \(00\) alone/);
+    const ssccAlone = labelFor(engine.parse("(00)106141411234567897") as Identified, design, font);
+    expect(textFile(printFileFor("tspl", ssccAlone, design, 203))).toMatch(/\r\nBARCODE \d+,\d+,"EAN128",\d+,0,0,4,4,"00106141411234567897"\r\n/);
+    expect(textFile(printFileFor("dpl", ssccAlone, design, 203, 4, ["a note"]))).toContain("50 mm: measure this line");
     expect(textFile(printFileFor("epl2", drawn, design, 203)).match(/,1E,/g)).toHaveLength(2); // EPL2 writes it (backlog 4.1)
     const tspl = await generateBatch(sscc, { design, files: [], pattern: "{00}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
-    expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: The GS1 Logistic Label is written in ZPL and EPL2 only/);
+    expect(tspl.csv.split("\r\n")[1]).toMatch(/TSPL: TSPL's GS1-128 is offered for an SSCC \(00\) alone/);
     // With a QR code beside the middle block: each row's own GS1 Digital Link URI, in the drawing and in the ZPL
     const withQr: LabelDesign = { ...design, logistic: { ...design.logistic!, twoD: "dl-qrcode" } };
     expect(labelFor(sscc[1]!.identified, withQr, font).logistic?.printer.twoD?.data).toBe("https://id.gs1.org/00/106141411234567903?02=09506000134376&37=12");

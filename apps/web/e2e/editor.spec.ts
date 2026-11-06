@@ -1061,7 +1061,31 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   expect(readFileSync((await test.path())!, "utf8")).toContain("50 mm: measure this line");
   await page.selectOption("#prn-profile", "tspl-203");
   await page.getByRole("button", { name: "TSPL (203 dpi)" }).click();
-  await expect(page.locator(".error.small")).toContainText("The GS1 Logistic Label is written in ZPL and EPL2 only, for now");
+  await expect(page.locator(".error.small")).toContainText("TSPL's GS1-128 is offered for an SSCC (00) alone");
+});
+
+// Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
+test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "4x6");
+  await page.fill("#opt-from", "Dal Giardino S.p.A.");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "tspl-203");
+  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const tsplFile = readFileSync((await tspl.path())!, "utf8");
+  expect(tsplFile).toMatch(/^SIZE 101\.6 mm,152\.4 mm\r$/m);
+  expect(tsplFile).toMatch(/^BARCODE \d+,\d+,"EAN128",\d+,0,0,4,4,"00106141411234567897"\r$/m);
+  expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",0,\d+,\d+,"Dal Giardino S\.p\.A\."\r$/m);
+  expect(tsplFile).toMatch(/^BAR 0,\d+,812,2\r$/m);
+  await page.selectOption("#prn-profile", "dpl-203");
+  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const dplFile = readFileSync((await dpl.path())!, "latin1");
+  expect(dplFile).toMatch(/\r1q\d\d\d{3}\d{8}0010614141123456789\r/);
+  expect(dplFile).toMatch(/\r1\d{3}000\d{8}Dal Giardino S\.p\.A\.\r/);
 });
 
 // Item 4.1 (mock-up A of two, 2 November 2026): a 2D symbol to the right of the GS1 Logistic Label's middle block

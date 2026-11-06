@@ -484,7 +484,6 @@
  "A valid PackageTypeCode is required.": "É preciso um PackageTypeCode válido.",
  "The component is shorter than the minimum length GS1 Company Prefix.": "O componente é mais curto que o menor prefixo de empresa GS1.",
  "The IBAN is too long.": "O IBAN é longo demais.",
- "The GS1 Logistic Label is written in ZPL and EPL2 only, for now: its PDF prints it at its size.": "A Etiqueta Logística GS1 é escrita só em ZPL e EPL2, por enquanto: o PDF dela a imprime no seu tamanho.",
  "EPL2's {name} is not offered for data with a double quote or a backslash: their escape could not be read back. Leave them out, or percent-encode them in a URI.": "O {name} do EPL2 não é oferecido para dados com aspas duplas ou barra invertida: o escape delas não pôde ser relido. Deixe-as de fora, ou codifique-as com % num URI.",
  "EPL2's RSS-14 is not offered yet for {name}: Labelize, the emulator the tests print EPL2 with, does not draw it, so no test has read it back. ZPL or the PDF print it.": "O RSS-14 do EPL2 ainda não é oferecido para {name}: o Labelize, emulador com que os testes imprimem EPL2, não o desenha, então nenhum teste o releu. ZPL ou o PDF o imprimem.",
  "EPL2 prints {name} with a narrow bar of 2 to 4 dots; this X-dimension needs {d}. Choose another size or printer.": "O EPL2 imprime {name} com barra estreita de 2 a 4 pontos; esta dimensão X precisa de {d}. Escolha outro tamanho ou impressora.",

@@ -460,7 +460,7 @@ complete.
   string's data title above its content (7 mm), the bottom block with the GS1-128 symbols and their 3 mm text, the
   SSCC alone in the lowest, the rest split as they fit the page's width; refused when the page is too short; one
   Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November, EPL2
-  since 3 November (TSPL and DPL not yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
+  since 3 November, TSPL and DPL since 6 November for an SSCC alone (their GS1-128 carries nothing else yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Not yet: a second
   language for the data titles. No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*

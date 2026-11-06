@@ -16,6 +16,7 @@ import {
   eplLogisticLabel,
   eplTestLabel,
   logisticLabel,
+  logisticPage,
   specificationFor,
   EplUnsupportedError,
   PrinterUnsupportedError,
@@ -357,6 +358,116 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     }
     const expected = [...label.parts.map((p) => `]C1 ${p}`), ...(withDataMatrix ? [`]d1 ${uri}`] : [])].sort();
     expect(await reads(render("epl", file, width, height, dpi))).toEqual(expected);
+  });
+
+  // The GS1 Logistic Label in TSPL and DPL (backlog 4.1): a page of their own (logisticPage), where their GS1-128 carries
+  // it, an SSCC alone; the label's text and rules as on a label of one's own, a 2D symbol beside the data. Every symbol
+  // read back from the whole label as Labelize draws it, the SSCC's first bar where the page puts it.
+  it.each([
+    ["tspl", 203, null], ["tspl", 300, "gs1-datamatrix"], ["dpl", 203.2, "dl-qrcode"], ["dpl", 304.8, null], ["dpl", 304.8, "dl-datamatrix"],
+  ] as const)("%s: the GS1 Logistic Label of an SSCC at %s dpi, every symbol read back (a 2D symbol: %s)", async (language, dpi, twoD) => {
+    const sscc = "(00)106141411234567897";
+    const uri = "https://id.gs1.org/00/106141411234567897";
+    const label = logisticLabel({
+      elementString: sscc, size: twoD ? "a5" : "4x6", spec: specificationFor(5, "gs1-128")!, table: 5, percent: 100,
+      from: ["Dal Giardino S.p.A."], to: ["Supermarket DC 12"], ...(twoD ? { twoD: { symbology: twoD, data: twoD === "gs1-datamatrix" ? sscc : uri } } : {}),
+    }, hriFont());
+    const page = logisticPage(label, dpi, snapToDots(0.495, dpi).dots);
+    expect(page.symbols).toHaveLength(twoD ? 2 : 1);
+    const file = textFile(PAGES[language](page));
+    expect(file).toMatch({ tspl: /\r\nBARCODE \d+,\d+,"EAN128",\d+,0,0,\d,\d,"00106141411234567897"\r\n/, dpl: /\r1q\d\d\d{3}\d{8}0010614141123456789\r/ }[language]);
+    expect(file).toContain("FROM");
+    expect(file).toContain("Supermarket DC 12");
+    // Labelize draws DPL's QR code eight modules higher than the record's row (as for a symbol alone, above): lowered
+    // here by as much, so that it stays below the rule over the data, as the manual places it
+    const drawn = language === "dpl" && twoD === "dl-qrcode"
+      ? file.replace(/\r1W1D(\w\w000)(\d{4})/, (_, head: string, row: string) => {
+        const lower = Math.round(((8 * page.symbols[1]!.options.dotsPerModule) / Math.round(dpi / 25.4)) * 10);
+        return `\r1W1D${head}${String(Number(row) - lower).padStart(4, "0")}`;
+      })
+      : file;
+    const png = render(language, drawn, page.widthDots, page.heightDots, dpi);
+    const beside = twoD ? { "dl-qrcode": `]Q1 ${uri}`, "dl-datamatrix": `]d1 ${uri}`, "gs1-datamatrix": `]d2 ${sscc}` }[twoD] : null;
+    const expected = [`]C1 ${sscc}`, ...(beside ? [beside] : [])].sort();
+    expect(await reads(png)).toEqual(expected);
+    // The SSCC's bars: their first dot where the page puts them (DPL within a dot: tenths of a millimetre)
+    const { x, y, barHeightDots: h } = page.symbols[0]!.options;
+    const { grey, width } = decodePng(png);
+    let [left, top] = [Infinity, Infinity];
+    for (let row = y - 20; row < y + h; row++) {
+      for (let col = 0; col < page.widthDots; col++) {
+        if (grey[row * width + col]! >= 128) continue;
+        [left, top] = [Math.min(left, col), Math.min(top, row)];
+      }
+    }
+    expect(Math.abs(left - x)).toBeLessThanOrEqual(language === "dpl" ? 1 : 0);
+    expect(Math.abs(top - y)).toBeLessThanOrEqual(language === "dpl" ? 1 : 0);
+    // ... and where the layout puts them: their top at its row, their middle at its middle (156 modules at the
+    // printer's whole dots, a rounding either side)
+    const perUnit = (label.layout.xMm / 25.4) * dpi;
+    const d = page.symbols[0]!.options.dotsPerModule;
+    const laid = label.printer.symbols[0]!;
+    expect(Math.abs(top - Math.round(laid.y * perUnit))).toBeLessThanOrEqual(language === "dpl" ? 1 : 0);
+    expect(Math.abs(left + (156 * d) / 2 - (laid.x + 156 / 2) * perUnit)).toBeLessThanOrEqual(1);
+    const dark = (col: number, row: number) => grey[row * width + col]! < 128;
+    // Its element string below at 3 mm (rule 5c): the last digit's ink (a 7: no descender, a capital's height) within
+    // a tenth of it, as the font nearest allows
+    const below = [y + h + 1, y + h + Math.round((8 / 25.4) * dpi)] as const;
+    let [hriLeft, hriRight] = [Infinity, -1];
+    for (let row = below[0]; row < below[1]; row++) {
+      for (let col = x; col < x + 156 * d; col++) if (dark(col, row)) [hriLeft, hriRight] = [Math.min(hriLeft, col), Math.max(hriRight, col)];
+    }
+    let [hriTop, hriBottom] = [Infinity, -1];
+    for (let row = below[0]; row < below[1]; row++) {
+      for (let col = hriRight - Math.floor((hriRight - hriLeft) / 22); col <= hriRight; col++) {
+        if (dark(col, row)) [hriTop, hriBottom] = [Math.min(hriTop, row), Math.max(hriBottom, row)];
+      }
+    }
+    expect((hriBottom + 1 - hriTop) / ((3 / 25.4) * dpi)).toBeGreaterThanOrEqual(0.9);
+    expect(() => logisticPage(label, dpi, 12)).toThrow(/is \d+\.\d mm wide at 12 dots a module, wider than the label/);
+    // Each rule drawn across the label where the layout puts it
+    expect(page.boxes).toHaveLength(label.printer.rules.length);
+    for (const [rx, ry, rw] of label.printer.rules) {
+      const row = Math.round(ry * perUnit);
+      expect([row, dark(Math.round((rx + rw / 2) * perUnit), row)]).toEqual([row, true]);
+    }
+    // The SSCC's data content (7 mm, 6.6.4.2) in the tallest font that keeps it within the layout's room: its digits'
+    // ink at least 5 mm high, from the layout's top; every line no wider in the printer's font than the layout's
+    const content = label.printer.texts.find((t) => t.text === "106141411234567897")!;
+    const [cx, cy] = [Math.round(content.x * perUnit), Math.round(content.top * perUnit)];
+    let [inkTop, inkBottom] = [Infinity, -1];
+    for (let row = cy - 10; row < cy + Math.round((9 / 25.4) * dpi); row++) {
+      for (let col = cx; col < cx + Math.floor(content.width * perUnit); col++) {
+        if (dark(col, row)) [inkTop, inkBottom] = [Math.min(inkTop, row), Math.max(inkBottom, row)];
+      }
+    }
+    expect(Math.abs(inkTop - cy)).toBeLessThanOrEqual(language === "dpl" ? 3 : 1);
+    expect(inkBottom + 1 - inkTop).toBeGreaterThanOrEqual(Math.round((5 / 25.4) * dpi));
+    const font = hriFont();
+    for (const t of label.printer.texts) {
+      const em = ((t.heightMm / label.layout.xMm) * font.unitsPerEm) / font.capHeight;
+      const room = Math.ceil(font.textWidth(t.text, em) * (label.layout.xMm / 25.4) * dpi);
+      let r = -1;
+      const [tx, ty, th] = [Math.round(t.x * perUnit), Math.round(t.top * perUnit), Math.round((t.heightMm / 25.4) * dpi)];
+      for (let row = ty; row < ty + th; row++) {
+        for (let col = tx; col < tx + room + 8; col++) if (dark(col, row)) r = Math.max(r, col); // the next block lies beyond
+      }
+      expect([t.text, r + 1 - tx <= room]).toEqual([t.text, true]);
+    }
+    // The 2D symbol's right edge and top where the layout puts them (TSPL to the dot; DPL's QR code drawn by Labelize
+    // as moved above)
+    const two = label.printer.twoD;
+    if (two && language === "tspl") {
+      const o2 = page.symbols[1]!.options;
+      const right = Math.round((two.x + two.modules * two.module) * perUnit);
+      let [l2, t2, r2] = [Infinity, Infinity, -1];
+      for (let row = o2.y - 20; row < o2.y + two.modules * o2.dotsPerModule + 20; row++) {
+        for (let col = right - two.modules * o2.dotsPerModule - 20; col < right + 20; col++) {
+          if (dark(col, row)) [l2, t2, r2] = [Math.min(l2, col), Math.min(t2, row), Math.max(r2, col)];
+        }
+      }
+      expect([r2 + 1, t2]).toEqual([right, Math.round(two.y * perUnit)]);
+    }
   });
 
   // A label of one's own (backlog 4.2) in EPL2 and TSPL, as in ZPL: each barcode read back from the whole page, its first

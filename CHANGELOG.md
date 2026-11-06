@@ -230,4 +230,8 @@
   SSCC's 20 digits, check digit included, the studio's text below; Labelize draws `EAN128` as ZPL's UCC case mode,
   and a printer that puts FNC1 before the digits as they come prints the same symbol. Read back through Labelize at
   203 and 300 dpi, turned too; other GS1-128 still refused in TSPL.
+- The GS1 Logistic Label in TSPL and DPL (backlog 4.1, 6 November) for an SSCC alone, the element string their
+  GS1-128 carries: laid out in the printer's dots as in ZPL and EPL2 (`logisticPage`) and written as a label of one's
+  own, the 2D symbol beside the data too; a label with more data refused with the language's reason. Every symbol
+  read back through Labelize, the SSCC's bars and the 2D symbol where the layout puts them.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

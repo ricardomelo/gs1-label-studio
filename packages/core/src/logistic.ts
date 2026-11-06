@@ -1,8 +1,10 @@
 import { aiEntry } from "./dictionary.ts";
+import { dotsWithin, MM_PER_INCH } from "./dots.ts";
 import { parseElementString, type Element } from "./elementString.ts";
 import { encode, widthInModules } from "./encode.ts";
 import { GS1_128_MAX_MM, splitGs1128 } from "./gs1128.ts";
 import type { HriFont } from "./hri.ts";
+import { hriTextDots, PrinterUnsupportedError, type PrintPage } from "./printers.ts";
 import { layoutLabel, symbolMatrix, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import { baseX, specificationFor, specSizesFor, type SymbolSpecification } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -273,5 +275,51 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
     options,
     parts,
     printer: { symbols: bars, barHeight: layouts[0]!.barHeight!, texts: own, rules, ...(twoD ? { twoD } : {}) },
+  };
+}
+
+/**
+ * The GS1 Logistic Label as a page in a printer's dots at `dpi` (backlog 4.1), for a language that writes a label of
+ * one's own (TSPL, DPL): each GS1-128 at `dotsPerModule` whole dots, kept centred, as the layout's width follows the
+ * printer's module, its element strings below at 3 mm (rule 5c); the label's own text at its capitals' corner and
+ * height, within the room the layout gives it; the rules as filled boxes; the 2D symbol at whole dots a module within
+ * table 5's range, the nearest to the layout's, its right edge and top where the layout puts them. The language's
+ * own page writer then refuses what it cannot print, with its reason.
+ */
+export function logisticPage(label: LogisticLabel, dpi: number, dotsPerModule: number, copies?: number): PrintPage {
+  const { layout, printer } = label;
+  const perUnit = (layout.xMm / MM_PER_INCH) * dpi; // dots a unit of the layout
+  const dots = (units: number) => Math.round(units * perUnit);
+  const d = dotsPerModule;
+  const widthDots = dots(layout.width);
+  const barHeightDots = dots(printer.barHeight);
+  const symbols: PrintPage["symbols"] = printer.symbols.map(({ part, x, y }) => {
+    const modules = widthInModules(encode("gs1-128", part));
+    const left = Math.round((x + modules / 2) * perUnit - (modules * d) / 2);
+    if (left < 0 || left + modules * d > widthDots) {
+      const mm = ((modules * d * MM_PER_INCH) / dpi).toFixed(1);
+      throw new PrinterUnsupportedError(`The GS1-128 of ${part} is ${mm} mm wide at ${d} dots a module, wider than the label: choose fewer dots or the larger label.`);
+    }
+    return { symbology: "gs1-128", data: part, options: { x: left, y: dots(y), dotsPerModule: d, barHeightDots, dpi, hri: true, hriHeightMm: HRI_MM } };
+  });
+  const twoD = printer.twoD;
+  if (twoD) {
+    const moduleMm = twoD.module * layout.xMm;
+    const choices = dotsWithin(twoD.rangeMm[0], twoD.rangeMm[1], dpi);
+    if (!choices.length) throw new PrinterUnsupportedError(`A ${dpi} dpi printer cannot print the 2D symbol within table 5's X-dimensions.`);
+    const d2 = choices.reduce((best, c) => (Math.abs(c.xMm - moduleMm) < Math.abs(best.xMm - moduleMm) - 1e-9 ? c : best)).dots;
+    const right = dots(twoD.x + twoD.modules * twoD.module);
+    symbols.push({
+      symbology: twoD.symbology, data: twoD.data,
+      options: { x: right - twoD.modules * d2, y: dots(twoD.y), dotsPerModule: d2, barHeightDots: 0, dpi, hri: false, qrError: twoD.error.toUpperCase() as "L" | "M" | "Q" | "H" },
+    });
+  }
+  return {
+    widthDots, heightDots: dots(layout.height), dpi, ...(copies ? { copies } : {}), symbols,
+    texts: printer.texts.map((t) => ({ x: dots(t.x), y: dots(t.top), widthDots: Math.floor(t.width * perUnit), heightDots: hriTextDots(dpi, t.heightMm), text: t.text })),
+    boxes: printer.rules.map(([x, y, w, h]) => {
+      const [width, height] = [dots(w), Math.max(1, dots(h))];
+      return { x: dots(x), y: dots(y), width, height, thickness: Math.min(width, height) };
+    }),
   };
 }
