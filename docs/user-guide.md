@@ -303,8 +303,9 @@ a turned QR code is refused there. In DPL too, each record by its bottom left co
 in tenths of a millimetre: each line of text in the internal font whose capitals come nearest its height and that keeps
 it within its width, each line and filled box as an `X` record's line, each outlined box as its box; DPL refuses what
 it refuses for a symbol alone (GS1 DataMatrix, GS1-128 but for an SSCC alone, GS1 DataBar), an image (DPL prints one
-stored in the printer first, which Labelize, the emulator of the tests, does not draw) and, for now, a turned barcode
-or text.
+stored in the printer first, which Labelize, the emulator of the tests, does not draw). A turned barcode or text goes
+in DPL with its record's rotation, turned about its bottom left corner as Datamax's manual shows; a turned Data Matrix
+or QR code is refused there (Labelize does not turn them).
 
 ## 6. The label's options
 
@@ -570,7 +571,7 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
 | *DPL prints an image stored in the printer's memory first…* | An image on a label of one's own, in DPL | Print its ZPL, EPL2, TSPL or PDF |
-| *DPL writes a label of one's own upright only for now* | A turned barcode or text on a label of one's own, in DPL | Turn it back to 0°, or print its ZPL, EPL2, TSPL or PDF |
+| *DPL's Data Matrix is printed upright only for now…* | A turned Data Matrix on a label of one's own, in DPL | Turn it back to 0°, or print its ZPL, TSPL or PDF |
 | *TSPL's QR code is printed upright only for now…* | A turned QR code on a label of one's own (from a work file), in TSPL | Turn it back to 0°: a QR code is read in any direction |
 | *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *A line or box runs past the label's edge* | A line or box of a label of one's own past the label's edge, in a print file | Move it inside the label, or shorten it |

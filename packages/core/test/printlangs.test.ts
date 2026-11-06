@@ -152,6 +152,44 @@ function labelizeTurnedTspl(file: string, dpi: number): string {
   }).join("\r\n");
 }
 
+/**
+ * A DPL file with turned records as Labelize places them. Datamax's printers turn a record clockwise about its bottom
+ * left corner, its row and column (the manual's figure 8-1: four fields from one point, each in its own quarter);
+ * Labelize places a turned field otherwise. Each turned record's position is moved here so that Labelize's turned ink
+ * lands on its upright ink turned about that corner, both found from Labelize's own prints of the record alone (EAN's
+ * and UPC's measured without the printer's digits, which Labelize does not turn with the bars). Rows and columns are
+ * tenths of a millimetre, Labelize's dots whole dots a millimetre: `heightDots` is the label's, from the bottom.
+ */
+function labelizeTurnedDpl(file: string, dpi: number, heightDots: number): string {
+  const dpmm = Math.round(dpi / 25.4);
+  const N = 4000;
+  const ink = (record: string): [number, number, number, number] => {
+    const { grey, width } = decodePng(render("dpl", `\x02L\rm\rD11\r${record}\rQ0001\rE\r`, N, N, dpi));
+    let [l, t, r, b] = [Infinity, Infinity, -Infinity, -Infinity];
+    grey.forEach((value, index) => {
+      if (value >= 128) return;
+      const [x, y] = [index % width, Math.floor(index / width)];
+      [l, t, r, b] = [Math.min(l, x), Math.min(t, y), Math.max(r, x), Math.max(b, y)];
+    });
+    // Relative to the corner the record names: row 2000 and column 2000 tenths
+    const [cx, cy] = [Math.round(200 * dpmm), N - Math.round(200 * dpmm)];
+    return [l - cx, t - cy, r - cx, b - cy];
+  };
+  return file.split("\r").map((line) => {
+    const turned = /^([234])(\w)(.{5})(\d{4})(\d{4})(.*)$/.exec(line);
+    if (!turned || turned[2] === "X") return line;
+    const [, rotation, kind, header, row, column, rest] = turned as unknown as [string, string, string, string, string, string, string];
+    const measured = /[FGBC]/.test(kind) ? kind.toLowerCase() : kind; // EAN and UPC without the printer's digits
+    const [l, t, r, b] = ink(`1${measured}${header}20002000${rest}`);
+    const expected = rotation === "2" ? [-b - 1, l] : rotation === "3" ? [-r - 1, -b - 1] : [t, -r - 1];
+    const [tl, tt] = ink(`${rotation}${measured}${header}20002000${rest}`);
+    const x = Math.round((Number(column) * dpmm) / 10) + expected[0]! - tl;
+    const y = heightDots - Math.round((Number(row) * dpmm) / 10) + expected[1]! - tt;
+    const tenths = (dots: number) => String(Math.round((dots * 10) / dpmm)).padStart(4, "0");
+    return `${rotation}${kind}${header}${tenths(heightDots - y)}${tenths(x)}${rest}`;
+  }).join("\r");
+}
+
 async function reads(png: Uint8Array): Promise<string[]> {
   const results = await readBarcodes(new Blob([png as Uint8Array<ArrayBuffer>], { type: "image/png" }), {
     formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4,
@@ -489,7 +527,12 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     ["tspl", 203, "distribution", "itf14", "(01)19506000134359"],
     ["tspl", 203, "distribution", "gs1-datamatrix", "(01)09506000134376(10)B42"],
     ["tspl", 300, "distribution", "dl-datamatrix", "(01)09506000134376(10)B42"],
-  ] as const)("%s: a label of one's own at %i dpi: a %s %s turned, each dot the upright one's", { timeout: 60000 }, async (language, dpi, environment, symbology, elementString) => {
+    ["dpl", 203.2, "retail", "ean13", "(01)09506000134352"],
+    ["dpl", 203.2, "distribution", "itf14", "(01)19506000134359"],
+    ["dpl", 203.2, "distribution", "gs1-128", "(00)106141411234567897"],
+    ["dpl", 203.2, "retail", "upce", "(01)00012345000065"],
+    ["dpl", 203.2, "retail", "ean8", "(01)00000095012346"],
+  ] as const)("%s: a label of one's own at %s dpi: a %s %s turned, each dot the upright one's", { timeout: 60000 }, async (language, dpi, environment, symbology, elementString) => {
     const engine = await syntaxEngine();
     const identified = engine.parse(elementString) as Identified;
     const pageAt = (rotation: 0 | 90 | 180 | 270) => {
@@ -500,7 +543,8 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     };
     const dark = async ({ printed }: ReturnType<typeof pageAt>) => {
       const file = textFile(PAGES[language](printed));
-      const png = render(language, language === "epl" ? labelizeTurned(file, dpi) : labelizeTurnedTspl(file, dpi), printed.widthDots, printed.heightDots, dpi);
+      const moved = { epl: () => labelizeTurned(file, dpi), tspl: () => labelizeTurnedTspl(file, dpi), dpl: () => labelizeTurnedDpl(file, dpi, printed.heightDots) }[language]();
+      const png = render(language, moved, printed.widthDots, printed.heightDots, dpi);
       const { grey, width } = decodePng(png);
       const dots = new Set<number>();
       for (let y = 0; y < printed.heightDots; y++) {
@@ -517,8 +561,11 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       const { x, y, turned: t } = turned.printed.symbols[0]!.options;
       const [w, h] = [t!.width, t!.height];
       const after = await dark(turned);
-      expect(after.file).toMatch(language === "epl" ? new RegExp(`^B\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m")
-        : new RegExp(`^(BARCODE \\d+,\\d+,"\\w+",\\d+,\\d,${rotation},|DMATRIX \\d+,\\d+,\\d+,\\d+,c126,x\\d+,r${rotation},)`, "m"));
+      expect(after.file).toMatch({
+        epl: new RegExp(`^B\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"),
+        tspl: new RegExp(`^(BARCODE \\d+,\\d+,"\\w+",\\d+,\\d,${rotation},|DMATRIX \\d+,\\d+,\\d+,\\d+,c126,x\\d+,r${rotation},)`, "m"),
+        dpl: new RegExp(`^${rotation / 90 + 1}[FGCdq]\\w\\w\\d{3}\\d{8}\\d`, "m"),
+      }[language]);
       expect(after.read).toEqual(upright.designed.expected);
       const W = upright.printed.widthDots;
       const moved = [...before.dots].map((i) => {
@@ -544,7 +591,10 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       const [rx, ry] = turnedRect([own[0]!, own[1]!, own[2]! - own[0]!, own[3]! - own[1]!], s.layout.width, s.layout.height, rotation);
       const toDots = (mm: number) => Math.round((mm / 25.4) * dpi);
       const corner = [...after.dots].filter(inBox).reduce(([cx, cy], i) => [Math.min(cx!, i % W), Math.min(cy!, Math.floor(i / W))], [Infinity, Infinity]);
-      expect(corner).toEqual([toDots(s.xMm + rx * s.layout.xMm), toDots(s.yMm + ry * s.layout.xMm)]);
+      // DPL: Labelize draws EAN's and UPC's guard bars 12 dots below the others, the layout 5X, so their bars' top is
+      // 5X - 12 dots lower than the layout's (as for a symbol alone, above); turned 270° that side is the box's left
+      const guards = language === "dpl" && rotation === 270 && ["ean13", "ean8", "upca", "upce"].includes(symbology) ? 5 * turned.printed.symbols[0]!.options.dotsPerModule - 12 : 0;
+      expect(corner).toEqual([toDots(s.xMm + rx * s.layout.xMm) + guards, toDots(s.yMm + ry * s.layout.xMm)]);
       expect(moved.filter(inBox).length).toBeGreaterThan(500);
     }
   });
@@ -552,15 +602,19 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
   // A turned text block on a label of one's own (backlog 4.2, rotation): A turned, its capitals' top side where the page
   // puts it and its first letter where the line starts, within Labelize's cell dot (two at multiplier 2) and the
   // letter's side bearing; the printer's fixed-pitch font sets how far it runs.
-  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300]] as const)("%s: a label of one's own at %i dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (language, dpi) => {
+  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300], ["dpl", 203.2], ["dpl", 304.8]] as const)("%s: a label of one's own at %s dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (language, dpi) => {
     const engine = await syntaxEngine();
     for (const rotation of [90, 180, 270] as const) {
       const page: DesignPage = { widthMm: 80, heightMm: 80, elements: [{ id: "t", kind: "text", text: "EXP {10}", heightMm: 4, rotation, xMm: 30, yMm: 30 }] };
       const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
       const printed = printPageFor(designed, dpi);
       const file = textFile(PAGES[language](printed));
-      expect(file).toMatch(language === "epl" ? new RegExp(`^A\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m") : new RegExp(`^TEXT \\d+,\\d+,"\\d",${rotation},`, "m"));
-      const turnedFile = language === "epl" ? labelizeTurned(file, dpi) : labelizeTurnedTspl(file, dpi);
+      expect(file).toMatch({
+        epl: new RegExp(`^A\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"),
+        tspl: new RegExp(`^TEXT \\d+,\\d+,"\\d",${rotation},`, "m"),
+        dpl: new RegExp(`^${rotation / 90 + 1}[0-2](\\w)\\1(?:000)\\d{8}EXP B42$`, "m"),
+      }[language]);
+      const turnedFile = { epl: () => labelizeTurned(file, dpi), tspl: () => labelizeTurnedTspl(file, dpi), dpl: () => labelizeTurnedDpl(file, dpi, printed.heightDots) }[language]();
       const { grey, width } = decodePng(render(language, turnedFile, printed.widthDots, printed.heightDots, dpi));
       let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
       for (let y = 0; y < printed.heightDots; y++) {

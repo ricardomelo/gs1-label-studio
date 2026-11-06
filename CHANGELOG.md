@@ -215,10 +215,15 @@
   dpi.
 - A label of one's own in DPL (backlog 4.2, 6 November): each barcode as the symbol alone, each line of text in the
   internal font whose capitals come nearest its height and that fits its width, lines and boxes as `X` records, each
-  by its bottom left corner in tenths of a millimetre, its corner and size each rounded on its own. DPL's text, the symbols' too, now
-  has its capitals at the height asked: Labelize draws the internal fonts' capitals at 0.72 of their cell, their top at
-  the cell's. Every barcode read back and every line and box checked through Labelize at 8 and 12 dots a millimetre;
-  an image refused (Labelize does not draw DPL's stored images), a turned element refused in DPL for now.
+  by its bottom left corner in tenths of a millimetre, its corner and size each rounded on its own. DPL's text, the
+  symbols' too, now has its capitals at the height asked: Labelize draws the internal fonts' capitals at 0.72 of their
+  cell, their top at the cell's. Every barcode read back and every line and box checked through Labelize at 8 and 12 dots a millimetre;
+  an image refused (Labelize does not draw DPL's stored images).
+- Rotation on a label of one's own in DPL (backlog 4.2, 6 November): a turned barcode or line of text with its
+  record's rotation, turned about its bottom left corner as the manual's figure 8-1 shows (Labelize places a turned
+  field otherwise, so its tests move it); ITF-14's bearer bars turned as rectangles; a turned Data Matrix or QR code
+  refused (Labelize does not turn them). Every dot of each symbol's bars checked through Labelize at 8 dots a
+  millimetre.
 - Fixed (6 November): a label of one's own whose first barcode carries the GTIN alone (an ITF-14 or EAN/UPC with the
   data's other element strings unticked) was refused for those element strings, so nothing could be exported.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

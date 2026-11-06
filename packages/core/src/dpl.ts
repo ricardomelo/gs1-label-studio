@@ -52,7 +52,10 @@ const MESSAGES = {
     "DPL prints an image stored in the printer's memory first (<STX>I, then a Y record), which Labelize, the emulator the " +
     "tests print DPL with, does not draw, so no test has seen one: an image is not offered in DPL yet. ZPL, EPL2, TSPL " +
     "or the PDF print it.",
-  turned: "DPL writes a label of one's own upright only for now: turn its barcodes and text back to 0°, or print it in ZPL, EPL2 or TSPL.",
+  turnedMatrix:
+    "DPL's Data Matrix is printed upright only for now: Labelize, the emulator the tests print DPL with, does not turn it " +
+    "(W1c). Turn it back to 0°, or print it in ZPL or TSPL.",
+  turnedQr: "DPL's QR code is printed upright only for now: Labelize, the emulator the tests print DPL with, does not turn it (W1D). Turn it back to 0°: a QR code is read in any direction.",
   gs1128:
     "DPL's GS1-128 is offered for an SSCC (00) alone: the manual's UCC/EAN Code 128 (Q) carries that one, and its other " +
     "ways — FNC1 written &G in Code 128, or EAN 128 with automatic subsets (W1I) — are not drawn by Labelize, the emulator " +
@@ -90,10 +93,46 @@ function multiplier(n: number, kind: Limit): string {
 
 const pad = (n: number, width: number) => String(n).padStart(width, "0");
 
-/** The geometry every record needs: the label's height and resolution, to count rows up from its bottom. */
+/**
+ * The geometry every record needs: the label's height and resolution, to count rows up from its bottom; and, for a
+ * turned symbol or line of text (backlog 4.2), its box and rotation (`turn`): its records are written upright from the
+ * box's corner, then turned clockwise with it about the box, whose top left corner as turned is `x`, `y` and whose
+ * upright size is `width` and `height`, in dots; `past` says why a part turned past the label's top or left edge is
+ * refused (a record's corner past its bottom or right edge is refused by `place`).
+ */
 interface Frame {
   dpi: number;
   heightDots: number;
+  turn?: { rotation: 90 | 180 | 270; x: number; y: number; width: number; height: number; past: string };
+}
+
+/** A rectangle of the upright drawing as turned with its box: its top left corner and size, refused past the edge. */
+function turnRect(turn: NonNullable<Frame["turn"]>, x: number, y: number, width: number, h: number): [number, number, number, number] {
+  const [[ax, ay], [bx, by]] = [turnPoint(turn, x, y), turnPoint(turn, x + width, y + h)];
+  const [left, top] = [Math.min(ax, bx), Math.min(ay, by)];
+  if (left < 0 || top < 0) throw new DplUnsupportedError(turn.past);
+  return [left, top, Math.abs(bx - ax), Math.abs(by - ay)];
+}
+
+/**
+ * A point of the upright drawing, in dots from the label's top left corner, where it lands turned clockwise with its
+ * box (a point, not a dot: DPL places a record by its bottom left corner in tenths of a millimetre).
+ */
+function turnPoint(turn: NonNullable<Frame["turn"]>, px: number, py: number): [number, number] {
+  const [u, v] = [px - turn.x, py - turn.y];
+  return turn.rotation === 90 ? [turn.x + turn.height - v, turn.y + u]
+    : turn.rotation === 180 ? [turn.x + turn.width - u, turn.y + turn.height - v]
+    : [turn.x + v, turn.y + turn.width - u];
+}
+
+/**
+ * A record's rotation, its header's first character: 1 to 4 for 0°, 90°, 180° and 270° clockwise (manual, a: Rotation),
+ * the field turned about its bottom left corner, the record's row and column (figure 8-1: four fields from one point,
+ * each in its own quarter, at 90° reading downwards to the right of it). So a turned record's position is its upright
+ * bottom left corner turned with the box (`place`).
+ */
+function rotation(frame: Frame): string {
+  return frame.turn ? String(frame.turn.rotation / 90 + 1) : "1";
 }
 
 /** Dots as tenths of a millimetre (the `m` command's unit). */
@@ -101,10 +140,14 @@ function tenths(dots: number, dpi: number): number {
   return Math.round((dots / dpi) * MM_PER_INCH * 10);
 }
 
-/** A position: the row of `bottom` (in dots from the top) counted up from the label's bottom, and the column of `x`. */
+/**
+ * A position: the row of `bottom` (in dots from the top) counted up from the label's bottom, and the column of `x`: a
+ * record's bottom left corner upright, turned with its box when the frame turns.
+ */
 function place(frame: Frame, bottom: number, x: number): string {
-  const row = tenths(frame.heightDots - bottom, frame.dpi);
-  const column = tenths(x, frame.dpi);
+  const [px, py] = frame.turn ? turnPoint(frame.turn, x, bottom) : [x, bottom];
+  const row = tenths(frame.heightDots - py, frame.dpi);
+  const column = tenths(px, frame.dpi);
   if (row < 0 || row > 9999 || column < 0 || column > 9999) {
     throw new DplUnsupportedError("The symbol falls outside the label: DPL places records within 0 to 999.9 mm of its bottom left corner.");
   }
@@ -141,19 +184,29 @@ export function dplTestLabel(symbology: SymbologyId, value: string, options: Pri
  * each outlined box as its box `b`. Rows count up from the label's bottom, in tenths of a millimetre, a rectangle's
  * position and size each within half a tenth of the page's. An image is refused: DPL prints one stored in the
  * printer's memory first (`<STX>I`, then a Y record), which Labelize, the emulator the tests print DPL with, does not
- * draw. A turned element is refused for now. With `notes`, a test label (backlog 3.1).
+ * draw. A turned barcode or line of text with its record's rotation, its bottom left corner turned with its box
+ * (`rotation`); lines and boxes turned as rectangles; a turned Data Matrix or QR code is refused (Labelize does not
+ * turn W1c or W1D). With `notes`, a test label (backlog 3.1).
  */
 export function dplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
   if (page.images?.length) throw new DplUnsupportedError(MESSAGES.image);
-  if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) throw new DplUnsupportedError(MESSAGES.turned);
+  for (const { symbology, options: o } of page.symbols) {
+    if (o.turned && (symbology === "dl-datamatrix" || symbology === "dl-qrcode")) throw new DplUnsupportedError(symbology === "dl-qrcode" ? MESSAGES.turnedQr : MESSAGES.turnedMatrix);
+  }
+  // A turned line of text or symbol: its records written upright from its box's corner, then turned with it about the box
   const records = (frame: Frame) => [
     ...page.boxes.map((b) => (b.thickness >= Math.min(b.width, b.height) ? rule(frame, b.x, b.y, b.width, b.height) : box(frame, b.x, b.y, b.width, b.height, b.thickness))),
-    ...page.texts.flatMap((t) => text(frame, { x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L")),
-    ...page.symbols.flatMap(({ symbology, data, options: o }) => fields(symbology, data, o, frame)),
+    ...page.texts.flatMap((t) => text(t.rotation ? { ...frame, turn: { rotation: t.rotation, x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, past: TEXT_PAST } } : frame,
+      { x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L")),
+    ...page.symbols.flatMap(({ symbology, data, options: { turned, ...upright } }) =>
+      fields(symbology, data, upright, turned ? { ...frame, turn: { rotation: turned.rotation, x: upright.x, y: upright.y, width: turned.width, height: turned.height, past: BARCODE_TEXT_PAST } } : frame)),
   ];
   const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
   return options.notes ? withRuler(records, size, options.notes) : document(records({ dpi: page.dpi, heightDots: page.heightDots }), size);
 }
+
+const BARCODE_TEXT_PAST = "A barcode's text runs past the label's edge: move the barcode inside the label.";
+const TEXT_PAST = "A line of text runs past the label's edge: move it inside the label.";
 
 /**
  * The label's records, then a 50 mm ruler below it with a tick every 10 mm and the settings as text. Rows count from
@@ -189,6 +242,8 @@ function document(records: string[], options: PrintLabelOptions): string {
  * dot, and the far edges stay where the page puts them.
  */
 function edges(frame: Frame, x: number, y: number, width: number, h: number): { position: string; size: string } {
+  // An X record has no rotation (manual: its a is 1): the rectangle itself is turned
+  if (frame.turn) return edges({ dpi: frame.dpi, heightDots: frame.heightDots }, ...turnRect(frame.turn, x, y, width, h));
   return { position: place(frame, y + h, x), size: pad(Math.max(1, tenths(width, frame.dpi)), 4) + pad(Math.max(1, tenths(h, frame.dpi)), 4) };
 }
 
@@ -224,7 +279,8 @@ function text(frame: Frame, line: TextLine, align: "C" | "L"): string[] {
   const width = ([...line.text].length * font.width - spacing[Number(font.name)]!) * m;
   const x = align === "C" ? line.x + Math.max(0, Math.round((line.width - width) / 2)) : line.x;
   const k = multiplier(m, "font");
-  return [`1${font.name}${k}${k}000${place(frame, line.y + font.height * m, x)}${data(line.text)}`];
+  if (frame.turn) turnRect(frame.turn, x, line.y, width, font.height * m); // its cell within the label
+  return [`${rotation(frame)}${font.name}${k}${k}000${place(frame, line.y + font.height * m, x)}${data(line.text)}`];
 }
 
 function around(frame: Frame, lines: string[], x: number, top: number, bottom: number, width: number, gap: number, options: PrintSymbolOptions, join: boolean, align: "C" | "L" = "C"): string[] {
@@ -262,7 +318,7 @@ function fields(symbology: SymbologyId, value: string, options: PrintSymbolOptio
     // the symbol's bottom: its guard bars', which reach 5X below the others, as the layout draws them
     const letter = hri ? linear.letter : linear.letter.toLowerCase();
     const m = multiplier(d, "module");
-    return [`1${letter}${m}${m}${height(h, dpi)}${place(frame, y + h + Math.round(GUARD_EXTENSION * d), x)}${linear.digits(value)}`];
+    return [`${rotation(frame)}${letter}${m}${m}${height(h, dpi)}${place(frame, y + h + Math.round(GUARD_EXTENSION * d), x)}${linear.digits(value)}`];
   }
 
   switch (symbology) {
@@ -274,7 +330,7 @@ function fields(symbology: SymbologyId, value: string, options: PrintSymbolOptio
       // Q: "00" and the SSCC's first 17 digits, 19 in all; the printer adds the check digit and FNC1 (manual, Q). The
       // lower case q leaves out the printer's text, which it prints above the symbol: the studio's goes where asked
       const m = multiplier(d, "module");
-      const symbol = `1q${m}${m}${height(h, dpi)}${place(frame, y + h, x)}00${elements[0]!.value.slice(0, 17)}`;
+      const symbol = `${rotation(frame)}q${m}${m}${height(h, dpi)}${place(frame, y + h, x)}00${elements[0]!.value.slice(0, 17)}`;
       return [symbol, ...around(frame, [`(00)${elements[0]!.value}`], x, y, y + h, widthInModules(geometry) * d, 2 * d, options, true)];
     }
     case "dl-datamatrix": {
@@ -310,7 +366,7 @@ function fields(symbology: SymbologyId, value: string, options: PrintSymbolOptio
 function itf14(value: string, options: PrintSymbolOptions, frame: Frame): string[] {
   const { x, y, dotsPerModule: d, barHeightDots: h, bearer, dpi } = options;
   const width = (7 * (4 * ITF14_RATIO + 6) + ITF14_RATIO + 6) * d; // section 5.3.2.2: P(4N+6)+N+6 modules
-  const symbol = `1d${multiplier(ITF14_RATIO * d, "wide")}${multiplier(d, "module")}${height(h, dpi)}${place(frame, y + h, x)}${value}`;
+  const symbol = `${rotation(frame)}d${multiplier(ITF14_RATIO * d, "wide")}${multiplier(d, "module")}${height(h, dpi)}${place(frame, y + h, x)}${value}`;
   const gap = Math.round((HRI_GAP_MM / MM_PER_INCH) * dpi);
   if (!bearer) return [symbol, ...around(frame, [value], x, y, y + h, width, gap, options, true)];
   const t = bearer.thicknessDots;

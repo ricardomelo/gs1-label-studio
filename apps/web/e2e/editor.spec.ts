@@ -1535,7 +1535,7 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
 // label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
 // in the work; a QR code stays upright.
-test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2 and TSPL and kept in the work", async ({ page }) => {
+test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, TSPL and DPL and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1596,6 +1596,21 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2 an
   const tsplFile = readFileSync((await tspl.path())!, "utf8");
   expect(tsplFile).toMatch(/^DMATRIX \d+,\d+,\d+,\d+,c126,x\d+,r90,/m);
   expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",270,\d+,\d+,"BATCH B42"\r$/m);
+  // In DPL, each record with its rotation, 2 for 90° and 4 for 270° clockwise (DPL turns no Data Matrix in Labelize: the
+  // barcode becomes an ITF-14, still turned)
+  await on(page, "label");
+  await page.locator(".design-list button").first().click();
+  await page.selectOption("#el-symbol", "itf14");
+  await page.getByRole("checkbox", { name: "(10)B42" }).uncheck(); // ITF-14 carries the GTIN alone
+  await expect(rotation.getByRole("button", { name: "90°", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  if ((await printer.getAttribute("open")) === null) await printer.locator("summary").click();
+  await page.selectOption("#prn-profile", "dpl-203");
+  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const dplFile = readFileSync((await dpl.path())!, "latin1");
+  expect(dplFile).toMatch(/\r2d\w\w\d{3}\d{8}09506000134376\r/);
+  expect(dplFile).toMatch(/\r4[0-2](\w)\1(?:000)\d{8}BATCH B42\r/);
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);

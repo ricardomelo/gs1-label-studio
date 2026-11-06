@@ -441,6 +441,20 @@ describe("a label of one's own", () => {
     expect(tspl.match(/^TEXT \d+,\d+,"\d",270,/gm)).toHaveLength(printed.texts.length);
     expect(tspl).not.toMatch(/^(TEXT \d+,\d+,"\d",0|DMATRIX (?!.*,r180,))/m);
     expect(textFile(tsplPage(dmPrinted))).toMatch(/^DMATRIX \d+,\d+,\d+,\d+,c126,x\d+,r90,/m);
+    // In DPL (Labelize prints them in printlangs.test.ts): each record with its rotation, 2, 3 or 4 for 90°, 180° and
+    // 270° clockwise, its bottom left corner (the manual's pivot) turned with the symbol's box or the text's capitals'
+    // box; at 270° a line's cell's bottom left corner, x and y + its cell upright, goes to x + its cell and y + its width.
+    // A GS1-128 with more than an SSCC refused, as alone; a turned Data Matrix refused (Labelize does not turn W1c)
+    expect(() => dplPage({ ...printed, images: [] })).toThrow(/DPL's GS1-128 is offered for an SSCC \(00\) alone/);
+    const dplText = dplPage({ ...printed, images: [], symbols: [] });
+    const tenth = (d: number) => String(Math.round((d / 203) * 254)).padStart(4, "0");
+    for (const t of printed.texts) {
+      const [, f, k] = dplText.match(new RegExp(`\r4(\\d)(\\w)\\w000\\d{8}${t.text}\r`))!;
+      const cell = [7, 13, 18][Number(f)]! * Number.parseInt(k!, 36);
+      expect(dplText).toContain(`\r4${f}${k}${k}000${tenth(printed.heightDots - (t.y + t.widthDots))}${tenth(t.x + cell)}${t.text}\r`);
+    }
+    expect(dplText).not.toMatch(/\r[1-3]\d/);
+    expect(() => dplPage(dmPrinted)).toThrow(/DPL's Data Matrix is printed upright only for now/);
     // An ITF-14 turned a quarter by the label's top edge: its bearer frame, left of its bars upright, would start above
     // the label, refused; a little lower, the frame's top on the edge
     const itf = (y: number, kind: "frame" | "bars" = "frame") => eplPage({
@@ -460,11 +474,31 @@ describe("a label of one's own", () => {
     expect(() => tsplItf(27)).toThrow(/A barcode's text runs past the label's edge/);
     expect(textFile(tsplItf(28))).toMatch(/^BOX \d+,0,\d+,\d+,8\r$/m);
     expect(textFile(tsplItf(28, "bars")).match(/^BAR .*(?=\r$)/gm)).toEqual(["BAR 200,8,8,310", "BAR 92,8,8,310"]);
+    // The same in DPL: the d record turned (2), its pivot the bars' bottom left corner upright, (100, 128) turned to
+    // (100, 28) with the box (x 100, y 28, 270 by 100 upright); the frame and bars as turned rectangles, X records upright
+    const dplItf = (y: number, kind: "frame" | "bars" = "frame") => dplPage({
+      widthDots: 800, heightDots: 800, dpi: 203, texts: [], boxes: [],
+      symbols: [{ symbology: "itf14", data: "19506000134359", options: { x: 100, y, dotsPerModule: 2, barHeightDots: 100, dpi: 203, hri: true, bearer: { kind, thicknessDots: 8 }, turned: { rotation: 90, width: 270, height: 100 } } }],
+    });
+    expect(() => dplItf(27)).toThrow(/A barcode's text runs past the label's edge/);
+    // Without bearer bars, its digits below the bars upright are left of them turned a quarter: by the left edge, refused
+    const bare = (x: number) => dplPage({
+      widthDots: 800, heightDots: 800, dpi: 203, texts: [], boxes: [],
+      symbols: [{ symbology: "itf14", data: "19506000134359", options: { x, y: 100, dotsPerModule: 2, barHeightDots: 100, dpi: 203, hri: true, turned: { rotation: 90, width: 270, height: 100 } } }],
+    });
+    expect(() => bare(10)).toThrow(/A barcode's text runs past the label's edge/);
+    expect(bare(60)).toMatch(/\r2[0-2]\w\w000\d{8}19506000134359\r/);
+    expect(dplItf(28)).toContain(`\r2d62125${tenth(800 - 28)}${tenth(100)}19506000134359\r`);
+    // The frame (72, 20) to (398, 136) upright, 8 thick: turned, 92 to 208 across and 0 to 326 down
+    expect(dplItf(28)).toContain(`\r1X11000${tenth(800 - 326)}${tenth(92)}b${tenth(116)}${tenth(326)}${tenth(8)}${tenth(8)}\r`);
+    expect(dplItf(28, "bars").match(/\r1X11000\d{8}l\d{8}(?=\r)/g)).toEqual([
+      `\r1X11000${tenth(800 - 318)}${tenth(200)}l${tenth(8)}${tenth(310)}`, `\r1X11000${tenth(800 - 318)}${tenth(92)}l${tenth(8)}${tenth(310)}`,
+    ]);
     const qr: DesignPage = { widthMm: 60, heightMm: 60, elements: [{ id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, rotation: 90, xMm: 4, yMm: 4 }] };
     const qrLabel = designLabel(qr, data, font, { environment: "distribution" });
     expect(() => zplPage(printPageFor(qrLabel, 203))).toThrow(/ZPL prints a QR code upright only/);
     expect(() => tsplPage(printPageFor(qrLabel, 203))).toThrow(/TSPL's QR code is printed upright only for now/);
-    expect(() => dplPage(printPageFor(qrLabel, 203))).toThrow(/DPL writes a label of one's own upright only for now/);
+    expect(() => dplPage(printPageFor(qrLabel, 203))).toThrow(/DPL's QR code is printed upright only for now/);
     expect(zplPage(printPageFor(designLabel({ ...qr, elements: [{ ...(qr.elements[0] as DesignSymbol), rotation: 0 }] }, data, font, { environment: "distribution" }), 203))).toMatch(/\^BQN/);
   }, SLOW);
 
