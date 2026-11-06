@@ -504,7 +504,7 @@
  "Add rows: a CSV or Excel file, or rows pasted from a spreadsheet.": "Adicione linhas: um arquivo CSV ou Excel, ou linhas coladas de uma planilha.",
  "A value fixed here is checked at once; the file itself is not changed: download the corrected rows to fix it at its source. Skipped rows are left out of what is generated.": "Um valor corrigido aqui é verificado na hora; o arquivo em si não muda: baixe as linhas corrigidas para corrigi-lo na origem. As linhas ignoradas ficam fora do que é gerado.",
  "The label above, with its options, drawn for every row ready or fixed.": "A etiqueta acima, com as suas opções, desenhada para cada linha pronta ou corrigida.",
- "{row}, {symbol}, {key} (the key's value) or an AI such as {01} or {10}; a name repeated is numbered.": "{row}, {symbol}, {key} (o valor da chave) ou um AI como {01} ou {10}; um nome repetido é numerado.",
+ "{row}, {symbol}, {key} (the key's value), an AI such as {01} or {10}, or a column's header such as {Produto}; a name repeated is numbered.": "{row}, {symbol}, {key} (o valor da chave), um AI como {01} ou {10}, ou o cabeçalho de uma coluna como {Produto}; um nome repetido é numerado.",
  "Labels are printed at 100 %, centred in their place; a label larger than the sheet's is left out.": "As etiquetas são impressas a 100 %, centradas no seu lugar; uma etiqueta maior do que as da folha fica de fora.",
  "One zip: the files chosen and generated.csv, which lists every row and what was made of it.": "Um zip: os arquivos escolhidos e generated.csv, que lista cada linha e o que foi feito dela.",
  "Choose at least one file to generate.": "Escolha pelo menos um arquivo para gerar.",

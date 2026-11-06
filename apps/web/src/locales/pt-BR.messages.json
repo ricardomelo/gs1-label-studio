@@ -15,6 +15,7 @@
  "A GS1 Logistic Label takes GS1-128 at its table's row.": "Uma Etiqueta Logística GS1 usa GS1-128 na linha da sua tabela.",
  "A linear barcode beside the 2D symbol needs a GTIN (01).": "Um código de barras linear ao lado do símbolo 2D precisa de um GTIN (01).",
  "The pattern is empty.": "O padrão está vazio.",
+ "Not a name the pattern knows: {names}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.": "O nome não é conhecido pelo padrão: {names}. Use {row}, {symbol}, {key}, um AI como {01} ou {10}, ou o cabeçalho de uma coluna como {Produto}.",
  "UPC-E is only for a GTIN-12 that zero-suppresses.": "O UPC-E é só para um GTIN-12 que admite supressão de zeros.",
  "An EAN/UPC is only for GTINs of consumer units (indicator 0).": "Um EAN/UPC é só para GTINs de unidades de consumo (indicador 0).",
  "This value is in scientific notation, as a spreadsheet writes a long number: format the column as text, type the codes again and save the file again.": "Este valor está em notação científica, como uma planilha escreve um número longo: formate a coluna como texto, digite os códigos de novo e salve o arquivo de novo.",

@@ -24,6 +24,8 @@ interface Props {
   left: number;
   /** The first row's file name for a pattern, as an example. */
   example: (pattern: string) => string | null;
+  /** The spreadsheet's headers: a column's header in braces names the files by the row's cell. */
+  columns: readonly string[];
   dpi: number;
   /** The label shown, in mm at 100 %: whether it fits the sheet's labels. */
   labelMm?: readonly [number, number];
@@ -79,7 +81,7 @@ function Num({ id, label, value, onChange }: { id: string; label: string; value:
   );
 }
 
-export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, result, error, onGenerate, onCancel, languageName }: Props) {
+export function GeneratePanel({ ready, left, example, columns, dpi, labelMm, progress, result, error, onGenerate, onCancel, languageName }: Props) {
   const [choice, setChoice] = useState<Kept>(kept);
   const [start, setStart] = useState(1);
   const update = (next: Partial<Kept>) => {
@@ -95,7 +97,7 @@ export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, re
   const perSheet = sheet ? sheet.columns * sheet.rows : 0;
   const from = Math.min(Math.max(1, Math.floor(start) || 1), perSheet || 1);
   const sheets = sheet ? Math.ceil((from - 1 + ready) / perSheet) : 0;
-  const problem = patternProblem(choice.pattern) ?? (sheet ? sheetProblem(sheet) : null);
+  const problem = patternProblem(choice.pattern, columns) ?? (sheet ? sheetProblem(sheet) : null);
   const tooLarge = sheet && labelMm && !sheetProblem(sheet) ? fitsSheet(labelMm[0], labelMm[1], sheet) : null;
   const nothing = !choice.files.length && !choice.pdf && !sheet && !choice.zpl;
   const first = choice.files.length && !problem ? example(choice.pattern) : null;
@@ -128,7 +130,7 @@ export function GeneratePanel({ ready, left, example, dpi, labelMm, progress, re
           </div>
           <label htmlFor="gen-pattern">{t("File names")}</label>
           <input id="gen-pattern" className="mono" value={choice.pattern} spellCheck={false}
-            aria-invalid={Boolean(patternProblem(choice.pattern))} onChange={(e) => update({ pattern: e.target.value })} />
+            aria-invalid={Boolean(patternProblem(choice.pattern, columns))} onChange={(e) => update({ pattern: e.target.value })} />
           <div className="hint">
             {t(GENERATE_TEXTS.pattern)}
             {first ? ` ${t("First: {name}", { name: `${first}.${choice.files[0]}` })}` : ""}

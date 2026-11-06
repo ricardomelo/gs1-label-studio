@@ -516,7 +516,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // In bulk: every row ready or fixed drawn with the label's design, in one zip (backlog 2.4).
   const batchRows: BatchRow[] = rows.map((row, index) => ({
     row: row.row, ...(row.identified ? { identified: row.identified } : {}), ...(row.error ? { error: row.error } : {}),
-    ...(skipped.has(index) ? { skipped: true } : {}), ...(settings.designer ? { cells: cellsOf(index) } : {}),
+    ...(skipped.has(index) ? { skipped: true } : {}), cells: cellsOf(index),
   }));
   const readyRows = batchRows.filter((row) => row.identified && !row.skipped);
   // Generated in a worker (backlog 2.5): the page stays usable, the progress shows, and Cancel ends the worker.
@@ -952,7 +952,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
                 <GeneratePanel
                   ready={blocked || !font ? 0 : readyRows.length}
                   left={batchRows.length - readyRows.length}
-                  example={(pattern) => readyRows[0] ? patternName(pattern, readyRows[0].row, symbology, readyRows[0].identified!) : null}
+                  example={(pattern) => readyRows[0] ? patternName(pattern, readyRows[0].row, symbology, readyRows[0].identified!, readyRows[0].cells) : null}
+                  columns={edited?.headers ?? []}
                   dpi={settings.dpi}
                   {...(view.widthMm && view.heightMm ? { labelMm: [view.widthMm, view.heightMm] as const } : {})}
                   progress={progress}

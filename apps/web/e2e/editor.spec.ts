@@ -453,6 +453,34 @@ test("a label of one's own in bulk: a {column} field shows each row's cell, on t
   expect(zpl.match(/\^FD[^^]*(Tapenade|genovese|Liguria|\{Cor\})[^^]*\^FS/g)).toEqual(["^FDFinest Truffle Tapenade^FS", "^FDLiguria · {Cor}^FS", "^FDPesto alla genovese^FS", "^FD · {Cor}^FS"]);
 });
 
+// Backlog 4.2: a column's header in braces names the generated files by each row's cell, on any label
+test("in bulk: a column's header in the file names pattern names each row's files by its cell", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\tProduto\tRegião\n09506000134376\tB42\tFeijão Tropeiro\tSul\n09506000134352\tB43\tPesto alla genovese\t\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await on(page, "export");
+  const panel = page.locator(".generate");
+  await expect(panel.locator(".hint", { hasText: "column's header" })).toContainText("or a column's header such as {Produto}");
+  await page.locator("#gen-pattern").fill("{produto}_{Cor}");
+  await expect(panel.locator(".error")).toHaveText(
+    "Not a name the pattern knows: {Cor}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.");
+  await expect(page.getByRole("button", { name: "Generate 2 labels" })).toBeDisabled();
+  await page.locator("#gen-pattern").fill("{produto}_{ REGIÃO }_{10}");
+  await expect(panel).toContainText("First: Feijao-Tropeiro_Sul_B42.svg");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
+  expect(execFileSync("unzip", ["-Z1", (await download.path())!], { encoding: "utf8" }).split("\n").filter(Boolean)).toEqual([
+    "Feijao-Tropeiro_Sul_B42.svg", "Pesto-alla-genovese__B43.svg", "labels_dl-qrcode.pdf", "generated.csv",
+  ]);
+  // In Portuguese, the message too
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "export");
+  await page.locator("#gen-pattern").fill("{Cor}");
+  await expect(panel.locator(".error")).toHaveText(
+    "O nome não é conhecido pelo padrão: {Cor}. Use {row}, {symbol}, {key}, um AI como {01} ou {10}, ou o cabeçalho de uma coluna como {Produto}.");
+});
+
 // Item 2.1 (mock-up A of 29 October 2026): in bulk, rows from a file or pasted, their columns, the row shown.
 test("in bulk: an Excel workbook's rows, columns guessed from their headers, each row drawn and checked", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();

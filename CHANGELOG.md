@@ -238,4 +238,7 @@
   `{column}` field shows the row's cell under that header, offered in **Insert a field from the data** with the row
   shown's value for each column holding no AI; every row's label and print file with its own cells. A name in braces
   that no column has stays as typed (as any such text did before).
+- File names from spreadsheet columns (backlog 4.2, 6 November): in bulk, **File names** takes any column's header in
+  braces, such as `{Produto}`, for the row's cell, on any label; accents dropped. The message for an unknown name in
+  the pattern is now translated too (it was shown in English).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

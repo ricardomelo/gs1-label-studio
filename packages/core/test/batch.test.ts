@@ -163,6 +163,23 @@ describe("file names", () => {
     expect(patternProblem("{row}{8020}")).toBeNull();
     expect(patternProblem("  ")).toMatch(/empty/);
   });
+
+  // Backlog 4.2: a column's header in braces names the files by the row's cell, on any label, not only one's own
+  it("replaces a column's header by the row's cell, its case and surrounding spaces aside, and knows the headers", () => {
+    const identified = engine.parse("(01)09506000134376(10)B42") as never;
+    const cells = { " Produto ": "Pesto alla genovese", Região: "Sul", "10": "ten", row: "r", Vazio: "" };
+    expect(patternName("{produto}_{10}", 7, "dl-qrcode", identified, cells)).toBe("Pesto-alla-genovese_B42");
+    expect(patternName("{ REGIÃO }-{row}", 7, "dl-qrcode", identified, cells)).toBe("Sul-7"); // {row} is the row, not the column
+    expect(patternName("{Cor}{Vazio}", 7, "dl-qrcode", identified, cells)).toBe("row-7"); // no such column, an empty cell
+    expect(patternName("{Produto}", 7, "dl-qrcode", identified)).toBe("row-7"); // no cells
+    expect(patternName("{Produto}", 7, "dl-qrcode", identified, { Produto: "Feijão Ñandú" })).toBe("Feijao-Nandu");
+    const headers = ["GTIN", " Produto ", "Região", ""];
+    expect(patternProblem("{produto}_{ Região }_{01}", headers)).toBeNull();
+    expect(patternProblem("{Produto}_{Cor}", headers)).toBe(
+      "Not a name the pattern knows: {Cor}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.");
+    expect(patternProblem("{Produto}_{}", headers)).toMatch(/knows: \{\}\./); // an empty header is no name
+    expect(patternProblem("{Produto}")).toMatch(/knows: \{Produto\}\./); // no spreadsheet
+  });
 });
 
 describe("generating every row", () => {
@@ -295,6 +312,9 @@ describe("generating every row", () => {
     expect(await read(svgPng(svg("B42.svg")))).toEqual(["]Q1 https://id.gs1.org/01/09506000134376/10/B42"]);
     const zpl = new TextDecoder().decode(files.get("labels_dl-qrcode_203dpi.zpl"));
     expect(zpl.match(/\^FD(Tapenade|Pesto alla genovese|LOTE B4\d)\^FS/g)).toEqual(["^FDTapenade^FS", "^FDLOTE B42^FS", "^FDPesto alla genovese^FS", "^FDLOTE B43^FS"]);
+    // The files named by a column, a design without fields too
+    const named = await generateBatch(rows, { design: QR, files: ["svg"], pattern: "{produto}_{row}", pdf: false }, font);
+    expect([...unzip(named.zip).keys()]).toEqual(["Tapenade_2.svg", "Pesto-alla-genovese_3.svg", "generated.csv"]);
     // Without the cells (a single label) the field stays as typed
     expect(labelFor(rows[0]!.identified!, design, font).layout.texts.map((t) => t.text)).toEqual(["{Produto}", "LOTE B42"]);
   }, SLOW);

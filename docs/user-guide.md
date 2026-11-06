@@ -546,8 +546,10 @@ Under the Export bar, **Generate in bulk** draws the label shown, with its optio
 
 ![Generate in bulk: files a row, one PDF, label sheets, ZPL](images/guide/generate.png)
 
-- **A file a row**: SVG, PNG, PDF and/or EPS, named by **File names** — `{row}`, `{symbol}`, `{key}` or any AI such as
-  `{01}` or `{10}`; a name repeated is numbered. The first name is shown.
+- **A file a row**: SVG, PNG, PDF and/or EPS, named by **File names** — `{row}`, `{symbol}`, `{key}`, any AI such as
+  `{01}` or `{10}`, or any column's header such as `{Produto}` (the row's cell under it, the header's case and the
+  spaces around it aside; accents are dropped, as file names keep plain letters); a name repeated is numbered. The
+  first name is shown.
 - **To print**: **One PDF, a label a page**; **Label sheets** — Avery L7160, L7163, L7651, 5160 or a **Custom sheet…**
   (page, label size, columns × rows, margins and pitch) — each label at 100 % centred in its place, starting from any
   label of the first sheet. A label larger than the sheet's labels is said before generating; labels are never scaled.
@@ -601,7 +603,7 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *DPL's GS1-128 is offered for an SSCC (00) alone…*, *TSPL's GS1-128 is offered for an SSCC (00) alone…*, *DPL's Data Matrix (W1c) has no FNC1…* | DPL or TSPL cannot print it, or no test has read it back (a GS1 Logistic Label with more than an SSCC too) | Use a ZPL or EPL2 profile, or print the PDF |
 | *DPL sizes a QR code's module in tenths of a millimetre…* | The module's dots fall between DPL's sizes | Choose another size or printer |
 | *the A6 label is 148 mm high* (too short) | The page cannot hold its symbols | A larger page (A5, 6 × 8 in) |
-| *Not a name the pattern knows: {…}* | A file name pattern with an unknown name | `{row}`, `{symbol}`, `{key}` or an AI |
+| *Not a name the pattern knows: {…}* | A file name pattern with an unknown name | `{row}`, `{symbol}`, `{key}`, an AI or a column's header |
 
 ## 17. Glossary
 

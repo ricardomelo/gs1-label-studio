@@ -244,6 +244,10 @@
      "status": "passed"
     },
     {
+     "name": "file names › replaces a column's header by the row's cell, its case and surrounding spaces aside, and knows the headers",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › makes each row's files, numbers repeated names, leaves out errors and skipped rows, and lists them all",
      "status": "passed"
     },
@@ -4021,6 +4025,15 @@
     },
     {
      "name": "a label of one's own in bulk: a {column} field shows each row's cell, on the label and in the print file",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a column's header in the file names pattern names each row's files by its cell",
      "status": "listed",
      "projects": [
       "desktop",

@@ -14,7 +14,7 @@ import { labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
-import { designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
+import { columnCell, designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, logisticPage, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
 import { pictureBitmap, resample } from "./picture.ts";
 import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintPage } from "./printers.ts";
@@ -320,7 +320,10 @@ export interface BatchRow {
   /** The row's number in the file, as a spreadsheet numbers it. */
   row: number;
   identified?: Identified;
-  /** The row's cells by their column's header, for a label of one's own's `{column}` fields (`fillFields`). */
+  /**
+   * The row's cells by their column's header, for a label of one's own's `{column}` fields (`fillFields`) and the file
+   * names' (`patternName`).
+   */
   cells?: Record<string, string>;
   /** Why the row cannot be drawn (the Syntax Engine's message), or that it was skipped. */
   error?: string;
@@ -331,7 +334,10 @@ export interface BatchRequest {
   design: LabelDesign;
   /** A file of each kind for every row. */
   files: readonly BatchFile[];
-  /** The files' names: `{row}`, `{symbol}`, `{key}` (the key's value) and any AI in braces, such as `{01}` or `{10}`. */
+  /**
+   * The files' names: `{row}`, `{symbol}`, `{key}` (the key's value), any AI in braces, such as `{01}` or `{10}`, and
+   * any column's header, such as `{Produto}` (the row's cell).
+   */
   pattern: string;
   /** One PDF with a label a page. */
   pdf: boolean;
@@ -365,24 +371,36 @@ export function patternTokens(pattern: string): string[] {
   return [...pattern.matchAll(/\{([^{}]*)\}/g)].map((m) => m[1]!);
 }
 
-/** What is wrong with a name pattern, or null: an unknown name in braces. */
-export function patternProblem(pattern: string): string | null {
+/**
+ * What is wrong with a name pattern, or null: an unknown name in braces. The spreadsheet's `columns` (its headers) are
+ * names it knows, their case and surrounding spaces aside.
+ */
+export function patternProblem(pattern: string, columns: readonly string[] = []): string | null {
   if (!pattern.trim()) return "The pattern is empty.";
-  const unknown = patternTokens(pattern).filter((t) => !["row", "symbol", "key"].includes(t) && !/^\d{2,4}$/.test(t));
-  return unknown.length
-    ? `Not a name the pattern knows: ${unknown.map((t) => `{${t}}`).join(", ")}. Use {row}, {symbol}, {key} or an AI such as {01} or {10}.`
-    : null;
+  const headers = new Set(columns.map((c) => c.trim().toLowerCase()).filter(Boolean));
+  const unknown = patternTokens(pattern).filter((t) =>
+    !["row", "symbol", "key"].includes(t) && !/^\d{2,4}$/.test(t) && !headers.has(t.trim().toLowerCase()));
+  if (!unknown.length) return null;
+  const names = unknown.map((name) => "{" + name + "}").join(", ");
+  return `Not a name the pattern knows: ${names}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.`;
 }
 
-/** A row's file name, without its extension: the pattern's names replaced, then made safe for a file system. */
-export function patternName(pattern: string, row: number, symbology: SymbologyId, identified: Identified): string {
+/**
+ * A row's file name, without its extension: the pattern's names replaced, then made safe for a file system. A name that
+ * is neither {row}, {symbol}, {key} nor an AI is a column's header: the row's cell under it (`columnCell`, from `cells`).
+ * Letters lose their accents.
+ */
+export function patternName(pattern: string, row: number, symbology: SymbologyId, identified: Identified,
+  cells?: Readonly<Record<string, string>>): string {
   const values = new Map(identified.elements.map((e) => [e.ai, e.value]));
   const name = pattern.replace(/\{([^{}]*)\}/g, (_, token: string) =>
     token === "row" ? String(row)
     : token === "symbol" ? symbology
     : token === "key" ? (identified.elements[0]?.value ?? "")
-    : (values.get(token) ?? ""));
-  return fileName(name).replace(/^[-_.]+|[-_.]+$/g, "") || `row-${row}`;
+    : /^\d{2,4}$/.test(token) ? (values.get(token) ?? "")
+    : (columnCell(cells, token) ?? ""));
+  // Accents dropped first ("Feijão" → "Feijao"), as fileName keeps ASCII letters only
+  return fileName(name.normalize("NFD").replace(/\p{M}/gu, "")).replace(/^[-_.]+|[-_.]+$/g, "") || `row-${row}`;
 }
 
 /** Names made unique in their order: a name seen before gets "-2", "-3"…. */
@@ -424,7 +442,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     }
   });
   const ready = drawn.filter((d) => d.label);
-  const names = uniqueNames(ready.map((d) => patternName(request.pattern, d.row.row, design.symbology, d.row.identified!)));
+  const names = uniqueNames(ready.map((d) => patternName(request.pattern, d.row.row, design.symbology, d.row.identified!, d.row.cells)));
   ready.forEach((d, i) => (d.name = names[i]));
 
   const files: { name: string; bytes: Uint8Array }[] = [];
