@@ -213,4 +213,10 @@
   (Labelize places a turned field otherwise, so its tests move the origin); ITF-14's bearer bars turned with it; a
   turned QR code refused (Labelize does not turn it). Every dot of each symbol checked through Labelize at 203 and 300
   dpi.
+- A label of one's own in DPL (backlog 4.2, 6 November): each barcode as the symbol alone, each line of text in the
+  internal font whose capitals come nearest its height and that fits its width, lines and boxes as `X` records, each
+  by its bottom left corner in tenths of a millimetre, each edge rounded on its own. DPL's text, the symbols' too, now
+  has its capitals at the height asked: Labelize draws the internal fonts' capitals at 0.72 of their cell, their top at
+  the cell's. Every barcode read back and every line and box checked through Labelize at 8 and 12 dots a millimetre;
+  an image refused (Labelize does not draw DPL's stored images), a turned element refused in DPL for now.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

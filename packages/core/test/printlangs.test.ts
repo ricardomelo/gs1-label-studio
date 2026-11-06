@@ -9,6 +9,7 @@ import { textFile } from "./files.ts";
 import { decodePng, drawnBox } from "./png.ts";
 import {
   dplLabel,
+  dplPage,
   dplTestLabel,
   DplUnsupportedError,
   eplLabel,
@@ -49,7 +50,7 @@ beforeAll(async () => {
 
 type Language = "tspl" | "epl" | "dpl";
 const WRITERS = { tspl: tsplLabel, epl: eplLabel, dpl: dplLabel };
-const PAGES = { epl: eplPage, tspl: tsplPage };
+const PAGES = { epl: eplPage, tspl: tsplPage, dpl: dplPage };
 
 /**
  * Labelize's PNG of a print file, at the printer's dots a millimetre. DPL counts rows from the label's bottom, so its
@@ -343,6 +344,18 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       { id: "t", kind: "text", text: "BEST BEFORE {17}\nBATCH {10}", heightMm: 3, xMm: 4, yMm: 4 },
       { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
     ]],
+    ["dpl", 203.2, "distribution", [
+      { id: "t", kind: "text", text: "BATCH {10}", heightMm: 4, xMm: 6, yMm: 4 },
+      { id: "i", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 22 },
+      { id: "m", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 120, yMm: 3 },
+    ]],
+    // The first line's capitals are measured: "BEST BEFORE 271231" in font 2 at 2 would run wider than the page lays
+    // it out, so it takes font 1 at 2, shorter (fittingFont); "BATCH B42" goes first
+    ["dpl", 304.8, "retail", [
+      { id: "e", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 4, yMm: 30 },
+      { id: "t", kind: "text", text: "BATCH {10}\nBEST BEFORE {17}", heightMm: 3, xMm: 4, yMm: 4 },
+      { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
+    ]],
   ] as const)("%s: a label of one's own at %i dpi, every barcode read back, each where the layout puts it", async (language, dpi, environment, elements) => {
     const engine = await syntaxEngine();
     const page = { widthMm: 170, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };
@@ -357,15 +370,22 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     for (const [index, s] of designed.printer.symbols.entries()) {
       const range = s.layout.barRects && s.layout.barRects[1] > s.layout.barRects[0] ? s.layout.barRects : [0, s.layout.rects.length] as const;
       const bars = s.layout.rects.slice(...range);
-      const early = language === "epl" && s.options.symbology === "dl-datamatrix" ? printed.symbols[index]!.options.dotsPerModule : 0;
-      const [left, top] = [dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm) - early, dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm) - early];
+      const d = printed.symbols[index]!.options.dotsPerModule;
+      const early = language === "epl" && s.options.symbology === "dl-datamatrix" ? d : 0;
+      // DPL: Labelize draws a QR code eight modules higher and an EAN's bars 12 - 5X dots higher (its guard bars 12 dots
+      // long, the layout's 5X), as for a symbol alone ("starts at the layout's corner")
+      const high = language !== "dpl" ? 0 : s.options.symbology === "dl-qrcode" ? 8 * d : s.options.symbology === "ean13" ? 12 - 5 * d : 0;
+      const [left, top] = [dots(s.xMm + Math.min(...bars.map((r) => r[0])) * s.layout.xMm) - early, dots(s.yMm + Math.min(...bars.map((r) => r[1])) * s.layout.xMm) - early - high];
       let x = left - 12;
       while (x < left + 12 && !dark(x, top + 4)) x++;
       // ITF-14's bearer frame lies on its bars: the column meets the frame first, its thickness above them
       const frame = printed.symbols[index]!.options.bearer?.thicknessDots ?? 0;
       let y = top - frame - 12;
-      while (y < top - frame + 12 && !dark(left + 1, y)) y++;
-      expect([s.id, x, y]).toEqual([s.id, left, top - frame]);
+      while (y < top - frame + 12 && !dark(x + 1, y)) y++;
+      // DPL places in tenths of a millimetre: to the dot at 8 dots a millimetre (a tenth is 0.8 dots), within one at 12
+      // (a tenth is 1.2 dots, so the nearest tenth can miss a dot)
+      const within = language === "dpl" && dpi > 300 ? 1 : 0;
+      expect([s.id, Math.abs(x - left) <= within, Math.abs(y - (top - frame)) <= within, x, y]).toEqual([s.id, true, true, x, y]);
     }
     for (const t of page.elements.filter((e) => e.kind === "text")) {
       let y = dots(t.yMm) - 8;
@@ -377,24 +397,46 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       if (language === "epl" && dpi === 300) continue;
       let bottom = y;
       while (row(bottom + 1)) bottom++;
-      expect(Math.abs(bottom + 1 - y - dots(t.heightMm))).toBeLessThanOrEqual(Math.max(2, Math.ceil(dots(t.heightMm) / 10)));
+      const tenth = Math.max(2, Math.ceil(dots(t.heightMm) / 10));
+      const first = printed.texts.find((p) => p.y === Math.min(...printed.texts.filter((q) => q.x === dots(t.xMm)).map((q) => q.y)))!;
+      const record = textFile(PAGES[language](printed)).split("\r").find((r) => r.endsWith(first.text));
+      if (language === "dpl" && record) {
+        // DPL's three fixed-pitch fonts run wider than the page's text: a line takes the tallest font within a tenth of
+        // its capitals / 0.72 that keeps it within its width, so its capitals are its font's 0.72 (a round C a dot over
+        // above and below), and no taller than asked
+        const cells = dpi < 250 ? [7, 13, 18] : [10, 19, 27];
+        const cell = cells[Number(record[1])]! * Number.parseInt(record[2]!, 36);
+        expect(Math.abs(bottom + 1 - y - Math.round(cell * 0.72))).toBeLessThanOrEqual(3);
+        expect(bottom + 1 - y).toBeLessThanOrEqual(dots(t.heightMm) + tenth);
+        if (dpi < 250) expect(Math.abs(bottom + 1 - y - dots(t.heightMm))).toBeLessThanOrEqual(tenth);
+        continue;
+      }
+      expect(Math.abs(bottom + 1 - y - dots(t.heightMm))).toBeLessThanOrEqual(tenth);
     }
   });
 
   // Lines and boxes on a label of one's own (backlog 4.2): in EPL2 LO fills a line and a filled box, X draws an outline
   // whose ends are the box's outer edges; in TSPL BAR and BOX; each where the page puts it, to the dot
-  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300]] as const)("%s: a label of one's own at %i dpi, its lines and boxes drawn where the page puts them", async (language, dpi) => {
+  // DPL: X records' line l and box b, their edges in tenths of a millimetre from the bottom left corner: to the dot at
+  // 8 dots a millimetre, within one at 12 (a tenth is 1.2 dots there)
+  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300], ["dpl", 203.2], ["dpl", 304.8]] as const)("%s: a label of one's own at %s dpi, its lines and boxes drawn where the page puts them", async (language, dpi) => {
     const engine = await syntaxEngine();
     const designed = designLabel(GRAPHICS, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
     const printed = printPageFor(designed, dpi);
     const file = textFile(PAGES[language](printed));
-    expect(file.match(language === "epl" ? /^X\d/gm : /^BOX \d/gm)).toHaveLength(2);
-    expect(file.match(language === "epl" ? /^LO\d/gm : /^BAR \d/gm)).toHaveLength(3);
+    expect(file.match({ epl: /^X\d/gm, tspl: /^BOX \d/gm, dpl: /^1X11000\d{8}b\d{16}$/gm }[language])).toHaveLength(2);
+    expect(file.match({ epl: /^LO\d/gm, tspl: /^BAR \d/gm, dpl: /^1X11000\d{8}l\d{8}$/gm }[language])).toHaveLength(3);
     const png = render(language, file, printed.widthDots, printed.heightDots, dpi);
     expect(await reads(png)).toEqual(designed.expected);
     const { grey, width } = decodePng(png);
     const dark = (x: number, y: number) => grey[y * width + x]! < 128;
-    expect(printed.boxes.map((b) => drawnBox(dark, b))).toEqual(printed.boxes);
+    const within = language === "dpl" && dpi > 300 ? 1 : 0;
+    for (const b of printed.boxes) {
+      const drawn = drawnBox(dark, b);
+      const [right, bottom] = [b.x + b.width, b.y + b.height];
+      const off = [drawn.x - b.x, drawn.y - b.y, drawn.x + drawn.width - right, drawn.y + drawn.height - bottom, drawn.thickness - b.thickness];
+      expect(off.map((v) => Math.abs(v) <= within)).toEqual([true, true, true, true, true]);
+    }
   });
 
   // An image on a label of one's own (backlog 4.2): EPL2's GW and TSPL's BITMAP send its dots as raw bytes, so the print
@@ -565,11 +607,15 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     });
     const gap = symbology === "itf14" ? Math.round((1.02 / 25.4) * 203) : 2 * o.dotsPerModule;
     expect(Math.abs(top - (bottom + gap))).toBeLessThanOrEqual(2);
-    // ITF-14's 14 digits in font 2 (18 dots high at 203 dpi): the manual's pitch of 12 dots, the last one's spacing of 2
-    // left out, centred under the symbol. Labelize draws the font a little narrower, so the left edge is what is compared
+    // ITF-14's 14 digits, capitals 2.2 mm (18 dots) high, in font 1 at 2 (a cell 26 dots high at 203 dpi, capitals 0.72
+    // of it): the manual's pitch of 9 dots, the last one's spacing of 2 left out, twice, centred under the symbol.
+    // Labelize draws the font a little narrower, so the left edge is what is compared: the first digit, a 1, whose ink
+    // starts a few dots into its cell
     if (symbology === "itf14") {
       const symbolWidth = (7 * 18 + 9) * o.dotsPerModule;
-      expect(Math.abs(left - (o.x + Math.round((symbolWidth - (14 * 12 - 2)) / 2)))).toBeLessThanOrEqual(2);
+      const inside = left - (o.x + Math.round((symbolWidth - (14 * 9 - 2) * 2) / 2));
+      expect(inside).toBeGreaterThanOrEqual(0);
+      expect(inside).toBeLessThanOrEqual(4);
     }
     expect(right).toBeGreaterThan(left);
   });
@@ -581,6 +627,13 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     const height = language === "dpl" ? o.heightDots + Math.round((14 / 25.4) * 203) + Math.round(Math.round((2.2 / 25.4) * 203) * 1.4) : o.heightDots + 200;
     const png = render(language, file, o.widthDots, height, 203);
     expect((await reads(png)).length).toBe(1);
+    // The symbol where the label puts it: in DPL its rows count from the test label's bottom (Labelize draws the QR code
+    // eight modules higher, as above)
+    if (language === "dpl") {
+      const ink = decodePng(png);
+      const top = ink.grey.findIndex((value) => value < 128);
+      expect(Math.abs(Math.floor(top / ink.width) - (o.y - 8 * o.dotsPerModule))).toBeLessThanOrEqual(1);
+    }
     // The ruler's line: the longest run of black on a row below the label
     const { grey, width } = decodePng(png);
     let longest = 0;

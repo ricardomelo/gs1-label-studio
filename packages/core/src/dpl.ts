@@ -3,12 +3,13 @@ import { encode, widthInModules } from "./encode.ts";
 import { parseElementString } from "./elementString.ts";
 import { GUARD_EXTENSION } from "./linear.ts";
 import {
-  bitmapFontFor,
+  fittingFont,
   hriTextDots,
   PrinterUnsupportedError,
   textLines,
   type BitmapFont,
   type PrintLabelOptions,
+  type PrintPage,
   type PrintSymbolOptions,
   type TextLine,
 } from "./printers.ts";
@@ -47,6 +48,11 @@ function fontsFor(dpi: number): { fonts: readonly BitmapFont[]; spacing: readonl
 }
 
 const MESSAGES = {
+  image:
+    "DPL prints an image stored in the printer's memory first (<STX>I, then a Y record), which Labelize, the emulator the " +
+    "tests print DPL with, does not draw, so no test has seen one: an image is not offered in DPL yet. ZPL, EPL2, TSPL " +
+    "or the PDF print it.",
+  turned: "DPL writes a label of one's own upright only for now: turn its barcodes and text back to 0°, or print it in ZPL, EPL2 or TSPL.",
   gs1128:
     "DPL's GS1-128 is offered for an SSCC (00) alone: the manual's UCC/EAN Code 128 (Q) carries that one, and its other " +
     "ways — FNC1 written &G in Code 128, or EAN 128 with automatic subsets (W1I) — are not drawn by Labelize, the emulator " +
@@ -125,24 +131,52 @@ export function dplLabel(symbology: SymbologyId, value: string, options: PrintLa
 
 /** A test label (backlog 3.1): the label, then a 50 mm ruler with a tick every 10 mm and the settings as text. */
 export function dplTestLabel(symbology: SymbologyId, value: string, options: PrintLabelOptions, notes: readonly string[]): string {
+  return withRuler((frame) => fields(symbology, value, options, frame), options, notes);
+}
+
+/**
+ * A label of one's own (backlog 4.2) with DPL's own records, as ZPL, EPL2 and TSPL write it: each barcode with the
+ * records of a symbol alone where the page puts it; each line of text in the internal font whose capitals come nearest
+ * its height and that keeps it within the width the page gives it; each line and filled box as an X record's line `l`,
+ * each outlined box as its box `b`. Rows count up from the label's bottom, in tenths of a millimetre, so each edge is
+ * within half a tenth of the page's. An image is refused: DPL prints one stored in the printer's memory first (`<STX>I`,
+ * then a Y record), which Labelize, the emulator the tests print DPL with, does not draw. A turned element is refused
+ * for now. With `notes`, a test label (backlog 3.1).
+ */
+export function dplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
+  if (page.images?.length) throw new DplUnsupportedError(MESSAGES.image);
+  if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) throw new DplUnsupportedError(MESSAGES.turned);
+  const records = (frame: Frame) => [
+    ...page.boxes.map((b) => (b.thickness >= Math.min(b.width, b.height) ? rule(frame, b.x, b.y, b.width, b.height) : box(frame, b.x, b.y, b.width, b.height, b.thickness))),
+    ...page.texts.flatMap((t) => text(frame, { x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L")),
+    ...page.symbols.flatMap(({ symbology, data, options: o }) => fields(symbology, data, o, frame)),
+  ];
+  const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
+  return options.notes ? withRuler(records, size, options.notes) : document(records({ dpi: page.dpi, heightDots: page.heightDots }), size);
+}
+
+/**
+ * The label's records, then a 50 mm ruler below it with a tick every 10 mm and the settings as text. Rows count from
+ * the bottom, so the label grows downwards: its records are written in the taller frame.
+ */
+function withRuler(records: (frame: Frame) => string[], options: PrintLabelOptions, notes: readonly string[]): string {
   const dpi = options.dpi;
   const mm = (v: number) => Math.round((v / MM_PER_INCH) * dpi);
   const t = hriTextDots(dpi);
   const step = Math.round(t * 1.4);
   const height = options.heightDots + Math.round((14 / MM_PER_INCH) * dpi) + notes.length * step;
-  // Rows count from the bottom, so the label grows downwards: the whole label is placed in the taller frame
   const frame = { dpi, heightDots: height };
-  const commands = fields(symbology, value, options, frame);
   const top = options.heightDots + mm(2);
   const x = Math.max(mm(2), Math.min(options.x, options.widthDots - mm(50) - mm(2)));
   const line = Math.max(2, mm(0.3));
   const ruler = [
-    rule(frame, x, top + mm(3), mm(50), line),
+    // DPL's unit is the tenth of a millimetre: the line is 50.0 mm exactly, its ticks at whole millimetres
+    rule(frame, x, top + mm(3), mm(50), line).replace(/l\d{4}/, "l0500"),
     ...[0, 10, 20, 30, 40, 50].map((at) => rule(frame, x + mm(at) - (at === 50 ? line : 0), top, line, mm(at % 50 ? 2.5 : 4))),
     ...text(frame, { x, y: top + mm(5), width: mm(50), height: t, text: "50 mm: measure this line" }, "C"),
     ...notes.flatMap((note, index) => text(frame, { x: mm(2), y: top + mm(10) + index * step, width: options.widthDots, height: t, text: note }, "L")),
   ];
-  return document([...commands, ...ruler], { ...options, heightDots: height });
+  return document([...records(frame), ...ruler], { ...options, heightDots: height });
 }
 
 function document(records: string[], options: PrintLabelOptions): string {
@@ -150,25 +184,46 @@ function document(records: string[], options: PrintLabelOptions): string {
   return ["\x02L", "m", "D11", "z", ...records, `Q${pad(options.copies ?? 1, 4)}`, "E", ""].join("\r");
 }
 
+/**
+ * A rectangle's bottom left corner and size in tenths of a millimetre, each edge rounded on its own, so that every edge
+ * is within half a tenth of the page's (sizes rounded apart would add their errors to the far edges).
+ */
+function edges(frame: Frame, x: number, y: number, width: number, h: number): { position: string; size: string } {
+  const position = place(frame, y + h, x); // refuses a corner outside the label
+  const [left, right] = [tenths(x, frame.dpi), tenths(x + width, frame.dpi)];
+  const [bottom, top] = [tenths(frame.heightDots - y - h, frame.dpi), tenths(frame.heightDots - y, frame.dpi)];
+  return { position, size: pad(Math.max(1, right - left), 4) + pad(Math.max(1, top - bottom), 4) };
+}
+
 /** A filled line or bar (an X record's l): its top left corner, width and height in dots. */
 function rule(frame: Frame, x: number, y: number, width: number, h: number): string {
-  return `1X11000${place(frame, y + h, x)}l${pad(tenths(width, frame.dpi), 4)}${pad(tenths(h, frame.dpi), 4)}`;
+  const { position, size } = edges(frame, x, y, width, h);
+  return `1X11000${position}l${size}`;
 }
 
 /** A hollow box (an X record's b): its outer top left corner, size and thickness in dots. */
 function box(frame: Frame, x: number, y: number, width: number, h: number, thickness: number): string {
-  const tt = pad(tenths(thickness, frame.dpi), 4);
-  return `1X11000${place(frame, y + h, x)}b${pad(tenths(width, frame.dpi), 4)}${pad(tenths(h, frame.dpi), 4)}${tt}${tt}`;
+  const tt = pad(Math.max(1, tenths(thickness, frame.dpi)), 4);
+  const { position, size } = edges(frame, x, y, width, h);
+  return `1X11000${position}b${size}${tt}${tt}`;
 }
 
 /**
- * A line of text in the internal font closest to its height. A record has no centring for these fonts (the J command
- * is for scalable fonts on display-equipped models): the text's width is the font's pitch times its characters, so a
- * centred line starts half the difference in. The row is the cell's bottom.
+ * The internal fonts' capitals are this much of their cell, their top at the cell's top (Labelize, 6 November 2026:
+ * fonts 1 and 2 at multipliers 1 to 3, 0.69 to 0.74 at 203 and 304.8 dpi; the manual gives the cells, not the capitals).
+ * The studio's text heights are its capitals' (section 4.14), so the cell asked for is this much larger.
+ */
+const DPL_CAPITALS = 0.72;
+
+/**
+ * A line of text in the internal font whose capitals come closest to its height, no wider than `line.width` where a
+ * font that tall fits it (else the narrowest). A record has no centring for these fonts (the J command is for scalable
+ * fonts on display-equipped models): the text's width is the font's pitch times its characters, so a centred line
+ * starts half the difference in. The row is the cell's bottom, the capitals' top at the cell's top (`line.y`).
  */
 function text(frame: Frame, line: TextLine, align: "C" | "L"): string[] {
   const { fonts, spacing } = fontsFor(frame.dpi);
-  const { font, multiplier: m } = bitmapFontFor(fonts, line.height);
+  const { font, multiplier: m } = fittingFont(fonts, line.text, line.height, line.width, DPL_CAPITALS, (f, k) => f.width * k, 24);
   const width = ([...line.text].length * font.width - spacing[Number(font.name)]!) * m;
   const x = align === "C" ? line.x + Math.max(0, Math.round((line.width - width) / 2)) : line.x;
   const k = multiplier(m, "font");

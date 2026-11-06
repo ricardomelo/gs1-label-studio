@@ -2380,6 +2380,14 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a label of one's own at 203 dpi, every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a label of one's own at 304 dpi, every barcode read back, each where the layout puts it",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, its lines and boxes drawn where the page puts them",
      "status": "passed"
     },
@@ -2393,6 +2401,14 @@
     },
     {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, its lines and boxes drawn where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a label of one's own at 203.2 dpi, its lines and boxes drawn where the page puts them",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a label of one's own at 304.8 dpi, its lines and boxes drawn where the page puts them",
      "status": "passed"
     },
     {
@@ -4196,7 +4212,7 @@
      ]
     },
     {
-     "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL and kept in the work",
+     "name": "a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL, refused in DPL, and kept in the work",
      "status": "listed",
      "projects": [
       "desktop",

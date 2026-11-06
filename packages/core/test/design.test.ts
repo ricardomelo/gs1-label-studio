@@ -6,6 +6,7 @@ import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   checkRows,
   designLabel,
+  dplPage,
   eplPage,
   tsplPage,
   DATE_FORMATS,
@@ -163,8 +164,30 @@ describe("a label of one's own", () => {
     expect(tspl).toContain('TEXT 48,48,"2",0,2,2,"Finest Truffle Tapenade"');
     expect(tspl).toMatch(/^QRCODE \d+,\d+,M,\d+,A,0,"https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231"\r$/m);
     expect(textFile(printFileFor("tspl", labelFor(data, noLinear, font), noLinear, 203, undefined, ["a note"]))).toContain("50 mm: measure this line");
-    // Another language says it cannot write it yet; a barcode past the label's edge is refused, not cut
-    expect(() => printFileFor("dpl", drawn, design, 203)).toThrow(/written in ZPL, EPL2 and TSPL only/);
+    // DPL: rows count up from the label's bottom, in tenths of a millimetre; each line's record at its cell's bottom (the
+    // capitals' top at the cell's top), in the tallest internal font within a tenth of its capitals / 0.72 that keeps it
+    // within its width; the QR code by its bottom left corner. A GS1-128 other than an SSCC alone is refused, as alone
+    const dpl = printFileFor("dpl", labelFor(data, noLinear, font), noLinear, 203) as string;
+    expect(dpl.startsWith("\x02L\rm\rD11\rz\r")).toBe(true);
+    expect(dpl.endsWith("\rQ0001\rE\r")).toBe(true);
+    const tenths = (v: number) => String(Math.round((v / 203) * 254)).padStart(4, "0");
+    const DPL_PITCH = [6, 9, 12];
+    const DPL_CELL = [7, 13, 18];
+    for (const t of tsplPrinted.texts) {
+      const [, f, m] = dpl.match(new RegExp(`\r1(\\d)(\\w)\\w000(\\d{8})${t.text}\r`))!.slice(0, 3) as [string, string, string];
+      const cell = DPL_CELL[Number(f)]! * Number.parseInt(m, 36);
+      expect(dpl).toContain(`\r1${f}${m}${m}000${tenths(639 - t.y - cell)}${tenths(t.x)}${t.text}\r`);
+      // The tallest of fonts 0 to 2 at multipliers 1 to 24 within a tenth of the cell asked that keeps the line in its width
+      const asked = Math.round(t.heightDots / 0.72) * 1.1;
+      const tallest = Math.max(...[0, 1, 2].flatMap((font) => Array.from({ length: 24 }, (_, i) => i + 1)
+        .filter((k) => DPL_CELL[font]! * k <= asked && [...t.text].length * DPL_PITCH[font]! * k <= t.widthDots).map((k) => DPL_CELL[font]! * k)));
+      expect([t.text, cell]).toEqual([t.text, tallest]);
+      expect([...t.text].length * DPL_PITCH[Number(f)]! * Number.parseInt(m, 36)).toBeLessThanOrEqual(t.widthDots);
+    }
+    expect(dpl).toMatch(/\r1W1D\w\w000\d{8}MA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\r\r/);
+    expect(printFileFor("dpl", labelFor(data, noLinear, font), noLinear, 203, undefined, ["a note"])).toContain("50 mm: measure this line");
+    expect(() => printFileFor("dpl", drawn, design, 203)).toThrow(/DPL's GS1-128 is offered for an SSCC \(00\) alone/);
+    // A barcode past the label's edge is refused, not cut
     const past: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "b1" ? { ...e, xMm: 40 } : e)) } };
     expect(() => printFileFor("zpl", labelFor(data, past, font), past, 203)).toThrow(/The GS1-128 runs past the label's edge at 4 dots a module/);
   });
@@ -221,6 +244,15 @@ describe("a label of one's own", () => {
     const tspl = tsplPage({ ...page, symbols: [] });
     expect(tspl).toContain(`\r\nBOX ${dots(2)},${dots(2)},${dots(128)},${dots(78)},${dots(0.8)}\r\n`);
     expect(tspl).toContain(`\r\nBAR ${dots(110)},${dots(8)},${dots(120) - dots(110)},${dots(14) - dots(8)}\r\n`);
+    // DPL: an X record's box b and line l by their bottom left corner, rows up from the label's bottom, each edge in
+    // tenths of a millimetre rounded on its own (so the sizes are the differences)
+    const dpl = dplPage({ ...page, symbols: [] });
+    const tenth = (d: number) => Math.round((d / 203) * 254);
+    const four = (v: number) => String(v).padStart(4, "0");
+    const corner = (left: number, bottom: number) => four(tenth(page.heightDots - bottom)) + four(tenth(left));
+    const size = (left: number, top: number, right: number, bottom: number) => four(tenth(right) - tenth(left)) + four(tenth(page.heightDots - top) - tenth(page.heightDots - bottom));
+    expect(dpl).toContain(`\r1X11000${corner(dots(2), dots(78))}b${size(dots(2), dots(2), dots(128), dots(78))}${four(tenth(dots(0.8)))}${four(tenth(dots(0.8)))}\r`);
+    expect(dpl).toContain(`\r1X11000${corner(dots(110), dots(14))}l${size(dots(110), dots(8), dots(120), dots(14))}\r`);
     // A line past the label's edge is named in the editor and refused in a print file, not cut
     const past: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 2), { id: "long", kind: "line", vertical: false, lengthMm: 130, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
     const pastLabel = designLabel(past, data, font, { environment: "distribution" });
@@ -280,6 +312,9 @@ describe("a label of one's own", () => {
       expect(tspl.subarray(from, from + row * at.bitmap.height)).toEqual(epl.subarray(start, start + row * at.bitmap.height));
       expect(new TextDecoder().decode(tspl.subarray(from + row * at.bitmap.height))).toMatch(/^\r\nDMATRIX \d+,\d+,/);
       expect(typeof tsplPage({ ...page, images: [] })).toBe("string");
+      // DPL prints a stored image (a Y record), which Labelize does not draw: refused, the rest written without it
+      expect(() => dplPage(page)).toThrow(/an image is not offered in DPL yet/);
+      expect(dplPage({ ...page, images: [] })).toMatch(/\r1W1c/);
     }
     // Past the label's edge: named in the editor, refused in a print file
     const past = designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 99 }] }, data, font, { environment: "distribution" });
@@ -424,6 +459,7 @@ describe("a label of one's own", () => {
     const qrLabel = designLabel(qr, data, font, { environment: "distribution" });
     expect(() => zplPage(printPageFor(qrLabel, 203))).toThrow(/ZPL prints a QR code upright only/);
     expect(() => tsplPage(printPageFor(qrLabel, 203))).toThrow(/TSPL's QR code is printed upright only for now/);
+    expect(() => dplPage(printPageFor(qrLabel, 203))).toThrow(/DPL writes a label of one's own upright only for now/);
     expect(zplPage(printPageFor(designLabel({ ...qr, elements: [{ ...(qr.elements[0] as DesignSymbol), rotation: 0 }] }, data, font, { environment: "distribution" }), 203))).toMatch(/\^BQN/);
   }, SLOW);
 

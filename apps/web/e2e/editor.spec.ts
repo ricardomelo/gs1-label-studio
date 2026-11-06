@@ -1240,6 +1240,17 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   expect(file).toContain("^FDEXP 31.12.2027^FS");
   expect(file).toMatch(/\^BQN,2,\d+\^FDMA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\^FS/);
   await expect(page.locator(".error.small")).toHaveCount(0);
+  // In DPL: records by their bottom left corner, rows up from the label's bottom in tenths of a millimetre (the text at
+  // 70 mm, 559 dots at 203 dpi, so column 0699), the text in the printer's internal fonts, the QR code with W1D
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "dpl-203");
+  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const dplFile = readFileSync((await dpl.path())!, "latin1");
+  expect(dplFile).toMatch(/\r1[0-2](\w)\1(?:000)\d{4}0699BATCH B42\r/);
+  expect(dplFile).toMatch(/\r1[0-2](\w)\1(?:000)\d{4}0699EXP 31\.12\.2027\r/);
+  expect(dplFile).toMatch(/\r1W1D\w\w000\d{8}MA,https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\r\r/);
+  expect(dplFile.endsWith("\rQ0001\rE\r")).toBe(true);
+  await expect(page.locator(".error.small")).toHaveCount(0);
 });
 
 // Item 4.2, step b (mock-up B of two, the owner's choice of 3 November 2026): lines and boxes on a label of one's own,
@@ -1444,7 +1455,7 @@ test("the last work kept in this browser and offered on the next visit; Start an
 // Item 4.2, step d (mock-up A of two, 3 November 2026): + Image takes a file at once and places it 20 mm wide, as high as
 // its proportions make it, in black and white; it prints in ZPL as a graphic field, in EPL2 with GW's raw bytes, in TSPL
 // with BITMAP's, and is kept in the work file.
-test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL and kept in the work", async ({ page }) => {
+test("a label of one's own: an image added, sized, refused when not an image, printed in ZPL, EPL2 and TSPL, refused in DPL, and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1505,6 +1516,10 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   expect(tsplBytes.subarray(from, from + length).equals(bytes.subarray(gw.index + gw[0].length, end))).toBe(true);
   expect(tsplText.slice(from + length)).toMatch(/^\r\nTEXT [^]*\r\nDMATRIX /);
   expect(tsplText.endsWith("PRINT 1\r\n")).toBe(true);
+  // In DPL an image is refused with the reason: DPL prints a stored image, which Labelize does not draw
+  await page.selectOption("#prn-profile", "dpl-203");
+  await page.getByRole("button", { name: "DPL (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("an image is not offered in DPL yet");
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
