@@ -207,6 +207,10 @@
   `TEXT` in the dot font whose capitals come nearest its height and that fits its width, lines and boxes with `BAR`
   and `BOX`, images with `BITMAP` (raw bytes, a dot whose bit is 0 black, as Labelize draws it). TSPL's text, the
   symbols' too, now has its capitals at the height asked: Labelize draws the dot fonts' capitals at 0.75 of their cell.
-  Every barcode read back and every line, box and image dot checked through Labelize at 203 and 300 dpi; a turned
-  element refused in TSPL for now.
+  Every barcode read back and every line, box and image dot checked through Labelize at 203 and 300 dpi.
+- Rotation on a label of one's own in TSPL (backlog 4.2, 4 November): a turned barcode or line of text with
+  `BARCODE`'s, `TEXT`'s and `DMATRIX`'s rotation, turned about its origin as the manual's own example prints it
+  (Labelize places a turned field otherwise, so its tests move the origin); ITF-14's bearer bars turned with it; a
+  turned QR code refused (Labelize does not turn it). Every dot of each symbol checked through Labelize at 203 and 300
+  dpi.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

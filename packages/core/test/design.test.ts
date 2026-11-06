@@ -389,11 +389,18 @@ describe("a label of one's own", () => {
     const dmPrinted = printPageFor(designLabel(dm, data, font, { environment: "distribution" }), 203);
     expect(() => eplPage(dmPrinted)).toThrow(/EPL2 prints a Data Matrix upright only \(its b command has no rotation\)/);
     expect(textFile(eplPage({ ...dmPrinted, symbols: dmPrinted.symbols.map((s) => ({ ...s, options: { ...s.options, turned: undefined } })) }))).toMatch(/^b\d+,\d+,D,/m);
-    // TSPL refuses a turned barcode or line of text for now, upright not
-    const dmUpright = { ...dmPrinted, symbols: dmPrinted.symbols.map((s) => ({ ...s, options: { ...s.options, turned: undefined } })) };
-    expect(() => tsplPage(dmPrinted)).toThrow(/TSPL file prints barcodes and text upright only, for now/);
-    expect(() => tsplPage({ ...dmUpright, texts: printed.texts })).toThrow(/TSPL file prints barcodes and text upright only, for now/);
-    expect(textFile(tsplPage(dmUpright))).toMatch(/^DMATRIX \d+,\d+,/m);
+    // In TSPL (Labelize prints them in printlangs.test.ts): BARCODE, TEXT and DMATRIX with their rotation, each origin
+    // the dot its upright top left one was, turned about the symbol's box or the text's capitals' box, as TSC's printers
+    // turn a field about its origin; a GS1 DataMatrix's text lines turned with it, each from its left edge
+    expect(() => tsplPage({ ...printed, images: [] })).toThrow(/encodes "!102" as text/);
+    const tspl = textFile(tsplPage({ ...printed, images: [], symbols: printed.symbols.slice(1) }));
+    const g = printed.symbols[1]!.options;
+    expect(tspl).toMatch(new RegExp(`^DMATRIX ${g.x + g.turned!.width - 1},${g.y + g.turned!.height - 1},\\d+,\\d+,c126,x\\d+,r180,`, "m"));
+    expect(tspl.match(/^TEXT \d+,\d+,"\d",180,\d+,\d+,"\(01\)/gm)).toHaveLength(1);
+    for (const t of printed.texts) expect(tspl).toContain(`\r\nTEXT ${t.x},${t.y + t.widthDots - 1},`);
+    expect(tspl.match(/^TEXT \d+,\d+,"\d",270,/gm)).toHaveLength(printed.texts.length);
+    expect(tspl).not.toMatch(/^(TEXT \d+,\d+,"\d",0|DMATRIX (?!.*,r180,))/m);
+    expect(textFile(tsplPage(dmPrinted))).toMatch(/^DMATRIX \d+,\d+,\d+,\d+,c126,x\d+,r90,/m);
     // An ITF-14 turned a quarter by the label's top edge: its bearer frame, left of its bars upright, would start above
     // the label, refused; a little lower, the frame's top on the edge
     const itf = (y: number, kind: "frame" | "bars" = "frame") => eplPage({
@@ -405,9 +412,18 @@ describe("a label of one's own", () => {
     // Its bearer bars (LO, 310 dots long with the quiet zones, 8 thick, above and below the bars) turned beside them:
     // the top one right of the 100-dot bars, the bottom one left
     expect(textFile(itf(28, "bars")).match(/^LO.*$/gm)).toEqual(["LO200,8,8,310", "LO92,8,8,310"]);
+    // The same in TSPL: BOX and BAR turned with it
+    const tsplItf = (y: number, kind: "frame" | "bars" = "frame") => tsplPage({
+      widthDots: 800, heightDots: 800, dpi: 203, texts: [], boxes: [],
+      symbols: [{ symbology: "itf14", data: "19506000134359", options: { x: 100, y, dotsPerModule: 2, barHeightDots: 100, dpi: 203, hri: true, bearer: { kind, thicknessDots: 8 }, turned: { rotation: 90, width: 270, height: 100 } } }],
+    });
+    expect(() => tsplItf(27)).toThrow(/A barcode's text runs past the label's edge/);
+    expect(textFile(tsplItf(28))).toMatch(/^BOX \d+,0,\d+,\d+,8\r$/m);
+    expect(textFile(tsplItf(28, "bars")).match(/^BAR .*(?=\r$)/gm)).toEqual(["BAR 200,8,8,310", "BAR 92,8,8,310"]);
     const qr: DesignPage = { widthMm: 60, heightMm: 60, elements: [{ id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, rotation: 90, xMm: 4, yMm: 4 }] };
     const qrLabel = designLabel(qr, data, font, { environment: "distribution" });
     expect(() => zplPage(printPageFor(qrLabel, 203))).toThrow(/ZPL prints a QR code upright only/);
+    expect(() => tsplPage(printPageFor(qrLabel, 203))).toThrow(/TSPL's QR code is printed upright only for now/);
     expect(zplPage(printPageFor(designLabel({ ...qr, elements: [{ ...(qr.elements[0] as DesignSymbol), rotation: 0 }] }, data, font, { environment: "distribution" }), 203))).toMatch(/\^BQN/);
   }, SLOW);
 

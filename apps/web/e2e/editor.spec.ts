@@ -1518,9 +1518,9 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
 });
 
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
-// label turned with them, printed in ZPL with its field orientation and in EPL2 with its rotation, and kept in the work;
-// a QR code stays upright.
-test("a label of one's own: a barcode and a text turned, printed in ZPL and EPL2 and kept in the work", async ({ page }) => {
+// label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
+// in the work; a QR code stays upright.
+test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2 and TSPL and kept in the work", async ({ page }) => {
   await page.fill("#paste", "(01)09506000134376(10)B42");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "scan");
@@ -1567,6 +1567,20 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL and EPL2
   const eplFile = readFileSync((await epl.path())!, "utf8");
   expect(eplFile).toMatch(/^B\d+,\d+,1,1E,/m);
   expect(eplFile).toMatch(/^A\d+,\d+,3,\d,\d,\d,N,"BATCH B42"/m);
+  // In TSPL, DMATRIX's r90 and TEXT's 270 (TSPL has no GS1-128 yet: the barcode becomes a GS1 DataMatrix, still turned)
+  await on(page, "label");
+  await page.locator(".design-list button").first().click();
+  await page.selectOption("#el-symbol", "gs1-datamatrix");
+  await expect(rotation.getByRole("button", { name: "90°", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  const printer = page.locator("details.printer");
+  if ((await printer.getAttribute("open")) === null) await printer.locator("summary").click();
+  await page.selectOption("#prn-profile", "tspl-203");
+  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const tsplFile = readFileSync((await tspl.path())!, "utf8");
+  expect(tsplFile).toMatch(/^DMATRIX \d+,\d+,\d+,\d+,c126,x\d+,r90,/m);
+  expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",270,\d+,\d+,"BATCH B42"\r$/m);
   // Kept in the work file and opened again
   await on(page, "more");
   const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);

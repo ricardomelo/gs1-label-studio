@@ -297,8 +297,9 @@ DataMatrix, the QR code, GS1 DataBar). A turned barcode or text goes in EPL2 wit
 turned with it as the guide says; a Data Matrix has no rotation in EPL2, so one turned is refused there. In TSPL too,
 each line of text with `TEXT` in the dot font whose capitals come nearest its height and that keeps it within its
 width, each line and filled box with `BAR`, each outlined box with `BOX` and each image with `BITMAP`, its dots as raw
-bytes as in EPL2; TSPL refuses what it refuses for a symbol alone (GS1-128, EAN-8, UPC, GS1 DataBar), and a turned
-barcode or text for now. DPL does not write it yet.
+bytes as in EPL2; TSPL refuses what it refuses for a symbol alone (GS1-128, EAN-8, UPC, GS1 DataBar). A turned barcode
+or text goes in TSPL with its rotation, turned about its point of origin as TSC's printers do (the manual's example);
+a turned QR code is refused there. DPL does not write it yet.
 
 ## 6. The label's options
 
@@ -564,14 +565,14 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | GS1 DataBar refused in ZPL at a till (tables 1 and 3) | `^BR` prints a fixed height, below what the table asks | Print the PDF |
 | *The GS1 Logistic Label is written in ZPL and EPL2 only, for now* | A TSPL or DPL profile | Use a ZPL or EPL2 profile, or print its PDF at its size |
 | *A label of one's own is written in ZPL, EPL2 and TSPL only, for now* | A DPL profile | Use a ZPL, EPL2 or TSPL profile, or print its PDF at its size |
-| *The studio's TSPL file prints barcodes and text upright only, for now…* | A turned barcode or text on a label of one's own, in TSPL | Turn it back to 0°, or print its ZPL, EPL2 or PDF |
+| *TSPL's QR code is printed upright only for now…* | A turned QR code on a label of one's own (from a work file), in TSPL | Turn it back to 0°: a QR code is read in any direction |
 | *The … runs past the label's edge at … dots a module* | A barcode of a label of one's own, at the printer's dots, past the label's edge | Move it inside the label |
 | *A line or box runs past the label's edge* | A line or box of a label of one's own past the label's edge, in a print file | Move it inside the label, or shorten it |
 | *A line or box needs a length, a width and a thickness greater than 0 mm* | A line or box of a label of one's own with a size of 0 | Give it a size |
 | *… is not an image this browser can read* | **+ Image** or **Replace…** given a file that is not a PNG, JPEG, GIF, WebP or SVG image, or a damaged one | Choose the image file, or save it again as PNG |
 | *An image runs past the label's edge* | An image of a label of one's own past the label's edge, in a print file | Move it inside the label, or make it narrower |
 | *ZPL prints a QR code upright only…* | A QR code of a label of one's own turned (in a work file made by hand), in ZPL | Turn it back to 0°: a QR code reads in any direction |
-| *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text or ITF-14 frame, past the label's edge, in ZPL or EPL2 | Move it inside the label |
+| *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text or ITF-14 frame, past the label's edge, in ZPL, EPL2 or TSPL | Move it inside the label |
 | *EPL2 prints a Data Matrix upright only…* | A turned Data Matrix of a label of one's own, in EPL2 | Turn it back to 0°, or print its ZPL or its PDF |
 | *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
 | *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |

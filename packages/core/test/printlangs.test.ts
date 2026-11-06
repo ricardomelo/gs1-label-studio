@@ -105,6 +105,52 @@ function labelizeTurned(file: string, dpi: number): string {
   }).join("\r\n");
 }
 
+/**
+ * A TSPL file with turned BARCODE, TEXT and DMATRIX commands as Labelize places them. TSC's printers turn a field about
+ * its origin (the manual's RSS example: four symbols from one x, y, each in its own quarter); Labelize puts the turned
+ * field's top left corner at x, y, as ZPL does. Each turned command's origin is moved there here: a barcode's by its
+ * field's upright width from Labelize's own print of it upright (without its interpretation line) and its bar height, a
+ * Data Matrix's by its own size. Labelize draws turned TEXT a few dots off its cell (2 at font 2, up to 7 at
+ * multiplier 2, unevenly by rotation), so a text's origin is moved to where Labelize's turned ink lands on the upright
+ * ink turned about the origin, each found from Labelize's own prints of that command alone.
+ */
+function labelizeTurnedTspl(file: string, dpi: number): string {
+  const ink = (command: string): [number, number, number, number] => {
+    const { grey, width } = decodePng(render("tspl", `SIZE 500 mm,500 mm\r\nCLS\r\n${command}\r\nPRINT 1\r\n`, 4000, 4000, dpi));
+    let [l, t, r, b] = [Infinity, Infinity, -Infinity, -Infinity];
+    grey.forEach((value, index) => {
+      if (value >= 128) return;
+      const [x, y] = [index % width, Math.floor(index / width)];
+      [l, t, r, b] = [Math.min(l, x), Math.min(t, y), Math.max(r, x), Math.max(b, y)];
+    });
+    return [l, t, r, b];
+  };
+  return file.split("\r\n").map((line) => {
+    const turned = /^(BARCODE|TEXT|DMATRIX) (\d+),(\d+),(.*)$/.exec(line);
+    if (!turned) return line;
+    const [, kind, ox, oy, rest] = turned as unknown as [string, "BARCODE" | "TEXT" | "DMATRIX", string, string, string];
+    const p = rest.split(",");
+    const rotation = kind === "BARCODE" ? p[3] : kind === "TEXT" ? p[1] : p.find((v) => /^r\d+$/.test(v))?.slice(1);
+    if (!rotation || rotation === "0") return line;
+    const [x, y] = [Number(ox), Number(oy)];
+    if (kind === "TEXT") {
+      // The upright ink from origin 400, 400, turned about it (dot by dot: 90° takes (u, v) to (-v, u)); then Labelize's
+      // turned ink from the same origin: the origin moves by the difference of their top left corners
+      const [l, t, r, b] = ink(`TEXT 400,400,${[p[0], "0", ...p.slice(2)].join(",")}`).map((v) => v - 400) as [number, number, number, number];
+      const expected = rotation === "90" ? [-b, l] : rotation === "180" ? [-r, -b] : [t, -r];
+      const [ll, lt] = ink(`TEXT 400,400,${rest}`).map((v) => v - 400);
+      return `TEXT ${x + expected[0]! - ll!},${y + expected[1]! - lt!},${rest}`;
+    }
+    let [w, h] = [Number(p[0]), Number(p[1])]; // a Data Matrix's
+    if (kind === "BARCODE") {
+      const right = ink(`BARCODE 20,20,${[p[0], p[1], "0", "0", ...p.slice(4)].join(",")}`)[2];
+      [w, h] = [right - 20 + 1, Number(p[1])];
+    }
+    const [lx, ly] = rotation === "90" ? [x - h + 1, y] : rotation === "180" ? [x - w + 1, y - h + 1] : [x, y - w + 1];
+    return `${kind} ${lx},${ly},${rest}`;
+  }).join("\r\n");
+}
+
 async function reads(png: Uint8Array): Promise<string[]> {
   const results = await readBarcodes(new Blob([png as Uint8Array<ArrayBuffer>], { type: "image/png" }), {
     formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4,
@@ -392,12 +438,16 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
   // the box's corner as turned where the page puts it, and read back each time. Labelize places turned fields otherwise
   // than the guide (labelizeTurned).
   it.each([
-    [203, "distribution", "gs1-128", "(01)09506000134376(10)B42"],
-    [300, "retail", "ean13", "(01)09506000134352"],
-    [203, "distribution", "itf14", "(01)19506000134359"],
-    [203, "retail", "upce", "(01)00012345000065"],
-    [300, "retail", "ean8", "(01)00000095012346"],
-  ] as const)("EPL2: a label of one's own at %i dpi: a %s %s turned, each dot the upright one's", { timeout: 60000 }, async (dpi, environment, symbology, elementString) => {
+    ["epl", 203, "distribution", "gs1-128", "(01)09506000134376(10)B42"],
+    ["epl", 300, "retail", "ean13", "(01)09506000134352"],
+    ["epl", 203, "distribution", "itf14", "(01)19506000134359"],
+    ["epl", 203, "retail", "upce", "(01)00012345000065"],
+    ["epl", 300, "retail", "ean8", "(01)00000095012346"],
+    ["tspl", 300, "retail", "ean13", "(01)09506000134352"],
+    ["tspl", 203, "distribution", "itf14", "(01)19506000134359"],
+    ["tspl", 203, "distribution", "gs1-datamatrix", "(01)09506000134376(10)B42"],
+    ["tspl", 300, "distribution", "dl-datamatrix", "(01)09506000134376(10)B42"],
+  ] as const)("%s: a label of one's own at %i dpi: a %s %s turned, each dot the upright one's", { timeout: 60000 }, async (language, dpi, environment, symbology, elementString) => {
     const engine = await syntaxEngine();
     const identified = engine.parse(elementString) as Identified;
     const pageAt = (rotation: 0 | 90 | 180 | 270) => {
@@ -407,8 +457,8 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       return { designed, printed: printPageFor(designed, dpi) };
     };
     const dark = async ({ printed }: ReturnType<typeof pageAt>) => {
-      const file = textFile(eplPage(printed));
-      const png = render("epl", labelizeTurned(file, dpi), printed.widthDots, printed.heightDots, dpi);
+      const file = textFile(PAGES[language](printed));
+      const png = render(language, language === "epl" ? labelizeTurned(file, dpi) : labelizeTurnedTspl(file, dpi), printed.widthDots, printed.heightDots, dpi);
       const { grey, width } = decodePng(png);
       const dots = new Set<number>();
       for (let y = 0; y < printed.heightDots; y++) {
@@ -425,7 +475,8 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       const { x, y, turned: t } = turned.printed.symbols[0]!.options;
       const [w, h] = [t!.width, t!.height];
       const after = await dark(turned);
-      expect(after.file).toMatch(new RegExp(`^B\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"));
+      expect(after.file).toMatch(language === "epl" ? new RegExp(`^B\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m")
+        : new RegExp(`^(BARCODE \\d+,\\d+,"\\w+",\\d+,\\d,${rotation},|DMATRIX \\d+,\\d+,\\d+,\\d+,c126,x\\d+,r${rotation},)`, "m"));
       expect(after.read).toEqual(upright.designed.expected);
       const W = upright.printed.widthDots;
       const moved = [...before.dots].map((i) => {
@@ -459,15 +510,16 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
   // A turned text block on a label of one's own (backlog 4.2, rotation): A turned, its capitals' top side where the page
   // puts it and its first letter where the line starts, within Labelize's cell dot (two at multiplier 2) and the
   // letter's side bearing; the printer's fixed-pitch font sets how far it runs.
-  it.each([203, 300])("EPL2: a label of one's own at %i dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (dpi) => {
+  it.each([["epl", 203], ["epl", 300], ["tspl", 203], ["tspl", 300]] as const)("%s: a label of one's own at %i dpi: a line of text turned each way, where the page puts it", { timeout: 60000 }, async (language, dpi) => {
     const engine = await syntaxEngine();
     for (const rotation of [90, 180, 270] as const) {
       const page: DesignPage = { widthMm: 80, heightMm: 80, elements: [{ id: "t", kind: "text", text: "EXP {10}", heightMm: 4, rotation, xMm: 30, yMm: 30 }] };
       const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
       const printed = printPageFor(designed, dpi);
-      const epl = textFile(eplPage(printed));
-      expect(epl).toMatch(new RegExp(`^A\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m"));
-      const { grey, width } = decodePng(render("epl", labelizeTurned(epl, dpi), printed.widthDots, printed.heightDots, dpi));
+      const file = textFile(PAGES[language](printed));
+      expect(file).toMatch(language === "epl" ? new RegExp(`^A\\d+,\\d+,${{ 90: 1, 180: 2, 270: 3 }[rotation]},`, "m") : new RegExp(`^TEXT \\d+,\\d+,"\\d",${rotation},`, "m"));
+      const turnedFile = language === "epl" ? labelizeTurned(file, dpi) : labelizeTurnedTspl(file, dpi);
+      const { grey, width } = decodePng(render(language, turnedFile, printed.widthDots, printed.heightDots, dpi));
       let [left, top, right, bottom] = [Infinity, Infinity, -1, -1];
       for (let y = 0; y < printed.heightDots; y++) {
         for (let x = 0; x < printed.widthDots; x++) {

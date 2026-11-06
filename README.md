@@ -488,7 +488,8 @@ complete.
   `A`'s and `B`'s rotation, the origin turned with the object as the guide shows (Labelize places it otherwise; a
   turned Data Matrix refused, `b` has no rotation). In TSPL since 4 November: barcodes, text (`TEXT` at its capitals'
   height, measured through Labelize), lines and boxes (`BAR`, `BOX`) and images (`BITMAP`, raw bytes as in EPL2), every
-  one checked through Labelize; turned elements refused there for now. Not yet: DPL; saving the label is 4.3*
+  one checked through Labelize; turned barcodes and text with TSPL's rotation, about the origin as the manual's own
+  example prints it (a turned QR code refused: Labelize does not turn it). Not yet: DPL; saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

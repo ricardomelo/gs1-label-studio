@@ -532,7 +532,7 @@
  "Table {table} does not allow {name}: choose another symbol or scanning environment.": "La tabla {table} no admite {name}: elija otro símbolo u otro entorno de lectura.",
  "A label of one's own has no ZPL template yet: its ZPL file prints it, or its PDF.": "Una etiqueta propia aún no tiene plantilla ZPL: su archivo ZPL la imprime, o su PDF.",
  "A label of one's own is written in ZPL, EPL2 and TSPL only, for now: its PDF prints it at its size.": "Por ahora, una etiqueta propia se escribe solo en ZPL, EPL2 y TSPL: su PDF la imprime a su tamaño.",
- "The studio's TSPL file prints barcodes and text upright only, for now: turn them back to 0°, or print its ZPL, EPL2 or PDF.": "Por ahora, el archivo TSPL del estudio imprime códigos de barras y textos solo en posición vertical: vuélvalos a 0° o imprima su ZPL, EPL2 o PDF.",
+ "TSPL's QR code is printed upright only for now: Labelize, the emulator the tests print TSPL with, does not turn it. Turn it back to 0°: a QR code is read in any direction.": "Por ahora, el código QR de TSPL se imprime solo en posición vertical: Labelize, el emulador con que las pruebas imprimen TSPL, no lo gira. Vuélvalo a 0°: un código QR se lee en cualquier dirección.",
  "The {name} runs past the label's edge at {d} dots a module: move it inside the label.": "El {name} sobrepasa el borde de la etiqueta a {d} puntos por módulo: muévalo dentro de la etiqueta.",
  "A {dpi} dpi printer cannot print the {name} within its table's X-dimensions.": "Una impresora de {dpi} dpi no puede imprimir el {name} dentro de las dimensiones X de su tabla.",
  "A line or box needs a length, a width and a thickness greater than 0 mm.": "Una línea o un recuadro necesita longitud, ancho y grosor mayores que 0 mm.",
@@ -563,5 +563,6 @@
  "A line of text runs past the label's edge: move it inside the label.": "Una línea de texto sobrepasa el borde de la etiqueta: muévala dentro de la etiqueta.",
  "A barcode's text runs past the label's edge: move the barcode inside the label.": "El texto de un código de barras sobrepasa el borde de la etiqueta: mueva el código dentro de la etiqueta.",
  "EPL2 prints a Data Matrix upright only (its b command has no rotation): turn it back to 0°, or print its ZPL or PDF.": "EPL2 imprime un Data Matrix solo derecho (su comando b no tiene rotación): vuélvalo a 0° o imprima su ZPL o PDF.",
- "no turn for the EPL2 command {command}": "ninguna rotación para el comando EPL2 {command}"
+ "no turn for the EPL2 command {command}": "ninguna rotación para el comando EPL2 {command}",
+ "no turn for the TSPL command {command}": "ninguna rotación para el comando TSPL {command}"
 }

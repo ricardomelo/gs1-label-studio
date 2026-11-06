@@ -66,15 +66,24 @@ export function tsplTestLabel(symbology: SymbologyId, data: string, options: Pri
  * of a symbol alone where the page puts it; each line of text with TEXT in the dot font whose capitals come nearest its
  * height and that keeps it within the width the page gives it; each line and filled box with BAR, each outlined box with
  * BOX; each image with BITMAP, whose dots are raw bytes, so a page with an image is a print file of bytes (`PrintFile`).
- * A turned barcode or line of text is refused for now. With `notes`, a test label (backlog 3.1).
+ * A turned barcode or line of text with BARCODE's, TEXT's and DMATRIX's rotation (`turnAbout`); a turned QR code is
+ * refused. With `notes`, a test label (backlog 3.1).
  */
 export function tsplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): PrintFile {
-  if (page.symbols.some((s) => s.options.turned) || page.texts.some((t) => t.rotation)) {
-    throw new TsplUnsupportedError("The studio's TSPL file prints barcodes and text upright only, for now: turn them back to 0°, or print its ZPL, EPL2 or PDF.");
-  }
   const images = (page.images ?? []).map((image) => bitmap(image.bitmap, image.x, image.y));
-  const symbols = page.symbols.flatMap(({ symbology, data, options: o }) => fields(symbology, data, o));
-  const texts = page.texts.flatMap((t) => text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L"));
+  // A turned symbol: its commands written upright from its corner, then turned with it about its own box
+  const symbols = page.symbols.flatMap(({ symbology, data, options: { turned, ...upright } }) => {
+    if (turned && symbology === "dl-qrcode") {
+      throw new TsplUnsupportedError("TSPL's QR code is printed upright only for now: Labelize, the emulator the tests print TSPL with, does not turn it. Turn it back to 0°: a QR code is read in any direction.");
+    }
+    const commands = fields(symbology, data, upright);
+    return turned ? turnAbout(commands, { x: upright.x, y: upright.y, width: turned.width, height: turned.height }, turned.rotation, BARCODE_TEXT_PAST) : commands;
+  });
+  // A turned line of text: its TEXT command turned about its capitals' box, the text's start where the page puts it
+  const texts = page.texts.flatMap((t) => {
+    const commands = text({ x: t.x, y: t.y, width: t.widthDots, height: t.heightDots, text: t.text }, "L");
+    return t.rotation ? turnAbout(commands, { x: t.x, y: t.y, width: t.widthDots, height: t.heightDots }, t.rotation, TEXT_PAST) : commands;
+  });
   // BAR fills a rectangle (a line, a filled box); BOX draws a box's outline inside its corners, the far one exclusive
   const boxes: string[] = [];
   for (const b of page.boxes) {
@@ -84,6 +93,56 @@ export function tsplPage(page: PrintPage, options: { notes?: readonly string[] }
   const size = { x: 0, y: 0, dotsPerModule: 1, barHeightDots: 0, dpi: page.dpi, widthDots: page.widthDots, heightDots: page.heightDots, ...(page.copies ? { copies: page.copies } : {}) };
   const commands = [...images, ...boxes, ...texts, ...symbols];
   return options.notes ? withRuler(commands, size, options.notes) : document(commands, size);
+}
+
+const BARCODE_TEXT_PAST = "A barcode's text runs past the label's edge: move the barcode inside the label.";
+const TEXT_PAST = "A line of text runs past the label's edge: move it inside the label.";
+
+/**
+ * Commands written upright from a box's corner, turned clockwise with it about the box (backlog 4.2), whose top left
+ * corner as turned is `box`'s `x` and `y` and whose upright size is its `width` and `height`. TSC's printers turn a
+ * field about its origin: the manual's RSS example prints four symbols from one x, y turned 0°, 90°, 180° and 270°, and
+ * its picture shows them around that point, each in its own quarter (at 90° the origin is the field's top right corner,
+ * as EPL2's guide draws it). So BARCODE, TEXT and DMATRIX keep their own field and take their origin, the dot their
+ * upright top left dot was, turned about the box, with their rotation (DMATRIX's r#); a centred TEXT (alignment 2,
+ * whose x is its middle) is written from its left edge first, by its font's pitch. BAR and BOX have no rotation: their
+ * rectangle is turned. Labelize places a turned field's top left corner at x, y instead, as ZPL does: its tests move
+ * each origin there.
+ */
+function turnAbout(commands: string[], box: { x: number; y: number; width: number; height: number }, rotation: 90 | 180 | 270, past: string): string[] {
+  const { x, y, width: w, height: h } = box;
+  // A rectangle's top left corner and size as turned; a dot is a rectangle one dot square
+  const rect = (rx: number, ry: number, rw: number, rh: number): [number, number, number, number] => {
+    const [u, v] = [rx - x, ry - y];
+    const turned: [number, number, number, number] = rotation === 90 ? [x + h - v - rh, y + u, rh, rw]
+      : rotation === 180 ? [x + w - u - rw, y + h - v - rh, rw, rh]
+      : [x + v, y + w - u - rw, rh, rw];
+    if (turned[0] < 0 || turned[1] < 0) throw new TsplUnsupportedError(past);
+    return turned;
+  };
+  const origin = (ox: number, oy: number) => rect(ox, oy, 1, 1).slice(0, 2).join(",");
+  const written = (name: string, ...parameters: (string | number)[]) => `${name} ${parameters.join(",")}`;
+  return commands.map((command) => {
+    const barcode = /^BARCODE (-?\d+),(-?\d+),("[^"]*",\d+,\d+),0,/.exec(command);
+    if (barcode) return written("BARCODE", origin(Number(barcode[1]), Number(barcode[2])), barcode[3]!, rotation, command.slice(barcode[0].length));
+    const line = /^TEXT (-?\d+),(-?\d+),"(\d)",0,(\d+),(\d+),(2,)?(".*")$/.exec(command);
+    if (line) {
+      const [, tx, ty, font, mx, my, centred, content] = line as unknown as [string, string, string, string, string, string, string | undefined, string];
+      const chars = [...content.slice(1, -1).replace(/\\\["\]/g, '"')].length;
+      const left = Number(tx) - (centred ? Math.round((chars * FONTS[Number(font) - 1]!.width * Number(mx)) / 2) : 0);
+      return written("TEXT", origin(left, Number(ty)), `"${font}"`, rotation, mx, my, content);
+    }
+    const matrix = /^DMATRIX (-?\d+),(-?\d+),(\d+,\d+,c126,x\d+),/.exec(command);
+    if (matrix) return written("DMATRIX", origin(Number(matrix[1]), Number(matrix[2])), matrix[3]!, `r${rotation}`, command.slice(matrix[0].length));
+    const bar = /^BAR (-?\d+),(-?\d+),(\d+),(\d+)$/.exec(command);
+    if (bar) return written("BAR", ...rect(Number(bar[1]), Number(bar[2]), Number(bar[3]), Number(bar[4])));
+    const outline = /^BOX (-?\d+),(-?\d+),(-?\d+),(-?\d+),(\d+)$/.exec(command);
+    if (outline) {
+      const [bx, by, bw, bh] = rect(Number(outline[1]), Number(outline[2]), Number(outline[3]) - Number(outline[1]), Number(outline[4]) - Number(outline[2]));
+      return written("BOX", bx, by, bx + bw, by + bh, outline[5]!);
+    }
+    throw new Error(`no turn for the TSPL command ${command}`);
+  });
 }
 
 /**
