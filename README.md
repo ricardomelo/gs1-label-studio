@@ -437,7 +437,8 @@ complete.
 - 3.3 TSPL/TSPL2 — *done 31 October for the symbols Labelize reads back (the owner chose it to stand in for a printer,
   ADR 0002): EAN-13, ITF-14 with bearer bars, GS1 DataMatrix (FNC1 as `~1`), Data Matrix and QR code with a GS1 Digital
   Link URI, text in the dot fonts, the test label; GS1-128 (the manual's `!102`, which Labelize encodes as text),
-  EAN-8, UPC-A, UPC-E and GS1 DataBar refused until a test reads them*
+  EAN-8, UPC-A, UPC-E and GS1 DataBar refused until a test reads them; GS1-128 of an SSCC alone done 6 November as
+  `EAN128`, its 20 digits, which Labelize draws as ZPL's UCC case mode*
 - 3.4 PPLB · 3.5 PPLA — manuals to gather (Argox, Elgin); PPLB is close to EPL2
 - 3.6 EPL2 — *done 31 October through Labelize: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with bearer bars, GS1-128 (UCC/EAN
   128, a variable-length element string last only; over several symbols too), Data Matrix with a GS1 Digital Link URI,

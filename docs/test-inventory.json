@@ -2196,6 +2196,14 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl gs1-128 (00)095060001343520000 at 0.495 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl ean13 9506000134352 at 0.33 mm, 203 dpi",
      "status": "passed"
     },
@@ -2317,6 +2325,10 @@
     },
     {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: ean13 starts at the layout's corner",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: gs1-128 starts at the layout's corner",
      "status": "passed"
     },
     {
@@ -2464,6 +2476,10 @@
      "status": "passed"
     },
     {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 203 dpi: a distribution gs1-128 turned, each dot the upright one's",
+     "status": "passed"
+    },
+    {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: a label of one's own at 203.2 dpi: a retail ean13 turned, each dot the upright one's",
      "status": "passed"
     },
@@ -2512,11 +2528,15 @@
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › DPL: gs1-128's text under the bars where the layout puts it",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: gs1-128's text under the bars where the layout puts it",
      "status": "passed"
     },
     {
-     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › DPL: itf14's text under the bars where the layout puts it",
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › dpl: itf14's text under the bars where the layout puts it",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: gs1-128's text under the bars where the layout puts it",
      "status": "passed"
     },
     {
@@ -2533,6 +2553,14 @@
     },
     {
      "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses gs1-128 (01)09506000134352(10)ABC",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses gs1-128 (00)106141411234567897(02)09506000134376(37)24",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › tspl refuses gs1-128 (01)09506000134352",
      "status": "passed"
     },
     {
@@ -2601,6 +2629,10 @@
     },
     {
      "name": "what TSPL, EPL2 and DPL refuse, with the reason › DPL refuses what its records cannot hold: a module over 24 dots, a QR module between tenths of a millimetre, a line break, one mode",
+     "status": "passed"
+    },
+    {
+     "name": "what TSPL, EPL2 and DPL refuse, with the reason › TSPL writes an SSCC as EAN128 with its 20 digits, check digit included, and refuses GS1-128 in several symbols",
      "status": "passed"
     },
     {

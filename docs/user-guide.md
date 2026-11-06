@@ -297,7 +297,7 @@ DataMatrix, the QR code, GS1 DataBar). A turned barcode or text goes in EPL2 wit
 turned with it as the guide says; a Data Matrix has no rotation in EPL2, so one turned is refused there. In TSPL too,
 each line of text with `TEXT` in the dot font whose capitals come nearest its height and that keeps it within its
 width, each line and filled box with `BAR`, each outlined box with `BOX` and each image with `BITMAP`, its dots as raw
-bytes as in EPL2; TSPL refuses what it refuses for a symbol alone (GS1-128, EAN-8, UPC, GS1 DataBar). A turned barcode
+bytes as in EPL2; TSPL refuses what it refuses for a symbol alone (GS1-128 but for an SSCC alone, EAN-8, UPC, GS1 DataBar). A turned barcode
 or text goes in TSPL with its rotation, turned about its point of origin as TSC's printers do (the manual's example);
 a turned QR code is refused there. In DPL too, each record by its bottom left corner, counted up from the label's bottom
 in tenths of a millimetre: each line of text in the internal font whose capitals come nearest its height and that keeps

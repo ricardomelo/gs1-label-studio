@@ -226,4 +226,8 @@
   millimetre.
 - Fixed (6 November): a label of one's own whose first barcode carries the GTIN alone (an ITF-14 or EAN/UPC with the
   data's other element strings unticked) was refused for those element strings, so nothing could be exported.
+- GS1-128 of an SSCC alone in TSPL (6 November), on a label alone and on a label of one's own: `EAN128` with the
+  SSCC's 20 digits, check digit included, the studio's text below; Labelize draws `EAN128` as ZPL's UCC case mode,
+  and a printer that puts FNC1 before the digits as they come prints the same symbol. Read back through Labelize at
+  203 and 300 dpi, turned too; other GS1-128 still refused in TSPL.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -215,6 +215,8 @@ const CASES: Case[] = [
   ["tspl", "dl-datamatrix", "https://id.gs1.org/01/09506000134352/10/A~B", 0.495, 300, "]d1 https://id.gs1.org/01/09506000134352/10/A~B"],
   ["tspl", "dl-qrcode", "https://id.gs1.org/01/09506000134352/10/ABC123", 0.495, 203, "]Q1 https://id.gs1.org/01/09506000134352/10/ABC123"],
   ["tspl", "dl-qrcode", 'https://example.com/a"b', 0.495, 300, ']Q1 https://example.com/a"b'],
+  ["tspl", "gs1-128", "(00)106141411234567897", 0.33, 203, "]C1 (00)106141411234567897"],
+  ["tspl", "gs1-128", "(00)095060001343520000", 0.495, 300, "]C1 (00)095060001343520000"],
   ["epl", "ean13", "9506000134352", 0.33, 203, "]E0 9506000134352"],
   ["epl", "ean8", "95012346", 0.33, 300, "]E4 95012346"],
   ["epl", "upca", "614141000036", 0.33, 203, "]E0 0614141000036"],
@@ -260,7 +262,7 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
   // wide (guide, b command), so the command starts a module earlier; Labelize draws no such quiet zone, so there the
   // symbol shows a module before the corner — the difference between the guide and the emulator, kept in sight
   it.each([
-    ["tspl", "dl-datamatrix"], ["epl", "dl-datamatrix"], ["tspl", "dl-qrcode"], ["epl", "ean13"], ["tspl", "ean13"],
+    ["tspl", "dl-datamatrix"], ["epl", "dl-datamatrix"], ["tspl", "dl-qrcode"], ["epl", "ean13"], ["tspl", "ean13"], ["tspl", "gs1-128"],
     ["dpl", "dl-datamatrix"], ["dpl", "dl-qrcode"], ["dpl", "ean13"], ["dpl", "itf14"], ["dpl", "gs1-128"],
   ] as const)(
     "%s: %s starts at the layout's corner", (language, symbology) => {
@@ -527,6 +529,7 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     ["tspl", 203, "distribution", "itf14", "(01)19506000134359"],
     ["tspl", 203, "distribution", "gs1-datamatrix", "(01)09506000134376(10)B42"],
     ["tspl", 300, "distribution", "dl-datamatrix", "(01)09506000134376(10)B42"],
+    ["tspl", 203, "distribution", "gs1-128", "(00)106141411234567897"],
     ["dpl", 203.2, "retail", "ean13", "(01)09506000134352"],
     ["dpl", 203.2, "distribution", "itf14", "(01)19506000134359"],
     ["dpl", 203.2, "distribution", "gs1-128", "(00)106141411234567897"],
@@ -643,11 +646,11 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     expect(() => eplLogisticLabel(gs1dm, 203, 4)).toThrow(/Data Matrix \(the b command\) has no FNC1/);
   });
 
-  // The studio's text under a symbol in DPL: the cell's bottom is the record's row, so its top must land where the
-  // layout puts it, the gap below the bars; centred by the font's pitch
-  it.each([["gs1-128", "(00)106141411234567897", 0.495], ["itf14", "19506000134359", 0.5]] as const)("DPL: %s's text under the bars where the layout puts it", (symbology, data, xMm) => {
+  // The studio's text under a symbol in DPL and TSPL: its top must land where the layout puts it, the gap below the bars
+  // (in DPL the cell's bottom is the record's row); centred by the font's pitch
+  it.each([["dpl", "gs1-128", "(00)106141411234567897", 0.495], ["dpl", "itf14", "19506000134359", 0.5], ["tspl", "gs1-128", "(00)106141411234567897", 0.495]] as const)("%s: %s's text under the bars where the layout puts it", (language, symbology, data, xMm) => {
     const o = options(xMm, 203);
-    const { grey, width } = decodePng(render("dpl", dplLabel(symbology, data, o), o.widthDots, o.heightDots, 203));
+    const { grey, width } = decodePng(render(language, WRITERS[language](symbology, data, o), o.widthDots, o.heightDots, 203));
     const bottom = o.y + o.barHeightDots;
     let top = Infinity;
     let left = width;
@@ -671,6 +674,9 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       expect(inside).toBeGreaterThanOrEqual(0);
       expect(inside).toBeLessThanOrEqual(4);
     }
+    // TSPL: GS1-128's element string centred under its 156 modules, within the glyphs' side bearings (in DPL Labelize
+    // draws the font narrower than the manual's pitch, as above)
+    if (language === "tspl") expect(Math.abs((left + right + 1) / 2 - (o.x + (156 * o.dotsPerModule) / 2))).toBeLessThanOrEqual(3);
     expect(right).toBeGreaterThan(left);
   });
 
@@ -705,7 +711,9 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
 describe("what TSPL, EPL2 and DPL refuse, with the reason", () => {
   const o = options(0.33, 203);
   it.each([
-    ["tspl", "gs1-128", "(01)09506000134352(10)ABC", /encodes "!102" as text/],
+    ["tspl", "gs1-128", "(01)09506000134352(10)ABC", /SSCC \(00\) alone/],
+    ["tspl", "gs1-128", "(00)106141411234567897(02)09506000134376(37)24", /SSCC \(00\) alone/],
+    ["tspl", "gs1-128", "(01)09506000134352", /SSCC \(00\) alone/],
     ["tspl", "ean8", "95012346", /does not draw it/],
     ["tspl", "upca", "614141000036", /does not draw it/],
     ["tspl", "databar-omni", "(01)09506000134352", /RSS command/],
@@ -747,6 +755,13 @@ describe("what TSPL, EPL2 and DPL refuse, with the reason", () => {
     expect(() => dplLabel("dl-qrcode", "https://id.gs1.org/01/09506000134352", { ...o, qrMode: "byte" })).toThrow(/automatic mode/);
     expect(() => dplLabel("dl-datamatrix", "https://example.com/a\rb", o)).toThrow(/line break/);
     expect(() => dplLabel("gs1-128", "(00)106141411234567897", { ...o, parts: ["(00)106141411234567897", "(02)09506000134376(37)24"] })).toThrow(/SSCC \(00\) alone/);
+  });
+
+  it("TSPL writes an SSCC as EAN128 with its 20 digits, check digit included, and refuses GS1-128 in several symbols", () => {
+    // Labelize computes the check digit from the first 19 digits; a printer that puts FNC1 before the digits as they come
+    // takes the 20th as written: the same symbol either way
+    expect(tsplLabel("gs1-128", "(00)106141411234567897", { ...o, hri: false })).toContain(`\r\nBARCODE ${o.x},${o.y},"EAN128",${o.barHeightDots},0,0,${o.dotsPerModule},${o.dotsPerModule},"00106141411234567897"\r\nPRINT`);
+    expect(() => tsplLabel("gs1-128", "(00)106141411234567897", { ...o, parts: ["(00)106141411234567897", "(02)09506000134376(37)24"] })).toThrow(/SSCC \(00\) alone/);
   });
 
   it("DPL counts in tenths of a millimetre from the label's bottom left corner: the record's row and column", () => {

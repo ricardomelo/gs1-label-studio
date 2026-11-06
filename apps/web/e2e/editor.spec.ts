@@ -204,6 +204,15 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
   expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
+  // In TSPL too: an SSCC alone as EAN128, its 20 digits with the check digit, and the studio's text below
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "tspl-203");
+  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  expect(tspl.suggestedFilename()).toBe("gs1-128_00_106141411234567897.prn");
+  const tsplFile = readFileSync((await tspl.path())!, "utf8");
+  expect(tsplFile).toMatch(/^BARCODE \d+,\d+,"EAN128",\d+,0,0,4,4,"00106141411234567897"\r$/m);
+  expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",0,\d+,\d+,2,"\(00\)106141411234567897"\r$/m);
+  await page.selectOption("#prn-profile", "zpl-203");
   await on(page, "label");
   await page.selectOption("#opt-size", "150");
   await expect(page.locator(".caption")).toContainText("GS1-128 · bars 31.75 mm · X 0.743 mm");
@@ -1582,7 +1591,8 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   const eplFile = readFileSync((await epl.path())!, "utf8");
   expect(eplFile).toMatch(/^B\d+,\d+,1,1E,/m);
   expect(eplFile).toMatch(/^A\d+,\d+,3,\d,\d,\d,N,"BATCH B42"/m);
-  // In TSPL, DMATRIX's r90 and TEXT's 270 (TSPL has no GS1-128 yet: the barcode becomes a GS1 DataMatrix, still turned)
+  // In TSPL, DMATRIX's r90 and TEXT's 270 (TSPL's GS1-128 carries an SSCC alone: the barcode becomes a GS1 DataMatrix,
+  // still turned)
   await on(page, "label");
   await page.locator(".design-list button").first().click();
   await page.selectOption("#el-symbol", "gs1-datamatrix");

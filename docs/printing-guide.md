@@ -145,7 +145,7 @@ production run**. The studio says so beside a TSPL, EPL2 or DPL profile.
 | EAN-13 | ✓ | ✓ | ✓ | ✓ |
 | EAN-8, UPC-A, UPC-E | ✓ | not yet: Labelize does not draw them | ✓ | ✓ |
 | ITF-14, with bearer bars | ✓ | ✓ | ✓ | ✓ |
-| GS1-128 | ✓, over several symbols too | not yet: Labelize encodes TSPL's `!102` (FNC1) as text | ✓, an element string of no predefined length last only; several symbols too | an SSCC (00) alone; the rest not yet: Labelize does not draw DPL's ways to write FNC1 |
+| GS1-128 | ✓, over several symbols too | an SSCC (00) alone (`EAN128`); the rest not yet: Labelize encodes TSPL's `!102` (FNC1) as text | ✓, an element string of no predefined length last only; several symbols too | an SSCC (00) alone; the rest not yet: Labelize does not draw DPL's ways to write FNC1 |
 | GS1 DataBar | ✓ (see section 7) | not yet: Labelize does not draw `RSS` | not yet: Labelize does not draw `R14` | not yet: Labelize does not draw `W1k` |
 | GS1 DataMatrix | ✓ | ✓ | ✗ EPL2's Data Matrix has no FNC1 | ✗ the manual gives DPL's Data Matrix no FNC1 |
 | Data Matrix with a GS1 Digital Link URI | ✓ | ✓ | ✓, without a double quote or a backslash | ✓, square |

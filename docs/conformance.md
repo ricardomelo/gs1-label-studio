@@ -121,15 +121,17 @@ every test run (ADR 0002).
 |---|---|---|
 | TSPL `DMATRIX` | `c126`: FNC1 as `~1`, `~` as `~~`, the size forced | `printlangs`: tspl gs1-datamatrix |
 | TSPL `BARCODE` | EAN13 (12 digits), ITF14 (13 digits) with bearer bars drawn | `printlangs`: tspl itf14 |
+| TSPL `EAN128` | GS1-128 of an SSCC alone: `00` and its 18 digits, check digit included, which Labelize draws as ZPL's UCC case mode | `printlangs`: tspl gs1-128 |
 | TSPL strings | A double quote as `\["]` | `printlangs`: TSPL quotes a double quote |
 | EPL2 `B` | EAN/UPC at 2 to 4 dots; UCC/EAN 128 with FNC1 first, a variable-length element string last only | `printlangs`: EPL2 prints EAN and UPC with a narrow bar of 2 to 4 dots only |
 | EPL2 `b` | Data Matrix with a URI, started a module early for the printer's own quiet zone | `printlangs`: epl: dl-datamatrix starts at the layout's corner |
 | DPL records | Rows and columns in tenths of a millimetre from the label's bottom left corner (`m`), within a dot | `printlangs`: DPL counts in tenths of a millimetre from the label's bottom left corner |
 | DPL `q` | UCC/EAN Code 128 for an SSCC alone: `00` and 17 digits, the printer adding FNC1 and the check digit | `printlangs`: dpl gs1-128 |
 | DPL `W1D` | QR code with the label's error correction level, its module in tenths of a millimetre | `printlangs`: dpl dl-qrcode |
-| Not offered | TSPL: GS1-128, EAN-8, UPC, DataBar; EPL2: GS1 DataMatrix, QR, DataBar; DPL: GS1-128 beyond an SSCC, GS1 DataMatrix, DataBar | `printlangs`: what TSPL, EPL2 and DPL refuse, with the reason |
+| Not offered | TSPL: GS1-128 beyond an SSCC, EAN-8, UPC, DataBar; EPL2: GS1 DataMatrix, QR, DataBar; DPL: GS1-128 beyond an SSCC, GS1 DataMatrix, DataBar | `printlangs`: what TSPL, EPL2 and DPL refuse, with the reason |
 
-Where Labelize and the manual differ, the symbol is refused (TSPL's `!102`) or the manual followed and the difference
+Where Labelize and the manual differ, the symbol is refused (TSPL's `!102`; its `EAN128` offered only for an SSCC, which
+both readings of it print alike) or the manual followed and the difference
 tested in sight (EPL2's Data Matrix quiet zone; where DPL's QR code and EAN guard bars land). A print from a physical printer outranks both (backlog 3.9).
 
 ## 7. Deliberate differences and open points

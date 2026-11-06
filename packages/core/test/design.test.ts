@@ -150,9 +150,10 @@ describe("a label of one's own", () => {
     expect(epl).toContain(`q${dots(130)}`);
     expect(epl).toMatch(new RegExp(`^A${dots(6)},${dots(6)},0,\\d,\\d,\\d,N,"Finest Truffle Tapenade"$`, "m"));
     expect(epl).toMatch(/^B\d+,\d+,0,1E,4,4,\d+,N,"010950600013437617271231"$/m);
-    // TSPL writes it too (printlangs.test.ts prints it): its GS1-128 refused with the reason, as for a symbol alone; each
+    // TSPL writes it too (printlangs.test.ts prints it): its GS1-128 of a GTIN refused with the reason (an SSCC alone is
+    // printed), as for a symbol alone; each
     // line of text with TEXT in the dot font whose capitals (0.75 of its cell) come nearest, from its corner
-    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/encodes "!102" as text/);
+    expect(() => printFileFor("tspl", drawn, design, 203)).toThrow(/TSPL's GS1-128 is offered for an SSCC \(00\) alone/);
     const noLinear: LabelDesign = { ...design, page: { ...PAGE, elements: PAGE.elements.filter((e) => e.id !== "b1") } };
     const tspl = textFile(printFileFor("tspl", labelFor(data, noLinear, font), noLinear, 203));
     expect(tspl).toMatch(/^SIZE 130 mm,79.95 mm\r$/m); // the label's dots, 639 at 203 dpi
@@ -432,7 +433,7 @@ describe("a label of one's own", () => {
     // In TSPL (Labelize prints them in printlangs.test.ts): BARCODE, TEXT and DMATRIX with their rotation, each origin
     // the dot its upright top left one was, turned about the symbol's box or the text's capitals' box, as TSC's printers
     // turn a field about its origin; a GS1 DataMatrix's text lines turned with it, each from its left edge
-    expect(() => tsplPage({ ...printed, images: [] })).toThrow(/encodes "!102" as text/);
+    expect(() => tsplPage({ ...printed, images: [] })).toThrow(/TSPL's GS1-128 is offered for an SSCC \(00\) alone/);
     const tspl = textFile(tsplPage({ ...printed, images: [], symbols: printed.symbols.slice(1) }));
     const g = printed.symbols[1]!.options;
     expect(tspl).toMatch(new RegExp(`^DMATRIX ${g.x + g.turned!.width - 1},${g.y + g.turned!.height - 1},\\d+,\\d+,c126,x\\d+,r180,`, "m"));

@@ -1,5 +1,5 @@
 import { MM_PER_INCH } from "./dots.ts";
-import { encode } from "./encode.ts";
+import { encode, widthInModules } from "./encode.ts";
 import { hasPredefinedLength, parseElementString } from "./elementString.ts";
 import type { Bitmap } from "./raster.ts";
 import {
@@ -39,12 +39,16 @@ const REFUSED: Partial<Record<SymbologyId, string>> = {
   ean8: "TSPL's EAN8 is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it, so no test has read it back. ZPL or the PDF print it.",
   upca: "TSPL's UPCA is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it, so no test has read it back. ZPL or the PDF print it.",
   upce: "TSPL's UPCE is not offered yet: Labelize, the emulator the tests print TSPL with, does not draw it, so no test has read it back. ZPL or the PDF print it.",
-  "gs1-128":
-    "GS1-128 is not offered in TSPL yet: the manual writes FNC1 as !102 in a 128M bar code, but Labelize, the emulator " +
-    "the tests print TSPL with, encodes \"!102\" as text, so no test has read a GS1-128 back. ZPL or the PDF print it.",
   "gs1-qrcode": "TSPL's QR code has no FNC1, so it cannot print a GS1 QR Code. Use a GS1 DataMatrix, or a QR code with a GS1 Digital Link URI.",
 };
 
+const MESSAGES = {
+  gs1128:
+    "TSPL's GS1-128 is offered for an SSCC (00) alone: the manual lists EAN128 without saying how it takes element " +
+    "strings, and Labelize, the emulator the tests print TSPL with, draws EAN128 as an SSCC (FNC1, 19 digits and their " +
+    "check digit) and the manual's FNC1 in a 128M bar code (!102) as text, so no test has read another GS1-128 back. ZPL, " +
+    "EPL2 or the PDF print it.",
+};
 
 /** TSPL's string: double quotes as \["] (manual, TEXT). */
 function quoted(text: string): string {
@@ -228,7 +232,7 @@ function fields(symbology: SymbologyId, data: string, options: PrintSymbolOption
   if (symbology.startsWith("databar")) {
     throw new TsplUnsupportedError("TSPL's RSS command is not offered yet for {name}: Labelize, the emulator the tests print TSPL with, does not draw it, so no test has read it back. ZPL or the PDF print it.".replace("{name}", SYMBOLOGIES[symbology].name));
   }
-  if (options.parts && options.parts.length > 1) throw new TsplUnsupportedError(REFUSED["gs1-128"]!);
+  if (options.parts && options.parts.length > 1) throw new TsplUnsupportedError(MESSAGES.gs1128);
   const geometry = encode(symbology, data); // checks the data: GS1 syntax, check digits
   const { x, y, dotsPerModule: d, barHeightDots: h } = options;
   const hri = options.hri ?? true;
@@ -239,6 +243,16 @@ function fields(symbology: SymbologyId, data: string, options: PrintSymbolOption
       return [`BARCODE ${x},${y},"EAN13",${h},${hri ? 2 : 0},0,${d},${d},"${data.slice(0, 12)}"`];
     case "itf14":
       return itf14(data, options);
+    case "gs1-128": {
+      // EAN128 with the SSCC's 20 digits, "00" and its 18 (check digit included), and no printer's text: the studio's goes
+      // where asked. The manual lists EAN128 ("switching code subset automatically") without its data; Labelize draws it
+      // as ZPL's UCC case mode (FNC1, the first 19 digits and their check digit), and a printer that puts FNC1 before the
+      // digits as they come draws the same symbol from the same 20 digits
+      const elements = parseElementString(data);
+      if (elements.length !== 1 || elements[0]!.ai !== "00") throw new TsplUnsupportedError(MESSAGES.gs1128);
+      const symbol = `BARCODE ${x},${y},"EAN128",${h},0,0,${d},${d},"00${elements[0]!.value}"`;
+      return [symbol, ...around([`(00)${elements[0]!.value}`], x, y, y + h, widthInModules(geometry) * d, 2 * d, options, true)];
+    }
     case "gs1-datamatrix":
     case "dl-datamatrix": {
       // c126: "~" is the escape character; ~1 is FNC1, first and after each element string without a predefined length
