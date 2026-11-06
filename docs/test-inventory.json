@@ -260,6 +260,10 @@
      "status": "passed"
     },
     {
+     "name": "generating every row › fills each row's {column} fields of a label of one's own from that row's cells",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › names a row its design cannot draw, and a label larger than the sheet's, in the CSV",
      "status": "passed"
     },
@@ -408,6 +412,14 @@
      "status": "passed"
     },
     {
+     "name": "a row's cells by their column's header › keeps each cell trimmed under its header, leaves out a column without one and keeps the first of two",
+     "status": "passed"
+    },
+    {
+     "name": "a row's cells by their column's header › offers as fields the columns holding no AI, by a header a field can name, the first of two alike",
+     "status": "passed"
+    },
+    {
      "name": "rows as identifications › takes the key, its qualifiers and the attributes, with the fixed values last",
      "status": "passed"
     },
@@ -485,6 +497,10 @@
     },
     {
      "name": "a label of one's own › fills a text's fields from the data, an AI it does not have leaving nothing",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › fills a {column} field from the row's cell, and leaves a name no column has as typed",
      "status": "passed"
     },
     {
@@ -3996,6 +4012,15 @@
     },
     {
      "name": "tobacco unit packs: GS1 DotCode named but not drawn, GS1 DataMatrix at table 12's size",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own in bulk: a {column} field shows each row's cell, on the label and in the print file",
      "status": "listed",
      "projects": [
       "desktop",

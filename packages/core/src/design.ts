@@ -182,6 +182,8 @@ export interface DesignOptions {
   table?: number;
   /** A QR code's error correction level. */
   error?: ErrorLevel;
+  /** In bulk, the row's cells by their column's header, which `{column}` fields show (`fillFields`). */
+  cells?: Readonly<Record<string, string>>;
 }
 
 const LINE_SPACING = 1.4; // a text block's baseline-to-baseline distance, as a multiple of its height
@@ -237,13 +239,33 @@ export function formatDate(yymmdd: string, format: string, { today = new Date(),
   return format.replace(DATE_TOKENS, (token) => parts[token]!);
 }
 
+export interface FieldOptions extends DateOptions {
+  /** A spreadsheet row's cells by their column's header (in bulk): what a `{column}` field shows. */
+  cells?: Readonly<Record<string, string>>;
+}
+
+/**
+ * The cell of the column `name` (its header, spaces around it and the case of its letters aside), or undefined when no
+ * column is named so.
+ */
+export function columnCell(cells: Readonly<Record<string, string>> | undefined, name: string): string | undefined {
+  if (!cells) return undefined;
+  const wanted = name.trim().toLowerCase();
+  const header = Object.keys(cells).find((h) => h.trim().toLowerCase() === wanted);
+  return header === undefined ? undefined : cells[header];
+}
+
 /**
  * The value of each `{AI}` in a text, from the data, and of each `{AI:format}` of a date AI its date in that format
  * (`formatDate`); an AI the data does not have leaves nothing. A format after an AI that is not a date raises an
- * `InputError`.
+ * `InputError`. Any other name in braces is a spreadsheet column's (backlog 4.2): `{Description}` shows the row's cell
+ * under that header (`columnCell`); a name no column has stays as typed, so that a mistyped field shows on the label.
  */
-export function fillFields(text: string, identified: Pick<Identified, "elements">, options: DateOptions = {}): string {
-  return text.replace(/\{(\d{2,4})(?::([^{}]*))?\}/g, (_, ai: string, format: string | undefined) => {
+export function fillFields(text: string, identified: Pick<Identified, "elements">, options: FieldOptions = {}): string {
+  return text.replace(/\{([^{}]*)\}/g, (whole, inside: string) => {
+    const field = /^(\d{2,4})(?::(.*))?$/s.exec(inside);
+    if (!field) return columnCell(options.cells, inside) ?? whole;
+    const [, ai, format] = field as unknown as [string, string, string | undefined];
     if (format === undefined) return identified.elements.find((e) => e.ai === ai)?.value ?? "";
     if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
     const value = identified.elements.find((e) => e.ai === ai)?.value;
@@ -335,7 +357,7 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
-      const lines = fillFields(element.text, identified, { months: element.months }).split("\n");
+      const lines = fillFields(element.text, identified, { months: element.months, cells: options.cells }).split("\n");
       const rotation = element.rotation ?? 0;
       // The block's own box, upright: its widest line, its first line's capitals to its last's baseline
       const width = Math.max(0, ...lines.map((line) => font.textWidth(line, em))) * unit;

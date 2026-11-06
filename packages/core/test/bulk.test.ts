@@ -2,11 +2,13 @@ import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   checkRows,
+  fieldColumns,
   guessColumn,
   guessMapping,
   normaliseCell,
   parseDelimited,
   parseXlsx,
+  rowCells,
   rowIdentification,
   syntaxEngine,
   type SyntaxEngine,
@@ -51,6 +53,21 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("17", "271231")).toBe("271231");
     expect(normaliseCell("17", "31/02/2027")).toBe("270231"); // the Syntax Engine refuses it, with its reason
     expect(normaliseCell("10", "2027-12-31")).toBe("2027-12-31");
+  });
+});
+
+describe("a row's cells by their column's header", () => {
+  // For a label of one's own's {column} fields (backlog 4.2)
+  it("keeps each cell trimmed under its header, leaves out a column without one and keeps the first of two", () => {
+    const headers = ["GTIN", "Description", "", "Description", " Price "];
+    expect(rowCells(headers, ["09506000134376", "  Tapenade ", "x", "second", "4,50"])).toEqual({ GTIN: "09506000134376", Description: "Tapenade", " Price ": "4,50" });
+    expect(rowCells(headers, ["09506000134376"])).toEqual({ GTIN: "09506000134376", Description: "", " Price ": "" });
+  });
+
+  it("offers as fields the columns holding no AI, by a header a field can name, the first of two alike", () => {
+    const headers = ["GTIN", " Description ", "", "description", "Price {BRL}", "10", "Lote", "2024"];
+    expect(fieldColumns(headers, ["01", null, null, null, null, null, "10", null])).toEqual([{ column: 1, name: "Description" }]);
+    expect(fieldColumns(["Origin", "Origin "], [null, null])).toEqual([{ column: 0, name: "Origin" }]);
   });
 });
 

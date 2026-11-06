@@ -234,6 +234,8 @@ interface PanelProps {
   selected: string | null;
   /** The data's AIs, in order, and their element strings: what a barcode can carry and a text can show. */
   elements: { ai: string; text: string }[];
+  /** In bulk, the spreadsheet's columns holding no AI, with the row shown's value: what a {column} field shows. */
+  columns: { name: string; value: string }[];
   environments: string[];
   environment: string;
   guided: boolean;
@@ -368,9 +370,12 @@ const valueOf = ({ ai, text }: { ai: string; text: string }) => text.slice(ai.le
  * "Insert a field from the data" (backlog 4.2, step c, mock-up B of two): each AI's field, and each date's in the formats
  * offered as well, each with the value it gives (its month in the text block's language); the other mock-up had a date
  * format select beside it. The month's language is the text block's "Month names" (mock-up B of two, 3 November 2026;
- * A wrote it in each field, {17:DD MMM YYYY:pt}).
+ * A wrote it in each field, {17:DD MMM YYYY:pt}). In bulk, the spreadsheet's columns holding no AI after them, each
+ * with the row shown's value (mock-up A of two, 6 November 2026; B offered them in a second list).
  */
-function FieldInsert({ elements, months, onInsert }: { elements: { ai: string; text: string }[]; months: MonthLanguage; onInsert: (field: string) => void }) {
+function FieldInsert({ elements, columns, months, onInsert }: {
+  elements: { ai: string; text: string }[]; columns: { name: string; value: string }[]; months: MonthLanguage; onInsert: (field: string) => void;
+}) {
   const today = new Date();
   return (
     <div>
@@ -393,13 +398,22 @@ function FieldInsert({ elements, months, onInsert }: { elements: { ai: string; t
             </option>
           ),
         )}
+        {columns.length > 0 && (
+          <optgroup label={t("Columns of the spreadsheet")}>
+            {columns.map((c) => (
+              <option key={c.name} value={`{${c.name}}`}>
+                {`{${c.name}}`} — {c.value || t("(empty on this row)")}
+              </option>
+            ))}
+          </optgroup>
+        )}
       </select>
     </div>
   );
 }
 
 /** The page's size, its elements and the selected one's properties, under the canvas. */
-export function DesignerPanel({ page, selected, elements, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
+export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
   const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
@@ -520,8 +534,11 @@ export function DesignerPanel({ page, selected, elements, environments, environm
                     <label htmlFor="el-text">{t("Text")}</label>
                     <textarea id="el-text" rows={2} value={element.text} onChange={(e) => update({ text: e.target.value })} />
                     <p className="hint">{t("A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.", { field: "{17:DD/MM/YYYY}" })}</p>
+                    {columns.length > 0 && (
+                      <p className="hint">{t("A column's header in braces, such as {field}, shows that column's cell on each row's label.", { field: `{${columns[0]!.name}}` })}</p>
+                    )}
                   </div>
-                  <FieldInsert elements={elements} months={element.months ?? "en"} onInsert={(field) => update({ text: element.text + field })} />
+                  <FieldInsert elements={elements} columns={columns} months={element.months ?? "en"} onInsert={(field) => update({ text: element.text + field })} />
                   {/MMM/.test(element.text) && (
                     <div>
                       <label htmlFor="el-months">{t("Month names")}</label>

@@ -494,8 +494,11 @@ complete.
   internal fonts at their capitals' height, measured through Labelize), lines and boxes (`X` records), each by its bottom
   left corner in tenths of a millimetre, checked through Labelize; an image refused (DPL's `Y` record prints a stored
   image, which Labelize does not draw); turned barcodes and text with their record's rotation, about their bottom left
-  corner as the manual's figure shows (a turned Data Matrix or QR code refused: Labelize does not turn them). Saving the
-  label is 4.3*
+  corner as the manual's figure shows (a turned Data Matrix or QR code refused: Labelize does not turn them). Fields
+  bound to spreadsheet columns since 6 November (mock-up A of two, taken under the owner's rule; B offered the columns
+  in a second list): in bulk, **Insert a field from the data** also offers each column holding no AI, such as
+  `{Produto}`, with the row shown's value; each row's label and print file show its own cell; a name no column has
+  stays as typed. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

@@ -234,4 +234,8 @@
   GS1-128 carries: laid out in the printer's dots as in ZPL and EPL2 (`logisticPage`) and written as a label of one's
   own, the 2D symbol beside the data too; a label with more data refused with the language's reason. Every symbol
   read back through Labelize, the SSCC's bars and the 2D symbol where the layout puts them.
+- Fields bound to spreadsheet columns on a label of one's own (backlog 4.2, 6 November): in bulk, a text block's
+  `{column}` field shows the row's cell under that header, offered in **Insert a field from the data** with the row
+  shown's value for each column holding no AI; every row's label and print file with its own cells. A name in braces
+  that no column has stays as typed (as any such text did before).
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

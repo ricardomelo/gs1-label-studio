@@ -7,6 +7,7 @@ import {
   correctedCsv,
   editCell,
   reportCsv,
+  rowCells,
   rowStatus,
   guessMapping,
   parseDelimited,
@@ -17,6 +18,7 @@ import {
   ENVIRONMENTS,
   environmentsFor,
   fieldsOf,
+  fieldColumns,
   fileName,
   HriFont,
   identify,
@@ -188,14 +190,17 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       .then((bytes) => setFont(HriFont.fromBytes(bytes)), (e: unknown) => console.error(e));
   }, []);
 
+  // The rows with the values fixed in the studio: what is checked, and what a label of one's own's {column} fields show
+  const edited = useMemo(() => (dataTable ? applyEdits(dataTable, edits) : null), [dataTable, edits]);
   const rows = useMemo(
-    () => (engine && dataTable
-      ? checkRows(engine, applyEdits(dataTable, edits), mapping, fixed, settings.stem.trim() || DEFAULT_STEM)
-      : []),
-    [engine, dataTable, edits, mapping, fixed, settings.stem],
+    () => (engine && edited ? checkRows(engine, edited, mapping, fixed, settings.stem.trim() || DEFAULT_STEM) : []),
+    [engine, edited, mapping, fixed, settings.stem],
   );
   const bulk = mode === "bulk";
   const current = bulk ? rows[Math.min(rowIndex, rows.length - 1)] : undefined;
+  // The row shown's cells by their column's header (backlog 4.2: fields bound to spreadsheet columns)
+  const cellsOf = (index: number) => (edited?.rows[index] ? rowCells(edited.headers, edited.rows[index]) : undefined);
+  const currentCells = useMemo(() => (bulk && rows.length ? cellsOf(Math.min(rowIndex, rows.length - 1)) : undefined), [bulk, edited, rowIndex, rows.length]);
   // What the steps after the first work from: the identification typed, or the row shown.
   const active: Identification = bulk ? (current?.id ?? id) : id;
 
@@ -320,7 +325,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     if (blocked) return { view: { ...base, error: blocked } };
     try {
       const { symbology } = effective;
-      const { data, options, layout, geometry, logistic, designed } = labelFor(identified, design, font);
+      const { data, options, layout, geometry, logistic, designed } = labelFor(identified, design, font, currentCells);
       if (designed && design.page) {
         // A label of one's own: its size and its barcodes in the caption, its problems in words, its symbols expected
         const page = design.page;
@@ -402,7 +407,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     } catch (error) {
       return { view: { ...base, error: tm(errorText(error)) } };
     }
-  }, [checked, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD, lang]);
+  }, [checked, currentCells, gtinOnly, font, engine, blocked, spec, design, effective.symbology, effective.hriAsText, effective.error, environment, size, twoD, lang]);
 
   const view: LabelView = {
     ...label.view, environments, sizes, twoD, bars, isQr: symbology.endsWith("qrcode"), linearPossible, logisticPossible: active.key === "00",
@@ -420,6 +425,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         }
       : {}),
     ...(spec ? { sizeBase: baseX(spec) } : {}),
+    // In bulk, the columns holding no AI as {column} fields, each with the row shown's value
+    ...(bulk && edited
+      ? { columns: fieldColumns(edited.headers, mapping).map(({ column, name }) => ({ name, value: currentCells?.[edited.headers[column]!] ?? "" })) }
+      : {}),
   };
 
   // ZPL with the printer's own commands (ADR 0002); a label just large enough for the symbol, its quiet zones and text.
@@ -507,7 +516,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // In bulk: every row ready or fixed drawn with the label's design, in one zip (backlog 2.4).
   const batchRows: BatchRow[] = rows.map((row, index) => ({
     row: row.row, ...(row.identified ? { identified: row.identified } : {}), ...(row.error ? { error: row.error } : {}),
-    ...(skipped.has(index) ? { skipped: true } : {}),
+    ...(skipped.has(index) ? { skipped: true } : {}), ...(settings.designer ? { cells: cellsOf(index) } : {}),
   }));
   const readyRows = batchRows.filter((row) => row.identified && !row.skipped);
   // Generated in a worker (backlog 2.5): the page stays usable, the progress shows, and Cancel ends the worker.

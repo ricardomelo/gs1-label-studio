@@ -211,9 +211,11 @@ export { excelDate, excelNumber, parseDelimited, parseTableFile, parseXlsx, Tabl
 export {
   cellHint,
   checkRows,
+  fieldColumns,
   guessColumn,
   guessMapping,
   normaliseCell,
+  rowCells,
   rowIdentification,
   type CheckedRow,
   type ColumnMapping,
@@ -284,7 +286,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, DATE_FORMATS, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, fillFields, formatDate, MONTH_NAMES, type DateOptions, type MonthLanguage, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, DATE_FORMATS, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, columnCell, fillFields, type FieldOptions, formatDate, MONTH_NAMES, type DateOptions, type MonthLanguage, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {

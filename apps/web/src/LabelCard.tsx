@@ -119,6 +119,8 @@ export interface LabelView {
   designer?: { placed: PlacedElement[]; problems: string[] };
   /** GS1-128: its element strings and the index of each that starts a symbol (the first always). */
   gs1128?: { elements: string[]; starts: number[] };
+  /** In bulk, the spreadsheet's columns a text can show as {column} fields, with the row shown's value (backlog 4.2). */
+  columns?: { name: string; value: string }[];
 }
 
 type Scan =
@@ -437,6 +439,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 page={s.page}
                 selected={s.selected}
                 elements={aiList}
+                columns={view.columns ?? []}
                 environments={view.environments}
                 environment={s.environment}
                 guided={Boolean(view.guided)}

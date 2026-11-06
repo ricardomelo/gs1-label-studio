@@ -18,6 +18,7 @@ import {
   pdfContent,
   printFileFor,
   printWidthDots,
+  rowCells,
   specificationFor,
   sheetCells,
   sheetPages,
@@ -270,6 +271,32 @@ describe("generating every row", () => {
     const qr = await generateBatch(sscc, { design: withQr, files: [], pattern: "{00}", pdf: false, zplDpi: 203 }, font);
     const qrFile = new TextDecoder().decode(unzip(qr.zip).get("labels_gs1-128_203dpi.zpl"));
     expect(qrFile.match(/\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/10614141123456\d{4}\?02=09506000134376&37=\d\d\^FS/g)).toHaveLength(2);
+  }, SLOW);
+
+  // A label of one's own in bulk (backlog 4.2): each row's {column} fields from its own cells, in the drawing and in
+  // the print file, the barcodes read back
+  it("fills each row's {column} fields of a label of one's own from that row's cells", async () => {
+    const table = parseDelimited("GTIN,Lote,Produto\n09506000134376,B42,Tapenade\n09506000134352,B43,Pesto alla genovese");
+    const rows: BatchRow[] = checkRows(engine, table, ["01", "10", null], [], "https://id.gs1.org").map((row, i) => ({
+      row: row.row, identified: row.identified!, cells: rowCells(table.headers, table.rows[i]!),
+    }));
+    const design: LabelDesign = {
+      ...QR, page: {
+        widthMm: 60, heightMm: 40, elements: [
+          { id: "t", kind: "text", text: "{Produto}\nLOTE {10}", heightMm: 3, xMm: 3, yMm: 3 },
+          { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 35, yMm: 12 },
+        ],
+      },
+    };
+    const result = await generateBatch(rows, { design, files: ["svg"], pattern: "{10}", pdf: false, zplDpi: 203 }, font);
+    const files = unzip(result.zip);
+    const svg = (name: string) => new TextDecoder().decode(files.get(name));
+    expect(labelFor(rows[1]!.identified!, design, font, rows[1]!.cells).layout.texts.map((t) => t.text)).toEqual(["Pesto alla genovese", "LOTE B43"]);
+    expect(await read(svgPng(svg("B42.svg")))).toEqual(["]Q1 https://id.gs1.org/01/09506000134376/10/B42"]);
+    const zpl = new TextDecoder().decode(files.get("labels_dl-qrcode_203dpi.zpl"));
+    expect(zpl.match(/\^FD(Tapenade|Pesto alla genovese|LOTE B4\d)\^FS/g)).toEqual(["^FDTapenade^FS", "^FDLOTE B42^FS", "^FDPesto alla genovese^FS", "^FDLOTE B43^FS"]);
+    // Without the cells (a single label) the field stays as typed
+    expect(labelFor(rows[0]!.identified!, design, font).layout.texts.map((t) => t.text)).toEqual(["{Produto}", "LOTE B42"]);
   }, SLOW);
 
   it("names a row its design cannot draw, and a label larger than the sheet's, in the CSV", async () => {

@@ -78,13 +78,16 @@ export interface DrawnLabel {
   designed?: DesignedLabel;
 }
 
-/** The label of `identified` as `design` lays it out; an `InputError` when this data cannot be drawn so. */
-export function labelFor(identified: Identified, design: LabelDesign, font: HriFont): DrawnLabel {
+/**
+ * The label of `identified` as `design` lays it out; an `InputError` when this data cannot be drawn so. In bulk, `cells`
+ * (a row's cells by their column's header) fill a label of one's own's `{column}` fields.
+ */
+export function labelFor(identified: Identified, design: LabelDesign, font: HriFont, cells?: Readonly<Record<string, string>>): DrawnLabel {
   const { symbology } = design;
   if (design.page) {
     if (!design.page.elements.some((e) => e.kind === "symbol")) throw new InputError("A label of one's own needs a barcode: add one.");
     const designed = designLabel(design.page, identified, font, {
-      environment: design.environment ?? "retail", ...(design.table ? { table: design.table } : {}), error: design.error,
+      environment: design.environment ?? "retail", ...(design.table ? { table: design.table } : {}), error: design.error, cells,
     });
     // The first barcode's geometry from the data it carries (an ITF-14 the GTIN alone, its element strings chosen)
     const first = designed.printer.symbols[0]!;
@@ -317,6 +320,8 @@ export interface BatchRow {
   /** The row's number in the file, as a spreadsheet numbers it. */
   row: number;
   identified?: Identified;
+  /** The row's cells by their column's header, for a label of one's own's `{column}` fields (`fillFields`). */
+  cells?: Record<string, string>;
   /** Why the row cannot be drawn (the Syntax Engine's message), or that it was skipped. */
   error?: string;
   skipped?: boolean;
@@ -411,7 +416,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     if (row.skipped) return { row, error: "Skipped" };
     if (!row.identified) return { row, error: row.error ?? "Not checked" };
     try {
-      const label = labelFor(row.identified, design, font);
+      const label = labelFor(row.identified, design, font, row.cells);
       const problem = request.sheet && fitsSheet(label.layout.width * label.layout.xMm, label.layout.height * label.layout.xMm, request.sheet.sheet);
       return problem ? { row, error: problem } : { row, label };
     } catch (error) {

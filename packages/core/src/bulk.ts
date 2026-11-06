@@ -137,6 +137,34 @@ export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: 
   return id;
 }
 
+/**
+ * A row's cells by their column's header, as a label of one's own's `{column}` fields read them (backlog 4.2): each
+ * cell trimmed; a column without a header is left out, and of two columns with one header the first is kept.
+ */
+export function rowCells(headers: readonly string[], row: readonly string[]): Record<string, string> {
+  const cells: Record<string, string> = {};
+  headers.forEach((header, column) => {
+    if (header.trim() && !(header in cells)) cells[header] = row[column]?.trim() ?? "";
+  });
+  return cells;
+}
+
+/**
+ * The columns a label of one's own offers as `{column}` fields: those holding no AI (an AI's column is its `{AI}`
+ * field), by their header trimmed, the first of two alike; a header a field cannot name (empty, with braces, or read as
+ * an AI such as "10") is left out.
+ */
+export function fieldColumns(headers: readonly string[], mapping: ColumnMapping): { column: number; name: string }[] {
+  const seen = new Set<string>();
+  return headers.flatMap((header, column) => {
+    const name = header.trim();
+    const key = name.toLowerCase();
+    if (mapping[column] || !name || /[{}]/.test(name) || /^\d{2,4}(:|$)/.test(name) || seen.has(key)) return [];
+    seen.add(key);
+    return [{ column, name }];
+  });
+}
+
 export interface CheckedRow {
   /** 1-based, as a spreadsheet numbers rows after the header: the first data row is row 2. */
   row: number;

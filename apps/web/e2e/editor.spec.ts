@@ -417,6 +417,42 @@ test("tobacco unit packs: GS1 DotCode named but not drawn, GS1 DataMatrix at tab
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231", { timeout: 30_000 });
 });
 
+// Item 4.2's fields bound to spreadsheet columns (mock-up A of two, 6 November 2026): in bulk, "Insert a field from the
+// data" also offers the columns holding no AI, each with the row shown's value; each row's label and print file show
+// its own cell, and a name no column has stays as typed.
+test("a label of one's own in bulk: a {column} field shows each row's cell, on the label and in the print file", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\tProduto\tRegião\n09506000134376\tB42\tFinest Truffle Tapenade\tLiguria\n09506000134352\tB43\tPesto alla genovese\t\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-x", "48");
+  await page.fill("#el-y", "8");
+  await expect(page.locator("#el-field optgroup[label='Columns of the spreadsheet'] option")).toHaveText(["{Produto} — Finest Truffle Tapenade", "{Região} — Liguria"]);
+  await expect(page.locator(".designer .hint", { hasText: "column's header in braces" })).toHaveText("A column's header in braces, such as {Produto}, shows that column's cell on each row's label.");
+  await page.fill("#el-text", "");
+  await page.selectOption("#el-field", "{Produto}");
+  await expect(page.locator("#el-text")).toHaveValue("{Produto}");
+  await page.fill("#el-text", "{Produto}\n{Região} · {Cor}");
+  await expect(page.locator('.preview .symbol svg [aria-label="Finest Truffle Tapenade"]')).toHaveCount(1);
+  await expect(page.locator('.preview .symbol svg [aria-label="Liguria · {Cor}"]')).toHaveCount(1);
+  // The next row's own cells, an empty one leaving nothing
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator('.preview .symbol svg [aria-label="Pesto alla genovese"]')).toHaveCount(1);
+  await expect(page.locator("#el-field option[value='{Região}']")).toHaveText("{Região} — (empty on this row)");
+  // Generated: each row's label in the print file with its own cells
+  await on(page, "export");
+  await page.locator(".generate label.check", { hasText: "One ZPL file" }).locator("input").check();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
+  const zpl = execFileSync("unzip", ["-p", (await download.path())!, "labels_dl-qrcode_203dpi.zpl"], { encoding: "utf8" });
+  expect(zpl.match(/\^FD[^^]*(Tapenade|genovese|Liguria|\{Cor\})[^^]*\^FS/g)).toEqual(["^FDFinest Truffle Tapenade^FS", "^FDLiguria · {Cor}^FS", "^FDPesto alla genovese^FS", "^FD · {Cor}^FS"]);
+});
+
 // Item 2.1 (mock-up A of 29 October 2026): in bulk, rows from a file or pasted, their columns, the row shown.
 test("in bulk: an Excel workbook's rows, columns guessed from their headers, each row drawn and checked", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();

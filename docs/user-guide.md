@@ -265,6 +265,11 @@ of my own (barcodes and text placed freely)*:
    `YY` and `YYYY`; the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the
    month's last. When the text has `MMM`, **Month names** chooses its language: *English* (JAN to DEC), *Portuguese*
    (JAN, FEV … DEZ) or *Spanish* (ENE, FEB … DIC); a new text block starts in the interface's language.
+   In bulk, the list also offers, under *Columns of the spreadsheet*, each column that holds no AI (a product's name,
+   its region, a price), each shown with the row shown's value, such as `{Produto}` *Finest Truffle Tapenade*: each
+   row's label shows that row's cell, in the drawing and in the print files. The header's case and the spaces around
+   it do not matter; a column empty on a row leaves nothing, and a name in braces that no column has stays on the label
+   as typed, so a mistyped field shows. On a single label, with no spreadsheet, such a field also stays as typed.
 6. A shape: its **Shape** (*Line across*, *Line down*, *Box* or *Filled box*), **Width (mm)**, **Height (mm)** and
    **Thickness (mm)**, from its top left corner. A line across is as wide as it is long, a line down as high; its other
    side is its thickness, shown but not typed. A box's outline is drawn inside its width and height; a filled box has

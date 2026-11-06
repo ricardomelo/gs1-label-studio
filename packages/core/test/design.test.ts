@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   checkRows,
+  columnCell,
   designLabel,
   dplPage,
   encode,
@@ -506,6 +507,27 @@ describe("a label of one's own", () => {
   it("fills a text's fields from the data, an AI it does not have leaving nothing", () => {
     expect(fillFields("BATCH {10} · SERIAL {21}", data)).toBe("BATCH B42 · SERIAL ");
     expect(fillFields("{01}", data)).toBe("09506000134376");
+  });
+
+  // Fields bound to spreadsheet columns (backlog 4.2): any other name in braces is a column's header, its letters'
+  // case and the spaces around it aside; a name no column has stays as typed, so that a mistyped field shows
+  it("fills a {column} field from the row's cell, and leaves a name no column has as typed", () => {
+    const cells = { "Product name": "Finest Truffle Tapenade", Price: " ", "10": "not the batch", Weight: "" };
+    expect(fillFields("{Product name} · {10}", data, { cells })).toBe("Finest Truffle Tapenade · B42");
+    expect(fillFields("{product NAME }", data, { cells })).toBe("Finest Truffle Tapenade");
+    expect(fillFields("[{Weight}]", data, { cells })).toBe("[]"); // an empty cell leaves nothing
+    expect(fillFields("{Colour} {12x} {}", data, { cells })).toBe("{Colour} {12x} {}");
+    expect(fillFields("{Product name}", data)).toBe("{Product name}"); // a single label has no columns
+    expect(columnCell(cells, " price")).toBe(" ");
+    expect(columnCell(cells, "Colour")).toBeUndefined();
+    expect(columnCell({ " Price ": "4,50" }, "Price")).toBe("4,50"); // a header with spaces around it, as rowCells keeps it
+    expect(columnCell(undefined, "Price")).toBeUndefined();
+    // Through the page: the text's lines, and the print file's
+    const page: DesignPage = { ...PAGE, elements: PAGE.elements.map((e) => (e.id === "t1" ? { ...e, text: "{Product name}\n{Origin}" } : e)) };
+    const label = designLabel(page, data, font, { environment: "distribution", cells: { ...cells, Origin: "Liguria" } });
+    expect(label.layout.texts.map((t) => t.text)).toEqual(expect.arrayContaining(["Finest Truffle Tapenade", "Liguria", "BATCH B42"]));
+    expect(label.printer.texts.map((t) => t.text)).toEqual(expect.arrayContaining(["Finest Truffle Tapenade", "Liguria"]));
+    expect(designLabel(page, data, font, { environment: "distribution" }).layout.texts.map((t) => t.text)).toContain("{Origin}");
   });
 
   it("writes a date field in the format it names, the century as section 7.12 chooses it", () => {
