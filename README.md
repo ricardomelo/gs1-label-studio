@@ -462,8 +462,9 @@ complete.
   SSCC alone in the lowest, the rest split as they fit the page's width; refused when the page is too short; one
   Layout, so the SVG, PNG, PDF, EPS and the files in bulk draw it; each symbol read back. In ZPL since 2 November, EPL2
   since 3 November, TSPL and DPL since 6 November for an SSCC alone (their GS1-128 carries nothing else yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
-  Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Not yet: a second
-  language for the data titles. No product or healthcare templates (the owner, 3 November 2026: every place has its
+  Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Data titles in a
+  second language since 7 November (mock-up A of two, taken under the owner's rule; B put the translation on the English
+  title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2). No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*
 - 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
   to spreadsheet columns — *barcodes and text blocks done 3 November (mock-up A of two: in step 3, "Label" offers "A

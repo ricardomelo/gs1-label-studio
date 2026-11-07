@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
-import { labelPdf, labelSvg, logisticLabel, specificationFor, type LogisticInput, type LogisticTwoD } from "../src/index.ts";
+import { DICTIONARY, labelPdf, labelSvg, logisticLabel, secondTitle, specificationFor, zplLogisticLabel, type LogisticInput, type LogisticTwoD } from "../src/index.ts";
 import { drawPdf } from "./files.ts";
 import { hriFont } from "./font.ts";
 
@@ -129,6 +129,74 @@ describe("the GS1 Logistic Label", () => {
     expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(expected);
     expect(await read(drawPdf(await labelPdf(options, layout, font), 300))).toEqual(expected);
   }, SLOW);
+
+  // A second language for the data titles (6.6.4.2: English, and a second language at the labeller's discretion)
+  it("adds a second language under each data title and under FROM and TO, the contents on a row level", async () => {
+    const label = logisticLabel({ ...INPUT, secondLanguage: "pt-BR", twoD: { symbology: "gs1-datamatrix", data: INPUT.elementString } }, font);
+    const own = label.printer.texts;
+    const at = (text: string) => own.find((t) => t.text === text)!;
+    const line = 2.5 * 1.6 / label.layout.xMm; // a title's line: 2.5 mm capitals and the gap below them
+    for (const [english, second] of [["FROM", "REMETENTE"], ["TO", "DESTINATÁRIO"], ["CONTENT", "CONTEÚDO"], ["COUNT", "QUANTIDADE"], ["BATCH/LOT", "LOTE"]] as const) {
+      expect(at(second).x).toBeCloseTo(at(english).x, 9);
+      expect(at(second).top).toBeCloseTo(at(english).top + line, 9);
+      expect(at(second).heightMm).toBe(2.5);
+    }
+    // An acronym stays one line, its content where the others' are: two title lines down, level with its row's
+    expect(own[own.indexOf(at("SSCC")) + 1]!.text).toBe("106141411234567897");
+    expect(at("106141411234567897").top).toBeCloseTo(at("SSCC").top + 2 * line, 9);
+    expect(at("24").top).toBeCloseTo(at("09506000134376").top, 9);
+    expect(at("09506000134376").top).toBeCloseTo(at("CONTENT").top + 2 * line, 9);
+    // The free text below FROM's two lines; the 2D symbol's quiet zone still clear; every symbol read back
+    expect(at("Dal Giardino S.p.A.").top).toBeCloseTo(at("FROM").top + 2 * line, 9);
+    clearOf(label, label.printer.twoD!.module);
+    const { layout, options, parts } = label;
+    const svg = labelSvg(options, layout, font);
+    const expected = [...parts.map((p) => `]C1 ${p}`), `]d2 ${INPUT.elementString}`].sort();
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(expected);
+    // A second title wider than its English one and its content (QUANTIDADE over COUNT and 24) keeps the next item clear
+    const small = logisticLabel({ ...INPUT, size: "4x6", from: [], to: [], elementString: "(00)106141411234567897(37)24(10)ABC123", secondLanguage: "pt-BR" }, font);
+    const count = small.printer.texts;
+    const lote = count.find((t) => t.text === "LOTE")!;
+    expect(lote.top).toBeCloseTo(count.find((t) => t.text === "QUANTIDADE")!.top, 9); // on the same row
+    for (const [i, a] of count.entries()) {
+      for (const b of count.slice(i + 1)) {
+        const apart = a.x + a.width <= b.x || b.x + b.width <= a.x || a.top + a.heightMm / small.layout.xMm <= b.top || b.top + b.heightMm / small.layout.xMm <= a.top;
+        expect([a.text, b.text, apart]).toEqual([a.text, b.text, true]);
+      }
+    }
+    // In Spanish; English alone without one; ZPL writes the titles in UTF-8 (^CI28)
+    const spanish = logisticLabel({ ...INPUT, secondLanguage: "es" }, font).printer.texts.map((t) => t.text);
+    expect(spanish).toEqual(expect.arrayContaining(["REMITENTE", "DESTINATARIO", "CONTENIDO", "CANTIDAD", "LOTE"]));
+    const english = logisticLabel(INPUT, font).printer.texts.map((t) => t.text);
+    expect(english.filter((t) => ["LOTE", "REMETENTE", "CONTEÚDO"].includes(t))).toEqual([]);
+    expect(english).toEqual(spanish.filter((t) => !["REMITENTE", "DESTINATARIO", "CONTENIDO", "CANTIDAD", "LOTE"].includes(t)));
+    const zpl = zplLogisticLabel(logisticLabel({ ...INPUT, secondLanguage: "pt-BR" }, font), 300, 3);
+    expect(zpl).toContain("^CI28");
+    expect(zpl).toMatch(/\^FDDESTINATÁRIO\^FS/);
+  }, SLOW);
+
+  it("names a data title in Portuguese and Spanish, an AI of its own where one title has two meanings", () => {
+    expect(secondTitle("SHIP TO LOC", "pt-BR", "410")).toBe("LOCAL DE ENTREGA");
+    expect(secondTitle("SHIP TO LOC", "pt-BR", "4305")).toBe("CIDADE DE ENTREGA");
+    expect(secondTitle("SHIP TO LOC", "es", "4305")).toBe("CIUDAD DE ENTREGA");
+    expect(secondTitle("NET WEIGHT (kg)", "es", "3102")).toBe("PESO NETO (kg)");
+    expect(secondTitle("VOLUME (l), log", "pt-BR")).toBe("VOLUME (l), log");
+    expect(secondTitle("USE BY or EXPIRY", "pt-BR")).toBe("VALIDADE");
+    expect(secondTitle("USE BY or EXPIRY", "es")).toBe("CADUCIDAD");
+    expect(secondTitle("SSCC", "pt-BR")).toBeNull();
+    expect(secondTitle("AI (99999)", "es")).toBeNull();
+    // Every title of the dictionary in both languages, or an acronym that is the same in every one: a title added to a
+    // newer dictionary fails here until it is translated or listed
+    const ACRONYMS = ["CPID", "CPV", "DIGSIG", "ESIM", "GCN", "GDTI", "GIAI", "GINC", "GMN", "GRAI", "GSIN", "GTIN", "IBAN", "IMEI",
+      "IMEI2", "ITIP", "MUDI", "NHRN AIC", "NHRN AIM", "NHRN CIP", "NHRN CN", "NHRN DRN", "NHRN NDC", "NHRN PZN", "NHRN SRN", "NSN",
+      "OPTSEN", "PCN", "PSIM", "SRIN", "SSCC", "TPX", "UIC+EXT", "VCN"];
+    const titles = new Set(Object.values(DICTIONARY.ais).map((e) => e.title).filter(Boolean));
+    for (const title of titles) {
+      const [pt, es] = [secondTitle(title, "pt-BR"), secondTitle(title, "es")];
+      if (ACRONYMS.includes(title)) expect([title, pt, es]).toEqual([title, null, null]);
+      else expect([title, typeof pt, typeof es]).toEqual([title, "string", "string"]);
+    }
+  });
 
   it("puts a line too wide for the room beside the 2D symbol below it, and refuses a page too short for both", () => {
     // On A6 the SSCC's 18 digits do not fit beside the Data Matrix: the content and count go beside it, the SSCC below

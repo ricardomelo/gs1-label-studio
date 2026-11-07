@@ -1208,6 +1208,56 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await expect(page.locator(".error.small")).toContainText("TSPL's GS1-128 is offered for an SSCC (00) alone");
 });
 
+// Item 4.1, a second language for the data titles (7 November 2026, mock-up A of two, taken under the owner's rule; B
+// put it on the English title's line): each title's second line under it, in the drawing, the ZPL and the work saved.
+test("the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on the label, in ZPL and in the work saved", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "4x6");
+  await page.fill("#opt-from", "Dal Giardino S.p.A.");
+  await expect(page.locator(".preview .error")).toHaveCount(0);
+  await expect(page.locator("#opt-logistic-second")).toHaveValue("none");
+  await expect(page.locator("#opt-logistic-second option")).toHaveText(["English only", "Português", "Español"]);
+  const plain = await page.locator(".preview .symbol svg").innerHTML();
+  // The second line takes room: with who sends it this label no longer fits its page, refused with the reason
+  await page.selectOption("#opt-logistic-second", "pt-BR");
+  await expect(page.locator(".preview .error")).toContainText("The label's text and symbols need 156 mm; the 4 × 6 in label is 152.4 mm high");
+  await page.fill("#opt-from", "");
+  await expect(page.locator(".preview .error")).toHaveCount(0);
+  await expect.poll(() => page.locator(".preview .symbol svg").innerHTML()).not.toBe(plain);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24", { timeout: 30_000 });
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const text = readFileSync((await zpl.path())!, "utf8");
+  expect(text).toContain("^CI28");
+  for (const title of ["CONTENT", "CONTEÚDO", "COUNT", "QUANTIDADE", "SSCC"]) expect(text).toContain(`^FD${title}^FS`);
+  // The work saved keeps it; Start over forgets it; Open… brings it back, and Spanish then writes its own titles
+  await on(page, "more");
+  const [saved] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save", exact: true }).click()]);
+  const savedPath = (await saved.path())!;
+  expect((JSON.parse(readFileSync(savedPath, "utf8")) as { settings: Record<string, unknown> }).settings.logisticSecond).toBe("pt-BR");
+  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByLabel("Open a saved work").setInputFiles(savedPath);
+  await expect(page.locator(".work-note")).toContainText("Opened");
+  await on(page, "label");
+  await expect(page.locator("#opt-logistic-second")).toHaveValue("pt-BR");
+  await page.selectOption("#opt-logistic-second", "es");
+  await on(page, "export");
+  const [spanish] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const es = readFileSync((await spanish.path())!, "utf8");
+  for (const title of ["CONTENIDO", "CANTIDAD"]) expect(es).toContain(`^FD${title}^FS`);
+  expect(es).not.toContain("^FDCONTEÚDO^FS");
+  // In Portuguese, the option's name and its first choice
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(page.locator('label[for="opt-logistic-second"]')).toHaveText("Títulos de dados também em");
+  await expect(page.locator("#opt-logistic-second option").first()).toHaveText("Só em inglês");
+});
+
 // Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
 test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897");

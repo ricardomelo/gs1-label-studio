@@ -316,6 +316,11 @@ describe("generating every row", () => {
     const qr = await generateBatch(sscc, { design: withQr, files: [], pattern: "{00}", pdf: false, zplDpi: 203 }, font);
     const qrFile = new TextDecoder().decode(unzip(qr.zip).get("labels_gs1-128_203dpi.zpl"));
     expect(qrFile.match(/\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/10614141123456\d{4}\?02=09506000134376&37=\d\d\^FS/g)).toHaveLength(2);
+    // With the data titles also in Spanish (6.6.4.2): on every row's label
+    const spanish: LabelDesign = { ...design, logistic: { ...design.logistic!, secondLanguage: "es" } };
+    const es = await generateBatch(sscc, { design: spanish, files: [], pattern: "{00}", pdf: false, zplDpi: 203 }, font);
+    const esFile = new TextDecoder().decode(unzip(es.zip).get("labels_gs1-128_203dpi.zpl"));
+    for (const title of ["REMITENTE", "CONTENIDO", "CANTIDAD"]) expect([title, esFile.match(new RegExp(`\\^FD${title}\\^FS`, "g"))?.length]).toEqual([title, 2]);
   }, SLOW);
 
   // A label of one's own in bulk (backlog 4.2): each row's {column} fields from its own cells, in the drawing and in

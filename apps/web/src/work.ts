@@ -1,4 +1,4 @@
-import { HRI_POSITIONS, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
+import { HRI_POSITIONS, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SECOND_LANGUAGES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
 import type { LabelSettings } from "./LabelCard.tsx";
 import { BEARER_CHOICES, ERROR_NAMES, HRI_CHOICES, LINEAR_CHOICES } from "./texts.ts";
 
@@ -18,6 +18,7 @@ const CHOICES: Partial<Record<Key, readonly string[]>> = {
   qrMode: ["auto", ...QR_MODES],
   logistic: ["none", ...Object.keys(LOGISTIC_SIZES)],
   logisticTwoD: ["none", ...LOGISTIC_TWO_D],
+  logisticSecond: ["none", ...Object.keys(SECOND_LANGUAGES)],
 };
 /** Settings that are a number or nothing (null), and the list of numbers that may be nothing too. */
 const NUMBER_OR_NULL: readonly Key[] = ["version", "linearSize", "hriHeightMm", "pngResolution"];
@@ -31,7 +32,7 @@ export const START_SETTINGS: LabelSettings = {
   symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
   linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
   hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
-  logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", designer: false, page: null, selected: null,
+  logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", logisticSecond: "none", designer: false, page: null, selected: null,
   expert: false,
 };
 

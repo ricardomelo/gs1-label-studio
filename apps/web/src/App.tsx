@@ -302,12 +302,13 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         logistic: {
           size: settings.logistic, from: settings.logisticFrom.split("\n"), to: settings.logisticTo.split("\n"),
           ...(settings.logisticTwoD !== "none" ? { twoD: settings.logisticTwoD } : {}),
+          ...(settings.logisticSecond !== "none" ? { secondLanguage: settings.logisticSecond } : {}),
         },
       }
       : {}),
     // A label of one's own (backlog 4.2): its page, the environment and table sizing its barcodes
     ...(settings.designer && settings.page ? { page: settings.page } : {}),
-  }), [settings.designer, settings.page, symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD]);
+  }), [settings.designer, settings.page, symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD, settings.logisticSecond]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {

@@ -1636,6 +1636,10 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label with its data titles also in Portuguese at 203 dpi: the titles where they belong",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › the GS1 Logistic Label with a gs1-datamatrix at 203 dpi: every symbol read back",
      "status": "passed"
     },
@@ -2057,6 +2061,14 @@
     },
     {
      "name": "the GS1 Logistic Label › places a dl-datamatrix to the right of the middle block, read back with the GS1-128",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › adds a second language under each data title and under FROM and TO, the contents on a row level",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › names a data title in Portuguese and Spanish, an AI of its own where one title has two meanings",
      "status": "passed"
     },
     {
@@ -4433,6 +4445,15 @@
     },
     {
      "name": "the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on the label, in ZPL and in the work saved",
      "status": "listed",
      "projects": [
       "desktop",

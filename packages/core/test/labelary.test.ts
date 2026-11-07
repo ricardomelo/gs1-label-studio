@@ -20,6 +20,7 @@ import {
   gs1128Modules,
   parseElementString,
   zplLogisticLabel,
+  logisticPage,
   logisticLabel,
   specificationFor,
   graphicFields,
@@ -247,6 +248,41 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     const firstBars = Math.min(...label.printer.symbols.map((s) => s.y)) * (label.layout.xMm / 25.4) * dpi;
     const lastRule = Math.max(...label.printer.rules.map((r) => r[1] + r[3])) * (label.layout.xMm / 25.4) * dpi;
     expect(lastRule).toBeLessThan(firstBars);
+  });
+
+  // Data titles in a second language (6.6.4.2), in UTF-8 (^CI28): every symbol read back; each line of the titles
+  // printed where the page puts it, its ink within the room the layout gives it, an accented capital's mark included
+  it("the GS1 Logistic Label with its data titles also in Portuguese at 203 dpi: the titles where they belong", { timeout: 60000 }, async () => {
+    const dpi = 203;
+    const label = logisticLabel({
+      elementString: "(00)106141411234567897(02)09506000134376(37)24(10)ABC123", size: "a5", spec: specificationFor(5, "gs1-128")!, table: 5,
+      percent: 100, from: ["Dal Giardino S.p.A."], to: ["Supermercado CD 12"], secondLanguage: "pt-BR",
+    }, hriFont());
+    const zpl = zplLogisticLabel(label, dpi, snapToDots(0.495, dpi).dots);
+    expect(zpl).toMatch(/\^A0N,\d+,\d+\^FDCONTEÚDO\^FS/);
+    const page = logisticPage(label, dpi, snapToDots(0.495, dpi).dots);
+    const png = await labelaryPng(zpl, dpi, page.widthDots, page.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4 });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(label.parts.map((p) => `]C1 ${p}`).sort());
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - page.widthDots) / 2);
+    const dark = (x: number, y: number) => grey[y * width + x + offset]! < 128;
+    const ink = (x0: number, y0: number, x1: number, y1: number) => {
+      let n = 0;
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) if (dark(x, y)) n++;
+      return n;
+    };
+    for (const title of ["REMETENTE", "DESTINATÁRIO", "CONTEÚDO", "QUANTIDADE", "LOTE"]) {
+      const t = page.texts.find((line) => line.text === title)!;
+      expect([title, ink(t.x, t.y, t.x + t.widthDots, t.y + t.heightDots) > 20]).toEqual([title, true]);
+      // Nothing beyond its room on its line, nor in the gap between it and the English title above
+      expect([title, ink(t.x + t.widthDots + 2, t.y, t.x + t.widthDots + 12, t.y + t.heightDots)]).toEqual([title, 0]);
+    }
+    // The acute accent over CONTEÚDO's U: ink above its capitals, where CONTENT above has none
+    const conteudo = page.texts.find((line) => line.text === "CONTEÚDO")!;
+    const content = page.texts.find((line) => line.text === "CONTENT")!;
+    expect(ink(conteudo.x, conteudo.y - 5, conteudo.x + conteudo.widthDots, conteudo.y - 1)).toBeGreaterThan(0);
+    expect(ink(content.x, content.y - 5, content.x + content.widthDots, content.y - 1)).toBe(0);
   });
 
   // With a 2D symbol beside the middle block (6.6.4.1.1): a ^BX or ^BQ at whole dots within table 5's X-dimensions,

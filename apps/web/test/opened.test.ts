@@ -13,7 +13,7 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
     const settings: LabelSettings = {
       ...START_SETTINGS, symbology: "gs1-128", environment: "distribution", size: 50, hri: "key", version: 7, error: "q",
       gs1128Starts: [0, 3], hriPosition: "split", hriHeightMm: 3, qrMode: "numeric", logistic: "4x6", logisticFrom: "A\nB",
-      logisticTwoD: "dl-qrcode", designer: true, page: PAGE, selected: "t", expert: true, dpi: 300, bearer: "bars",
+      logisticTwoD: "dl-qrcode", logisticSecond: "es", designer: true, page: PAGE, selected: "t", expert: true, dpi: 300, bearer: "bars",
     };
     const saved = savedSettings(settings);
     expect(Object.keys(saved)).not.toContain("page");
@@ -24,7 +24,7 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
 
   it("keep the editor's own where a setting is unknown, of another kind or a choice not offered", () => {
     const opened = openedSettings(
-      { symbology: "aztec", size: "100", hri: "all", version: "7", error: "x", gs1128Starts: 3, expert: 1, stem: null, futureSetting: true, designer: true, qrMode: "kanji" },
+      { symbology: "aztec", size: "100", hri: "all", version: "7", error: "x", gs1128Starts: 3, expert: 1, stem: null, futureSetting: true, designer: true, qrMode: "kanji", logisticSecond: "de" },
       null,
       START_SETTINGS,
     );

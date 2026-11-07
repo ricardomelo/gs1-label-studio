@@ -576,6 +576,8 @@
  "Test print ({language})": "Impresión de prueba ({language})",
  "For the print files: the printer's language, resolution and print width, and how many whole dots each module takes.": "Para los archivos de impresión: el lenguaje, la resolución y el ancho de impresión de la impresora, y cuántos puntos enteros ocupa cada módulo.",
  "2D symbol beside the data": "Símbolo 2D junto a los datos",
+ "Data titles also in": "Títulos de datos también en",
+ "English only": "Solo en inglés",
  "{name} goes past the label's edge.": "{name} sobrepasa el borde de la etiqueta.",
  "{a} and {b} overlap: a barcode's quiet zones must stay clear.": "{a} y {b} se superponen: las zonas de silencio de un código de barras deben quedar libres.",
  "A label of my own {w} × {h} mm · {symbols}": "Etiqueta propia {w} × {h} mm · {symbols}",

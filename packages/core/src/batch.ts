@@ -15,7 +15,7 @@ import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { columnCell, designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
-import { logisticLabel, logisticPage, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
+import { logisticLabel, logisticPage, type LogisticLabel, type LogisticSize, type LogisticTwoD, type SecondLanguage } from "./logistic.ts";
 import { pictureBitmap, redithered, resample } from "./picture.ts";
 import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel, eplPage } from "./epl.ts";
@@ -58,7 +58,7 @@ export interface LabelDesign {
    * A GS1 Logistic Label rather than the symbol alone (backlog 4.1): its size and free text, GS1-128 at `spec`, and a 2D
    * symbol beside the middle block if asked for (QR at `error`).
    */
-  logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[]; twoD?: LogisticTwoD };
+  logistic?: { size: LogisticSize; from: readonly string[]; to: readonly string[]; twoD?: LogisticTwoD; secondLanguage?: SecondLanguage };
   /** A label of one's own (backlog 4.2): barcodes and text blocks on a page, sized by `environment` and `table`. */
   page?: DesignPage;
   /** The symbol carries the GTIN alone (an EAN-13 chosen alone in step 2): the other element strings are left out. */
@@ -99,6 +99,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
       elementString: identified.elementString, size: design.logistic.size, spec: design.spec,
       ...(design.table ? { table: design.table } : {}), percent: design.size, from: design.logistic.from, to: design.logistic.to,
       ...(design.logistic.twoD ? { twoD: { symbology: design.logistic.twoD, data: dataFor(design.logistic.twoD, identified), error: design.error } } : {}),
+      ...(design.logistic.secondLanguage ? { secondLanguage: design.logistic.secondLanguage } : {}),
     }, font);
     return { data: identified.elementString, options: logistic.options, layout: logistic.layout, geometry: encode("gs1-128", logistic.parts.at(-1)!), logistic };
   }

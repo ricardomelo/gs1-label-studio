@@ -3,6 +3,7 @@ import {
   ERROR_LEVELS,
   LOGISTIC_SIZES,
   LOGISTIC_TWO_D,
+  SECOND_LANGUAGES,
   linearSizesFor,
   linearXDimension,
   snapToDots,
@@ -14,6 +15,7 @@ import {
   type QrMode,
   type LogisticSize,
   type LogisticTwoD,
+  type SecondLanguage,
   parseElementString,
   type DesignPage,
   type PlacedElement,
@@ -74,6 +76,8 @@ export interface LabelSettings {
   logisticTo: string;
   /** A 2D symbol to the right of the label's middle block (General Specifications 6.6.4.1.1). */
   logisticTwoD: "none" | LogisticTwoD;
+  /** The data titles also in a second language, under the English ones (General Specifications 6.6.4.2). */
+  logisticSecond: "none" | SecondLanguage;
   /** A label of one's own (backlog 4.2): on or off, its page (kept when off) and the element chosen on it. */
   designer: boolean;
   page: DesignPage | null;
@@ -420,6 +424,15 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                         <option value="none">{t("None")}</option>
                         {LOGISTIC_TWO_D.map((id) => (
                           <option key={id} value={id}>{tm(SYMBOLOGIES[id].name)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="opt-logistic-second">{t("Data titles also in")}</label>
+                      <select id="opt-logistic-second" value={s.logisticSecond} onChange={(e) => set("logisticSecond", e.target.value as "none" | SecondLanguage)}>
+                        <option value="none">{t("English only")}</option>
+                        {Object.entries(SECOND_LANGUAGES).map(([id, name]) => (
+                          <option key={id} value={id} lang={id}>{name}</option>
                         ))}
                       </select>
                     </div>

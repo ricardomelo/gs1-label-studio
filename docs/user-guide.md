@@ -428,13 +428,20 @@ correctly is refused with the reason, never printed wrong (section 16). How to u
 For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6) in A6 (105 × 148 mm), 4 × 6 in, A5
 (148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it. **2D symbol beside the data** adds
 a QR code or a Data Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix with the element string, to the right of
-the middle block (6.6.4.1.1).
+the middle block (6.6.4.1.1). **Data titles also in** adds Portuguese or Spanish to the English data titles (6.6.4.2:
+English unless the trading partners agree on another language, and a second one at the labeller's discretion).
 
 ![A GS1 Logistic Label in A5](images/guide/logistic-label.png)
 
 - The top block: the free text, 3.5 mm high.
 - The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high. A content wider than the label (an 18-digit SSCC is 102 mm at 7 mm, wider
   than a 4 × 6 in label) takes 2 mm margins and is made just small enough to fit.
+- With a second language, each title has its translation on a line of its own under it (CONTENT, then CONTEÚDO or
+  CONTENIDO), and so have FROM and TO (REMETENTE, DESTINATÁRIO; REMITENTE, DESTINATARIO); a title that is the same in
+  every language, such as SSCC or GTIN, stays one line, its content level with the others on its row. The second line
+  takes 4 mm a row, so a label that was just full may then need the larger size. The translations are drafts, to be
+  reviewed by native speakers. ZPL prints their accents (UTF-8, checked through Labelary) and TSPL declares UTF-8;
+  EPL2 and DPL files carry them in UTF-8 too, which a printer set to another code page may print otherwise.
 - The 2D symbol, if chosen: at the middle block's top right, at table 5's X-dimension (0.743 mm at 100 %, growing with
   **Size** as GS1-128 does), its quiet zone clear of the text; a line too wide for the room beside it goes below it.
   It carries every element string, which the GS1-128 symbols already show as text, so it has no text of its own. The
@@ -450,8 +457,7 @@ printer's font that fits the room the layout gives it, and a Data Matrix with th
 EPL2 refuses an element string of no predefined length that is not the last of its symbol (as `(37)` before `(10)`),
 a GS1 DataMatrix and a QR code, saying why. In TSPL and DPL for an SSCC alone, the element string their GS1-128
 carries: the same text, rules and 2D symbol, with what each refuses for a symbol alone refused here too (other element
-strings, a GS1 QR Code; in DPL a GS1 DataMatrix). A ZPL template does not write it yet (its PDF prints it). Data
-titles in a second language are not there yet.
+strings, a GS1 QR Code; in DPL a GS1 DataMatrix). A ZPL template does not write it yet (its PDF prints it).
 
 ## 10. Printer (ZPL, TSPL, EPL2, DPL)
 

@@ -276,4 +276,7 @@
 - A date's time in bulk (backlog 4.2, 7 November): (7003), (4324), (4325), (7011) and (8008) keep a time after the
   date in a cell, `31/12/2027 15:30` → 2712311530, (8008) with its seconds; (7011), whose time is optional, leaves out
   a midnight exported with its seconds. An Excel workbook's date cell keeps the time its format shows; it was dropped.
+- Data titles in a second language on the GS1 Logistic Label (backlog 4.1, 7 November): **Data titles also in**
+  Portuguese or Spanish puts each data title's translation under the English one, and FROM's and TO's (General
+  Specifications 6.6.4.2), in the drawing, the print files, bulk and the work saved; the translations are drafts.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

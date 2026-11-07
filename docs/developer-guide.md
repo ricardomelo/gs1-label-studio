@@ -54,7 +54,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | Path | What |
 |---|---|
 | `packages/core/src/` | The core's modules (section 5); `index.ts` exports its API |
-| `packages/core/src/data/` | `gs1_dictionary.json` (the GS1 Barcode Syntax Dictionary as the resolver read it, release 1.4.1) and `epc_schemes.json` (the EPC schemes derived from GS1's Tag Data Translation artefacts) |
+| `packages/core/src/data/` | `gs1_dictionary.json` (the GS1 Barcode Syntax Dictionary as the resolver read it, release 1.4.1) `epc_schemes.json` (the EPC schemes derived from GS1's Tag Data Translation artefacts) and `data_titles.json` (the data titles in Portuguese and Spanish for the GS1 Logistic Label, keyed by the English title, an AI in brackets where one title has two meanings; drafts by Claude) |
 | `packages/core/assets/fonts/` | Liberation Sans (SIL Open Font License), for the human readable text as outlines |
 | `packages/core/test/` | Vitest tests (`*.test.ts`), helpers (`files.ts`, `font.ts`, `png.ts`, `resolver.ts`) and fixtures |
 | `packages/core/test/fixtures/resolver/` | The resolver's own answers, written by `scripts/resolver-reference/golden.py` |
@@ -153,7 +153,7 @@ Each module, in the order of the flow above.
 | `linear.ts` | EAN/UPC as the resolver encoded them: guard bars, digits, quiet zones (`encodeLinear`, `symbolFor`) |
 | `layout.ts` | `layoutLabel` (the resolver's `_layout` and `_place_linear`, and `layoutBars` for symbols sized by their table's row), `labelSvg`, the text's position and height, bar width reduction, ITF-14's bearer bars |
 | `gs1128.ts` | `splitGs1128` and `dataCharacters` (48 data characters and 165.10 mm a symbol); the stack is laid out by `layout.ts` |
-| `logistic.ts` | `logisticLabel`: the GS1 Logistic Label as one `Layout` (6.6) |
+| `logistic.ts` | `logisticLabel`: the GS1 Logistic Label as one `Layout` (6.6), its data titles also in a second language (`secondTitle`) |
 | `design.ts` | `designLabel`: a label of one's own, barcodes, text blocks, lines, boxes and images placed on a page, each barcode, text block and image turned or not (`turnedRect`), as one `Layout` (backlog 4.2) |
 | `picture.ts` | `pictureOf`, `pictureBitmap`, `resample`, `bitmapRects`, `turnedPicture`: an image as a one-bit picture, at a printer's dots, as rectangles, turned |
 | `hri.ts` | `HriFont`: Liberation Sans through opentype.js, contours drawn as fontTools does, glyph points cached |
@@ -281,10 +281,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 14 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 69 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 70 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
-| `logistic` | the GS1 Logistic Label | 8 |
+| `logistic` | the GS1 Logistic Label | 10 |
 | `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 16 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 68 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 69 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 
@@ -338,7 +338,8 @@ The core's and the web application's unit tests run with `pnpm test` (Vitest); t
 - **A printer language.** Follow ADR 0002: the printer's own commands, each symbol proven by a test that prints it and
   reads it back, refusals with their reason; a profile per language in `printer.ts`.
 - **An AI or a key.** The Syntax Engine and the dictionary file decide; update `gs1encoder` and
-  `src/data/gs1_dictionary.json` together and run the tests of `identify`, `identifiers` and `attributes`.
+  `src/data/gs1_dictionary.json` together and run the tests of `identify`, `identifiers` and `attributes`; a new data
+  title fails `logistic` until `src/data/data_titles.json` translates it or the test lists it as an acronym.
 - **A screen.** Mock-ups first (Playwright screenshots of the real application), then the component in `apps/web/src`,
   a browser test in `e2e/editor.spec.ts`, and its screenshots for the user guide.
 - **A text.** In English through `t("…")` (a constant marked `en("…")` or kept in `src/texts.ts`), with its

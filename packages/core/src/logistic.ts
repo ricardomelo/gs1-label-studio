@@ -8,6 +8,7 @@ import { hriTextDots, PrinterUnsupportedError, type PrintPage } from "./printers
 import { layoutLabel, symbolMatrix, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import { baseX, specificationFor, specSizesFor, type SymbolSpecification } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
+import SECOND_TITLES from "./data/data_titles.json";
 
 // The GS1 Logistic Label (backlog 4.1; General Specifications 26.0, section 6.6): a page of A6 or 4 × 6 inches with
 // its building blocks from the top — free text (who sends, who receives), text with data titles, and at the bottom the
@@ -35,6 +36,25 @@ const BLOCK_GAP_MM = 3;
 const TWO_D_GAP_MM = 3; // between the middle block's text and the 2D symbol's quiet zone
 
 /**
+ * The languages a label's data titles can add to English (6.6.4.2: "If there is no other language agreed between
+ * trading partners, data titles must be printed in English. As an option left at the discretion of the labeller, a
+ * second language can be added"), each named in itself.
+ */
+export const SECOND_LANGUAGES = { "pt-BR": "Português", es: "Español" } as const;
+export type SecondLanguage = keyof typeof SECOND_LANGUAGES;
+
+/**
+ * A data title in a second language (`data/data_titles.json`, drafts by Claude to be reviewed by native speakers):
+ * the AI's own entry where one English title has two meanings ((4305) SHIP TO LOC is a town, (410)'s a GLN), else the
+ * English title's; also the label's own FROM and TO. Null where the title is the same in every language, an acronym
+ * such as SSCC or GTIN.
+ */
+export function secondTitle(english: string, language: SecondLanguage, ai?: string): string | null {
+  const titles = (SECOND_TITLES as Record<SecondLanguage, Record<string, string>>)[language];
+  return (ai !== undefined ? titles[`(${ai})`] : undefined) ?? titles[english] ?? null;
+}
+
+/**
  * The 2D symbols table 5 allows beside the GS1-128: GS1 DataMatrix with the element string, and a QR code or a Data
  * Matrix with its GS1 Digital Link URI (GS1 QR Code is not offered: ADR 0003).
  */
@@ -58,6 +78,8 @@ export interface LogisticInput {
    * same percentage of that row's target as GS1-128 of its own: 0.743 mm at 100 %.
    */
   twoD?: { symbology: LogisticTwoD; data: string; error?: ErrorLevel };
+  /** A second language for the data titles and the top block's FROM and TO, each under its English title (6.6.4.2). */
+  secondLanguage?: SecondLanguage;
 }
 
 /** A line of the label's own text (not a symbol's): its left edge and its capitals' top, in the label's units. */
@@ -166,12 +188,20 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   let y = u(MARGIN_MM);
   const from = (input.from ?? []).map((l) => l.trim()).filter(Boolean);
   const to = (input.to ?? []).map((l) => l.trim()).filter(Boolean);
+  const second = input.secondLanguage;
+  // A title's lines: the English one, then the second language's where it differs (an acronym stays one line)
+  const titleLines = (title: string, ai?: string) => {
+    const other = second ? secondTitle(title, second, ai) : null;
+    return other ? [title, other] : [title];
+  };
   if (from.length || to.length) {
     const column = (title: string, lines: string[], x: number) => {
       let cy = y;
       if (!lines.length) return cy;
-      text(title, x, cy, DATA_TITLE_MM);
-      cy += u(DATA_TITLE_MM * 1.6);
+      for (const line of titleLines(title)) {
+        text(line, x, cy, DATA_TITLE_MM);
+        cy += u(DATA_TITLE_MM * 1.6);
+      }
       for (const line of lines) {
         text(line, x, cy, FREE_TEXT_MM);
         cy += u(FREE_TEXT_MM * 1.5);
@@ -185,16 +215,18 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
 
   // Middle block: each element string's data title above its content, as many on a row as fit (6.6.4.2, 6.6.4.3)
   const items = elements.map((e) => {
-    const title = aiEntry(e.ai)?.title ?? `AI (${e.ai})`;
+    const titles = titleLines(aiEntry(e.ai)?.title ?? `AI (${e.ai})`, e.ai);
     // A content wider than the page with its margins takes narrower margins, and a smaller height only when even they fail
     const room = width - 2 * u(NARROW_MARGIN_MM);
     const content = Math.min(DATA_CONTENT_MM, (DATA_CONTENT_MM * room) / font.textWidth(e.value, em(DATA_CONTENT_MM)));
-    return { title, value: e.value, content, w: Math.max(font.textWidth(title, em(DATA_TITLE_MM)), font.textWidth(e.value, em(content))) };
+    return { titles, value: e.value, content, w: Math.max(...titles.map((t) => font.textWidth(t, em(DATA_TITLE_MM))), font.textWidth(e.value, em(content))) };
   });
   // The block's left edge: the margin, or as far left as its widest line needs
   const left = Math.max(u(NARROW_MARGIN_MM), Math.min(u(MARGIN_MM), width - u(NARROW_MARGIN_MM) - Math.max(...items.map((i) => i.w))));
   const right = width - left;
-  const rowHeight = u(DATA_TITLE_MM * 1.6 + DATA_CONTENT_MM * 1.3);
+  // With a second language every row keeps room for two title lines, so that the contents on a row stay level
+  const titleRoom = DATA_TITLE_MM * 1.6 * (second ? 2 : 1);
+  const rowHeight = u(titleRoom + DATA_CONTENT_MM * 1.3);
 
   // The 2D symbol at the block's top right, its quiet zone kept clear of the rule above and of the page's edge
   let twoD: LogisticLabel["printer"]["twoD"];
@@ -254,8 +286,8 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
         waiting.push(item);
         return;
       }
-      text(item.title, x, rowTop, DATA_TITLE_MM);
-      text(item.value, x, rowTop + u(DATA_TITLE_MM * 1.6), item.content);
+      item.titles.forEach((title, line) => text(title, x, rowTop + u(DATA_TITLE_MM * 1.6 * line), DATA_TITLE_MM));
+      text(item.value, x, rowTop + u(titleRoom), item.content);
       x += item.w + u(6);
       textBottom = rowTop + rowHeight;
       return;
