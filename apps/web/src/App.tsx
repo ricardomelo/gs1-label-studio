@@ -24,6 +24,7 @@ import {
   identify,
   InputError,
   labelFor,
+  patternFields,
   patternName,
   zplOptionsFor,
   printFileFor,
@@ -955,6 +956,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
                   left={batchRows.length - readyRows.length}
                   example={(pattern) => readyRows[0] ? patternName(pattern, readyRows[0].row, symbology, readyRows[0].identified!, readyRows[0].cells) : null}
                   columns={edited?.headers ?? []}
+                  fields={readyRows[0] && edited ? patternFields(readyRows[0], symbology, fieldColumns(edited.headers, mapping).map((c) => c.name)) : []}
                   dpi={settings.dpi}
                   {...(view.widthMm && view.heightMm ? { labelMm: [view.widthMm, view.heightMm] as const } : {})}
                   progress={progress}

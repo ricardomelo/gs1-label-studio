@@ -386,6 +386,39 @@ export function patternProblem(pattern: string, columns: readonly string[] = [])
 }
 
 /**
+ * The names a pattern may take, each with what it gives for `row` (before the file system's safe name), for the screen's
+ * list: {row}, {symbol}, {key}, each AI of the row's data, then each of the spreadsheet's `columns` (headers) that the
+ * pattern reads as a column, once, its case aside; a header read as an AI or named row, symbol or key is left out, as
+ * the pattern would read it as that name, and so is an empty one or one holding a brace.
+ */
+export function patternFields(row: BatchRow, symbology: SymbologyId, columns: readonly string[] = []): { field: string; value: string }[] {
+  const elements = row.identified?.elements ?? [];
+  const seen = new Set<string>();
+  const headers = columns.flatMap((column) => {
+    const name = column.trim();
+    const key = name.toLowerCase();
+    if (!name || /[{}]/.test(name) || ["row", "symbol", "key"].includes(name) || /^\d{2,4}$/.test(name) || seen.has(key)) return [];
+    seen.add(key);
+    return [{ field: `{${name}}`, value: columnCell(row.cells, name) ?? "" }];
+  });
+  return [
+    { field: "{row}", value: String(row.row) },
+    { field: "{symbol}", value: symbology },
+    { field: "{key}", value: elements[0]?.value ?? "" },
+    ...elements.map((e) => ({ field: `{${e.ai}}`, value: e.value })),
+    ...headers,
+  ];
+}
+
+/**
+ * A name added at the end of a pattern, after an underscore unless the pattern is empty or already ends in a separator
+ * ('-', '_', '.' or a space): "{symbol}_{key}" and "{10}" give "{symbol}_{key}_{10}".
+ */
+export function addToPattern(pattern: string, field: string): string {
+  return !pattern || /[-_. ]$/.test(pattern) ? pattern + field : `${pattern}_${field}`;
+}
+
+/**
  * A row's file name, without its extension: the pattern's names replaced, then made safe for a file system. A name that
  * is neither {row}, {symbol}, {key} nor an AI is a column's header: the row's cell under it (`columnCell`, from `cells`).
  * Letters lose their accents.

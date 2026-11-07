@@ -649,5 +649,7 @@
  "Lighter": "Mais clara",
  "Darker": "Mais escura",
  "Darker prints more of the image's light colours in black; lighter, fewer.": "Mais escura imprime em preto mais das cores claras da imagem; mais clara, menos.",
- "To change its darkness, choose its file again with Replace…: the work keeps only the black and white.": "Para mudar o escurecimento, escolha o arquivo de novo em Trocar…: o trabalho guarda só o preto e branco."
+ "To change its darkness, choose its file again with Replace…: the work keeps only the black and white.": "Para mudar o escurecimento, escolha o arquivo de novo em Trocar…: o trabalho guarda só o preto e branco.",
+ "Insert a name": "Inserir um nome",
+ "(empty on the first row)": "(vazio na primeira linha)"
 }

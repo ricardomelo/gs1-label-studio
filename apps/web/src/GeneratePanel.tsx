@@ -1,4 +1,5 @@
 import {
+  addToPattern,
   DEFAULT_PATTERN,
   fitsSheet,
   LABEL_SHEETS,
@@ -26,6 +27,8 @@ interface Props {
   example: (pattern: string) => string | null;
   /** The spreadsheet's headers: a column's header in braces names the files by the row's cell. */
   columns: readonly string[];
+  /** The names offered for the pattern, each with the first row's value (`patternFields`). */
+  fields: readonly { field: string; value: string }[];
   dpi: number;
   /** The label shown, in mm at 100 %: whether it fits the sheet's labels. */
   labelMm?: readonly [number, number];
@@ -81,7 +84,30 @@ function Num({ id, label, value, onChange }: { id: string; label: string; value:
   );
 }
 
-export function GeneratePanel({ ready, left, example, columns, dpi, labelMm, progress, result, error, onGenerate, onCancel, languageName }: Props) {
+/**
+ * "Insert a name" (backlog 4.2, mock-up A of two, 7 November 2026; B offered each name as a button): the studio's names,
+ * the first row's AIs and the spreadsheet's columns, each with the first row's value, as the designer's "Insert a field".
+ */
+function NameInsert({ fields, onInsert }: { fields: readonly { field: string; value: string }[]; onInsert: (field: string) => void }) {
+  const columns = fields.filter((f) => !/^\{(row|symbol|key|\d{2,4})\}$/.test(f.field));
+  const option = ({ field, value }: { field: string; value: string }) => (
+    <option key={field} value={field}>
+      {field} — {value || t("(empty on the first row)")}
+    </option>
+  );
+  return (
+    <>
+      <label htmlFor="gen-field">{t("Insert a name")}</label>
+      <select id="gen-field" value="" onChange={(e) => e.target.value && onInsert(e.target.value)}>
+        <option value="">{t("Choose…")}</option>
+        {fields.filter((f) => !columns.includes(f)).map(option)}
+        {columns.length > 0 && <optgroup label={t("Columns of the spreadsheet")}>{columns.map(option)}</optgroup>}
+      </select>
+    </>
+  );
+}
+
+export function GeneratePanel({ ready, left, example, columns, fields, dpi, labelMm, progress, result, error, onGenerate, onCancel, languageName }: Props) {
   const [choice, setChoice] = useState<Kept>(kept);
   const [start, setStart] = useState(1);
   const update = (next: Partial<Kept>) => {
@@ -131,6 +157,7 @@ export function GeneratePanel({ ready, left, example, columns, dpi, labelMm, pro
           <label htmlFor="gen-pattern">{t("File names")}</label>
           <input id="gen-pattern" className="mono" value={choice.pattern} spellCheck={false}
             aria-invalid={Boolean(patternProblem(choice.pattern, columns))} onChange={(e) => update({ pattern: e.target.value })} />
+          {fields.length > 0 && <NameInsert fields={fields} onInsert={(field) => update({ pattern: addToPattern(choice.pattern, field) })} />}
           <div className="hint">
             {t(GENERATE_TEXTS.pattern)}
             {first ? ` ${t("First: {name}", { name: `${first}.${choice.files[0]}` })}` : ""}

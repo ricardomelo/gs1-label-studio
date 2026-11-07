@@ -13,7 +13,7 @@ import {
   labelPdf,
   parseDelimited,
   patternName,
-  patternProblem,
+  addToPattern, patternFields, patternProblem,
   pdfDocument,
   pdfContent,
   printFileFor,
@@ -179,6 +179,34 @@ describe("file names", () => {
       "Not a name the pattern knows: {Cor}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.");
     expect(patternProblem("{Produto}_{}", headers)).toMatch(/knows: \{\}\./); // an empty header is no name
     expect(patternProblem("{Produto}")).toMatch(/knows: \{Produto\}\./); // no spreadsheet
+  });
+
+  it("offers each name a pattern may take with the row's value, leaving out the headers it would read as another name, and adds one after a separator", () => {
+    const identified = engine.parse("(01)09506000134376(10)B42(17)271231") as never;
+    const cells = { GTIN: "09506000134376", " Produto ": "Feijão Tropeiro", Região: "", "10": "ten", Row: "R", PRODUTO: "x" };
+    const headers = ["GTIN", " Produto ", "Região", "10", "row", "Row", "PRODUTO", "", "{a}", "key", "symbol"];
+    const fields = patternFields({ row: 7, identified, cells }, "dl-qrcode", headers);
+    expect(fields).toEqual([
+      { field: "{row}", value: "7" },
+      { field: "{symbol}", value: "dl-qrcode" },
+      { field: "{key}", value: "09506000134376" },
+      { field: "{01}", value: "09506000134376" },
+      { field: "{10}", value: "B42" },
+      { field: "{17}", value: "271231" },
+      { field: "{GTIN}", value: "09506000134376" },
+      { field: "{Produto}", value: "Feijão Tropeiro" }, // trimmed, and PRODUTO, the same name, offered once
+      { field: "{Região}", value: "" },
+      { field: "{Row}", value: "R" }, // the pattern reads {Row}, unlike {row}, as a column
+    ]);
+    // Every name offered is one the pattern knows, and gives the value offered
+    for (const { field, value } of fields) {
+      expect(patternProblem(field, headers), field).toBeNull();
+      expect(patternName(field, 7, "dl-qrcode", identified, cells), field).toBe(value ? patternName(value.replace(/[{}]/g, ""), 0, "dl-qrcode", identified) : "row-7");
+    }
+    expect(["", "{01}", "{01}_", "{01}-", "{01}.", "{01} "].map((p) => addToPattern(p, "{10}"))).toEqual([
+      "{10}", "{01}_{10}", "{01}_{10}", "{01}-{10}", "{01}.{10}", "{01} {10}",
+    ]);
+    expect(patternFields({ row: 3 }, "gs1-128").map((f) => f.field + "=" + f.value)).toEqual(["{row}=3", "{symbol}=gs1-128", "{key}="]); // no data, no columns
   });
 });
 

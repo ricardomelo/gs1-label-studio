@@ -481,6 +481,43 @@ test("in bulk: a column's header in the file names pattern names each row's file
     "O nome não é conhecido pelo padrão: {Cor}. Use {row}, {symbol}, {key}, um AI como {01} ou {10}, ou o cabeçalho de uma coluna como {Produto}.");
 });
 
+// Item 4.2 (mock-up A of two, 7 November 2026): the names a pattern may take offered in a list, as the designer's fields.
+test("in bulk: a name inserted from a list into the file names pattern, with the first row's value", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\tProduto\tRegião\n09506000134352\t\tPesto\t\n09506000134376\tB42\tFeijão Tropeiro\tSul\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await on(page, "export");
+  const panel = page.locator(".generate");
+  const list = page.locator("#gen-field");
+  // The studio's names and the first row's AIs, then the columns holding no AI; the lot's column is (10), not a column
+  await expect(list.locator("option")).toHaveText([
+    "Choose…", "{row} — 2", "{symbol} — dl-qrcode", "{key} — 09506000134352", "{01} — 09506000134352",
+    "{Produto} — Pesto", "{Região} — (empty on the first row)",
+  ]);
+  await expect(list.locator("optgroup")).toHaveAttribute("label", "Columns of the spreadsheet");
+  await expect(list.locator("optgroup option")).toHaveText(["{Produto} — Pesto", "{Região} — (empty on the first row)"]);
+  await page.locator("#gen-pattern").fill("{01}");
+  await list.selectOption("{Produto}");
+  await expect(page.locator("#gen-pattern")).toHaveValue("{01}_{Produto}");
+  await expect(list).toHaveValue(""); // ready for the next name
+  await page.locator("#gen-pattern").fill("{Produto}-");
+  await list.selectOption("{row}");
+  await expect(page.locator("#gen-pattern")).toHaveValue("{Produto}-{row}");
+  await expect(panel).toContainText("First: Pesto-2.svg");
+  await page.locator("#gen-pattern").fill("");
+  await list.selectOption("{Região}");
+  await expect(page.locator("#gen-pattern")).toHaveValue("{Região}");
+  await expect(panel.locator(".error")).toHaveCount(0);
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "export");
+  await expect(page.locator("label[for=gen-field]")).toHaveText("Inserir um nome");
+  await expect(list.locator("optgroup")).toHaveAttribute("label", "Colunas da planilha");
+  await expect(list.locator("option").last()).toHaveText("{Região} — (vazio na primeira linha)");
+});
+
 // Item 2.1 (mock-up A of 29 October 2026): in bulk, rows from a file or pasted, their columns, the row shown.
 test("in bulk: an Excel workbook's rows, columns guessed from their headers, each row drawn and checked", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();

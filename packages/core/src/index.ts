@@ -235,9 +235,11 @@ export {
   type RowStatus,
 } from "./report.ts";
 export {
+  addToPattern,
   DEFAULT_PATTERN,
   generateBatch,
   labelFor,
+  patternFields,
   patternName,
   patternProblem,
   upperCaseDomain,

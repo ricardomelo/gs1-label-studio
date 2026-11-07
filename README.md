@@ -511,8 +511,10 @@ complete.
   text block to the nearest text height. A date's time since 7 November (the recommended of two, taken under the
   owner's rule: `hh`, `mm` and `ss` in lower case, so that `MM` stays the month; the other was `HH` and `MI`): Insert a
   field offers a date followed by a time, such as (7003) or (8008), also as `{7003:DD/MM/YYYY hh:mm}` and three other
-  formats, with seconds where the AI has them; a part the value lacks is left out with the text before it. Saving the
-  label is 4.3*
+  formats, with seconds where the AI has them; a part the value lacks is left out with the text before it. Names
+  offered for the bulk file names since 7 November (mock-up A of two, taken under the owner's rule; B offered each
+  name as a button): **Insert a name** under File names lists `{row}`, `{symbol}`, `{key}`, the first row's AIs and the
+  columns holding no AI, each with the first row's value, and adds the one chosen at the end. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

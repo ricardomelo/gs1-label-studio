@@ -248,6 +248,10 @@
      "status": "passed"
     },
     {
+     "name": "file names › offers each name a pattern may take with the row's value, leaving out the headers it would read as another name, and adds one after a separator",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › makes each row's files, numbers repeated names, leaves out errors and skipped rows, and lists them all",
      "status": "passed"
     },
@@ -4110,6 +4114,15 @@
     },
     {
      "name": "in bulk: a column's header in the file names pattern names each row's files by its cell",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a name inserted from a list into the file names pattern, with the first row's value",
      "status": "listed",
      "projects": [
       "desktop",

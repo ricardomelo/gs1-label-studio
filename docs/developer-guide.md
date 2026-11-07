@@ -269,7 +269,7 @@ that say what is true; together they are the [inventory of features](test-invent
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 14 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 15 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 39 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 61 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 62 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

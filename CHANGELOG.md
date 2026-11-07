@@ -254,4 +254,7 @@
 - A date's time in a field (backlog 4.2, 7 November): a date followed by a time, such as (7003) or (8008), takes `hh`,
   `mm` and `ss` after its date, `{7003:DD/MM/YYYY hh:mm}` → *31/12/2027 15:30*, offered by *Insert a field from the
   data*; a part the value lacks, as (7011) without its time, is left out with the text before it.
+- Names offered for the file names (backlog 4.2, 7 November): in bulk, **Insert a name** under **File names** lists
+  `{row}`, `{symbol}`, `{key}`, the first row's AIs and the columns holding no AI, each with the first row's value, and
+  adds the one chosen at the end of the pattern.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

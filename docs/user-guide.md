@@ -564,7 +564,10 @@ Under the Export bar, **Generate in bulk** draws the label shown, with its optio
 - **A file a row**: SVG, PNG, PDF and/or EPS, named by **File names** — `{row}`, `{symbol}`, `{key}`, any AI such as
   `{01}` or `{10}`, or any column's header such as `{Produto}` (the row's cell under it, the header's case and the
   spaces around it aside; accents are dropped, as file names keep plain letters); a name repeated is numbered. The
-  first name is shown.
+  first name is shown. **Insert a name** lists the names the pattern can take, each with the first row's value:
+  `{row}`, `{symbol}`, `{key}`, the AIs of the first row's data, and under *Columns of the spreadsheet* each column
+  holding no AI; the name chosen goes at the end of the pattern, after an underscore unless the pattern ends in `-`,
+  `_`, `.` or a space.
 - **To print**: **One PDF, a label a page**; **Label sheets** — Avery L7160, L7163, L7651, 5160 or a **Custom sheet…**
   (page, label size, columns × rows, margins and pitch) — each label at 100 % centred in its place, starting from any
   label of the first sheet. A label larger than the sheet's labels is said before generating; labels are never scaled.
