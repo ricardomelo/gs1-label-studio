@@ -4,7 +4,7 @@ import {
 import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
-import { freeCorner } from "./place.ts";
+import { freeCorner, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
 import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
@@ -27,6 +27,9 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // rule; B drew the whole outline past the edge). Then resizing from the keyboard (mock-up A of two, 7 November 2026,
 // taken under the owner's rule): Tab reaches the handle, a button, and the arrow keys move its corner, Shift by 5 mm,
 // a hint under it while it has the keyboard's focus; B gave the keyboard to the element's outline, the arrows moving it.
+// Then moving from the keyboard (mock-up A of two, 7 November 2026, taken under the owner's rule): Tab reaches the
+// chosen element's outline, just before its handle, and the arrow keys move it, Shift by 5 mm (place.ts keyMoved); B
+// moved it by the arrow keys on its button in the list of elements.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -185,7 +188,8 @@ const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id
 
 /**
  * Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging; the chosen one's
- * handle at its bottom right corner, resizing it by dragging or by the arrow keys once Tab reaches it (resize.ts).
+ * handle at its bottom right corner, resizing it by dragging or by the arrow keys once Tab reaches it (resize.ts); its
+ * outline, just before the handle, moving it by the arrow keys once Tab reaches it (place.ts).
  */
 export function DesignerOverlay({ page, placed, sizing, selected, onChange }: OverlayProps) {
   const svg = useRef<SVGSVGElement>(null);
@@ -257,6 +261,26 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           );
         })}
       </svg>
+      {chosen && chosenElement && (
+        // Over the chosen element's box, held within the label; the pointer goes through it to the element underneath
+        <button
+          type="button"
+          className="design-move"
+          data-testid="move-outline"
+          data-keys={t("Arrow keys: move · Shift: larger steps")}
+          aria-label={t("{name}: press the arrow keys to move it", { name: elementName(chosenElement) })}
+          aria-keyshortcuts="ArrowRight ArrowLeft ArrowDown ArrowUp Shift+ArrowRight Shift+ArrowLeft Shift+ArrowDown Shift+ArrowUp"
+          style={outlineStyle(chosen, page)}
+          onKeyDown={(event) => {
+            if (!(MOVE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
+            event.preventDefault();
+            const next = keyMoved(chosenElement, event.key as MoveKey, event.shiftKey);
+            if (next.xMm !== chosenElement.xMm || next.yMm !== chosenElement.yMm) {
+              onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
+            }
+          }}
+        />
+      )}
       {chosen && chosenElement && handle && (
         <button
           type="button"
@@ -290,6 +314,19 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
       )}
     </>
   );
+}
+
+/** Where the chosen element's outline is drawn, in percentages of the label: its box held within the label. */
+function outlineStyle(placed: PlacedElement, page: DesignPage): React.CSSProperties {
+  const clip = (value: number, max: number) => Math.min(Math.max(value, 0), max);
+  const [left, top] = [clip(placed.xMm, page.widthMm), clip(placed.yMm, page.heightMm)];
+  const [right, bottom] = [clip(placed.xMm + placed.widthMm, page.widthMm), clip(placed.yMm + placed.heightMm, page.heightMm)];
+  return {
+    left: `${(left / page.widthMm) * 100}%`,
+    top: `${(top / page.heightMm) * 100}%`,
+    width: `${((right - left) / page.widthMm) * 100}%`,
+    height: `${((bottom - top) / page.heightMm) * 100}%`,
+  };
 }
 
 interface PanelProps {
@@ -580,7 +617,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
         </div>
         <div>
           {!element ? (
-            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label to move it, or drag its corner, or press the arrow keys on its corner, to resize it.")}</p>
+            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label, or press the arrow keys on its outline, to move it; drag its corner, or press the arrow keys on its corner, to resize it.")}</p>
           ) : (
             <div className="grid">
               {element.kind === "symbol" ? (

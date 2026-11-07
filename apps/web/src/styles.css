@@ -395,6 +395,12 @@ footer.about .hint { margin-top: 12px; }
 .design-overlay rect { fill: transparent; stroke: transparent; stroke-width: 0.4; cursor: move; }
 .design-overlay rect:hover { stroke: #1a73e8; stroke-dasharray: 1 1; }
 .design-overlay rect.selected { stroke: #1a73e8; stroke-dasharray: 1.2 0.8; fill: rgba(26, 115, 232, 0.06); }
+/* The chosen element's outline from the keyboard (place.ts keyMoved): unseen and let through by the pointer until Tab
+   reaches it, then a ring around the element and what the keys do under it */
+.design-move { position: absolute; min-width: 4px; min-height: 4px; padding: 0; border: 0; margin: 0; background: transparent; pointer-events: none; }
+.design-move:focus { outline: none; }
+.design-move:focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+.design-move:focus-visible::after { content: attr(data-keys); position: absolute; top: calc(100% + 8px); left: -3px; padding: 4px 8px; border-radius: 4px; background: #202124; color: #fff; font: 12px/1.3 system-ui, sans-serif; white-space: nowrap; pointer-events: none; z-index: 2; }
 /* The chosen element's handle at its bottom right corner (resize.ts): a few pixels whatever the zoom, larger to a finger */
 .design-handle { position: absolute; width: 12px; height: 12px; padding: 0; transform: translate(-50%, -50%); box-sizing: border-box; background: #fff; border: 2px solid #1a73e8; border-radius: 2px; cursor: nwse-resize; touch-action: none; }
 /* From the keyboard (Tab, then the arrow keys): a ring around the handle and what the keys do under it */

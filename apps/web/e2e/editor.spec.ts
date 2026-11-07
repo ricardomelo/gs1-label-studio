@@ -2011,7 +2011,7 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   const handle = page.getByTestId("resize-handle");
   const overlay = page.locator(".design-overlay");
   await expect(handle).toHaveCount(0);
-  await expect(page.getByText("drag it on the label to move it, or drag its corner, or press the arrow keys on its corner, to resize it.")).toBeVisible();
+  await expect(page.getByText("drag it on the label, or press the arrow keys on its outline, to move it; drag its corner, or press the arrow keys on its corner, to resize it.")).toBeVisible();
   /** Drags the handle by (dx, dy) pixels, or in mm when `mm` is set, and lets go. */
   const drag = async (dx: number, dy: number, mm = false) => {
     await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
@@ -2242,6 +2242,91 @@ test("a label of one's own: an element resized from the keyboard, by the arrow k
   await page.keyboard.press("ArrowRight");
   await expect(page.locator("#el-height")).toHaveValue("2.5");
   expect(await handle.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Setas: redimensionam · Shift: passos maiores"');
+});
+
+// Moving from the keyboard (backlog 4.2, mock-up A of two, 7 November 2026): Tab reaches the chosen element's outline,
+// just before its handle, and the arrow keys move it, Shift by 5 mm; the pointer still drags the element through it.
+test("a label of one's own: an element moved from the keyboard, by the arrow keys on its outline", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const outline = page.getByTestId("move-outline");
+  const handle = page.getByTestId("resize-handle");
+  await expect(outline).toHaveCount(0);
+  // Chosen from the list with Enter, then back with Shift and Tab past its handle to its outline
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  for (let n = 0; n < 40 && !(await outline.evaluate((element) => element === document.activeElement)); n++) await page.keyboard.press("Shift+Tab");
+  await expect(outline).toBeFocused();
+  await expect(outline).toHaveAccessibleName("QR code (GS1 Digital Link): press the arrow keys to move it");
+  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Arrow keys: move · Shift: larger steps"');
+  expect(await outline.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("solid");
+  // Over the element's box on the label
+  const rect = page.locator(".design-overlay rect.selected");
+  const near = async () => {
+    const [a, b] = [(await outline.boundingBox())!, (await rect.boundingBox())!];
+    // The SVG's rectangle has its stroke half outside
+    for (const [p, q] of [[a.x, b.x], [a.y, b.y], [a.width, b.width], [a.height, b.height]]) expect(Math.abs(p! - q!)).toBeLessThan(2);
+  };
+  await near();
+  // Half a millimetre right, 5 mm down, half a millimetre up; Ctrl and an arrow do nothing; the page does not scroll
+  const scrolled = await page.evaluate(() => [window.scrollX, window.scrollY, document.querySelector(".canvas")!.scrollTop]);
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("#el-x")).toHaveValue("2.5");
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(page.locator("#el-y")).toHaveValue("7");
+  await page.keyboard.press("ArrowUp");
+  await expect(page.locator("#el-y")).toHaveValue("6.5");
+  await page.keyboard.press("Control+ArrowRight");
+  await expect(page.locator("#el-x")).toHaveValue("2.5");
+  await expect(outline).toBeFocused();
+  expect(await page.evaluate(() => [window.scrollX, window.scrollY, document.querySelector(".canvas")!.scrollTop])).toEqual(scrolled);
+  await near();
+  await expect(page.locator("#el-size")).toHaveValue("100"); // moved, not resized
+  // Tab goes on to the handle, whose arrow keys resize
+  await page.keyboard.press("Tab");
+  await expect(handle).toBeFocused();
+  // A box at 70 mm, 40 mm wide, past the right edge: its outline held within the label; three times Shift and Left
+  // bring it to 55 mm, within the label
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await page.fill("#el-x", "70");
+  await page.fill("#el-y", "30");
+  await expect(handle).toHaveClass(/past/);
+  const label = (await page.locator(".design-overlay").boundingBox())!;
+  const held = (await outline.boundingBox())!;
+  expect(held.x + held.width).toBeLessThanOrEqual(label.x + label.width + 0.5);
+  expect(held.width).toBeGreaterThan(label.width * 0.25);
+  await outline.focus();
+  for (let n = 0; n < 3; n++) await page.keyboard.press("Shift+ArrowLeft");
+  await expect(page.locator("#el-x")).toHaveValue("55");
+  await expect(handle).not.toHaveClass(/past/);
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("◇ Box 40 × 20 mm");
+  // The pointer still drags the element underneath the outline: 5 mm left
+  await page.locator(".design-overlay").evaluate((element) => element.scrollIntoView({ block: "center" }));
+  const box = (await rect.boundingBox())!;
+  const mm = (await page.locator(".design-overlay").boundingBox())!.width / 100;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 2.5 * mm, box.y + box.height / 2, { steps: 4 });
+  await page.mouse.move(box.x + box.width / 2 - 5 * mm, box.y + box.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.locator("#el-x")).toHaveValue("50");
+  // In the ZPL, the box at 50 mm and 30 mm: 400 and 240 dots at 203 dpi (its right edge, 90 mm, rounded to dot 719)
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^FO400,240\^GB319,160,/);
+  // In Portuguese, the name and the hint
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(outline).toHaveAccessibleName("Caixa de 40 × 20 mm: use as setas para mover o elemento");
+  await outline.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("#el-y")).toHaveValue("30.5");
+  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Setas: movem · Shift: passos maiores"');
 });
 
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the

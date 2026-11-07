@@ -279,4 +279,7 @@
 - Data titles in a second language on the GS1 Logistic Label (backlog 4.1, 7 November): **Data titles also in**
   Portuguese or Spanish puts each data title's translation under the English one, and FROM's and TO's (General
   Specifications 6.6.4.2), in the drawing, the print files, bulk and the work saved; the translations are drafts.
+- Moving from the keyboard (backlog 4.2, 7 November): Tab reaches the chosen element's outline on a label of one's
+  own, just before its handle, a hint under it says what the keys do, and each arrow key moves the element half a
+  millimetre, or 5 mm with Shift.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

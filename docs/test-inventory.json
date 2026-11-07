@@ -2170,6 +2170,14 @@
     {
      "name": "where a new element lands › past the page's foot, the next diagonal a step right of the first; a page full keeps the corner",
      "status": "passed"
+    },
+    {
+     "name": "moving the chosen element by the arrow keys › half a millimetre each way, 5 mm with Shift, the rest of the element as it was",
+     "status": "passed"
+    },
+    {
+     "name": "moving the chosen element by the arrow keys › a corner typed off the half millimetres back on them; past the label's edge as dragging goes, no minus zero",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -4607,6 +4615,15 @@
     },
     {
      "name": "a label of one's own: an element resized from the keyboard, by the arrow keys on its handle",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an element moved from the keyboard, by the arrow keys on its outline",
      "status": "listed",
      "projects": [
       "desktop",

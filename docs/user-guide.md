@@ -254,14 +254,16 @@ of my own (barcodes and text placed freely)*:
    **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
    down, and again, so that it is never hidden under another.
 3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
-   type **Left (mm)** and **Top (mm)**. The chosen element shows a small square at its bottom right corner: drag it to
+   type **Left (mm)** and **Top (mm)**. From the keyboard: choose it in the list, press **Shift+Tab** until a ring goes
+   round the element on the label (a hint under it says what the keys do), and press the arrow keys: each press moves
+   it half a millimetre, or 5 mm with **Shift**. The next **Tab** goes on to its corner's square. The chosen element shows a small square at its bottom right corner: drag it to
    make the element larger or smaller, its top left corner kept. A box takes the corner's width and height and a line
    its length (by half millimetres); an image keeps its proportions; a barcode takes the nearest **Size** its scanning
    environment allows (its bars or modules follow the corner, its text keeps its height), and a text block the nearest
    **Text height**. The properties show the new size as it changes. When the element runs past the label's edge, its
    square stays at the edge, where the element is cut, and turns red; drag it and the corner comes under the pointer,
    so the element shrinks back onto the label. From the keyboard: choose the element in the list, press **Shift+Tab**
-   until the square has a ring (a hint under it says what the keys do), and press the arrow keys: each press moves the
+   until the square has a ring (just after the element's own ring) (a hint under it says what the keys do), and press the arrow keys: each press moves the
    corner half a millimetre, or 5 mm with **Shift**. A box takes **→** and **←** on its width and **↓** and **↑** on
    its height, a line the two along it; an image, a barcode and a text block keep their proportions, **→** and **↓**
    making them larger, **←** and **↑** smaller, a barcode and a text block a size at a time (with **Shift**, about
