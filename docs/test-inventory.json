@@ -4001,6 +4001,15 @@
      ]
     },
     {
+     "name": "the page fits the screen's width with a long barcode in the live preview",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "the EPC asks for a serial number, then writes every format",
      "status": "listed",
      "projects": [

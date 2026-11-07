@@ -117,7 +117,7 @@ input[aria-invalid="true"] { border-color: var(--error); }
   .panel, .grid, .qual { grid-template-columns: 1fr; }
   .mini-bar { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 12px; }
   .mini { display: flex; flex: 1; min-width: 0; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); text-decoration: none; min-height: 64px; }
-  .mini svg { height: 64px; width: auto; background: #fff; }
+  .mini svg { height: 64px; width: auto; max-width: 100%; background: #fff; }
   .mini-bar .start-over.round { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--navy); background: transparent; color: var(--navy); display: grid; place-items: center; padding: 0; cursor: pointer; }
   .mini-bar .start-over.round:active { background: var(--indicator); }
 }

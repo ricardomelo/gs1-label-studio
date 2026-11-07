@@ -89,6 +89,17 @@ test("the page fits the screen's width", async ({ page }) => {
   );
 });
 
+// A long barcode, as a GSRN's DataBar Expanded with a date of birth, once drew the phone's live preview wider than the
+// screen, and the tab bar could no longer be tapped.
+test("the page fits the screen's width with a long barcode in the live preview", async ({ page }) => {
+  await page.fill("#paste", "(8018)950600013435200008(7250)19600115");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator("#key")).toHaveValue("8018");
+  // The screen's width, not the window's: a phone widens its window to a page wider than the screen
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await on(page, "scan");
+});
+
 test("the EPC asks for a serial number, then writes every format", async ({ page }) => {
   const section = page.locator("details.epc");
   await expect(section.locator(".epc-message")).toHaveText("This key's EPC needs its qualifier (21), such as the serial number.");

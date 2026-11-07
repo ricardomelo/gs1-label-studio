@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge (apps/web/test) | 12 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 64 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 65 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 
