@@ -420,6 +420,10 @@
      "status": "passed"
     },
     {
+     "name": "cells as the AI takes them › keeps a time after a YYMMDD date as HHMM when the AI carries one, its seconds when the AI takes them",
+     "status": "passed"
+    },
+    {
      "name": "cells as the AI takes them › writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM",
      "status": "passed"
     },
@@ -441,6 +445,10 @@
     },
     {
      "name": "rows as identifications › checks every row of a workbook with the Syntax Engine, numbering rows as the spreadsheet does",
+     "status": "passed"
+    },
+    {
+     "name": "rows as identifications › keeps the time of a workbook's date cells for the AIs that carry one, as each cell's format shows it",
      "status": "passed"
     },
     {
@@ -3878,6 +3886,14 @@
     {
      "name": "Excel workbooks › counts Excel's dates from its 1900 system",
      "status": "passed"
+    },
+    {
+     "name": "Excel workbooks › writes the time of day a date's format shows, to the nearest second",
+     "status": "passed"
+    },
+    {
+     "name": "Excel workbooks › reads a workbook's date cells with the time their format shows: its own, Excel's built-in 22, or none",
+     "status": "passed"
     }
    ],
    "area": "In bulk: rows, the report, sequences, generation"
@@ -4201,6 +4217,15 @@
     },
     {
      "name": "in bulk: an Excel workbook's rows, columns guessed from their headers, each row drawn and checked",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a date's time kept for the AIs that carry one, from a workbook and from pasted rows, on the label and in the print file",
      "status": "listed",
      "projects": [
       "desktop",

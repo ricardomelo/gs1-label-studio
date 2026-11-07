@@ -133,8 +133,12 @@ function attribute(tag: string, name: string): string | undefined {
 /** Built-in number formats that are dates (ECMA-376, 18.8.30), and custom ones that show a day, month or year. */
 const DATE_FORMATS = new Set([14, 15, 16, 17, 22, 27, 30, 36, 45, 46, 47, 50, 57]);
 
-function dateStyles(styles: string | undefined): Set<number> {
-  const out = new Set<number>();
+/** How much of a time a date format shows after its date: none, hours and minutes, or seconds too. */
+export type ExcelTime = "none" | "minutes" | "seconds";
+
+/** The date styles by their index, each with the time its format shows (the built-in format 22, m/d/yy h:mm, minutes). */
+function dateStyles(styles: string | undefined): Map<number, ExcelTime> {
+  const out = new Map<number, ExcelTime>();
   if (!styles) return out;
   const custom = new Map<number, string>();
   for (const [tag] of styles.matchAll(/<(?:\w+:)?numFmt\s[^>]*>/g)) {
@@ -144,15 +148,22 @@ function dateStyles(styles: string | undefined): Set<number> {
   [...xfs.matchAll(/<(?:\w+:)?xf\s[^>]*>/g)].forEach(([tag], index) => {
     const id = Number(attribute(tag, "numFmtId") ?? 0);
     const code = (custom.get(id) ?? "").replace(/"[^"]*"|\[[^\]]*\]|\\./g, "");
-    if (DATE_FORMATS.has(id) || /[dy]/i.test(code) || /m/i.test(code.replace(/h+[^a-z]*m+|m+[^a-z]*s+/gi, ""))) out.add(index);
+    const date = DATE_FORMATS.has(id) || /[dy]/i.test(code) || /m/i.test(code.replace(/h+[^a-z]*m+|m+[^a-z]*s+/gi, ""));
+    if (!date) return;
+    const time = id === 22 || /h/i.test(code) ? (/s/i.test(code) ? "seconds" : "minutes") : "none";
+    out.set(index, time);
   });
   return out;
 }
 
-/** An Excel date serial (1900 system, after its 29 February 1900) as YYYY-MM-DD. */
-export function excelDate(serial: number): string {
-  const days = Math.floor(serial) - 25569; // 1970-01-01
-  return new Date(days * 86_400_000).toISOString().slice(0, 10);
+/**
+ * An Excel date serial (1900 system, after its 29 February 1900) as YYYY-MM-DD, and with the time of day its format
+ * shows (`time`) as YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS, to the nearest second as Excel shows it.
+ */
+export function excelDate(serial: number, time: ExcelTime = "none"): string {
+  const seconds = time === "none" ? Math.floor(serial) * 86_400 : Math.round(serial * 86_400);
+  const iso = new Date((seconds - 25569 * 86_400) * 1000).toISOString(); // 25569: 1970-01-01
+  return time === "none" ? iso.slice(0, 10) : `${iso.slice(0, 10)} ${iso.slice(11, time === "seconds" ? 19 : 16)}`;
 }
 
 /** A number cell as Excel shows it: at most 15 significant digits (0.1 + 0.2 is 0.3, not 0.30000000000000004). */
@@ -197,11 +208,12 @@ export async function parseXlsx(bytes: Uint8Array): Promise<Table> {
       const index = reference ? column(reference) : record.length;
       const type = attribute(tag!, "t") ?? "n";
       const value = unescapeXml(/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/.exec(body ?? "")?.[1] ?? "");
+      const dateTime = dates.get(Number(attribute(tag!, "s") ?? 0));
       let cell: string;
       if (type === "s") cell = shared[Number(value)] ?? "";
       else if (type === "inlineStr") cell = texts(body ?? "");
       else if (type === "b") cell = value === "1" ? "TRUE" : "FALSE";
-      else if (type === "n" && value && dates.has(Number(attribute(tag!, "s") ?? 0))) cell = excelDate(Number(value));
+      else if (type === "n" && value && dateTime) cell = excelDate(Number(value), dateTime);
       else if (type === "n" && value) cell = excelNumber(value);
       else cell = value;
       while (record.length < index) record.push("");

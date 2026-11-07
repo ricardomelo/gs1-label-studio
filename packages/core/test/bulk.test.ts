@@ -53,8 +53,29 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("17", "271231")).toBe("271231");
     expect(normaliseCell("17", "31/02/2027")).toBe("270231"); // the Syntax Engine refuses it, with its reason
     expect(normaliseCell("10", "2027-12-31")).toBe("2027-12-31");
-    expect(normaliseCell("17", "31/12/2027 15:30")).toBe("271231"); // a time after a date is dropped
-    expect(normaliseCell("7003", "2027-12-31 15:30")).toBe("271231"); // also for a YYMMDD date that carries one
+    expect(normaliseCell("17", "31/12/2027 15:30")).toBe("271231"); // a time after a date that carries none is dropped
+    expect(normaliseCell("17", "2027-12-31 15:30:20")).toBe("271231");
+  });
+
+  it("keeps a time after a YYMMDD date as HHMM when the AI carries one, its seconds when the AI takes them", () => {
+    expect(normaliseCell("7003", "2027-12-31 15:30")).toBe("2712311530");
+    expect(normaliseCell("7003", "2027-12-31T15:30:20")).toBe("2712311530"); // (7003) takes no seconds
+    expect(normaliseCell("7003", "31/12/2027 8:05")).toBe("2712310805");
+    expect(normaliseCell("7003", "31.12.27 08:05")).toBe("2712310805");
+    expect(normaliseCell("7003", "2027-12-31 00:00:00")).toBe("2712310000"); // its time is not optional
+    expect(normaliseCell("7003", "2027-12-31")).toBe("271231"); // its time missing: the Syntax Engine says so
+    expect(normaliseCell("7003", "2712311530")).toBe("2712311530");
+    expect(normaliseCell("4324", "2027-12-00 06:00")).toBe("2712000600"); // a day 00, as YYMMD0 allows
+    expect(normaliseCell("4325", "31/12/2027 18:00")).toBe("2712311800");
+    expect(normaliseCell("8008", "2026-10-01 08:05:09")).toBe("261001080509");
+    expect(normaliseCell("8008", "01/10/2026 08:05:09")).toBe("261001080509");
+    expect(normaliseCell("8008", "2026-10-01 08:05")).toBe("2610010805");
+    expect(normaliseCell("8008", "2026-10-01 00:00:00")).toBe("261001000000"); // its hour is not optional
+    expect(normaliseCell("7011", "2027-06-30 10:15")).toBe("2706301015");
+    expect(normaliseCell("7011", "2027-06-30 00:00")).toBe("2706300000"); // midnight typed
+    expect(normaliseCell("7011", "2027-06-30 00:00:00")).toBe("270630"); // a date alone, exported: its time optional
+    expect(normaliseCell("7011", "30/06/2027 00:00:00")).toBe("270630");
+    expect(normaliseCell("7011", "2027-06-30 10:15 AM")).toBe("2027-06-30 10:15 AM"); // left for the engine to refuse
   });
 
   it("writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM", () => {
@@ -111,6 +132,17 @@ describe("rows as identifications", () => {
       [5, "The key's column is empty on this row."],
     ]);
     expect(rows[0]!.identified!.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376/10/B42?17=271231&3101=000005&11=261001");
+  });
+
+  it("keeps the time of a workbook's date cells for the AIs that carry one, as each cell's format shows it", async () => {
+    const table = await parseXlsx(new Uint8Array(readFileSync(new URL("./fixtures/bulk/times.xlsx", import.meta.url))));
+    const mapping = guessMapping(table.headers);
+    expect(mapping).toEqual(["01", "7003", "8008", "7011", "17"]);
+    const rows = checkRows(engine, table, mapping);
+    expect(rows.map((r) => r.identified?.elementString ?? r.error)).toEqual([
+      "(01)09506000134376(7003)2712311530(8008)261001080509(7011)270630(17)271231",
+      "(01)09506000134352(7003)2801050000(8008)261001235959(7011)270630(17)280105",
+    ]);
   });
 
   it("checks pasted rows the same way, a date the engine refuses reported for its row", () => {

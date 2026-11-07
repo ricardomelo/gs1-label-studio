@@ -559,6 +559,38 @@ test("in bulk: an Excel workbook's rows, columns guessed from their headers, eac
   await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/L-7?17=280105&3102=000125");
 });
 
+// Backlog 4.2: a time kept from a bulk cell, from an Excel workbook's date-time cells and from pasted rows
+test("in bulk: a date's time kept for the AIs that carry one, from a workbook and from pasted rows, on the label and in the print file", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  // Pasted rows, day first: the time kept as HHMM, a midnight exported with its seconds left out of (7011)
+  await page.fill("#rows-paste", "GTIN\t(7003) Expiry time\t(7011) Test by\n09506000134376\t31/12/2027 8:05\t30/06/2027 00:00:00\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376?7003=2712310805&7011=270630");
+  // A workbook's date-time cells, as each cell's format shows them
+  await page.locator("#rows-file").setInputFiles(new URL("../../../packages/core/test/fixtures/bulk/times.xlsx", import.meta.url).pathname);
+  await expect(page.locator(".source")).toContainText("times.xlsx · sheet “Times” · 2 rows");
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  // (7003) and (8008) keep their times, (8008) its seconds; (7011)'s cell shows no time; (17) carries none
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376?17=271231&7003=2712311530&8008=261001080509&7011=270630");
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await expect(page.locator('#el-field option[value="{7003:DD/MM/YYYY hh:mm}"]')).toHaveText("{7003:DD/MM/YYYY hh:mm} — 31/12/2027 15:30");
+  await page.fill("#el-text", "EXP {7003:DD/MM/YYYY hh:mm}");
+  await expect(page.locator('.preview .symbol svg [aria-label="EXP 31/12/2027 15:30"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator('.preview .symbol svg [aria-label="EXP 05/01/2028 00:00"]')).toHaveCount(1);
+  await on(page, "export");
+  await page.locator(".generate label.check", { hasText: "One ZPL file" }).locator("input").check();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
+  const zip = (await download.path())!;
+  const name = execFileSync("unzip", ["-Z1", zip], { encoding: "utf8" }).split("\n").find((n) => n.endsWith(".zpl"))!;
+  expect(execFileSync("unzip", ["-p", zip, name], { encoding: "utf8" }).match(/\^FDEXP [^^]*\^FS/g)).toEqual(["^FDEXP 31/12/2027 15:30^FS", "^FDEXP 05/01/2028 00:00^FS"]);
+});
+
 test("in bulk: pasted rows, a value for every row, and the columns remembered for the same headers", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();
   await page.fill("#rows-paste", "Código de barras\tLote\tVence\n9506000134376\tA1\t31/12/2027\n9506000134352\tA2\t30/06/2028\n");

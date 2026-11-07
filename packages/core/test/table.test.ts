@@ -66,5 +66,23 @@ describe("Excel workbooks", () => {
   it("counts Excel's dates from its 1900 system", () => {
     expect(excelDate(46387)).toBe("2026-12-31");
     expect(excelDate(25569)).toBe("1970-01-01");
+    expect(excelDate(46387.75)).toBe("2026-12-31"); // a format that shows no time
+  });
+
+  it("writes the time of day a date's format shows, to the nearest second", () => {
+    expect(excelDate(46387.75, "minutes")).toBe("2026-12-31 18:00");
+    expect(excelDate(46387.75, "seconds")).toBe("2026-12-31 18:00:00");
+    expect(excelDate(46296.33690972222, "seconds")).toBe("2026-10-01 08:05:09");
+    expect(excelDate(46296.99999999, "seconds")).toBe("2026-10-02 00:00:00"); // 23:59:59.999 rounds to the next day
+    expect(excelDate(46296.99999999)).toBe("2026-10-01");
+    expect(excelDate(46387, "minutes")).toBe("2026-12-31 00:00");
+  });
+
+  it("reads a workbook's date cells with the time their format shows: its own, Excel's built-in 22, or none", async () => {
+    const table = await parseXlsx(new Uint8Array(readFileSync(new URL("./fixtures/bulk/times.xlsx", import.meta.url))));
+    expect(table.rows).toEqual([
+      ["09506000134376", "2027-12-31 15:30", "2026-10-01 08:05:09", "2027-06-30", "2027-12-31 15:30"],
+      ["09506000134352", "2028-01-05 00:00", "2026-10-01 23:59:59", "2027-06-30", "2028-01-05 23:59"],
+    ]);
   });
 });

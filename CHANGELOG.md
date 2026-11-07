@@ -273,4 +273,7 @@
 - Resizing from the keyboard (backlog 4.2, 7 November): Tab reaches the chosen element's handle on a label of one's
   own, a hint under it says what the keys do, and each arrow key moves its corner half a millimetre, or 5 mm with
   Shift; a barcode and a text block go a size at a time.
+- A date's time in bulk (backlog 4.2, 7 November): (7003), (4324), (4325), (7011) and (8008) keep a time after the
+  date in a cell, `31/12/2027 15:30` → 2712311530, (8008) with its seconds; (7011), whose time is optional, leaves out
+  a midnight exported with its seconds. An Excel workbook's date cell keeps the time its format shows; it was dropped.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

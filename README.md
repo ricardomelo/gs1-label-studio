@@ -524,7 +524,9 @@ complete.
   (7251) with its time, and read from ISO and DD/MM/YYYY cells in bulk. Resizing from the keyboard since 7 November
   (mock-up A of two, taken under the owner's rule; B gave the keyboard to the element's outline, the arrows moving
   it): Tab reaches the chosen element's handle, and the arrow keys move its corner by half a millimetre, 5 mm with
-  Shift, a barcode and a text block a size at a time. Saving the label is 4.3*
+  Shift, a barcode and a text block a size at a time. A date's time in bulk since 7 November: (7003), (4324), (4325),
+  (7011) and (8008) keep a cell's time after the date, (8008) its seconds, and an Excel cell keeps the time its format
+  shows. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**
