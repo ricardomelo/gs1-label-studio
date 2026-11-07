@@ -2966,6 +2966,18 @@
     {
      "name": "a barcode's sizing › makes a barcode follow the corner by its modules: half its side again gives 150 %, and only a size allowed",
      "status": "passed"
+    },
+    {
+     "name": "the handle of an element past the label's edge › is at the box's bottom right corner while it is on the label, its edges included",
+     "status": "passed"
+    },
+    {
+     "name": "the handle of an element past the label's edge › is held within the label, across, down or both, and says so",
+     "status": "passed"
+    },
+    {
+     "name": "the handle of an element past the label's edge › dragged from where it is held, puts the corner under the pointer",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -4485,6 +4497,15 @@
     },
     {
      "name": "a label of one's own: an element resized by dragging its corner, its top left corner kept",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: the handle of an element past the label's edge held at the edge, and dragged back",
      "status": "listed",
      "projects": [
       "desktop",

@@ -260,4 +260,7 @@
 - Greys as dots, for a photo (backlog 4.2, 7 November): a box under an image's **Darkness** dithers its greys by error
   diffusion, so a photo prints as dots rather than black and white areas; Darkness then darkens or lightens the greys;
   each print file dithers the picture again at the printer's dots, so a grey prints as dark as it is.
+- The handle of an element past the label's edge (backlog 4.2, 7 November): it stays at the label's edge, where the
+  element is cut, in red, instead of following the corner out of sight under the canvas's edge or the zoom buttons;
+  dragging it puts the corner under the pointer, so the element shrinks back at once.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

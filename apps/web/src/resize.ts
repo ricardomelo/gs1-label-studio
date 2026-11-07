@@ -14,6 +14,12 @@ import {
 // block the nearest of its heights, so that dragging gives only what the properties could choose and draw. A barcode's
 // box holds its human readable text, which keeps its height whatever the size, so the corner follows its bars or
 // modules alone (`symbolSizing`): dragging it 10 mm makes them about 10 mm larger.
+//
+// An element can run past the label's edge (the page reports it), and its corner with it, out of the drawn label and
+// possibly under the canvas's edge or the zoom buttons. Then the handle stays at the label's edge, where the element
+// is cut, in red, and dragging it puts the corner under the pointer, so the element shrinks back as soon as it is
+// pulled (mock-up A of two, 7 November 2026, taken under the owner's rule; B drew the whole outline past the edge with
+// the handle at its true corner, which can still be out of sight).
 
 /** Dragging sizes boxes, lines and images by half millimetres, as it moves elements. */
 export const RESIZE_STEP_MM = 0.5;
@@ -39,6 +45,13 @@ export function symbolSizing({ layout, options, rotation }: DesignedLabel["print
   const sizes = options.spec ? specSizesFor(options.spec, SIZES)
     : SYMBOLOGIES[options.symbology].kind === "matrix" ? sizesFor(environment) : linearSizesFor(environment);
   return rotation === 90 || rotation === 270 ? { widthMm: h, heightMm: w, sizes } : { widthMm: w, heightMm: h, sizes };
+}
+
+/** Where the chosen element's handle is drawn: its box's bottom right corner, held within the label; `past` when held. */
+export function handleAt(placed: PlacedElement, page: { widthMm: number; heightMm: number }): { xMm: number; yMm: number; past: boolean } {
+  const [x, y] = [placed.xMm + placed.widthMm, placed.yMm + placed.heightMm];
+  const [xMm, yMm] = [Math.min(Math.max(x, 0), page.widthMm), Math.min(Math.max(y, 0), page.heightMm)];
+  return { xMm, yMm, past: xMm !== x || yMm !== y };
 }
 
 const step = (mm: number) => Math.max(RESIZE_STEP_MM, Math.round(mm / RESIZE_STEP_MM) * RESIZE_STEP_MM);

@@ -258,7 +258,9 @@ of my own (barcodes and text placed freely)*:
    make the element larger or smaller, its top left corner kept. A box takes the corner's width and height and a line
    its length (by half millimetres); an image keeps its proportions; a barcode takes the nearest **Size** its scanning
    environment allows (its bars or modules follow the corner, its text keeps its height), and a text block the nearest
-   **Text height**. The properties show the new size as it changes.
+   **Text height**. The properties show the new size as it changes. When the element runs past the label's edge, its
+   square stays at the edge, where the element is cut, and turns red; drag it and the corner comes under the pointer,
+   so the element shrinks back onto the label.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,

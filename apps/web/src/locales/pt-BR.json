@@ -585,6 +585,7 @@
  "Delete": "Excluir",
  "The label's elements: click one to choose it, drag it to move it": "Os elementos da etiqueta: clique num para escolhê-lo, arraste-o para movê-lo",
  "Drag this corner to resize the element": "Arraste este canto para redimensionar o elemento",
+ "The element runs past the label's edge: drag this corner to make it smaller": "O elemento passa da borda da etiqueta: arraste este canto para diminuí-lo",
  "Elements": "Elementos",
  "Choose an element in the list or on the label to change it; drag it on the label to move it, or drag its corner to resize it.": "Escolha um elemento na lista ou na etiqueta para alterá-lo; arraste-o na etiqueta para movê-lo, ou arraste o seu canto para redimensioná-lo.",
  "{size} %": "{size} %",

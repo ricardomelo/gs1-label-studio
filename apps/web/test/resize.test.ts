@@ -4,7 +4,7 @@ import {
 } from "@gs1-label-studio/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { nearest, resized, symbolSizing, TEXT_HEIGHTS } from "../src/resize.ts";
+import { handleAt, nearest, resized, symbolSizing, TEXT_HEIGHTS } from "../src/resize.ts";
 
 // Resizing an element by dragging its bottom right corner on a label of one's own (backlog 4.2, mock-up A of two,
 // 7 November 2026): its top left corner kept, a box to the corner, a line to its length, an image, a barcode and a text
@@ -117,5 +117,31 @@ describe("a barcode's sizing", () => {
     expect(by(0.8)).toEqual(symbol);
     // Without its sizing, its whole box, text and all, and every size
     expect(resized(symbol, box, 2 + box.widthMm * 0.8, 2 + box.heightMm * 0.8)).toEqual({ ...symbol, size: 80 });
+  });
+});
+
+// An element run past the label's edge (mock-up A of two, 7 November 2026): its handle held at the edge, where the
+// element is cut, and dragging it from there puts the corner under the pointer.
+describe("the handle of an element past the label's edge", () => {
+  const page = { widthMm: 100, heightMm: 60 };
+
+  it("is at the box's bottom right corner while it is on the label, its edges included", () => {
+    expect(handleAt(at(10, 5, 30, 20), page)).toEqual({ xMm: 40, yMm: 25, past: false });
+    expect(handleAt(at(70, 40, 30, 20), page)).toEqual({ xMm: 100, yMm: 60, past: false });
+  });
+
+  it("is held within the label, across, down or both, and says so", () => {
+    expect(handleAt(at(80, 5, 40, 20), page)).toEqual({ xMm: 100, yMm: 25, past: true });
+    expect(handleAt(at(10, 50, 30, 20), page)).toEqual({ xMm: 40, yMm: 60, past: true });
+    expect(handleAt(at(90, 55, 30, 20), page)).toEqual({ xMm: 100, yMm: 60, past: true });
+    // Wholly off the label, to the left or above
+    expect(handleAt(at(-40, -30, 20, 10), page)).toEqual({ xMm: 0, yMm: 0, past: true });
+  });
+
+  it("dragged from where it is held, puts the corner under the pointer", () => {
+    const box: DesignBox = { id: "e1", kind: "box", widthMm: 40, heightMm: 20, thicknessMm: 0.5, filled: false, xMm: 80, yMm: 5 };
+    const placed = at(80, 5, 40, 20);
+    const { xMm, yMm } = handleAt(placed, page);
+    expect(resized(box, placed, xMm - 1, yMm)).toEqual({ ...box, widthMm: 19, heightMm: 20 });
   });
 });

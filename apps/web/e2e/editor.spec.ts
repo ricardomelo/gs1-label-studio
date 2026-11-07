@@ -1962,6 +1962,74 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   await expect(handle).toHaveCount(0);
 });
 
+// Item 4.2 (mock-up A of two, 7 November 2026, taken under the owner's rule): an element run past the label's edge keeps
+// its handle at the edge, where it is cut, in red; dragging it puts the corner under the pointer, so it shrinks back.
+test("a label of one's own: the handle of an element past the label's edge held at the edge, and dragged back", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const handle = page.getByTestId("resize-handle");
+  const overlay = page.locator(".design-overlay");
+  /** The handle's centre, the label's box and the chosen element's outline, in pixels on the screen. */
+  const where = async () => {
+    await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    const h = (await handle.boundingBox())!;
+    return { x: h.x + h.width / 2, y: h.y + h.height / 2, label: (await overlay.boundingBox())!, outline: (await overlay.locator("rect.selected").boundingBox())! };
+  };
+  /** Drags the handle by (dx, dy) mm and lets go. */
+  const drag = async (dx: number, dy: number) => {
+    const { x, y, label } = await where();
+    const scale = label.width / 100;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx * scale, y + dy * scale, { steps: 6 });
+    await page.mouse.up();
+  };
+  // The QR code at retail, 100 %, moved 78 mm across: past the right edge, its handle at the edge level with its bottom
+  await page.selectOption("#page-env", "retail");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  await expect(handle).not.toHaveClass(/past/);
+  await page.fill("#el-x", "78");
+  await expect(handle).toHaveClass(/past/);
+  await expect(handle).toHaveAttribute("title", "The element runs past the label's edge: drag this corner to make it smaller");
+  const qr = await where();
+  expect(Math.abs(qr.x - (qr.label.x + qr.label.width))).toBeLessThan(1);
+  expect(Math.abs(qr.y - (qr.outline.y + qr.outline.height))).toBeLessThan(1);
+  expect(await handle.evaluate((element) => getComputedStyle(element).borderTopColor)).toBe("rgb(217, 48, 37)");
+  // Pulled 1 mm in, its corner comes under the pointer at once: the smallest size retail allows, its corner kept
+  await drag(-1, 0);
+  await expect(page.locator("#el-size")).toHaveValue("80");
+  await expect(page.locator("#el-x")).toHaveValue("78");
+  // A box 40 × 20 mm at 80 mm across: its handle held at the edge; pulled 5 mm in, 15 mm wide, on the label, blue again
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await page.fill("#el-x", "80");
+  await page.fill("#el-y", "30");
+  await expect(handle).toHaveClass(/past/);
+  await drag(-5, 0);
+  await expect(page.locator("#el-width")).toHaveValue("15");
+  await expect(page.locator("#el-height-mm")).toHaveValue("20");
+  await expect(handle).not.toHaveClass(/past/);
+  await expect(handle).toHaveAttribute("title", "Drag this corner to resize the element");
+  const box = await where();
+  expect(Math.abs(box.x - (box.outline.x + box.outline.width))).toBeLessThan(1);
+  expect(Math.abs(box.y - (box.outline.y + box.outline.height))).toBeLessThan(1);
+  // Past the bottom edge too: held at the label's bottom right corner
+  await page.fill("#el-y", "50");
+  await page.fill("#el-x", "90");
+  const corner = await where();
+  expect(Math.abs(corner.x - (corner.label.x + corner.label.width))).toBeLessThan(1);
+  expect(Math.abs(corner.y - (corner.label.y + corner.label.height))).toBeLessThan(1);
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(handle).toHaveAttribute("title", "O elemento passa da borda da etiqueta: arraste este canto para diminuí-lo");
+});
+
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
 // label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
 // in the work; a QR code stays upright.

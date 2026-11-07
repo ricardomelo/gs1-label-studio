@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { freeCorner } from "./place.ts";
-import { resized, TEXT_HEIGHTS, type SymbolSizing } from "./resize.ts";
+import { handleAt, resized, TEXT_HEIGHTS, type SymbolSizing } from "./resize.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -22,7 +22,9 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // (mock-up A of two, 6 November 2026, taken under the owner's rule): a slider from lighter to darker in its properties,
 // 5 to 95 per cent; B offered five steps in a list. Then resizing by dragging a corner (mock-up A of two, 7 November
 // 2026, taken under the owner's rule): one handle at the chosen element's bottom right corner, its top left corner kept
-// (resize.ts); B had a handle at each corner.
+// (resize.ts); B had a handle at each corner. An element run past the label's edge keeps its handle at the edge, in
+// red, and dragging it puts the corner under the pointer (mock-up A of two, 7 November 2026, taken under the owner's
+// rule; B drew the whole outline past the edge).
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -186,7 +188,8 @@ const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id
 export function DesignerOverlay({ page, placed, sizing, selected, onChange }: OverlayProps) {
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string; x: number; y: number; xMm: number; yMm: number } | null>(null);
-  const resizing = useRef<{ x: number; y: number; element: DesignElement; placed: PlacedElement; sizing?: SymbolSizing } | null>(null);
+  // The pointer's start and where the corner was taken from: the handle as drawn, held within the label (handleAt)
+  const resizing = useRef<{ x: number; y: number; xMm: number; yMm: number; element: DesignElement; placed: PlacedElement; sizing?: SymbolSizing } | null>(null);
   const mmPerPx = () => page.widthMm / svg.current!.getBoundingClientRect().width;
   const move = (event: React.PointerEvent) => {
     const d = drag.current;
@@ -203,7 +206,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
     const r = resizing.current;
     if (!r || !svg.current) return;
     const scale = mmPerPx();
-    const [xMm, yMm] = [r.placed.xMm + r.placed.widthMm + (event.clientX - r.x) * scale, r.placed.yMm + r.placed.heightMm + (event.clientY - r.y) * scale];
+    const [xMm, yMm] = [r.xMm + (event.clientX - r.x) * scale, r.yMm + (event.clientY - r.y) * scale];
     const next = resized(r.element, r.placed, xMm, yMm, r.sizing);
     const now = page.elements.find((e) => e.id === r.element.id);
     if (now && JSON.stringify(now) !== JSON.stringify(next)) {
@@ -212,6 +215,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
   };
   const chosen = placed.find((p) => p.id === selected);
   const chosenElement = page.elements.find((e) => e.id === selected);
+  const handle = chosen && handleAt(chosen, page);
   return (
     <>
       <svg
@@ -251,16 +255,16 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           );
         })}
       </svg>
-      {chosen && chosenElement && (
+      {chosen && chosenElement && handle && (
         <span
-          className="design-handle"
+          className={handle.past ? "design-handle past" : "design-handle"}
           data-testid="resize-handle"
-          title={t("Drag this corner to resize the element")}
-          style={{ left: `${((chosen.xMm + chosen.widthMm) / page.widthMm) * 100}%`, top: `${((chosen.yMm + chosen.heightMm) / page.heightMm) * 100}%` }}
+          title={handle.past ? t("The element runs past the label's edge: drag this corner to make it smaller") : t("Drag this corner to resize the element")}
+          style={{ left: `${(handle.xMm / page.widthMm) * 100}%`, top: `${(handle.yMm / page.heightMm) * 100}%` }}
           onPointerDown={(event) => {
             event.stopPropagation();
             (event.target as Element).setPointerCapture?.(event.pointerId);
-            resizing.current = { x: event.clientX, y: event.clientY, element: chosenElement, placed: chosen, sizing: sizing[chosen.id] };
+            resizing.current = { x: event.clientX, y: event.clientY, xMm: handle.xMm, yMm: handle.yMm, element: chosenElement, placed: chosen, sizing: sizing[chosen.id] };
           }}
           onPointerMove={resize}
           onPointerUp={() => (resizing.current = null)}

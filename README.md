@@ -517,7 +517,9 @@ complete.
   columns holding no AI, each with the first row's value, and adds the one chosen at the end. Greys as dots for a photo
   since 7 November (mock-up A of two, taken under the owner's rule; B offered two buttons): a box under an image's
   Darkness dithers its greys (Floyd and Steinberg), the darkness then darkening the greys; each printer dithers the
-  picture again at its own dots, so a grey prints as dark as it is (checked through Labelary). Saving the label is 4.3*
+  picture again at its own dots, so a grey prints as dark as it is (checked through Labelary). The handle of an
+  element past the label's edge since 7 November (mock-up A of two, taken under the owner's rule; B drew the whole
+  outline past the edge): held at the edge, in red, and dragged, the corner under the pointer. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

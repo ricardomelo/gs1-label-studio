@@ -211,7 +211,7 @@ Each module, in the order of the flow above.
 | `src/ScanCard.tsx` | Step 2: the tree's questions, the table, the recommended and allowed symbols, *Choose a symbol yourself* |
 | `src/LabelCard.tsx` | Step 3: canvas, caption, zoom, *Fit / Real size*, scan test, Export bar, options, GS1-128 symbols, the coloured URI |
 | `src/RealSize.tsx` | Rulers and the screen's calibration |
-| `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes) |
+| `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes), `handleAt` (the handle held within the label when the element runs past its edge) |
 | `src/scan.ts` | The scan test: the SVG drawn on a canvas, read by zxing-wasm (its WebAssembly served by the application) |
 | `src/BulkCard.tsx` | Step 1 in bulk: rows, column mapping, fixed values, the validation report |
 | `src/SequenceForm.tsx` | Serial numbers and SSCCs |
@@ -307,8 +307,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
-| `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed (apps/web/test) | 9 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 63 |
+| `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge (apps/web/test) | 12 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 64 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 
