@@ -53,6 +53,23 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("17", "271231")).toBe("271231");
     expect(normaliseCell("17", "31/02/2027")).toBe("270231"); // the Syntax Engine refuses it, with its reason
     expect(normaliseCell("10", "2027-12-31")).toBe("2027-12-31");
+    expect(normaliseCell("17", "31/12/2027 15:30")).toBe("271231"); // a time after a date is dropped
+    expect(normaliseCell("7003", "2027-12-31 15:30")).toBe("271231"); // also for a YYMMDD date that carries one
+  });
+
+  it("writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM", () => {
+    expect(normaliseCell("7250", "1980-01-15")).toBe("19800115");
+    expect(normaliseCell("7250", "1980-01-15 00:00:00")).toBe("19800115"); // an Excel date: no time for (7250)
+    expect(normaliseCell("7250", "15/1/1980")).toBe("19800115");
+    expect(normaliseCell("7250", "15.01.1980")).toBe("19800115");
+    expect(normaliseCell("7250", "19800115")).toBe("19800115");
+    expect(normaliseCell("7250", "15/01/80")).toBe("15/01/80"); // 1980 or 2080: left for the Syntax Engine to refuse
+    expect(normaliseCell("7250", "800115")).toBe("800115");
+    expect(normaliseCell("7251", "1980-01-15 08:30")).toBe("198001150830");
+    expect(normaliseCell("7251", "1980-01-15T08:30:00")).toBe("198001150830");
+    expect(normaliseCell("7251", "15/01/1980 8:30")).toBe("198001150830");
+    expect(normaliseCell("7251", "1980-01-15")).toBe("19800115"); // its time missing: the Syntax Engine says so
+    expect(normaliseCell("7251", "198001150830")).toBe("198001150830");
   });
 });
 

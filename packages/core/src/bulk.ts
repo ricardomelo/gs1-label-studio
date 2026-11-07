@@ -1,5 +1,5 @@
 import { attributeByCode, AttributeError } from "./attributes.ts";
-import { aiEntry, identifierKeys, isDateAi, qualifiersOf } from "./dictionary.ts";
+import { aiEntry, carriesTime, identifierKeys, isDateAi, isFullYearDate, qualifiersOf } from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
@@ -89,18 +89,23 @@ export function guessMapping(headers: string[]): ColumnMapping {
 /**
  * A cell as the AI takes it. Dates — AIs whose value starts with YYMMDD — are also read as YYYY-MM-DD (what an Excel
  * date becomes), day first as DD/MM/YYYY or DD/MM/YY (also with "-" or "."), and given as YYMMDD; a time after a date
- * is dropped. Anything else is left as it is, for the Syntax Engine to judge.
+ * is dropped. A date whose year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), is read from YYYY-MM-DD and
+ * DD/MM/YYYY alone, since a date of birth's century cannot be guessed, and keeps a time HH:MM after it as HHMM when the
+ * AI carries one, as (7251). Anything else is left as it is, for the Syntax Engine to judge.
  */
 export function normaliseCell(ai: string, raw: string): string {
   const value = raw.trim();
   if (!isDateAi(ai)) return value;
   if (/^\d{6}$/.test(value)) return value;
-  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$/.exec(value);
-  if (iso) return iso[1]!.slice(2) + iso[2] + iso[3];
-  const dayFirst = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})$/.exec(value);
+  const full = isFullYearDate(ai);
+  const time = (hh?: string, mi?: string) => (full && hh && carriesTime(ai) ? hh + mi : "");
+  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::\d{2})?)?$/.exec(value);
+  if (iso) return (full ? iso[1]! : iso[1]!.slice(2)) + iso[2] + iso[3] + time(iso[4], iso[5]);
+  const dayFirst = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})(?: (\d{1,2}):(\d{2})(?::\d{2})?)?$/.exec(value);
   if (dayFirst) {
-    const [, d, m, y] = dayFirst;
-    return y!.slice(-2) + m!.padStart(2, "0") + d!.padStart(2, "0");
+    const [, d, m, y, hh, mi] = dayFirst;
+    if (full && y!.length === 2) return value;
+    return (full ? y! : y!.slice(-2)) + m!.padStart(2, "0") + d!.padStart(2, "0") + time(hh?.padStart(2, "0"), mi);
   }
   return value;
 }

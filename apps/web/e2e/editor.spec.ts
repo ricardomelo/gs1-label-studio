@@ -1552,6 +1552,44 @@ test("a label of one's own: a date's time in hh and mm, in the drawing and the Z
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDEXP 31/12/2027 15.30^FS");
 });
 
+test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251)'s time, in the drawing and the ZPL", async ({ page }) => {
+  await page.fill("#paste", "(8018)950600013435200008(7250)19600115");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "gs1-datamatrix"); // smaller than the GSRN's DataBar Expanded
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  // (7250) offers its date's five formats, its year as given (by the rule for YYMMDD, 60 would be 2060), no time
+  await expect(page.locator('#el-field option[value^="{7250:"]')).toHaveCount(5);
+  await expect(page.locator('#el-field option[value="{7250:DD/MM/YYYY}"]')).toHaveText("{7250:DD/MM/YYYY} — 15/01/1960");
+  await expect(page.locator('#el-field option[value="{7250:DD MMM YYYY}"]')).toHaveText("{7250:DD MMM YYYY} — 15 JAN 1960");
+  await expect(page.locator(".designer .hint", { hasText: "A date with a time" })).toHaveCount(0);
+  await page.fill("#el-text", "DOB ");
+  await page.selectOption("#el-field", "{7250:DD/MM/YYYY}");
+  await expect(page.locator("#el-text")).toHaveValue("DOB {7250:DD/MM/YYYY}");
+  await expect(page.locator('.preview .symbol svg [aria-label="DOB 15/01/1960"]')).toHaveCount(1);
+  await page.fill("#el-text", "DOB {7250:DD/MM/YYYY hh:mm}");
+  await expect(page.locator("p.error", { hasText: "(7250) carries no time, so its field takes no hh, mm or ss." })).toBeVisible();
+  // (7251) DOB TIME: its date and time's formats too, the time from the digits after the eight of the date
+  await on(page, "data");
+  await page.fill("#paste", "(8018)950600013435200008(7251)196001150830");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await expect(page.locator(".designer .hint", { hasText: "A date with a time" })).toBeVisible();
+  await expect(page.locator('#el-field option[value="{7251:DD/MM/YYYY hh:mm}"]')).toHaveText("{7251:DD/MM/YYYY hh:mm} — 15/01/1960 08:30");
+  await expect(page.locator('#el-field option[value="{7251:hh:mm}"]')).toHaveText("{7251:hh:mm} — 08:30");
+  await expect(page.locator('#el-field option[value^="{7251:"][value$="ss}"]')).toHaveCount(0);
+  await page.fill("#el-text", "DOB {7251:DD/MM/YYYY hh:mm}");
+  await expect(page.locator('.preview .symbol svg [aria-label="DOB 15/01/1960 08:30"]')).toHaveCount(1);
+  await page.fill("#el-y", "52");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDDOB 15/01/1960 08:30^FS");
+});
+
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {

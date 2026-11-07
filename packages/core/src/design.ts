@@ -1,4 +1,4 @@
-import { carriesTime, isDateAi } from "./dictionary.ts";
+import { carriesTime, isDateAi, isFullYearDate } from "./dictionary.ts";
 import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
@@ -238,26 +238,32 @@ export const MONTH_NAMES: Record<MonthLanguage, readonly string[]> = {
   es: ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"],
 };
 
-/** What a date is written with: the day its century is chosen from (today), the language of its month (English). */
+/**
+ * What a date is written with: the day its century is chosen from (today), the language of its month (English), and
+ * whether the value's year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), rather than two (false).
+ */
 export interface DateOptions {
   today?: Date;
   months?: MonthLanguage;
+  fullYear?: boolean;
 }
 
 /**
  * A YYMMDD date in a format of DD, MM, MMM (the month's abbreviation in `MONTH_NAMES`), YY and YYYY, what is between
  * them kept: the century as section 7.12 of the General Specifications chooses it, day 00 the month's last
- * (`isoDate`). The digits after the date, in such AIs as (7003) or (8008), are its time: hh the hours, mm the minutes,
- * ss the seconds. A part the value does not have, as (7011) without its time or (8008) without its seconds, is left
+ * (`isoDate`); with `fullYear`, a YYYYMMDD date, as (7250)'s, its year as given. The digits after the date, in such
+ * AIs as (7003), (8008) or (7251), are its time: hh the hours, mm the minutes, ss the seconds. A part the value does not have, as (7011) without its time or (8008) without its seconds, is left
  * out with the text before it, so "DD/MM/YYYY hh:mm" of a date alone is its date. A format with none of the parts
  * raises an `InputError`.
  */
-export function formatDate(value: string, format: string, { today = new Date(), months = "en" }: DateOptions = {}): string {
+export function formatDate(value: string, format: string, { today = new Date(), months = "en", fullYear = false }: DateOptions = {}): string {
   if (!format.match(DATE_TOKENS)) throw new InputError(`The date format “${format}” has none of DD, MM, MMM, YY, YYYY, hh, mm and ss.`);
-  const [yyyy, mm, dd] = isoDate(value.slice(0, 6), today).split("-") as [string, string, string];
+  const end = fullYear ? 8 : 6;
+  const date = fullYear ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` : isoDate(value.slice(0, 6), today);
+  const [yyyy, mm, dd] = date.split("-") as [string, string, string];
   const parts: Record<string, string> = {
     YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTH_NAMES[months][Number(mm) - 1] ?? mm, MM: mm, DD: dd,
-    hh: value.slice(6, 8), mm: value.slice(8, 10), ss: value.slice(10, 12),
+    hh: value.slice(end, end + 2), mm: value.slice(end + 2, end + 4), ss: value.slice(end + 4, end + 6),
   };
   let out = "";
   let from = 0;
@@ -287,7 +293,7 @@ export function columnCell(cells: Readonly<Record<string, string>> | undefined, 
 
 /**
  * The value of each `{AI}` in a text, from the data, and of each `{AI:format}` of a date AI its date in that format
- * (`formatDate`), and its time too when the AI carries one (`carriesTime`); an AI the data does not have leaves
+ * (`formatDate`, its year as given for a YYYYMMDD date, `isFullYearDate`), and its time too when the AI carries one (`carriesTime`); an AI the data does not have leaves
  * nothing. A format after an AI that is not a date, or with a time after an AI that carries none, raises an
  * `InputError`. Any other name in braces is a spreadsheet column's (backlog 4.2): `{Description}` shows the row's cell
  * under that header (`columnCell`); a name no column has stays as typed, so that a mistyped field shows on the label.
@@ -301,7 +307,7 @@ export function fillFields(text: string, identified: Pick<Identified, "elements"
     if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
     if (!carriesTime(ai) && TIME_TOKENS.test(format)) throw new InputError(`(${ai}) carries no time, so its field takes no hh, mm or ss.`);
     const value = identified.elements.find((e) => e.ai === ai)?.value;
-    return value ? formatDate(value, format, options) : "";
+    return value ? formatDate(value, format, { ...options, fullYear: isFullYearDate(ai) }) : "";
   });
 }
 

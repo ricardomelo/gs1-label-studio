@@ -277,6 +277,9 @@ of my own (barcodes and text placed freely)*:
    The time's parts are in lower case, `hh`, `mm` and `ss`, so that `MM` stays the month. A part the value does not
    have, such as (7011)'s time when only its date was given, is left out with the text before it: `DD/MM/YYYY hh:mm`
    then shows the date alone.
+   A date of birth, (7250) *DOB* or (7251) *DOB TIME*, is written YYYYMMDD, its year whole, and keeps the century it
+   was given: `{7250:DD/MM/YYYY}` of 19600115 shows *15/01/1960* (the rule for YYMMDD would make 60 into 2060). It is
+   offered in the same five formats, and (7251) with its time too: `{7251:DD/MM/YYYY hh:mm}` *15/01/1960 08:30*.
    In bulk, the list also offers, under *Columns of the spreadsheet*, each column that holds no AI (a product's name,
    its region, a price), each shown with the row shown's value, such as `{Produto}` *Finest Truffle Tapenade*: each
    row's label shows that row's cell, in the drawing and in the print files. The header's case and the spaces around
@@ -524,7 +527,10 @@ its preview steps through the rows.
    **Use the pasted rows**. CSV with comma, semicolon or tab; Excel's first worksheet (`.xlsx`).
 2. Each column's AI is guessed from its header — an AI (`(01)`, `(17) Expiry` always go to that AI), a GS1 data title,
    or a common word in English, Portuguese or Spanish (*Lote*, *Validade*, *Código de barras*). Change it under **Goes
-   to**. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`).
+   to**. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`), a time after them dropped. A date
+   of birth, (7250) or (7251), becomes YYYYMMDD from `1960-01-15` or `15/01/1960`, and (7251) keeps its time
+   (`1960-01-15 08:30 → 196001150830`); a two-digit year such as `15/01/60` is left as typed and refused, since its
+   century cannot be told.
 3. **Same value on every row** → **+ Add**: an AI with the same value on every row, such as a country of origin (422).
 4. The rows are checked at once: *2 rows ready · 2 with errors*.
 

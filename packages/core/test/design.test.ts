@@ -14,6 +14,8 @@ import {
   DATE_FORMATS,
   TIME_FORMATS,
   carriesTime,
+  isDateAi,
+  isFullYearDate,
   fillFields,
   formatDate,
   generateBatch,
@@ -593,12 +595,37 @@ describe("a label of one's own", () => {
     expect(() => fillFields("{17:DD/MM/YYYY hh:mm}", data)).toThrow(InputError);
     expect(() => fillFields("{17:ss}", data)).toThrow("(17) carries no time, so its field takes no hh, mm or ss.");
     expect(["7003", "7011", "8008", "4324", "4325"].every(carriesTime)).toBe(true);
-    expect(["17", "11", "7006", "7007", "4326", "10", "7251"].some(carriesTime)).toBe(false);
+    expect(["17", "11", "7006", "7007", "4326", "10", "7250"].some(carriesTime)).toBe(false);
     // Through the page: the drawing and the print file
     const page: DesignPage = { widthMm: 80, heightMm: 30, elements: [{ id: "t", kind: "text", text: "EXP {7003:DD/MM/YYYY hh:mm}", heightMm: 4, xMm: 4, yMm: 4 }] };
     const designed = designLabel(page, expiry, font, { environment: "distribution" });
     expect(designed.layout.texts.map((t) => t.text)).toEqual(["EXP 31/12/2027 15:30"]);
     expect(zplPage(printPageFor(designed, 203))).toContain("^FDEXP 31/12/2027 15:30^FS");
+  });
+
+  it("writes a date of birth, YYYYMMDD, with its year as given, and (7251)'s time", () => {
+    const today = new Date(Date.UTC(2026, 10, 3));
+    const patient = (s: string) => engine.parse(`(8018)950600013435200008${s}`) as Identified;
+    const born = patient("(7250)19600115");
+    // The century as given: by the rule for YYMMDD (section 7.12), 60 would be 2060 in 2026
+    expect(DATE_FORMATS.map((format) => fillFields(`{7250:${format}}`, born, { today }))).toEqual(["15/01/1960", "15.01.1960", "1960-01-15", "01/1960", "15 JAN 1960"]);
+    expect(fillFields("{7250:DD MMM YY}", born, { today, months: "pt" })).toBe("15 JAN 60");
+    expect(fillFields("{7250:DD/MM/YYYY}", patient("(7250)20191231"), { today })).toBe("31/12/2019");
+    expect(fillFields("{7250}", born, { today })).toBe("19600115");
+    expect(() => fillFields("{7250:DD/MM/YYYY hh:mm}", born, { today })).toThrow("(7250) carries no time, so its field takes no hh, mm or ss.");
+    // (7251) YYYYMMDDHHMM: the time from the digits after the eight of the date
+    const bornAt = patient("(7251)196001150830");
+    expect(TIME_FORMATS.map((format) => fillFields(`{7251:${format}}`, bornAt, { today }))).toEqual(["15/01/1960 08:30", "15.01.1960 08:30", "1960-01-15 08:30", "08:30"]);
+    expect(fillFields("{7251:DD MMM YYYY}", bornAt, { today, months: "es" })).toBe("15 ENE 1960");
+    expect([isDateAi("7250"), isDateAi("7251"), carriesTime("7251"), isFullYearDate("7250"), isFullYearDate("7251")]).toEqual([true, true, true, true, true]);
+    expect(["17", "7003", "8008", "7007", "10", "8018"].some(isFullYearDate)).toBe(false);
+    expect(formatDate("19600115", "DD/MM/YYYY", { today, fullYear: true })).toBe("15/01/1960");
+    expect(formatDate("600115", "DD/MM/YYYY", { today })).toBe("15/01/2060"); // a YYMMDD date's century by the rule
+    // Through the page: the drawing and the print file
+    const page: DesignPage = { widthMm: 80, heightMm: 30, elements: [{ id: "t", kind: "text", text: "DOB {7251:DD/MM/YYYY hh:mm}", heightMm: 4, xMm: 4, yMm: 4 }] };
+    const designed = designLabel(page, bornAt, font, { environment: "distribution" });
+    expect(designed.layout.texts.map((t) => t.text)).toEqual(["DOB 15/01/1960 08:30"]);
+    expect(zplPage(printPageFor(designed, 203))).toContain("^FDDOB 15/01/1960 08:30^FS");
   });
 
   it("writes a date's month in the text block's language: English, Portuguese or Spanish", () => {

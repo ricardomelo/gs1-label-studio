@@ -263,6 +263,11 @@
 - The handle of an element past the label's edge (backlog 4.2, 7 November): it stays at the label's edge, where the
   element is cut, in red, instead of following the corner out of sight under the canvas's edge or the zoom buttons;
   dragging it puts the corner under the pointer, so the element shrinks back at once.
+- A date of birth in a field (backlog 4.2, 7 November): (7250) DOB and (7251) DOB TIME, whose dates are YYYYMMDD,
+  are offered by *Insert a field from the data* like the other dates, with the year as given (`{7250:DD/MM/YYYY}` →
+  *15/01/1960*), and (7251) with its time; in bulk, `1960-01-15` and `15/01/1960` become 19600115, and (7251) keeps
+  a time after them. A time after a YYMMDD date written day first, `31/12/2027 15:30`, is now dropped as after an ISO
+  date.
 - The phone's live preview of a long barcode, such as a GSRN's GS1 DataBar Expanded with a date of birth, is kept
   within the screen's width; it made the page wider than the screen and the tab bar could not be tapped.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

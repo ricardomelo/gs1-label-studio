@@ -420,6 +420,10 @@
      "status": "passed"
     },
     {
+     "name": "cells as the AI takes them › writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM",
+     "status": "passed"
+    },
+    {
      "name": "a row's cells by their column's header › keeps each cell trimmed under its header, leaves out a column without one and keeps the first of two",
      "status": "passed"
     },
@@ -517,6 +521,10 @@
     },
     {
      "name": "a label of one's own › writes a date's time in hh, mm and ss, leaving out a part the value does not have",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › writes a date of birth, YYYYMMDD, with its year as given, and (7251)'s time",
      "status": "passed"
     },
     {
@@ -4461,6 +4469,15 @@
     },
     {
      "name": "a label of one's own: a date's time in hh and mm, in the drawing and the ZPL",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251)'s time, in the drawing and the ZPL",
      "status": "listed",
      "projects": [
       "desktop",

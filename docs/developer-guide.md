@@ -270,7 +270,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
 | `batch` | label sheets, several-page PDF, file names, generating every row | 15 |
-| `bulk` | columns guessed from headers, cells normalised, rows checked | 39 |
+| `bulk` | columns guessed from headers, cells normalised, rows checked | 40 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
 | `dots` | the printer's dot grid | 3 |
@@ -285,7 +285,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 8 |
-| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 15 |
+| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 16 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
@@ -308,7 +308,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `place` | where a new element lands on a label of one's own, never on another (apps/web/test) | 2 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge (apps/web/test) | 12 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 65 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 66 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

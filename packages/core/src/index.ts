@@ -143,6 +143,7 @@ export {
   identifierKeys,
   carriesTime,
   isDateAi,
+  isFullYearDate,
   isDigitalLinkKey,
   formatHint,
   pathAis,

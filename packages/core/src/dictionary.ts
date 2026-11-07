@@ -35,17 +35,33 @@ export function aiEntry(ai: string): AiEntry | undefined {
 }
 
 const DATE_LINTERS = new Set(["yymmd0", "yymmdd"]);
+const FULL_YEAR_LINTERS = new Set(["yyyymmdd"]);
 
-/** Whether an AI's value starts with a date YYMMDD, such as (17) or (7003): a bulk cell read as a date, a date field's format. */
+/** Whether an AI's first component carries one of the linters. */
+const startsWith = (ai: string, linters: Set<string>) => aiEntry(ai)?.components[0]?.linters.some((l) => linters.has(l)) ?? false;
+
+/**
+ * Whether an AI's value starts with a date whose year has four digits, YYYYMMDD, such as (7250) DOB or (7251) DOB TIME
+ * (backlog 4.2): a date of birth, whose century the General Specifications' rule for YYMMDD could not choose.
+ */
+export function isFullYearDate(ai: string): boolean {
+  return startsWith(ai, FULL_YEAR_LINTERS);
+}
+
+/**
+ * Whether an AI's value starts with a date, YYMMDD as (17) or (7003), or YYYYMMDD as (7250) (`isFullYearDate`): a
+ * bulk cell read as a date, a date field's format.
+ */
 export function isDateAi(ai: string): boolean {
-  return aiEntry(ai)?.components[0]?.linters.some((l) => DATE_LINTERS.has(l)) ?? false;
+  return startsWith(ai, DATE_LINTERS) || isFullYearDate(ai);
 }
 
 const TIME_LINTERS = new Set(["hhmi", "hh", "mi", "ss"]);
 
 /**
  * Whether a date AI's value goes on, after its date, with a time: hours, then minutes, then seconds, some of them
- * optional, such as (7003) YYMMDDHHMM, (7011) YYMMDD[HHMM] or (8008) YYMMDDHH[MM[SS]]; a date field's hh, mm and ss.
+ * optional, such as (7003) YYMMDDHHMM, (7011) YYMMDD[HHMM], (8008) YYMMDDHH[MM[SS]] or (7251) YYYYMMDDHHMM; a date
+ * field's hh, mm and ss.
  */
 export function carriesTime(ai: string): boolean {
   return isDateAi(ai) && (aiEntry(ai)?.components.some((c) => c.linters.some((l) => TIME_LINTERS.has(l))) ?? false);
