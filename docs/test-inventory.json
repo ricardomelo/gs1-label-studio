@@ -2986,6 +2986,26 @@
     {
      "name": "the handle of an element past the label's edge › dragged from where it is held, puts the corner under the pointer",
      "status": "passed"
+    },
+    {
+     "name": "resizing from the keyboard › gives a box half a millimetre, or 5 mm with Shift, across with Right and Left and down with Down and Up",
+     "status": "passed"
+    },
+    {
+     "name": "resizing from the keyboard › gives a line its length with the two keys along it, and ignores the other two",
+     "status": "passed"
+    },
+    {
+     "name": "resizing from the keyboard › keeps an image's proportions: Right and Down make it wider, Left and Up narrower, turned or not",
+     "status": "passed"
+    },
+    {
+     "name": "resizing from the keyboard › gives a barcode its next size, or with Shift the one nearest its modules 5 mm larger, and stops at the ends",
+     "status": "passed"
+    },
+    {
+     "name": "resizing from the keyboard › gives a text block its next height, or with Shift the one nearest its longer side 5 mm longer, and stops at the ends",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -4532,6 +4552,15 @@
     },
     {
      "name": "a label of one's own: the handle of an element past the label's edge held at the edge, and dragged back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an element resized from the keyboard, by the arrow keys on its handle",
      "status": "listed",
      "projects": [
       "desktop",

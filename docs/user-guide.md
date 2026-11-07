@@ -260,7 +260,12 @@ of my own (barcodes and text placed freely)*:
    environment allows (its bars or modules follow the corner, its text keeps its height), and a text block the nearest
    **Text height**. The properties show the new size as it changes. When the element runs past the label's edge, its
    square stays at the edge, where the element is cut, and turns red; drag it and the corner comes under the pointer,
-   so the element shrinks back onto the label.
+   so the element shrinks back onto the label. From the keyboard: choose the element in the list, press **Shift+Tab**
+   until the square has a ring (a hint under it says what the keys do), and press the arrow keys: each press moves the
+   corner half a millimetre, or 5 mm with **Shift**. A box takes **→** and **←** on its width and **↓** and **↑** on
+   its height, a line the two along it; an image, a barcode and a text block keep their proportions, **→** and **↓**
+   making them larger, **←** and **↑** smaller, a barcode and a text block a size at a time (with **Shift**, about
+   5 mm at a time).
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,

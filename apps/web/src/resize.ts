@@ -20,9 +20,20 @@ import {
 // is cut, in red, and dragging it puts the corner under the pointer, so the element shrinks back as soon as it is
 // pulled (mock-up A of two, 7 November 2026, taken under the owner's rule; B drew the whole outline past the edge with
 // the handle at its true corner, which can still be out of sight).
+//
+// The handle also takes the keyboard (mock-up A of two, 7 November 2026, taken under the owner's rule): Tab reaches it
+// once an element is chosen, and each arrow key moves the corner one step, half a millimetre, or 5 mm with Shift
+// (`keyResized`). A box takes Right and Left on its width and Down and Up on its height, a line the two along it; an
+// image, a barcode and a text block keep their proportions, Right and Down making them larger, Left and Up smaller, a
+// barcode and a text block to their next size, or with Shift to the size nearest their longer side 5 mm longer or
+// shorter, at least the next one. Mock-up B gave the keyboard to the element's outline, the arrows moving it and Shift
+// and the arrows resizing it: moving from the keyboard was not asked for, and Left and Top already move it exactly.
 
 /** Dragging sizes boxes, lines and images by half millimetres, as it moves elements. */
 export const RESIZE_STEP_MM = 0.5;
+
+/** Shift and an arrow key move the corner by 5 mm. */
+export const RESIZE_BIG_STEP_MM = 5;
 
 /** The heights a text block's capitals can take, in mm: those its properties offer. */
 export const TEXT_HEIGHTS = [2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12] as const;
@@ -84,4 +95,42 @@ export function resized(element: DesignElement, placed: PlacedElement, xMm: numb
     return { ...element, size: nearest(sizes, element.size * scale) };
   }
   return { ...element, heightMm: nearest(TEXT_HEIGHTS, element.heightMm * scale) };
+}
+
+/** The keys that resize the chosen element from its handle. */
+export const RESIZE_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"] as const;
+export type ResizeKey = (typeof RESIZE_KEYS)[number];
+
+/** The next of `values` after `current` towards `sign`, or past `wanted` when it lies further: `current` at the end. */
+function nextOf(values: readonly number[], current: number, sign: number, wanted?: number): number {
+  const ahead = [...values].sort((a, b) => sign * (a - b)).filter((value) => sign * (value - current) > 0);
+  if (!ahead.length) return current;
+  return wanted === undefined ? ahead[0]! : nearest(ahead, wanted);
+}
+
+/**
+ * The element as it is after an arrow key on its handle: the corner one step, 0.5 mm or with `big` (Shift) 5 mm, right
+ * or left, down or up, its top left corner kept. A box and a line take the step on the side it moves along (a line
+ * ignores the other two keys); an image, a barcode and a text block keep their proportions, Right and Down making them
+ * larger. A barcode and a text block go to their next size, or with `big` to the one nearest to their longer side (a
+ * barcode's bars or modules, as `sizing` says) 5 mm longer or shorter, at least the next; at the end of their sizes they
+ * stay as they are. `placed` is the element's box on the page now.
+ */
+export function keyResized(element: DesignElement, placed: PlacedElement, key: ResizeKey, big: boolean, sizing?: SymbolSizing): DesignElement {
+  const mm = big ? RESIZE_BIG_STEP_MM : RESIZE_STEP_MM;
+  const across = key === "ArrowLeft" || key === "ArrowRight";
+  const sign = key === "ArrowRight" || key === "ArrowDown" ? 1 : -1;
+  if (element.kind === "box") {
+    return across ? { ...element, widthMm: step(element.widthMm + sign * mm) } : { ...element, heightMm: step(element.heightMm + sign * mm) };
+  }
+  if (element.kind === "line") return across === element.vertical ? element : { ...element, lengthMm: step(element.lengthMm + sign * mm) };
+  if (element.kind === "image") return { ...element, widthMm: step(element.widthMm + sign * mm) };
+  const grows = element.kind === "symbol" && sizing ? sizing : placed;
+  const side = Math.max(grows.widthMm, grows.heightMm, 0.1);
+  const scale = Math.max(0.01, (side + sign * mm) / side);
+  if (element.kind === "symbol") {
+    const sizes = sizing?.sizes.length ? sizing.sizes : SIZES;
+    return { ...element, size: nextOf(sizes, element.size, sign, big ? element.size * scale : undefined) };
+  }
+  return { ...element, heightMm: nextOf(TEXT_HEIGHTS, element.heightMm, sign, big ? element.heightMm * scale : undefined) };
 }

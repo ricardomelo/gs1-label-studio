@@ -270,4 +270,7 @@
   date.
 - The phone's live preview of a long barcode, such as a GSRN's GS1 DataBar Expanded with a date of birth, is kept
   within the screen's width; it made the page wider than the screen and the tab bar could not be tapped.
+- Resizing from the keyboard (backlog 4.2, 7 November): Tab reaches the chosen element's handle on a label of one's
+  own, a hint under it says what the keys do, and each arrow key moves its corner half a millimetre, or 5 mm with
+  Shift; a barcode and a text block go a size at a time.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

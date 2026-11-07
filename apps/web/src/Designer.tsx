@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { freeCorner } from "./place.ts";
-import { handleAt, resized, TEXT_HEIGHTS, type SymbolSizing } from "./resize.ts";
+import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -24,7 +24,9 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // 2026, taken under the owner's rule): one handle at the chosen element's bottom right corner, its top left corner kept
 // (resize.ts); B had a handle at each corner. An element run past the label's edge keeps its handle at the edge, in
 // red, and dragging it puts the corner under the pointer (mock-up A of two, 7 November 2026, taken under the owner's
-// rule; B drew the whole outline past the edge).
+// rule; B drew the whole outline past the edge). Then resizing from the keyboard (mock-up A of two, 7 November 2026,
+// taken under the owner's rule): Tab reaches the handle, a button, and the arrow keys move its corner, Shift by 5 mm,
+// a hint under it while it has the keyboard's focus; B gave the keyboard to the element's outline, the arrows moving it.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -183,7 +185,7 @@ const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id
 
 /**
  * Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging; the chosen one's
- * handle at its bottom right corner, resizing it by dragging (resize.ts).
+ * handle at its bottom right corner, resizing it by dragging or by the arrow keys once Tab reaches it (resize.ts).
  */
 export function DesignerOverlay({ page, placed, sizing, selected, onChange }: OverlayProps) {
   const svg = useRef<SVGSVGElement>(null);
@@ -256,10 +258,17 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
         })}
       </svg>
       {chosen && chosenElement && handle && (
-        <span
+        <button
+          type="button"
           className={handle.past ? "design-handle past" : "design-handle"}
           data-testid="resize-handle"
-          title={handle.past ? t("The element runs past the label's edge: drag this corner to make it smaller") : t("Drag this corner to resize the element")}
+          data-keys={t("Arrow keys: resize · Shift: larger steps")}
+          aria-keyshortcuts="ArrowRight ArrowLeft ArrowDown ArrowUp Shift+ArrowRight Shift+ArrowLeft Shift+ArrowDown Shift+ArrowUp"
+          title={
+            handle.past
+              ? t("The element runs past the label's edge: drag this corner, or press the arrow keys, to make it smaller")
+              : t("Drag this corner, or press the arrow keys, to resize the element")
+          }
           style={{ left: `${(handle.xMm / page.widthMm) * 100}%`, top: `${(handle.yMm / page.heightMm) * 100}%` }}
           onPointerDown={(event) => {
             event.stopPropagation();
@@ -269,6 +278,14 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           onPointerMove={resize}
           onPointerUp={() => (resizing.current = null)}
           onPointerCancel={() => (resizing.current = null)}
+          onKeyDown={(event) => {
+            if (!(RESIZE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
+            event.preventDefault();
+            const next = keyResized(chosenElement, chosen, event.key as ResizeKey, event.shiftKey, sizing[chosen.id]);
+            if (JSON.stringify(next) !== JSON.stringify(chosenElement)) {
+              onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
+            }
+          }}
         />
       )}
     </>
@@ -563,7 +580,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
         </div>
         <div>
           {!element ? (
-            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label to move it, or drag its corner to resize it.")}</p>
+            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label to move it, or drag its corner, or press the arrow keys on its corner, to resize it.")}</p>
           ) : (
             <div className="grid">
               {element.kind === "symbol" ? (

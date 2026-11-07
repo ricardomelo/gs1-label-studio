@@ -1929,7 +1929,7 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   const handle = page.getByTestId("resize-handle");
   const overlay = page.locator(".design-overlay");
   await expect(handle).toHaveCount(0);
-  await expect(page.getByText("drag it on the label to move it, or drag its corner to resize it.")).toBeVisible();
+  await expect(page.getByText("drag it on the label to move it, or drag its corner, or press the arrow keys on its corner, to resize it.")).toBeVisible();
   /** Drags the handle by (dx, dy) pixels, or in mm when `mm` is set, and lets go. */
   const drag = async (dx: number, dy: number, mm = false) => {
     await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
@@ -1953,7 +1953,7 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   // 150 %; dragged far back, never smaller than the 100 % that general distribution allows
   await page.selectOption("#page-env", "distribution");
   await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
-  await expect(handle).toHaveAttribute("title", "Drag this corner to resize the element");
+  await expect(handle).toHaveAttribute("title", "Drag this corner, or press the arrow keys, to resize the element");
   const qr = await corner();
   expect(Math.abs(qr.handle[0]! - qr.corner[0]!)).toBeLessThan(1);
   expect(Math.abs(qr.handle[1]! - qr.corner[1]!)).toBeLessThan(1);
@@ -2043,7 +2043,7 @@ test("a label of one's own: the handle of an element past the label's edge held 
   await expect(handle).not.toHaveClass(/past/);
   await page.fill("#el-x", "78");
   await expect(handle).toHaveClass(/past/);
-  await expect(handle).toHaveAttribute("title", "The element runs past the label's edge: drag this corner to make it smaller");
+  await expect(handle).toHaveAttribute("title", "The element runs past the label's edge: drag this corner, or press the arrow keys, to make it smaller");
   const qr = await where();
   expect(Math.abs(qr.x - (qr.label.x + qr.label.width))).toBeLessThan(1);
   expect(Math.abs(qr.y - (qr.outline.y + qr.outline.height))).toBeLessThan(1);
@@ -2062,7 +2062,7 @@ test("a label of one's own: the handle of an element past the label's edge held 
   await expect(page.locator("#el-width")).toHaveValue("15");
   await expect(page.locator("#el-height-mm")).toHaveValue("20");
   await expect(handle).not.toHaveClass(/past/);
-  await expect(handle).toHaveAttribute("title", "Drag this corner to resize the element");
+  await expect(handle).toHaveAttribute("title", "Drag this corner, or press the arrow keys, to resize the element");
   const box = await where();
   expect(Math.abs(box.x - (box.outline.x + box.outline.width))).toBeLessThan(1);
   expect(Math.abs(box.y - (box.outline.y + box.outline.height))).toBeLessThan(1);
@@ -2076,7 +2076,90 @@ test("a label of one's own: the handle of an element past the label's edge held 
   await on(page, "more");
   await page.selectOption("#language", "pt-BR");
   await on(page, "label");
-  await expect(handle).toHaveAttribute("title", "O elemento passa da borda da etiqueta: arraste este canto para diminuí-lo");
+  await expect(handle).toHaveAttribute("title", "O elemento passa da borda da etiqueta: arraste este canto, ou use as setas, para diminuí-lo");
+});
+
+// Item 4.2 (mock-up A of two, 7 November 2026, taken under the owner's rule): the chosen element's handle takes the
+// keyboard: Tab reaches it, a hint under it says what the keys do, and the arrow keys move its corner, Shift by 5 mm; a
+// barcode and a text block go to their next size; the page does not scroll and the handle keeps the focus.
+test("a label of one's own: an element resized from the keyboard, by the arrow keys on its handle", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  const handle = page.getByTestId("resize-handle");
+  // Chosen from the list with Enter, then back with Shift and Tab to its handle on the label, before the list
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  for (let n = 0; n < 40 && !(await handle.evaluate((element) => element === document.activeElement)); n++) await page.keyboard.press("Shift+Tab");
+  await expect(handle).toBeFocused();
+  await expect(handle).toHaveAttribute("title", "Drag this corner, or press the arrow keys, to resize the element");
+  expect(await handle.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Arrow keys: resize · Shift: larger steps"');
+  expect(await handle.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("solid");
+  // The QR code to its next size and back; general distribution allows nothing under 100 %, so it stays there
+  const scrolled = await page.evaluate(() => [window.scrollX, window.scrollY, document.querySelector(".canvas")!.scrollTop]);
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("#el-size")).toHaveValue("120");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("#el-size")).toHaveValue("150");
+  await page.keyboard.press("Shift+ArrowLeft");
+  await expect(page.locator("#el-size")).toHaveValue("120");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.locator("#el-size")).toHaveValue("100");
+  await expect(handle).toBeFocused();
+  expect(await page.evaluate(() => [window.scrollX, window.scrollY, document.querySelector(".canvas")!.scrollTop])).toEqual(scrolled);
+  await expect(page.locator("#el-x")).toHaveValue("2");
+  await expect(page.locator("#el-y")).toHaveValue("2");
+  // A box, 40 × 20 mm: half a millimetre across, 5 mm down with Shift, half a millimetre up; Ctrl and an arrow do nothing
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await page.fill("#el-x", "50");
+  await handle.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("#el-width")).toHaveValue("41");
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(page.locator("#el-height-mm")).toHaveValue("25");
+  await page.keyboard.press("ArrowUp");
+  await expect(page.locator("#el-height-mm")).toHaveValue("24.5");
+  await page.keyboard.press("Control+ArrowUp");
+  await expect(page.locator("#el-height-mm")).toHaveValue("24.5");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("◇ Box 41 × 24.5 mm");
+  await expect(page.locator("#el-x")).toHaveValue("50");
+  // Run past the right edge, at 70 mm to 111 mm, its handle held there in red; three times Shift and Left make it 26 mm
+  // wide, within the label
+  await page.fill("#el-x", "70");
+  await expect(handle).toHaveClass(/past/);
+  await expect(handle).toHaveAttribute("title", "The element runs past the label's edge: drag this corner, or press the arrow keys, to make it smaller");
+  await handle.focus();
+  for (let n = 0; n < 3; n++) await page.keyboard.press("Shift+ArrowLeft");
+  await expect(page.locator("#el-width")).toHaveValue("26");
+  await expect(handle).not.toHaveClass(/past/);
+  await expect(handle).toBeFocused();
+  // In the ZPL, a box 26 × 24.5 mm: 208 × 196 dots at 203 dpi
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^GB208,196,/);
+  await on(page, "label");
+  // The text block: 3 mm to 3.5 mm, then down four heights and more, never under 2 mm
+  await page.locator(".design-list button", { hasText: "“{01}”" }).press("Enter");
+  await handle.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("#el-height")).toHaveValue("3.5");
+  for (let n = 0; n < 4; n++) await page.keyboard.press("ArrowLeft");
+  await expect(page.locator("#el-height")).toHaveValue("2");
+  // In Portuguese, the hint and the title
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(handle).toHaveAttribute("title", "Arraste este canto, ou use as setas, para redimensionar o elemento");
+  await handle.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("#el-height")).toHaveValue("2.5");
+  expect(await handle.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Setas: redimensionam · Shift: passos maiores"');
 });
 
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the

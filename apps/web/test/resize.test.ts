@@ -4,7 +4,7 @@ import {
 } from "@gs1-label-studio/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { handleAt, nearest, resized, symbolSizing, TEXT_HEIGHTS } from "../src/resize.ts";
+import { handleAt, keyResized, nearest, resized, symbolSizing, TEXT_HEIGHTS } from "../src/resize.ts";
 
 // Resizing an element by dragging its bottom right corner on a label of one's own (backlog 4.2, mock-up A of two,
 // 7 November 2026): its top left corner kept, a box to the corner, a line to its length, an image, a barcode and a text
@@ -143,5 +143,82 @@ describe("the handle of an element past the label's edge", () => {
     const placed = at(80, 5, 40, 20);
     const { xMm, yMm } = handleAt(placed, page);
     expect(resized(box, placed, xMm - 1, yMm)).toEqual({ ...box, widthMm: 19, heightMm: 20 });
+  });
+});
+
+// Resizing from the keyboard (mock-up A of two, 7 November 2026): the arrow keys on the chosen element's handle move its
+// corner one step, 0.5 mm, or 5 mm with Shift; a barcode and a text block go to their next size.
+describe("resizing from the keyboard", () => {
+  it("gives a box half a millimetre, or 5 mm with Shift, across with Right and Left and down with Down and Up", () => {
+    const box: DesignBox = { id: "e1", kind: "box", widthMm: 20, heightMm: 10, thicknessMm: 0.5, filled: false, xMm: 5, yMm: 4 };
+    const placed = at(5, 4, 20, 10);
+    expect(keyResized(box, placed, "ArrowRight", false)).toEqual({ ...box, widthMm: 20.5 });
+    expect(keyResized(box, placed, "ArrowLeft", false)).toEqual({ ...box, widthMm: 19.5 });
+    expect(keyResized(box, placed, "ArrowDown", false)).toEqual({ ...box, heightMm: 10.5 });
+    expect(keyResized(box, placed, "ArrowUp", false)).toEqual({ ...box, heightMm: 9.5 });
+    expect(keyResized(box, placed, "ArrowRight", true)).toEqual({ ...box, widthMm: 25 });
+    expect(keyResized(box, placed, "ArrowUp", true)).toEqual({ ...box, heightMm: 5 });
+    // Never smaller than a step; a size typed off the half millimetres comes back to them
+    expect(keyResized({ ...box, widthMm: 3 }, placed, "ArrowLeft", true)).toEqual({ ...box, widthMm: 0.5 });
+    expect(keyResized({ ...box, widthMm: 20.3 }, placed, "ArrowRight", false)).toEqual({ ...box, widthMm: 21 });
+  });
+
+  it("gives a line its length with the two keys along it, and ignores the other two", () => {
+    const across: DesignLine = { id: "e1", kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 };
+    expect(keyResized(across, at(4, 4, 40, 0.5), "ArrowRight", false)).toEqual({ ...across, lengthMm: 40.5 });
+    expect(keyResized(across, at(4, 4, 40, 0.5), "ArrowLeft", true)).toEqual({ ...across, lengthMm: 35 });
+    expect(keyResized(across, at(4, 4, 40, 0.5), "ArrowDown", false)).toEqual(across);
+    const down: DesignLine = { ...across, vertical: true };
+    expect(keyResized(down, at(4, 4, 0.5, 40), "ArrowDown", true)).toEqual({ ...down, lengthMm: 45 });
+    expect(keyResized(down, at(4, 4, 0.5, 40), "ArrowUp", false)).toEqual({ ...down, lengthMm: 39.5 });
+    expect(keyResized(down, at(4, 4, 0.5, 40), "ArrowRight", false)).toEqual(down);
+  });
+
+  it("keeps an image's proportions: Right and Down make it wider, Left and Up narrower, turned or not", () => {
+    const picture = { width: 360, height: 150, bits: "" };
+    const image: DesignImage = { id: "e1", kind: "image", name: "logo", picture, widthMm: 20, xMm: 60, yMm: 6 };
+    const placed = at(60, 6, 20, 25 / 3);
+    expect(keyResized(image, placed, "ArrowRight", false)).toEqual({ ...image, widthMm: 20.5 });
+    expect(keyResized(image, placed, "ArrowDown", true)).toEqual({ ...image, widthMm: 25 });
+    expect(keyResized(image, placed, "ArrowUp", false)).toEqual({ ...image, widthMm: 19.5 });
+    expect(keyResized(image, placed, "ArrowLeft", true)).toEqual({ ...image, widthMm: 15 });
+    const turned = { ...image, rotation: 90 as const };
+    expect(keyResized(turned, at(60, 6, 25 / 3, 20), "ArrowDown", false)).toEqual({ ...turned, widthMm: 20.5 });
+  });
+
+  it("gives a barcode its next size, or with Shift the one nearest its modules 5 mm larger, and stops at the ends", () => {
+    const symbol: DesignSymbol = { id: "e1", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: true, xMm: 2, yMm: 2 };
+    const placed = at(2, 2, 24, 30);
+    const sizing = { widthMm: 20, heightMm: 20, sizes: SIZES };
+    expect(keyResized(symbol, placed, "ArrowRight", false, sizing)).toEqual({ ...symbol, size: 120 });
+    expect(keyResized(symbol, placed, "ArrowDown", false, sizing)).toEqual({ ...symbol, size: 120 });
+    expect(keyResized(symbol, placed, "ArrowLeft", false, sizing)).toEqual({ ...symbol, size: 90 });
+    expect(keyResized(symbol, placed, "ArrowUp", false, sizing)).toEqual({ ...symbol, size: 90 });
+    // 20 mm of modules 5 mm larger is 125 %: 120; 10 mm 5 mm larger, 150 %; 10 mm 5 mm smaller, 50 %: the smallest, 80
+    expect(keyResized(symbol, placed, "ArrowRight", true, sizing)).toEqual({ ...symbol, size: 120 });
+    expect(keyResized(symbol, placed, "ArrowRight", true, { ...sizing, widthMm: 10, heightMm: 10 })).toEqual({ ...symbol, size: 150 });
+    expect(keyResized({ ...symbol, size: 150 }, placed, "ArrowLeft", true, { ...sizing, widthMm: 10, heightMm: 10 })).toEqual({ ...symbol, size: 80 });
+    // With Shift, at least the next size: 60 mm 5 mm larger is 108 %, nearer 100 than 120
+    expect(keyResized(symbol, placed, "ArrowRight", true, { ...sizing, widthMm: 60, heightMm: 60 })).toEqual({ ...symbol, size: 120 });
+    // At the ends of the sizes allowed, as it is
+    expect(keyResized({ ...symbol, size: 200 }, placed, "ArrowRight", false, sizing)).toEqual({ ...symbol, size: 200 });
+    expect(keyResized({ ...symbol, size: 80 }, placed, "ArrowLeft", true, sizing)).toEqual({ ...symbol, size: 80 });
+    expect(keyResized(symbol, placed, "ArrowLeft", false, { ...sizing, sizes: [100, 120, 150, 200] })).toEqual(symbol);
+    // Without its sizing, its whole box and every size: 30 mm 5 mm larger is 117 %, so 90 becomes 100 and 100 becomes 120
+    expect(keyResized({ ...symbol, size: 90 }, placed, "ArrowRight", true)).toEqual({ ...symbol, size: 100 });
+    expect(keyResized(symbol, placed, "ArrowRight", true)).toEqual({ ...symbol, size: 120 });
+  });
+
+  it("gives a text block its next height, or with Shift the one nearest its longer side 5 mm longer, and stops at the ends", () => {
+    const text: DesignText = { id: "e1", kind: "text", text: "BATCH {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 4, yMm: 52 };
+    const placed = at(4, 42, 3, 10);
+    expect(keyResized(text, placed, "ArrowDown", false)).toEqual({ ...text, heightMm: 3.5 });
+    expect(keyResized(text, placed, "ArrowLeft", false)).toEqual({ ...text, heightMm: 2.5 });
+    // 10 mm 5 mm longer is 4.5 mm high, nearer 5 than 4 by ratio
+    expect(keyResized(text, placed, "ArrowRight", true)).toEqual({ ...text, heightMm: 5 });
+    expect(keyResized({ ...text, heightMm: 4.2 }, placed, "ArrowRight", false)).toEqual({ ...text, heightMm: 5 });
+    expect(keyResized({ ...text, heightMm: 4.2 }, placed, "ArrowUp", false)).toEqual({ ...text, heightMm: 4 });
+    expect(keyResized({ ...text, heightMm: 12 }, placed, "ArrowDown", true)).toEqual({ ...text, heightMm: 12 });
+    expect(keyResized({ ...text, heightMm: 2 }, placed, "ArrowUp", false)).toEqual({ ...text, heightMm: 2 });
   });
 });

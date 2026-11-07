@@ -521,7 +521,10 @@ complete.
   element past the label's edge since 7 November (mock-up A of two, taken under the owner's rule; B drew the whole
   outline past the edge): held at the edge, in red, and dragged, the corner under the pointer. A date of birth since
   7 November: (7250) and (7251), whose dates are YYYYMMDD, offered in the date fields' formats with the year as given,
-  (7251) with its time, and read from ISO and DD/MM/YYYY cells in bulk. Saving the label is 4.3*
+  (7251) with its time, and read from ISO and DD/MM/YYYY cells in bulk. Resizing from the keyboard since 7 November
+  (mock-up A of two, taken under the owner's rule; B gave the keyboard to the element's outline, the arrows moving
+  it): Tab reaches the chosen element's handle, and the arrow keys move its corner by half a millimetre, 5 mm with
+  Shift, a barcode and a text block a size at a time. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**
