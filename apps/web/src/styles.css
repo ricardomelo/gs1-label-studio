@@ -413,4 +413,6 @@ footer.about .hint { margin-top: 12px; }
 .designer .darkness .range { display: flex; align-items: center; gap: 8px; }
 .designer .darkness input[type="range"] { flex: 1; min-width: 0; accent-color: #1a73e8; }
 .designer .darkness output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.designer .darkness label.dither { margin-top: 8px; }
+.designer .darkness label.dither input { width: auto; margin: 0; }
 @media (max-width: 700px) { .design-columns { grid-template-columns: 1fr; } }

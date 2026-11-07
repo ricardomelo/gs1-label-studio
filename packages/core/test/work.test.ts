@@ -20,7 +20,7 @@ const WORK: Work = {
       ...GRAPHICS.elements,
       { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 8, yMm: 8 },
       { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, rotation: 90, xMm: 4, yMm: 4 },
-      { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180, threshold: 160 },
+      { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180, threshold: 160, dither: true },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },
@@ -121,6 +121,14 @@ describe("the work saved and opened again (backlog 4.3)", () => {
       return (readWork(JSON.stringify(copy)).page!.elements[8] as DesignImage).threshold;
     };
     expect([kept(13), kept(243)]).toEqual([13, 243]);
+    // Dithered (backlog 4.2): only true is kept; without it, the picture was made at the threshold
+    expect(element(8, { dither: false })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { dither: "true" })).toBe(at("element 9 of the label's page"));
+    expect(element(8, { dither: 1 })).toBe(at("element 9 of the label's page"));
+    expect((readWork(JSON.stringify(saved)).page!.elements[8] as DesignImage).dither).toBe(true);
+    const plain = structuredClone(saved);
+    delete ((plain.page as typeof page).elements[8] as Record<string, unknown>).dither;
+    expect("dither" in readWork(JSON.stringify(plain)).page!.elements[8]!).toBe(false);
     expect(element(2, { id: "frame" })).toBe(at("the label's page"));
     expect(changed((c) => { (c.page as Record<string, unknown>).widthMm = null; })).toBe(at("the label's page"));
     expect(changed((c) => { ((c.printer as Record<string, unknown>).profile as Record<string, unknown>).language = "pcl"; })).toBe(at("the printer"));

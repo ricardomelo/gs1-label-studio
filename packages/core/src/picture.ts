@@ -56,19 +56,61 @@ export function greyLevels(rgba: ArrayLike<number>, width: number, height: numbe
 
 /**
  * The picture of the grey levels `grey` (`greyLevels`), a pixel dark below `threshold`: the higher the threshold, the
- * more of a logo's light colours print dark (the image's darkness, backlog 4.2).
+ * more of a logo's light colours print dark (the image's darkness, backlog 4.2). Dithered (`dither`), a photo's greys
+ * become dots, the darker the closer together (`dithered`), and the threshold darkens the greys instead.
  */
-export function pictureFromGrey(grey: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD): Picture {
+export function pictureFromGrey(grey: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD, dither = false): Picture {
   checkSize(width, height);
   if (grey.length !== width * height) throw new InputError("The image has no pixels.");
+  if (dither) return pictureFrom(dithered(Float32Array.from(grey, (level) => toned(level, threshold)), width, height));
   const dark = new Uint8Array(width * height);
   for (let p = 0; p < width * height; p++) if (grey[p]! < threshold) dark[p] = 1;
   return pictureFrom({ width, height, dark });
 }
 
 /** The picture of `rgba` (four bytes a pixel, as a canvas gives them): its `greyLevels`, dark below `threshold`. */
-export function pictureOf(rgba: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD): Picture {
-  return pictureFromGrey(greyLevels(rgba, width, height), width, height, threshold);
+export function pictureOf(rgba: ArrayLike<number>, width: number, height: number, threshold = PICTURE_THRESHOLD, dither = false): Picture {
+  return pictureFromGrey(greyLevels(rgba, width, height), width, height, threshold, dither);
+}
+
+/**
+ * A grey level as a dithered picture takes it at `threshold`: unchanged at the usual threshold; above it, darker by a
+ * curve that sends the threshold's grey to half way (so half its dots print) and keeps white white and black black, so
+ * that the paper around a photo stays clean; below it, lighter.
+ */
+export function toned(level: number, threshold: number): number {
+  if (threshold === PICTURE_THRESHOLD) return level;
+  return 255 * (level / 255) ** (Math.log(0.5) / Math.log(threshold / 255));
+}
+
+/**
+ * The greys `grey` (0 black to 255 white, a pixel's own at `y * width + x`) as dots by Floyd and Steinberg's error
+ * diffusion: each pixel prints dark below half way and hands what it got wrong to the pixels right of it and below,
+ * 7, 3, 5 and 1 sixteenths, every other row from right to left (fewer worm-like trails). A grey area prints as dots
+ * as many as its darkness; black and white stay as they are. `grey` is used up.
+ */
+export function dithered(grey: Float32Array, width: number, height: number): Bitmap {
+  const dark = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) {
+    const back = y % 2 === 1;
+    for (let i = 0; i < width; i++) {
+      const x = back ? width - 1 - i : i;
+      const p = y * width + x;
+      const level = grey[p]!;
+      const printed = level < 128 ? 0 : 255;
+      if (!printed) dark[p] = 1;
+      const error = level - printed;
+      if (!error) continue;
+      const ahead = back ? -1 : 1;
+      if (x + ahead >= 0 && x + ahead < width) grey[p + ahead]! += (error * 7) / 16;
+      if (y + 1 < height) {
+        if (x - ahead >= 0 && x - ahead < width) grey[p + width - ahead]! += (error * 3) / 16;
+        grey[p + width]! += (error * 5) / 16;
+        if (x + ahead >= 0 && x + ahead < width) grey[p + width + ahead]! += error / 16;
+      }
+    }
+  }
+  return { width, height, dark };
 }
 
 /** The picture's pixels, `dark[y * width + x]`; a picture whose bits do not fill its size raises an `InputError`. */
@@ -134,6 +176,32 @@ export function resample(bitmap: Bitmap, width: number, height: number): Bitmap 
     }
   }
   return { width, height, dark };
+}
+
+/**
+ * A dithered bitmap at `width` × `height` (a printer's dots), dithered again there: each dot takes the share of its
+ * area that the pixels under it print dark, and those greys are dithered (`dithered`). Taking the pixel under each
+ * dot's centre (`resample`) would print a fine pattern of dots darker or lighter than it is, or even solid, when the
+ * dots are fewer than the pixels; at the picture's own size or a whole multiple of it, the dots are the pixels'.
+ */
+export function redithered(bitmap: Bitmap, width: number, height: number): Bitmap {
+  const grey = new Float32Array(width * height);
+  const [sx, sy] = [bitmap.width / width, bitmap.height / height];
+  for (let y = 0; y < height; y++) {
+    const [top, bottom] = [y * sy, (y + 1) * sy];
+    for (let x = 0; x < width; x++) {
+      const [left, right] = [x * sx, (x + 1) * sx];
+      let covered = 0;
+      for (let py = Math.floor(top); py < Math.min(bitmap.height, Math.ceil(bottom)); py++) {
+        const h = Math.min(bottom, py + 1) - Math.max(top, py);
+        for (let px = Math.floor(left); px < Math.min(bitmap.width, Math.ceil(right)); px++) {
+          if (bitmap.dark[py * bitmap.width + px]) covered += h * (Math.min(right, px + 1) - Math.max(left, px));
+        }
+      }
+      grey[y * width + x] = 255 * (1 - covered / (sx * sy));
+    }
+  }
+  return dithered(grey, width, height);
 }
 
 /**

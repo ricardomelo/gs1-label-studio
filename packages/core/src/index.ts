@@ -3,7 +3,7 @@ export { DATABAR, SYMBOLOGIES, type Symbology, type SymbologyId } from "./symbol
 export { encode, EncodeError, QR_MODES, qrModeProblem, stackedRows, widthInModules, type EncodeOptions, type QrMode, type SymbolGeometry } from "./encode.ts";
 export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from "./dots.ts";
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
-export { bitmapRects, greyLevels, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, resample, turnedPicture, type Picture } from "./picture.ts";
+export { bitmapRects, dithered, greyLevels, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, redithered, resample, toned, turnedPicture, type Picture } from "./picture.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
 export { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
 export {

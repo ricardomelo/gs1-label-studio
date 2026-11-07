@@ -91,6 +91,11 @@ export interface DesignImage {
    * the editor: `PICTURE_THRESHOLD` when not given. The picture is already made with it; the editor shows it.
    */
   threshold?: number;
+  /**
+   * Whether the file's greys were dithered (`pictureFromGrey`), for a photo: its picture is dots, and each printer
+   * dithers it again at its own dots (`redithered`). Made black and white at the threshold when not given.
+   */
+  dither?: true;
   /** Its own width, before it is turned. */
   widthMm: number;
   /** Turned clockwise about its box (backlog 4.2): upright when not given. */
@@ -177,7 +182,7 @@ export interface DesignedLabel {
     /** Each line's capitals: their box's top left corner as turned, and their own width and height, upright. */
     texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number; rotation: Rotation }[];
     boxes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; thicknessMm: number }[];
-    images: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; picture: Picture }[];
+    images: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; picture: Picture; dither?: true }[];
   };
 }
 
@@ -380,7 +385,7 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
         graphics.push([u(element.xMm + x * pixel), u(element.yMm + y * pixel), u(w * pixel), u(h * pixel)]);
       }
       const [widthMm, heightMm] = [picture.width * pixel, picture.height * pixel];
-      printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm, picture });
+      printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm, picture, ...(element.dither ? { dither: true as const } : {}) });
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;

@@ -649,7 +649,9 @@
  "Lighter": "Más clara",
  "Darker": "Más oscura",
  "Darker prints more of the image's light colours in black; lighter, fewer.": "Más oscura imprime en negro más colores claros de la imagen; más clara, menos.",
- "To change its darkness, choose its file again with Replace…: the work keeps only the black and white.": "Para cambiar la oscuridad, elija el archivo de nuevo con Cambiar…: el trabajo guarda solo el blanco y negro.",
+ "To change its darkness or its dots, choose its file again with Replace…: the work keeps only the black and white.": "Para cambiar la oscuridad o los puntos, elija el archivo de nuevo con Cambiar…: el trabajo guarda solo el blanco y negro.",
+ "Greys as dots, for a photo": "Grises en puntos, para una foto",
+ "Its greys print as dots, closer together where it is darker. Darker prints all its greys darker; lighter, lighter.": "Los grises se imprimen en puntos, más juntos donde la imagen es más oscura. Más oscura imprime todos los grises más oscuros; más clara, más claros.",
  "Insert a name": "Insertar un nombre",
  "(empty on the first row)": "(vacío en la primera fila)"
 }

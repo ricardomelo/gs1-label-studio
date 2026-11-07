@@ -5,7 +5,8 @@ import { t } from "./i18n.ts";
 // scales it so that its longest side is no more than the core takes, and gives its pixels to the core, which makes the
 // one-bit picture that label printers print. The file's grey levels are kept beside each picture made from them, in
 // this page's memory only (the work keeps the one-bit picture, a few kilobytes), so that the image's darkness can be
-// changed until the page is reloaded; after that, choosing the file again brings them back.
+// changed, and the picture dithered for a photo, until the page is reloaded; after that, choosing the file again brings
+// them back.
 
 /** A file's grey levels (`greyLevels`), from which its picture is made at any darkness. */
 interface Grey {
@@ -17,19 +18,22 @@ interface Grey {
 /** The grey levels each picture was made from, while this page lives. */
 const greys = new WeakMap<Picture, Grey>();
 
-function made(grey: Grey, threshold: number): Picture {
-  const picture = pictureFromGrey(grey.grey, grey.width, grey.height, threshold);
+function made(grey: Grey, threshold: number, dither: boolean): Picture {
+  const picture = pictureFromGrey(grey.grey, grey.width, grey.height, threshold, dither);
   greys.set(picture, grey);
   return picture;
 }
 
-/** Whether the picture's darkness can be changed: its file was chosen since the page was loaded. */
+/** Whether the picture's darkness and dithering can be changed: its file was chosen since the page was loaded. */
 export const canDarken = (picture: Picture): boolean => greys.has(picture);
 
-/** The picture made again from its file's grey levels, dark below `threshold`; null when they are not kept. */
-export function darkened(picture: Picture, threshold: number): Picture | null {
+/**
+ * The picture made again from its file's grey levels, dark below `threshold`, or dithered at that darkness; null when
+ * they are not kept.
+ */
+export function darkened(picture: Picture, threshold: number, dither = false): Picture | null {
   const grey = greys.get(picture);
-  return grey ? made(grey, threshold) : null;
+  return grey ? made(grey, threshold, dither) : null;
 }
 
 /** A darkness in per cent (5 to 95, 50 the usual) as the threshold below which a pixel prints dark, and back. */
@@ -46,10 +50,10 @@ export function drawnSize(width: number, height: number): { width: number; heigh
 }
 
 /**
- * The file's picture, dark below `threshold`; refused (an Error with a message for the person) when the browser cannot
+ * The file's picture, dark below `threshold` or dithered at that darkness; refused (an Error with a message for the person) when the browser cannot
  * read it as an image.
  */
-export async function pictureFromFile(file: File, threshold = PICTURE_THRESHOLD): Promise<Picture> {
+export async function pictureFromFile(file: File, threshold = PICTURE_THRESHOLD, dither = false): Promise<Picture> {
   const url = URL.createObjectURL(file);
   try {
     const image = new Image();
@@ -66,7 +70,7 @@ export async function pictureFromFile(file: File, threshold = PICTURE_THRESHOLD)
     canvas.height = height;
     const context = canvas.getContext("2d")!;
     context.drawImage(image, 0, 0, width, height);
-    return made({ grey: greyLevels(context.getImageData(0, 0, width, height).data, width, height), width, height }, threshold);
+    return made({ grey: greyLevels(context.getImageData(0, 0, width, height).data, width, height), width, height }, threshold, dither);
   } finally {
     URL.revokeObjectURL(url);
   }

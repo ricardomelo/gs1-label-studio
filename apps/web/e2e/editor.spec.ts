@@ -1767,7 +1767,7 @@ test("a label of one's own: an image's darkness changed by its slider, printed a
   await page.locator(".design-list button", { hasText: "Image shades" }).press("Enter");
   await expect(slider).toBeDisabled();
   await expect(slider).toHaveValue("80");
-  await expect(page.getByText("To change its darkness, choose its file again with Replace…: the work keeps only the black and white.")).toBeVisible();
+  await expect(page.getByText("To change its darkness or its dots, choose its file again with Replace…: the work keeps only the black and white.")).toBeVisible();
   expect(await kept()).toEqual(darker);
   // Chosen again, the file is made at the darkness kept, and the slider works again
   await page.getByTestId("image-replace").setInputFiles(shades);
@@ -1783,6 +1783,88 @@ test("a label of one's own: an image's darkness changed by its slider, printed a
   await on(page, "label");
   await expect(page.locator('label[for="el-darkness"]')).toHaveText("Escurecimento");
   await expect(page.getByText("Mais escura imprime em preto mais das cores claras da imagem; mais clara, menos.")).toBeVisible();
+});
+
+// Dithering (backlog 4.2, mock-up A of two, 7 November 2026, taken under the owner's rule): a box under the darkness
+// makes the image's greys dots, the darker the closer, for a photo; the darkness then darkens the greys; kept in the
+// work, and after a reload waiting for the file, as the darkness does.
+test("a label of one's own: an image's greys as dots for a photo, at its darkness, printed and kept", async ({ page }) => {
+  const photo = new URL("./fixtures/photo.png", import.meta.url).pathname; // 300 × 200: a shaded sphere, a sky, a square at grey 128
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByTestId("image-file").setInputFiles(photo);
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image photo");
+  await page.fill("#el-x", "40");
+  const dither = page.locator("#el-dither");
+  await expect(dither).toBeEnabled();
+  await expect(dither).not.toBeChecked();
+  /** The image as the kept work holds it: its threshold, whether it is dithered, and the share of the grey square that is dark. */
+  const kept = async () => {
+    const work = JSON.parse((await keptWorkText(page))!) as { page: { elements: { kind: string; threshold?: number; dither?: boolean; picture?: { width: number; bits: string } }[] } };
+    const image = work.page.elements.find((e) => e.kind === "image")!;
+    const bytes = Buffer.from(image.picture!.bits, "base64");
+    const row = Math.ceil(image.picture!.width / 8);
+    let dark = 0;
+    for (let y = 130; y < 190; y++) for (let x = 20; x < 80; x++) dark += (bytes[y * row + (x >> 3)]! & (0x80 >> (x & 7))) !== 0 ? 1 : 0;
+    return { threshold: image.threshold, dither: image.dither, square: dark / 3600 };
+  };
+  await expect.poll(async () => (await keptWorkText(page))?.includes("photo") ?? false).toBe(true);
+  expect(await kept()).toEqual({ threshold: undefined, dither: undefined, square: 0 }); // grey 128 is not below half way
+  const zplOf = async () => {
+    await on(page, "export");
+    const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    await on(page, "label");
+    return /\^GFA,[^]*?\^FS/.exec(readFileSync((await zpl.path())!, "utf8"))![0];
+  };
+  const plainZpl = await zplOf();
+  // Dots: half the grey square prints, and the drawing and the ZPL follow
+  await page.locator(".design-list button", { hasText: "Image photo" }).press("Enter");
+  await dither.check();
+  await expect(page.getByText("Its greys print as dots, closer together where it is darker. Darker prints all its greys darker; lighter, lighter.")).toBeVisible();
+  await expect.poll(async () => (await kept()).dither).toBe(true);
+  const dots = await kept();
+  expect(dots.threshold).toBeUndefined();
+  expect(dots.square).toBeGreaterThan(0.45);
+  expect(dots.square).toBeLessThan(0.55);
+  expect(await zplOf()).not.toBe(plainZpl);
+  // Darker: the greys darker, still dots
+  await page.locator(".design-list button", { hasText: "Image photo" }).press("Enter");
+  await page.locator("#el-darkness").fill("80");
+  await expect.poll(async () => (await kept()).threshold).toBe(205);
+  const darker = await kept();
+  expect(darker.dither).toBe(true);
+  expect(darker.square).toBeGreaterThan(dots.square + 0.15);
+  expect(darker.square).toBeLessThan(1);
+  // Unticked: black and white at that darkness, the whole square dark
+  await dither.uncheck();
+  await expect.poll(async () => (await kept()).dither).toBeUndefined();
+  expect(await kept()).toEqual({ threshold: 205, dither: undefined, square: 1 });
+  await expect(page.getByText("Darker prints more of the image's light colours in black; lighter, fewer.")).toBeVisible();
+  await dither.check();
+  await expect.poll(async () => (await kept()).dither).toBe(true);
+  expect(await kept()).toEqual(darker);
+  // After a reload the box waits for the file, as the darkness does; chosen again, it keeps both
+  await page.reload();
+  await page.getByRole("region", { name: "Your last work" }).getByRole("button", { name: "Continue it" }).click();
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "Image photo" }).press("Enter");
+  await expect(dither).toBeDisabled();
+  await expect(dither).toBeChecked();
+  await expect(page.getByText("To change its darkness or its dots, choose its file again with Replace…: the work keeps only the black and white.")).toBeVisible();
+  await page.getByTestId("image-replace").setInputFiles(photo);
+  await expect(dither).toBeEnabled();
+  await page.waitForTimeout(800); // the work is kept half a second after it changes
+  expect(await kept()).toEqual(darker);
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(page.getByText("Cinzas em pontos, para uma foto")).toBeVisible();
+  await expect(page.getByText("Os cinzas saem em pontos, mais juntos onde a imagem é mais escura.", { exact: false })).toBeVisible();
 });
 
 // Item 4.2 (mock-up A of two, 7 November 2026, taken under the owner's rule): the chosen element's handle at its bottom

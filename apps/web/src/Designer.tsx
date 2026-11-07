@@ -336,7 +336,7 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
   const replace = async (chosen: File | undefined) => {
     if (!chosen) return;
     try {
-      const picture = await pictureFromFile(chosen, element.threshold);
+      const picture = await pictureFromFile(chosen, element.threshold, element.dither);
       setProblem(null);
       onChange({ ...element, name: imageName(chosen), picture });
     } catch (error) {
@@ -386,19 +386,21 @@ function ImageFields({ element, onChange }: { element: DesignImage; onChange: (e
 
 /**
  * The image's darkness (mock-up A): a slider from lighter to darker, the black and white made again from the file's
- * grey levels as it moves; after a reload they are gone, so the slider waits for the file to be chosen again.
+ * grey levels as it moves; after a reload they are gone, so the slider waits for the file to be chosen again. Below
+ * it, its greys as dots for a photo (dithering, mock-up A of two, 7 November 2026: a box to tick).
  */
 function DarknessField({ element, onChange }: { element: DesignImage; onChange: (element: DesignImage) => void }) {
   const threshold = element.threshold ?? PICTURE_THRESHOLD;
   const percent = percentOf(threshold);
+  const dither = element.dither === true;
   const can = canDarken(element.picture);
-  const change = (value: string) => {
-    const next = thresholdOf(Number(value));
-    const picture = darkened(element.picture, next);
+  const remake = (next: number, nextDither: boolean) => {
+    const picture = darkened(element.picture, next, nextDither);
     if (!picture) return;
-    const { threshold: _, ...rest } = element;
-    onChange({ ...rest, picture, ...(next === PICTURE_THRESHOLD ? {} : { threshold: next }) });
+    const { threshold: _, dither: __, ...rest } = element;
+    onChange({ ...rest, picture, ...(next === PICTURE_THRESHOLD ? {} : { threshold: next }), ...(nextDither ? { dither: true as const } : {}) });
   };
+  const change = (value: string) => remake(thresholdOf(Number(value)), dither);
   return (
     <div className="wide darkness">
       <label htmlFor="el-darkness">{t("Darkness")}</label>
@@ -408,10 +410,15 @@ function DarknessField({ element, onChange }: { element: DesignImage; onChange: 
         <span className="hint">{t("Darker")}</span>
         <output htmlFor="el-darkness">{formatNumber(percent)} %</output>
       </span>
+      <label className="inline dither">
+        <input type="checkbox" id="el-dither" checked={dither} disabled={!can} onChange={(e) => remake(threshold, e.target.checked)} /> {t("Greys as dots, for a photo")}
+      </label>
       <p className="hint">
-        {can
-          ? t("Darker prints more of the image's light colours in black; lighter, fewer.")
-          : t("To change its darkness, choose its file again with Replace…: the work keeps only the black and white.")}
+        {!can
+          ? t("To change its darkness or its dots, choose its file again with Replace…: the work keeps only the black and white.")
+          : dither
+            ? t("Its greys print as dots, closer together where it is darker. Darker prints all its greys darker; lighter, lighter.")
+            : t("Darker prints more of the image's light colours in black; lighter, fewer.")}
       </p>
     </div>
   );

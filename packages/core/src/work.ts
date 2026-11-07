@@ -154,12 +154,13 @@ function element(value: unknown, at: string): DesignElement {
       const picture = value.picture;
       if (!isString(value.name) || !isNumber(value.widthMm) || !isRecord(picture) || !isNumber(picture.width)
         || !isNumber(picture.height) || !isString(picture.bits) || !isPicture(picture as unknown as Picture)) damaged(at);
-      const { threshold } = value;
+      const { threshold, dither } = value;
       if (threshold !== undefined && !(Number.isInteger(threshold) && (threshold as number) >= PICTURE_THRESHOLD_MIN && (threshold as number) <= PICTURE_THRESHOLD_MAX)) damaged(at);
+      if (dither !== undefined && dither !== true) damaged(at);
       const p = picture as unknown as Picture;
       return {
         id, kind: "image", name: value.name as string, picture: { width: p.width, height: p.height, bits: p.bits },
-        ...(threshold !== undefined ? { threshold: threshold as number } : {}), widthMm: value.widthMm as number, ...rotation, xMm, yMm,
+        ...(threshold !== undefined ? { threshold: threshold as number } : {}), ...(dither ? { dither: true as const } : {}), widthMm: value.widthMm as number, ...rotation, xMm, yMm,
       };
     }
     default:

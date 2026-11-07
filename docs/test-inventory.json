@@ -1656,6 +1656,14 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a dithered image printed dot for dot, each grey as dark as it is",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: a dithered image printed dot for dot, each grey as dark as it is",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: a distribution gs1-128 turned, each dot the upright one's",
      "status": "passed"
     },
@@ -2105,6 +2113,18 @@
     },
     {
      "name": "a picture › is drawn as rectangles that cover its dark pixels and nothing else, a run the row above has growing down",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is dithered by error diffusion: each grey as dots as many as its darkness, black and white as they are",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is dithered from its grey levels at its darkness, which darkens or lightens the greys and keeps white and black",
+     "status": "passed"
+    },
+    {
+     "name": "a picture › is dithered again at a printer's dots when dithered, where each dot under its centre would print it wrong",
      "status": "passed"
     }
    ],
@@ -4447,6 +4467,15 @@
     },
     {
      "name": "a label of one's own: an image's darkness changed by its slider, printed and kept, and changed again after a reload once its file is chosen again",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an image's greys as dots for a photo, at its darkness, printed and kept",
      "status": "listed",
      "projects": [
       "desktop",

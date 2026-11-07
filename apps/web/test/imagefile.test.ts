@@ -25,5 +25,6 @@ describe("the image's darkness", () => {
     const picture = { width: 8, height: 1, bits: btoa("\x80") };
     expect(canDarken(picture)).toBe(false);
     expect(darkened(picture, 160)).toBeNull();
+    expect(darkened(picture, 160, true)).toBeNull();
   });
 });

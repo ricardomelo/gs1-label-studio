@@ -38,7 +38,7 @@ import {
   type Identified,
   type SyntaxEngine,
 } from "../src/index.ts";
-import { bitmapRects, graphicFields, labelPixels, labelPng, pictureBitmap, resample, turnedPicture, turnedRect } from "../src/index.ts";
+import { bitmapRects, graphicFields, labelPixels, labelPng, PICTURE_THRESHOLD, pictureBitmap, pictureFromGrey, redithered, resample, turnedPicture, turnedRect } from "../src/index.ts";
 import { WITH_LOGO } from "./fixtures/graphics.ts";
 import { drawPdf, textFile, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
@@ -324,6 +324,21 @@ describe("a label of one's own", () => {
       // DPL prints a stored image (a Y record), which Labelize does not draw: refused, the rest written without it
       expect(() => dplPage(page)).toThrow(/an image is not offered in DPL yet/);
       expect(dplPage({ ...page, images: [] })).toMatch(/\r1W1c/);
+    }
+    // Dithered (backlog 4.2): drawn as its picture's pixels, but dithered again at each printer's dots, so that a
+    // photo's greys print as dark as they are whatever the dots; a picture at the threshold keeps the pixel under each dot
+    const photo = pictureFromGrey(Uint8Array.from({ length: 120 * 60 }, (_, p) => (p % 120) * 2), 120, 60, PICTURE_THRESHOLD, true);
+    const dither: DesignPage = { ...WITH_LOGO, elements: [{ ...image, picture: photo, dither: true }, WITH_LOGO.elements[1]!] };
+    const ditheredLabel = designLabel(dither, data, font, { environment: "distribution" });
+    expect(ditheredLabel.layout.rects.slice(ditheredLabel.layout.symbolRects).map((r) => mm(r.map((v) => v * ditheredLabel.layout.xMm))))
+      .toEqual(bitmapRects(pictureBitmap(photo)).map(([x, y, w, h]) => mm([4 + x * pixel, 4 + y * pixel, w * pixel, h * pixel])));
+    for (const dpi of [203, 300, 600]) {
+      const dots = (v: number) => Math.round((v / 25.4) * dpi);
+      const [w, h] = [dots(44) - dots(4), dots(24) - dots(4)];
+      expect(printPageFor(ditheredLabel, dpi).images).toEqual([{ x: dots(4), y: dots(4), bitmap: redithered(pictureBitmap(photo), w, h) }]);
+      expect(redithered(pictureBitmap(photo), w, h)).not.toEqual(resample(pictureBitmap(photo), w, h));
+      const plain = designLabel({ ...dither, elements: [{ ...image, picture: photo }, WITH_LOGO.elements[1]!] }, data, font, { environment: "distribution" });
+      expect(printPageFor(plain, dpi).images![0]!.bitmap).toEqual(resample(pictureBitmap(photo), w, h));
     }
     // Past the label's edge: named in the editor, refused in a print file
     const past = designLabel({ ...WITH_LOGO, elements: [{ ...image, widthMm: 99 }] }, data, font, { environment: "distribution" });

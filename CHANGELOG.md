@@ -257,4 +257,7 @@
 - Names offered for the file names (backlog 4.2, 7 November): in bulk, **Insert a name** under **File names** lists
   `{row}`, `{symbol}`, `{key}`, the first row's AIs and the columns holding no AI, each with the first row's value, and
   adds the one chosen at the end of the pattern.
+- Greys as dots, for a photo (backlog 4.2, 7 November): a box under an image's **Darkness** dithers its greys by error
+  diffusion, so a photo prints as dots rather than black and white areas; Darkness then darkens or lightens the greys;
+  each print file dithers the picture again at the printer's dots, so a grey prints as dark as it is.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

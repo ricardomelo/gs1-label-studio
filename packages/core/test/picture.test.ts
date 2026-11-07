@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bitmapRects, greyLevels, InputError, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, resample, type Bitmap } from "../src/index.ts";
+import { bitmapRects, dithered, greyLevels, InputError, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, redithered, resample, toned, type Bitmap } from "../src/index.ts";
 import { logo } from "./fixtures/graphics.ts";
 
 // An image on a label of one's own (backlog 4.2, step d): a one-bit picture, as label printers print it.
@@ -71,5 +71,62 @@ describe("a picture", () => {
     expect(bitmapRects({ width: 3, height: 3, dark: Uint8Array.from([1, 1, 0, 1, 1, 0, 0, 0, 1]) })).toEqual([[0, 0, 2, 2], [2, 2, 1, 1]]);
     const runs = [...Array(bitmap.height).keys()].reduce((n, y) => n + bitmapRects({ width: bitmap.width, height: 1, dark: bitmap.dark.subarray(y * bitmap.width, (y + 1) * bitmap.width) }).length, 0);
     expect(rects.length).toBeLessThan(runs);
+  });
+
+  // Dithering (backlog 4.2, 7 November 2026): a photo's greys as dots, as many as its darkness, for a printer that
+  // prints only black dots.
+  /** The share of a bitmap's pixels that are dark. */
+  const share = (bitmap: Bitmap) => bitmap.dark.reduce((a, b) => a + b, 0) / bitmap.dark.length;
+  /** A flat grey `level`, `width` × `height`. */
+  const flat = (level: number, width: number, height: number) => new Float32Array(width * height).fill(level);
+
+  it("is dithered by error diffusion: each grey as dots as many as its darkness, black and white as they are", () => {
+    // By hand: 96 prints dark and hands 7/16 right, 5/16 and 1/16 below; 138 light, -117 handed 3/16 and 5/16 below;
+    // the second row runs right to left, 65.4 dark handing 7/16 left, 132.7 light (left to right it would be 1, 0, 1, 1)
+    expect([...dithered(flat(96, 2, 2), 2, 2).dark]).toEqual([1, 0, 0, 1]);
+    expect([...dithered(flat(128, 4, 1), 4, 1).dark]).toEqual([0, 1, 0, 1]);
+    for (const level of [0, 32, 64, 128, 192, 224, 255]) {
+      expect(share(dithered(flat(level, 200, 200), 200, 200))).toBeCloseTo((255 - level) / 255, 2);
+    }
+    // A grey at half way as a fine checkerboard: nearly every pixel unlike the one to its right
+    const half = dithered(flat(128, 100, 100), 100, 100);
+    let unlike = 0;
+    for (let y = 0; y < 100; y++) for (let x = 0; x < 99; x++) unlike += half.dark[y * 100 + x] !== half.dark[y * 100 + x + 1] ? 1 : 0;
+    expect(unlike / (100 * 99)).toBeGreaterThan(0.9);
+  });
+
+  it("is dithered from its grey levels at its darkness, which darkens or lightens the greys and keeps white and black", () => {
+    expect(toned(77, PICTURE_THRESHOLD)).toBe(77);
+    expect(toned(205, 205)).toBeCloseTo(127.5, 6); // the threshold's grey sent to half way
+    expect(toned(64, 64)).toBeCloseTo(127.5, 6);
+    for (const threshold of [PICTURE_THRESHOLD_MIN, 64, 205, PICTURE_THRESHOLD_MAX]) {
+      expect(toned(0, threshold)).toBe(0);
+      expect(toned(255, threshold)).toBe(255);
+    }
+    expect(toned(200, 205)).toBeLessThan(200);
+    expect(toned(200, 64)).toBeGreaterThan(200);
+    const grey = new Uint8Array(300 * 200).fill(160);
+    const at = (threshold: number) => share(pictureBitmap(pictureFromGrey(grey, 300, 200, threshold, true)));
+    expect(at(PICTURE_THRESHOLD)).toBeCloseTo(1 - 160 / 255, 2);
+    expect(at(205)).toBeGreaterThan(at(PICTURE_THRESHOLD) + 0.1);
+    expect(at(64)).toBeLessThan(at(PICTURE_THRESHOLD) - 0.1);
+    expect(pictureFromGrey(grey, 300, 200, PICTURE_THRESHOLD, true)).not.toEqual(pictureFromGrey(grey, 300, 200));
+    expect(share(pictureBitmap(pictureFromGrey(grey, 300, 200)))).toBe(0); // at the threshold, all of it light
+    const rgba = row([0, 0, 0, 255], [128, 128, 128, 255], [128, 128, 128, 255], [255, 255, 255, 255]);
+    expect(pictureOf(rgba, 4, 1, 160, true)).toEqual(pictureFromGrey(greyLevels(rgba, 4, 1), 4, 1, 160, true));
+    expect(() => pictureFromGrey(grey, 299, 200, PICTURE_THRESHOLD, true)).toThrow("The image has no pixels.");
+  });
+
+  it("is dithered again at a printer's dots when dithered, where each dot under its centre would print it wrong", () => {
+    const half = dithered(flat(128, 200, 200), 200, 200);
+    expect(Math.abs(share(resample(half, 100, 100)) - 0.5)).toBeGreaterThan(0.2); // every other pixel of a checkerboard
+    for (const [w, h] of [[100, 100], [87, 133], [150, 61], [317, 250]] as const) expect(share(redithered(half, w, h))).toBeCloseTo(0.5, 2);
+    // At its own size or a whole multiple of it, the dots are the pixels'
+    expect(redithered(half, 200, 200)).toEqual(half);
+    expect(redithered(half, 400, 600)).toEqual(resample(half, 400, 600));
+    // Black stays black and white white; an edge falls where it was
+    const edge: Bitmap = { width: 10, height: 4, dark: Uint8Array.from({ length: 40 }, (_, p) => (p % 10 < 5 ? 1 : 0)) };
+    expect([...redithered(edge, 4, 3).dark]).toEqual([1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]);
+    expect([...redithered(edge, 3, 2).dark].filter((_, p) => p % 3 !== 1)).toEqual([1, 0, 1, 0]);
   });
 });

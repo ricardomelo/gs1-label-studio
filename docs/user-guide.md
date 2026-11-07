@@ -293,6 +293,12 @@ of my own (barcodes and text placed freely)*:
    redrawn as the slider moves. The studio keeps the file's greys only while the page is open: after a reload, or a
    work opened again, the darkness chosen is kept but the slider is greyed out until **Replace…** takes the same file
    again, which brings it back at that darkness.
+   **Greys as dots, for a photo** (under Darkness) prints a photo or a shaded image as dots instead of black and white
+   areas: each grey as many dots as it is dark, closer together where it is darker (dithering). Darkness then makes
+   all its greys darker or lighter while white stays white and black black. A printer prints the dots at its own
+   resolution, so the label drawn on the screen shows the picture's pixels and the print file the printer's dots, each
+   as dark as the other. As the darkness, the box waits for **Replace…** after a reload. A logo in black prints better
+   without it: its edges stay sharp.
 8. **Rotation** turns a barcode, a text block or an image: *0°*, *90°* (reading downwards), *180°* (upside down) or
    *270°* (reading upwards). It turns about its box, whose top left corner stays at **Left** and **Top**. A QR code
    reads in any direction, so it stays upright. A line or box needs none: choose *Line across* or *Line down*, or swap

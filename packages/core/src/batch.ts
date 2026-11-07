@@ -16,7 +16,7 @@ import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
 import { columnCell, designLabel, turnedRect, type DesignedLabel, type DesignPage } from "./design.ts";
 import { logisticLabel, logisticPage, type LogisticLabel, type LogisticSize, type LogisticTwoD } from "./logistic.ts";
-import { pictureBitmap, resample } from "./picture.ts";
+import { pictureBitmap, redithered, resample } from "./picture.ts";
 import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile, type PrintPage } from "./printers.ts";
 import { eplLogisticLabel, eplPage } from "./epl.ts";
 import { tsplPage } from "./tspl.ts";
@@ -216,14 +216,15 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     }
     return { x, y, width, height, thickness };
   });
-  // Each image at the dots its edges round to, as a line or box is, each dot the picture's pixel under its centre
+  // Each image at the dots its edges round to, as a line or box is, each dot the picture's pixel under its centre; a
+  // dithered one dithered again at the printer's dots
   const images = designed.printer.images.map((image) => {
     const [x, y] = [dots(image.xMm), dots(image.yMm)];
     const [width, height] = [Math.max(1, dots(image.xMm + image.widthMm) - x), Math.max(1, dots(image.yMm + image.heightMm) - y)];
     if (x < 0 || y < 0 || x + width > widthDots || y + height > heightDots) {
       throw new PrinterUnsupportedError("An image runs past the label's edge: move it inside the label.");
     }
-    return { x, y, bitmap: resample(pictureBitmap(image.picture), width, height) };
+    return { x, y, bitmap: (image.dither ? redithered : resample)(pictureBitmap(image.picture), width, height) };
   });
   return { widthDots, heightDots, dpi, symbols, texts, boxes, images };
 }

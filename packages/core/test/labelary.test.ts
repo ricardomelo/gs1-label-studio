@@ -23,6 +23,8 @@ import {
   logisticLabel,
   specificationFor,
   graphicFields,
+  PICTURE_THRESHOLD,
+  pictureFromGrey,
   designLabel,
   printPageFor,
   syntaxEngine,
@@ -375,6 +377,33 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       if (Number(dark) !== bitmap.dark[i]) differ++;
     }
     expect(differ).toBe(0);
+  });
+
+  // A dithered image on a label of one's own (backlog 4.2): a photo's greys as dots, dithered again at the printer's
+  // dots, every dot printed by the compressed ^GF (a field of scattered dots, the compression's hardest), and each
+  // band of a grey ramp printed as dark as its grey
+  it.each([203, 300])("a label of one's own at %i dpi: a dithered image printed dot for dot, each grey as dark as it is", { timeout: 60000 }, async (dpi) => {
+    const [w, h] = [400, 100];
+    const grey = Uint8Array.from({ length: w * h }, (_, p) => Math.floor((p % w) / 50) * 32 + 16); // 8 bands, 16 to 240
+    const photo = pictureFromGrey(grey, w, h, PICTURE_THRESHOLD, true);
+    const page: DesignPage = { widthMm: 34, heightMm: 12, elements: [{ id: "photo", kind: "image", name: "photo", picture: photo, dither: true, widthMm: (200 * 25.4) / dpi, xMm: 2, yMm: 2 }] };
+    const designed = designLabel(page, { elements: [] } as unknown as Identified, hriFont(), { environment: "distribution" });
+    const printed = printPageFor(designed, dpi);
+    const png = await labelaryPng(zplPage(printed), dpi, printed.widthDots, printed.heightDots);
+    const { grey: drawn, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2);
+    const { x, y, bitmap } = printed.images![0]!;
+    expect(bitmap.width).toBe(w / 2); // a dot for two pixels, where sampling would take every other pixel of the pattern
+    const dark = (i: number) => Number(drawn[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width) + offset]! < 128);
+    let differ = 0;
+    for (let i = 0; i < bitmap.width * bitmap.height; i++) if (dark(i) !== bitmap.dark[i]) differ++;
+    expect(differ).toBe(0);
+    for (let band = 0; band < 8; band++) {
+      const [from, to] = [Math.ceil(((band * 50 + 3) * bitmap.width) / w), Math.floor((((band + 1) * 50 - 3) * bitmap.width) / w)];
+      let count = 0;
+      for (let yy = 0; yy < bitmap.height; yy++) for (let xx = from; xx < to; xx++) count += dark(yy * bitmap.width + xx);
+      expect(Math.abs(count / ((to - from) * bitmap.height) - (255 - (band * 32 + 16)) / 255)).toBeLessThan(0.02);
+    }
   });
 
   // A turned barcode on a label of one's own (backlog 4.2, rotation): printed upright and turned a quarter, a half and
