@@ -269,6 +269,12 @@ of my own (barcodes and text placed freely)*:
    `YY` and `YYYY`; the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the
    month's last. When the text has `MMM`, **Month names** chooses its language: *English* (JAN to DEC), *Portuguese*
    (JAN, FEV … DEZ) or *Spanish* (ENE, FEB … DIC); a new text block starts in the interface's language.
+   A date followed by a time, such as (7003) *expiration date and time*, (7011), (4324), (4325) or (8008), is also
+   offered with its time: `{7003:DD/MM/YYYY hh:mm}` *31/12/2027 15:30*, `{7003:DD.MM.YYYY hh:mm}`,
+   `{7003:YYYY-MM-DD hh:mm}` and `{7003:hh:mm}` *15:30*, and (8008) with its seconds, `{8008:YYYY-MM-DD hh:mm:ss}`.
+   The time's parts are in lower case, `hh`, `mm` and `ss`, so that `MM` stays the month. A part the value does not
+   have, such as (7011)'s time when only its date was given, is left out with the text before it: `DD/MM/YYYY hh:mm`
+   then shows the date alone.
    In bulk, the list also offers, under *Columns of the spreadsheet*, each column that holds no AI (a product's name,
    its region, a price), each shown with the row shown's value, such as `{Produto}` *Finest Truffle Tapenade*: each
    row's label shows that row's cell, in the drawing and in the print files. The header's case and the spaces around
@@ -599,7 +605,8 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *A line of text runs past the label's edge* / *A barcode's text runs past the label's edge* | A turned text, or a turned barcode's text or ITF-14 frame, past the label's edge, in ZPL, EPL2 or TSPL | Move it inside the label |
 | *EPL2 prints a Data Matrix upright only…* | A turned Data Matrix of a label of one's own, in EPL2 | Turn it back to 0°, or print its ZPL or its PDF |
 | *(10) is not a date, so its field takes no date format.* | A text block's field such as `{10:DD/MM/YYYY}` | Write `{10}` alone; formats are for dates |
-| *The date format “…” has none of DD, MM, MMM, YY and YYYY.* | A date field's format without a part of the date, such as `{17:dd/mm/yy}` | Write it in capitals: `{17:DD/MM/YY}` |
+| *The date format “…” has none of DD, MM, MMM, YY, YYYY, hh, mm and ss.* | A date field's format without a part of the date or time, such as `{17:dd/yy}` | Write the date's parts in capitals: `{17:DD/YY}` |
+| *(17) carries no time, so its field takes no hh, mm or ss.* | A time after a date that has none, such as `{17:DD/MM/YYYY hh:mm}` | Leave out `hh`, `mm` and `ss`; a time comes with AIs such as (7003) |
 | *This file is not a work saved by GS1 Label Studio.* | **Open…** was given another file (a spreadsheet, an image) | Open a `.gs1-work.json` file saved here, or a ZPL downloaded here |
 | *This ZPL carries no work: only the ZPL that GS1 Label Studio downloads can be opened here.* | A ZPL made elsewhere, or a ZPL template | Open the work file, or view the ZPL in Labelary's viewer |
 | *Part of the work in this ZPL is missing* | The ZPL was cut or edited, and some `^FX` comments are lost | Download the ZPL again |

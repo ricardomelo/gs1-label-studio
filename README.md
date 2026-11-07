@@ -508,7 +508,11 @@ complete.
   through Labelary). Resizing by dragging a corner since 7 November (mock-up A of two, taken under the owner's rule;
   B had a handle at each corner): the chosen element's handle at its bottom right corner, its top left corner kept; a
   box and a line to the corner, an image in its proportions, a barcode to the nearest size its environment allows, a
-  text block to the nearest text height. Saving the label is 4.3*
+  text block to the nearest text height. A date's time since 7 November (the recommended of two, taken under the
+  owner's rule: `hh`, `mm` and `ss` in lower case, so that `MM` stays the month; the other was `HH` and `MI`): Insert a
+  field offers a date followed by a time, such as (7003) or (8008), also as `{7003:DD/MM/YYYY hh:mm}` and three other
+  formats, with seconds where the AI has them; a part the value lacks is left out with the text before it. Saving the
+  label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

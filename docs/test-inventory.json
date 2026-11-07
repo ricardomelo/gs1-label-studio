@@ -512,6 +512,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › writes a date's time in hh, mm and ss, leaving out a part the value does not have",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › writes a date's month in the text block's language: English, Portuguese or Spanish",
      "status": "passed"
     },
@@ -4394,6 +4398,15 @@
     },
     {
      "name": "the work saved and opened again, from its file or from the ZPL; a ZPL made elsewhere refused",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: a date's time in hh and mm, in the drawing and the ZPL",
      "status": "listed",
      "projects": [
       "desktop",

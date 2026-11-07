@@ -12,6 +12,8 @@ import {
   eplPage,
   tsplPage,
   DATE_FORMATS,
+  TIME_FORMATS,
+  carriesTime,
   fillFields,
   formatDate,
   generateBatch,
@@ -549,7 +551,39 @@ describe("a label of one's own", () => {
     // A format after an AI that is not a date, and a format with no date in it, are refused, naming them
     expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow(InputError);
     expect(() => fillFields("{10:DD/MM/YYYY}", data)).toThrow("(10) is not a date, so its field takes no date format.");
-    expect(() => fillFields("{17:dd/mm/yy}", data)).toThrow("The date format “dd/mm/yy” has none of DD, MM, MMM, YY and YYYY.");
+    expect(() => fillFields("{17:dd/yy}", data)).toThrow("The date format “dd/yy” has none of DD, MM, MMM, YY, YYYY, hh, mm and ss.");
+  });
+
+  it("writes a date's time in hh, mm and ss, leaving out a part the value does not have", () => {
+    const today = new Date(Date.UTC(2026, 10, 3));
+    const timed = (s: string) => engine.parse(`(01)09506000134376${s}`) as Identified;
+    const expiry = timed("(7003)2712311530");
+    expect(TIME_FORMATS.map((format) => fillFields(`{7003:${format}}`, expiry, { today }))).toEqual(["31/12/2027 15:30", "31.12.2027 15:30", "2027-12-31 15:30", "15:30"]);
+    expect(fillFields("{7003:hh'h'mm DD MMM}", expiry, { today, months: "pt" })).toBe("15'h'30 31 DEZ");
+    expect(fillFields("{7003:MM mm}", expiry, { today })).toBe("12 30"); // MM the month, mm the minutes
+    expect(fillFields("{7003}", expiry, { today })).toBe("2712311530");
+    // (8008) YYMMDDHH[MM[SS]]: each part from its own digits; the seconds and minutes optional
+    const production = (t: string) => timed(`(10)B42(8008)271231${t}`);
+    expect(fillFields("{8008:YYYY-MM-DD hh:mm:ss}", production("153045"), { today })).toBe("2027-12-31 15:30:45");
+    expect(fillFields("{8008:YYYY-MM-DD hh:mm:ss}", production("1530"), { today })).toBe("2027-12-31 15:30");
+    expect(fillFields("{8008:YYYY-MM-DD hh:mm:ss}", production("15"), { today })).toBe("2027-12-31 15");
+    // (7011) YYMMDD[HHMM]: a date alone leaves out its time with the text before it
+    expect(fillFields("TEST BY {7011:DD/MM/YYYY hh:mm}!", timed("(7011)2712310800"), { today })).toBe("TEST BY 31/12/2027 08:00!");
+    expect(fillFields("TEST BY {7011:DD/MM/YYYY hh:mm}!", timed("(7011)271231"), { today })).toBe("TEST BY 31/12/2027!");
+    expect(fillFields("{4324:DD.MM.YYYY hh:mm}", engine.parse("(00)106141411234567897(4324)2712312359") as Identified, { today })).toBe("31.12.2027 23:59");
+    // (7007) HARVEST DATE YYMMDD[YYMMDD] carries no time: its second date is not read as one
+    expect(fillFields("{7007:DD/MM/YYYY}", timed("(7007)271201271231"), { today })).toBe("01/12/2027");
+    expect(() => fillFields("{7007:DD/MM/YYYY hh:mm}", timed("(7007)271201271231"), { today })).toThrow("(7007) carries no time, so its field takes no hh, mm or ss.");
+    // A time after a date that carries none is refused, naming the AI
+    expect(() => fillFields("{17:DD/MM/YYYY hh:mm}", data)).toThrow(InputError);
+    expect(() => fillFields("{17:ss}", data)).toThrow("(17) carries no time, so its field takes no hh, mm or ss.");
+    expect(["7003", "7011", "8008", "4324", "4325"].every(carriesTime)).toBe(true);
+    expect(["17", "11", "7006", "7007", "4326", "10", "7251"].some(carriesTime)).toBe(false);
+    // Through the page: the drawing and the print file
+    const page: DesignPage = { widthMm: 80, heightMm: 30, elements: [{ id: "t", kind: "text", text: "EXP {7003:DD/MM/YYYY hh:mm}", heightMm: 4, xMm: 4, yMm: 4 }] };
+    const designed = designLabel(page, expiry, font, { environment: "distribution" });
+    expect(designed.layout.texts.map((t) => t.text)).toEqual(["EXP 31/12/2027 15:30"]);
+    expect(zplPage(printPageFor(designed, 203))).toContain("^FDEXP 31/12/2027 15:30^FS");
   });
 
   it("writes a date's month in the text block's language: English, Portuguese or Spanish", () => {

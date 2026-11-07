@@ -1,5 +1,5 @@
 import {
-  boxOf, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
@@ -443,6 +443,17 @@ function RotationField({ element, onChange }: { element: DesignSymbol | DesignTe
 const valueOf = ({ ai, text }: { ai: string; text: string }) => text.slice(ai.length + 2);
 
 /**
+ * The formats offered for a date AI: the date's, and for one followed by a time, such as (7003), its date and time
+ * too (hh and mm in lower case beside the date's capitals, the recommended of two, 7 November 2026; the other was
+ * HH and MI), with its seconds when the AI may carry them, as (8008).
+ */
+function formatsFor(ai: string): readonly string[] {
+  if (!carriesTime(ai)) return DATE_FORMATS;
+  const seconds = aiEntry(ai)?.components.some((c) => c.linters.includes("ss")) ? ["YYYY-MM-DD hh:mm:ss"] : [];
+  return [...DATE_FORMATS, ...TIME_FORMATS, ...seconds];
+}
+
+/**
  * "Insert a field from the data" (backlog 4.2, step c, mock-up B of two): each AI's field, and each date's in the formats
  * offered as well, each with the value it gives (its month in the text block's language); the other mock-up had a date
  * format select beside it. The month's language is the text block's "Month names" (mock-up B of two, 3 November 2026;
@@ -462,7 +473,7 @@ function FieldInsert({ elements, columns, months, onInsert }: {
           isDateAi(x.ai) ? (
             <optgroup key={x.ai} label={x.text}>
               <option value={`{${x.ai}}`}>{`{${x.ai}}`} — {valueOf(x)}</option>
-              {DATE_FORMATS.map((format) => (
+              {formatsFor(x.ai).map((format) => (
                 <option key={format} value={`{${x.ai}:${format}}`}>
                   {`{${x.ai}:${format}}`} — {formatDate(valueOf(x), format, { today, months })}
                 </option>
@@ -494,6 +505,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
   const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
   const mm = (value: string, fallback: number) => millimetres(value, fallback);
+  const timed = elements.find((x) => carriesTime(x.ai));
   return (
     <div className="designer">
       <div className="grid">
@@ -610,6 +622,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                     <label htmlFor="el-text">{t("Text")}</label>
                     <textarea id="el-text" rows={2} value={element.text} onChange={(e) => update({ text: e.target.value })} />
                     <p className="hint">{t("A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.", { field: "{17:DD/MM/YYYY}" })}</p>
+                    {timed && <p className="hint">{t("A date with a time, such as {field}, takes hh, mm and ss in lower case, so that MM stays the month.", { field: `{${timed.ai}:DD/MM/YYYY hh:mm}` })}</p>}
                     {columns.length > 0 && (
                       <p className="hint">{t("A column's header in braces, such as {field}, shows that column's cell on each row's label.", { field: `{${columns[0]!.name}}` })}</p>
                     )}

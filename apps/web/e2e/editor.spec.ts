@@ -1469,6 +1469,41 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   await expect(page.locator(".work-note")).toHaveCount(0);
 });
 
+// Item 4.2, time parts (7 November 2026): a date followed by a time, such as (7003), offered in its date and time
+// formats too, hh and mm in lower case beside the date's capitals; a time after a date that carries none refused.
+test("a label of one's own: a date's time in hh and mm, in the drawing and the ZPL", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(17)271231(7003)2712311530(8008)271231064512");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await expect(page.locator(".designer .hint", { hasText: "A date with a time" })).toHaveText(
+    "A date with a time, such as {7003:DD/MM/YYYY hh:mm}, takes hh, mm and ss in lower case, so that MM stays the month.");
+  // (7003) offers its date's formats and its date and time's; (17) its date's only
+  await expect(page.locator('#el-field option[value="{7003:DD/MM/YYYY hh:mm}"]')).toHaveText("{7003:DD/MM/YYYY hh:mm} — 31/12/2027 15:30");
+  await expect(page.locator('#el-field option[value="{7003:hh:mm}"]')).toHaveText("{7003:hh:mm} — 15:30");
+  await expect(page.locator('#el-field option[value="{7003:DD.MM.YYYY}"]')).toHaveText("{7003:DD.MM.YYYY} — 31.12.2027");
+  await expect(page.locator('#el-field option[value^="{17:"]')).toHaveCount(5);
+  await expect(page.locator('#el-field option[value^="{7003:"][value$="ss}"]')).toHaveCount(0); // (7003) carries no seconds
+  await expect(page.locator('#el-field option[value="{8008:YYYY-MM-DD hh:mm:ss}"]')).toHaveText("{8008:YYYY-MM-DD hh:mm:ss} — 2027-12-31 06:45:12");
+  await page.fill("#el-text", "EXP ");
+  await page.selectOption("#el-field", "{7003:YYYY-MM-DD hh:mm}");
+  await expect(page.locator("#el-text")).toHaveValue("EXP {7003:YYYY-MM-DD hh:mm}");
+  await expect(page.locator('.preview .symbol svg [aria-label="EXP 2027-12-31 15:30"]')).toHaveCount(1);
+  // A time after a date that carries none is refused, naming the AI
+  await page.fill("#el-text", "EXP {17:DD/MM/YYYY hh:mm}");
+  await expect(page.locator("p.error", { hasText: "(17) carries no time, so its field takes no hh, mm or ss." })).toBeVisible();
+  await page.fill("#el-text", "EXP {7003:DD/MM/YYYY hh.mm}");
+  await expect(page.locator('.preview .symbol svg [aria-label="EXP 31/12/2027 15.30"]')).toHaveCount(1);
+  await page.fill("#el-y", "52");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDEXP 31/12/2027 15.30^FS");
+});
+
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {

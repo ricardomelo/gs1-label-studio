@@ -1,4 +1,4 @@
-import { isDateAi } from "./dictionary.ts";
+import { carriesTime, isDateAi } from "./dictionary.ts";
 import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
@@ -214,7 +214,14 @@ function boxRects(box: { widthMm: number; heightMm: number; thicknessMm: number 
 /** The date formats the editor offers for a date field (backlog 4.2): `{17:DD/MM/YYYY}`. */
 export const DATE_FORMATS = ["DD/MM/YYYY", "DD.MM.YYYY", "YYYY-MM-DD", "MM/YYYY", "DD MMM YYYY"] as const;
 
-const DATE_TOKENS = /YYYY|YY|MMM|MM|DD/g;
+/**
+ * The formats offered as well for a date followed by a time, such as (7003)'s: the time's hours and minutes in lower
+ * case, hh and mm, so that MM stays the month (backlog 4.2); seconds, ss, are offered when the AI may carry them.
+ */
+export const TIME_FORMATS = ["DD/MM/YYYY hh:mm", "DD.MM.YYYY hh:mm", "YYYY-MM-DD hh:mm", "hh:mm"] as const;
+
+const DATE_TOKENS = /YYYY|YY|MMM|MM|DD|hh|mm|ss/g;
+const TIME_TOKENS = /hh|mm|ss/;
 
 /** The languages a date's month (`MMM`) can be written in: English, Portuguese and Spanish, the interface's (ADR 0003). */
 export type MonthLanguage = "en" | "pt" | "es";
@@ -235,13 +242,26 @@ export interface DateOptions {
 /**
  * A YYMMDD date in a format of DD, MM, MMM (the month's abbreviation in `MONTH_NAMES`), YY and YYYY, what is between
  * them kept: the century as section 7.12 of the General Specifications chooses it, day 00 the month's last
- * (`isoDate`). A format with none of them raises an `InputError`.
+ * (`isoDate`). The digits after the date, in such AIs as (7003) or (8008), are its time: hh the hours, mm the minutes,
+ * ss the seconds. A part the value does not have, as (7011) without its time or (8008) without its seconds, is left
+ * out with the text before it, so "DD/MM/YYYY hh:mm" of a date alone is its date. A format with none of the parts
+ * raises an `InputError`.
  */
-export function formatDate(yymmdd: string, format: string, { today = new Date(), months = "en" }: DateOptions = {}): string {
-  if (!format.match(DATE_TOKENS)) throw new InputError(`The date format “${format}” has none of DD, MM, MMM, YY and YYYY.`);
-  const [yyyy, mm, dd] = isoDate(yymmdd, today).split("-") as [string, string, string];
-  const parts: Record<string, string> = { YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTH_NAMES[months][Number(mm) - 1] ?? mm, MM: mm, DD: dd };
-  return format.replace(DATE_TOKENS, (token) => parts[token]!);
+export function formatDate(value: string, format: string, { today = new Date(), months = "en" }: DateOptions = {}): string {
+  if (!format.match(DATE_TOKENS)) throw new InputError(`The date format “${format}” has none of DD, MM, MMM, YY, YYYY, hh, mm and ss.`);
+  const [yyyy, mm, dd] = isoDate(value.slice(0, 6), today).split("-") as [string, string, string];
+  const parts: Record<string, string> = {
+    YYYY: yyyy, YY: yyyy.slice(2), MMM: MONTH_NAMES[months][Number(mm) - 1] ?? mm, MM: mm, DD: dd,
+    hh: value.slice(6, 8), mm: value.slice(8, 10), ss: value.slice(10, 12),
+  };
+  let out = "";
+  let from = 0;
+  for (const match of format.matchAll(DATE_TOKENS)) {
+    const part = parts[match[0]]!;
+    if (part.length === 2 || !TIME_TOKENS.test(match[0])) out += format.slice(from, match.index) + part;
+    from = match.index + match[0].length;
+  }
+  return out + format.slice(from);
 }
 
 export interface FieldOptions extends DateOptions {
@@ -262,7 +282,8 @@ export function columnCell(cells: Readonly<Record<string, string>> | undefined, 
 
 /**
  * The value of each `{AI}` in a text, from the data, and of each `{AI:format}` of a date AI its date in that format
- * (`formatDate`); an AI the data does not have leaves nothing. A format after an AI that is not a date raises an
+ * (`formatDate`), and its time too when the AI carries one (`carriesTime`); an AI the data does not have leaves
+ * nothing. A format after an AI that is not a date, or with a time after an AI that carries none, raises an
  * `InputError`. Any other name in braces is a spreadsheet column's (backlog 4.2): `{Description}` shows the row's cell
  * under that header (`columnCell`); a name no column has stays as typed, so that a mistyped field shows on the label.
  */
@@ -273,8 +294,9 @@ export function fillFields(text: string, identified: Pick<Identified, "elements"
     const [, ai, format] = field as unknown as [string, string, string | undefined];
     if (format === undefined) return identified.elements.find((e) => e.ai === ai)?.value ?? "";
     if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
+    if (!carriesTime(ai) && TIME_TOKENS.test(format)) throw new InputError(`(${ai}) carries no time, so its field takes no hh, mm or ss.`);
     const value = identified.elements.find((e) => e.ai === ai)?.value;
-    return value ? formatDate(value.slice(0, 6), format, options) : "";
+    return value ? formatDate(value, format, options) : "";
   });
 }
 

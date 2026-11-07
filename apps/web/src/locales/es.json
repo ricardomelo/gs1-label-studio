@@ -610,6 +610,7 @@
  "Line across {mm} mm": "Línea horizontal de {mm} mm",
  "Line down {mm} mm": "Línea vertical de {mm} mm",
  "A date takes a format after a colon, such as {field}: DD, MM, MMM, YY and YYYY.": "Una fecha admite un formato después de dos puntos, como {field}: DD, MM, MMM, YY y YYYY.",
+ "A date with a time, such as {field}, takes hh, mm and ss in lower case, so that MM stays the month.": "Una fecha con hora, como {field}, admite hh, mm y ss en minúsculas, para que MM siga siendo el mes.",
  "Columns of the spreadsheet": "Columnas de la hoja de cálculo",
  "(empty on this row)": "(vacía en esta fila)",
  "A column's header in braces, such as {field}, shows that column's cell on each row's label.": "El encabezado de una columna entre llaves, como {field}, muestra la celda de esa columna en la etiqueta de cada fila.",

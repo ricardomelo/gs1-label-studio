@@ -251,4 +251,7 @@
   at its bottom right corner; dragging it resizes the element, its top left corner kept — a box and a line to the
   corner, an image in its proportions, a barcode to the nearest size its scanning environment allows (its bars or
   modules following the corner), a text block to the nearest text height.
+- A date's time in a field (backlog 4.2, 7 November): a date followed by a time, such as (7003) or (8008), takes `hh`,
+  `mm` and `ss` after its date, `{7003:DD/MM/YYYY hh:mm}` → *31/12/2027 15:30*, offered by *Insert a field from the
+  data*; a part the value lacks, as (7011) without its time, is left out with the text before it.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

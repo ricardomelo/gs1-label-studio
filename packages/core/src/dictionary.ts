@@ -41,6 +41,16 @@ export function isDateAi(ai: string): boolean {
   return aiEntry(ai)?.components[0]?.linters.some((l) => DATE_LINTERS.has(l)) ?? false;
 }
 
+const TIME_LINTERS = new Set(["hhmi", "hh", "mi", "ss"]);
+
+/**
+ * Whether a date AI's value goes on, after its date, with a time: hours, then minutes, then seconds, some of them
+ * optional, such as (7003) YYMMDDHHMM, (7011) YYMMDD[HHMM] or (8008) YYMMDDHH[MM[SS]]; a date field's hh, mm and ss.
+ */
+export function carriesTime(ai: string): boolean {
+  return isDateAi(ai) && (aiEntry(ai)?.components.some((c) => c.linters.some((l) => TIME_LINTERS.has(l))) ?? false);
+}
+
 export interface Attribute {
   ai: string;
   title: string;
