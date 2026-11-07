@@ -505,7 +505,10 @@ complete.
   black and white again from the file's grey levels, kept in the page's memory only (the work keeps the picture and
   its threshold; after a reload the file is chosen again to change it). Images in ZPL in ZPL's own compression since 6
   November (repeat counts, `,`, `!` and `:`, which every ZPL II printer reads; several times smaller, every dot checked
-  through Labelary). Saving the label is 4.3*
+  through Labelary). Resizing by dragging a corner since 7 November (mock-up A of two, taken under the owner's rule;
+  B had a handle at each corner): the chosen element's handle at its bottom right corner, its top left corner kept; a
+  box and a line to the corner, an image in its proportions, a barcode to the nearest size its environment allows, a
+  text block to the nearest text height. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

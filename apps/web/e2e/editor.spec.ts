@@ -1713,6 +1713,101 @@ test("a label of one's own: an image's darkness changed by its slider, printed a
   await expect(page.getByText("Mais escura imprime em preto mais das cores claras da imagem; mais clara, menos.")).toBeVisible();
 });
 
+// Item 4.2 (mock-up A of two, 7 November 2026, taken under the owner's rule): the chosen element's handle at its bottom
+// right corner resizes it by dragging, its top left corner kept: a barcode and a text block to the sizes their
+// properties offer, an image in its proportions, a box to the corner; the files follow.
+test("a label of one's own: an element resized by dragging its corner, its top left corner kept", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const handle = page.getByTestId("resize-handle");
+  const overlay = page.locator(".design-overlay");
+  await expect(handle).toHaveCount(0);
+  await expect(page.getByText("drag it on the label to move it, or drag its corner to resize it.")).toBeVisible();
+  /** Drags the handle by (dx, dy) pixels, or in mm when `mm` is set, and lets go. */
+  const drag = async (dx: number, dy: number, mm = false) => {
+    await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    const scale = mm ? (await overlay.boundingBox())!.width / 100 : 1;
+    const h = (await handle.boundingBox())!;
+    const [x, y] = [h.x + h.width / 2, h.y + h.height / 2];
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx * scale, y + dy * scale, { steps: 6 });
+    await page.mouse.up();
+  };
+  /** The handle's centre and the chosen element's box, in pixels from the label's top left corner. */
+  const corner = async () => {
+    const o = (await overlay.boundingBox())!;
+    const h = (await handle.boundingBox())!;
+    const r = (await overlay.locator("rect.selected").boundingBox())!;
+    const box = { x: r.x - o.x, y: r.y - o.y, width: r.width, height: r.height };
+    return { handle: [h.x + h.width / 2 - o.x, h.y + h.height / 2 - o.y], corner: [box.x + box.width, box.y + box.height], box };
+  };
+  // The QR code in general distribution: its handle at its box's corner; dragged 10 mm, its modules about 10 mm larger,
+  // 150 %; dragged far back, never smaller than the 100 % that general distribution allows
+  await page.selectOption("#page-env", "distribution");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  await expect(handle).toHaveAttribute("title", "Drag this corner to resize the element");
+  const qr = await corner();
+  expect(Math.abs(qr.handle[0]! - qr.corner[0]!)).toBeLessThan(1);
+  expect(Math.abs(qr.handle[1]! - qr.corner[1]!)).toBeLessThan(1);
+  await drag(10, 10, true);
+  await expect(page.locator("#el-size")).toHaveValue("150");
+  await drag(-40, -40, true);
+  await expect(page.locator("#el-size")).toHaveValue("100");
+  // At retail point of sale: 80 % dragged far back, 200 % dragged far on, its top left corner kept
+  await page.selectOption("#page-env", "retail");
+  await drag(-40, -40, true);
+  await expect(page.locator("#el-size")).toHaveValue("80");
+  const smaller = await corner();
+  await drag(40, 40, true);
+  await expect(page.locator("#el-size")).toHaveValue("200");
+  await expect(page.locator("#el-x")).toHaveValue("2");
+  await expect(page.locator("#el-y")).toHaveValue("2");
+  await expect.poll(async () => (await corner()).box.height / smaller.box.height).toBeGreaterThan(1.5);
+  const larger = await corner();
+  expect(Math.abs(larger.box.x - smaller.box.x)).toBeLessThan(1);
+  expect(Math.abs(larger.box.y - smaller.box.y)).toBeLessThan(1);
+  expect(Math.abs(larger.handle[0]! - larger.corner[0]!)).toBeLessThan(1);
+  expect(Math.abs(larger.handle[1]! - larger.corner[1]!)).toBeLessThan(1);
+  // The text block twice as high: 3 mm becomes 6 mm
+  await page.locator(".design-list button", { hasText: "“{01}”" }).press("Enter");
+  await page.fill("#el-y", "40");
+  const text = await corner();
+  await drag(text.box.width, text.box.height);
+  await expect(page.locator("#el-height")).toHaveValue("6");
+  await expect(page.locator("#el-y")).toHaveValue("40");
+  // The logo, 20 mm wide, made 30 mm wide in its proportions (360 × 150 pixels), and printed so in ZPL
+  await page.getByTestId("image-file").setInputFiles(new URL("./fixtures/logo.png", import.meta.url).pathname);
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image logo");
+  await page.fill("#el-x", "60");
+  await drag(10, (10 * 150) / 360, true);
+  await expect(page.locator("#el-width")).toHaveValue("30");
+  await expect(page.locator("#el-height-mm")).toHaveValue("12.5");
+  await expect(page.locator("#el-x")).toHaveValue("60");
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const dots = (mm: number) => Math.round((mm / 25.4) * 203);
+  expect(readFileSync((await zpl.path())!, "utf8")).toMatch(new RegExp(`\\^GFA,(\\d+),\\1,${Math.ceil((dots(90) - dots(60)) / 8)},`));
+  await on(page, "label");
+  // A box takes the corner's width and height: 40 × 20 mm made 30 × 25 mm
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await expect(page.locator("#el-width")).toHaveValue("40");
+  await expect(page.locator("#el-height-mm")).toHaveValue("20");
+  await drag(-10, 5, true);
+  await expect(page.locator("#el-width")).toHaveValue("30");
+  await expect(page.locator("#el-height-mm")).toHaveValue("25");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("◇ Box 30 × 25 mm");
+  // Nothing chosen, no handle
+  await overlay.click({ position: { x: 1, y: 1 } });
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveCount(0);
+  await expect(handle).toHaveCount(0);
+});
+
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
 // label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
 // in the work; a QR code stays upright.

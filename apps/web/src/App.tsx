@@ -94,6 +94,7 @@ import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
 import { IdentifyCard } from "./IdentifyCard.tsx";
 import { keep, kept } from "./keep.ts";
+import { symbolSizing } from "./resize.ts";
 import { elementName } from "./Designer.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
@@ -343,7 +344,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             widthMm: page.widthMm, heightMm: page.heightMm, expected: designed.expected,
             pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
             caption: t("A label of my own {w} × {h} mm · {symbols}", { w: formatNumber(page.widthMm), h: formatNumber(page.heightMm), symbols: names }),
-            designer: { placed: designed.placed, problems },
+            designer: { placed: designed.placed, sizing: Object.fromEntries(designed.printer.symbols.map((symbol) => [symbol.id, symbolSizing(symbol)])), problems },
           },
           data, geometry, options, layout, designed,
         };

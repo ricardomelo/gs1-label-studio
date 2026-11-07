@@ -24,6 +24,7 @@ import {
 import { useState } from "react";
 import { DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
+import type { SymbolSizing } from "./resize.ts";
 import { scanSvg } from "./scan.ts";
 import {
   BEARER_CHOICES,
@@ -116,7 +117,7 @@ export interface LabelView {
   /** An SSCC: the GS1 Logistic Label is offered (backlog 4.1). */
   logisticPossible?: boolean;
   /** A label of one's own: where each element landed, and what is wrong with the page, in words. */
-  designer?: { placed: PlacedElement[]; problems: string[] };
+  designer?: { placed: PlacedElement[]; sizing: Record<string, SymbolSizing>; problems: string[] };
   /** GS1-128: its element strings and the index of each that starts a symbol (the first always). */
   gs1128?: { elements: string[]; starts: number[] };
   /** In bulk, the spreadsheet's columns a text can show as {column} fields, with the row shown's value (backlog 4.2). */
@@ -317,7 +318,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                   {view.svg && s.designer && s.page && view.designer ? (
                     <div className="designed">
                       <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
-                      <DesignerOverlay page={s.page} placed={view.designer.placed} selected={s.selected} onChange={(page, selected) => onChange({ ...s, page, selected })} />
+                      <DesignerOverlay page={s.page} placed={view.designer.placed} sizing={view.designer.sizing} selected={s.selected} onChange={(page, selected) => onChange({ ...s, page, selected })} />
                     </div>
                   ) : view.svg ? (
                     <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />

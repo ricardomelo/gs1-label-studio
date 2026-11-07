@@ -1,5 +1,5 @@
 {
- "date": "2026-11-06",
+ "date": "2026-11-07",
  "skipped": 0,
  "programs": [
   {
@@ -2899,6 +2899,50 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "resize",
+   "file": "apps/web/test/resize.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "resizing by dragging a corner › gives a box the corner's width and height by half millimetres, its corner and outline kept",
+     "status": "passed"
+    },
+    {
+     "name": "resizing by dragging a corner › gives a line its length across or down, whichever way the corner moves the other",
+     "status": "passed"
+    },
+    {
+     "name": "resizing by dragging a corner › keeps an image's proportions, its width following the corner along its diagonal, turned or not",
+     "status": "passed"
+    },
+    {
+     "name": "resizing by dragging a corner › gives a barcode the nearest of the sizes its properties offer, from its size when the drag began",
+     "status": "passed"
+    },
+    {
+     "name": "resizing by dragging a corner › gives a text block the nearest of the heights its properties offer, its text and corner kept",
+     "status": "passed"
+    },
+    {
+     "name": "resizing by dragging a corner › finds the nearest value by ratio, so that a step up and a step down weigh the same",
+     "status": "passed"
+    },
+    {
+     "name": "a barcode's sizing › is a QR code's modules alone, not its text, and the sizes its scanning environment allows",
+     "status": "passed"
+    },
+    {
+     "name": "a barcode's sizing › is a GS1-128's bars, turned with it, and the sizes its table's row allows",
+     "status": "passed"
+    },
+    {
+     "name": "a barcode's sizing › makes a barcode follow the corner by its modules: half its side again gives 150 %, and only a size allowed",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "roundtrip",
    "file": "packages/core/test/roundtrip.test.ts",
    "kind": "unit",
@@ -4377,6 +4421,15 @@
     },
     {
      "name": "a label of one's own: an image's darkness changed by its slider, printed and kept, and changed again after a reload once its file is chosen again",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an element resized by dragging its corner, its top left corner kept",
      "status": "listed",
      "projects": [
       "desktop",

@@ -247,4 +247,8 @@
 - Smaller ZPL for images (backlog 4.2, 6 November): every graphic field (`^GFA`) is written with ZPL's own ASCII
   compression — repeat counts, a row's trailing white or black filled by `,` or `!`, a repeated row as `:` — which
   every ZPL II printer reads; a logo's field is several times smaller, every dot printed as before (Labelary).
+- Resizing by dragging a corner (backlog 4.2, 7 November): on a label of one's own the chosen element shows a handle
+  at its bottom right corner; dragging it resizes the element, its top left corner kept — a box and a line to the
+  corner, an image in its proportions, a barcode to the nearest size its scanning environment allows (its bars or
+  modules following the corner), a text block to the nearest text height.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { freeCorner } from "./place.ts";
+import { resized, TEXT_HEIGHTS, type SymbolSizing } from "./resize.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -19,12 +20,13 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // properties, its box's top left corner kept; B turned the chosen element a quarter at a time from a button over the
 // canvas. A QR code stays upright: it reads in any direction, and ZPL prints it upright only. Then an image's darkness
 // (mock-up A of two, 6 November 2026, taken under the owner's rule): a slider from lighter to darker in its properties,
-// 5 to 95 per cent; B offered five steps in a list.
+// 5 to 95 per cent; B offered five steps in a list. Then resizing by dragging a corner (mock-up A of two, 7 November
+// 2026, taken under the owner's rule): one handle at the chosen element's bottom right corner, its top left corner kept
+// (resize.ts); B had a handle at each corner.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
 const STEP_MM = 0.5; // dragging moves an element by half millimetres
-const TEXT_HEIGHTS = [2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12];
 const IMAGE_WIDTH_MM = 20; // a new image's width
 const IMAGE_FILES = "image/png,image/jpeg,image/gif,image/webp,image/svg+xml";
 
@@ -169,20 +171,27 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
 interface OverlayProps {
   page: DesignPage;
   placed: PlacedElement[];
+  /** Each barcode's bars or modules and the sizes it can take, by its id: what resizing it follows. */
+  sizing: Readonly<Record<string, SymbolSizing>>;
   selected: string | null;
   onChange: (page: DesignPage, selected: string | null) => void;
 }
 
 const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id === id && (e.kind === "line" || e.kind === "box"));
 
-/** Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging. */
-export function DesignerOverlay({ page, placed, selected, onChange }: OverlayProps) {
+/**
+ * Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging; the chosen one's
+ * handle at its bottom right corner, resizing it by dragging (resize.ts).
+ */
+export function DesignerOverlay({ page, placed, sizing, selected, onChange }: OverlayProps) {
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string; x: number; y: number; xMm: number; yMm: number } | null>(null);
+  const resizing = useRef<{ x: number; y: number; element: DesignElement; placed: PlacedElement; sizing?: SymbolSizing } | null>(null);
+  const mmPerPx = () => page.widthMm / svg.current!.getBoundingClientRect().width;
   const move = (event: React.PointerEvent) => {
     const d = drag.current;
     if (!d || !svg.current) return;
-    const scale = page.widthMm / svg.current.getBoundingClientRect().width;
+    const scale = mmPerPx();
     const xMm = round(d.xMm + (event.clientX - d.x) * scale);
     const yMm = round(d.yMm + (event.clientY - d.y) * scale);
     const element = page.elements.find((e) => e.id === d.id);
@@ -190,44 +199,75 @@ export function DesignerOverlay({ page, placed, selected, onChange }: OverlayPro
       onChange({ ...page, elements: page.elements.map((e) => (e.id === d.id ? { ...e, xMm, yMm } : e)) }, d.id);
     }
   };
+  const resize = (event: React.PointerEvent) => {
+    const r = resizing.current;
+    if (!r || !svg.current) return;
+    const scale = mmPerPx();
+    const [xMm, yMm] = [r.placed.xMm + r.placed.widthMm + (event.clientX - r.x) * scale, r.placed.yMm + r.placed.heightMm + (event.clientY - r.y) * scale];
+    const next = resized(r.element, r.placed, xMm, yMm, r.sizing);
+    const now = page.elements.find((e) => e.id === r.element.id);
+    if (now && JSON.stringify(now) !== JSON.stringify(next)) {
+      onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
+    }
+  };
+  const chosen = placed.find((p) => p.id === selected);
+  const chosenElement = page.elements.find((e) => e.id === selected);
   return (
-    <svg
-      ref={svg}
-      className="design-overlay"
-      viewBox={`0 0 ${page.widthMm} ${page.heightMm}`}
-      aria-label={t("The label's elements: click one to choose it, drag it to move it")}
-      onPointerDown={(event) => {
-        if (event.target === svg.current) onChange(page, null);
-      }}
-    >
-      {/* Lines and boxes underneath, so that a frame around a barcode or text leaves them to be chosen */}
-      {[...placed].sort((a, b) => Number(!graphic(page, a.id)) - Number(!graphic(page, b.id))).map((p) => {
-        const element = page.elements.find((e) => e.id === p.id);
-        if (!element) return null;
-        return (
-          <rect
-            key={p.id}
-            data-id={p.id}
-            className={p.id === selected ? "selected" : undefined}
-            x={p.xMm}
-            y={p.yMm}
-            width={Math.max(p.widthMm, 1)}
-            height={Math.max(p.heightMm, 1)}
-            onPointerDown={(event) => {
-              event.stopPropagation();
-              (event.target as Element).setPointerCapture?.(event.pointerId);
-              drag.current = { id: p.id, x: event.clientX, y: event.clientY, xMm: element.xMm, yMm: element.yMm };
-              if (p.id !== selected) onChange(page, p.id);
-            }}
-            onPointerMove={move}
-            onPointerUp={() => (drag.current = null)}
-            onPointerCancel={() => (drag.current = null)}
-          >
-            <title>{elementName(element)}</title>
-          </rect>
-        );
-      })}
-    </svg>
+    <>
+      <svg
+        ref={svg}
+        className="design-overlay"
+        viewBox={`0 0 ${page.widthMm} ${page.heightMm}`}
+        aria-label={t("The label's elements: click one to choose it, drag it to move it")}
+        onPointerDown={(event) => {
+          if (event.target === svg.current) onChange(page, null);
+        }}
+      >
+        {/* Lines and boxes underneath, so that a frame around a barcode or text leaves them to be chosen */}
+        {[...placed].sort((a, b) => Number(!graphic(page, a.id)) - Number(!graphic(page, b.id))).map((p) => {
+          const element = page.elements.find((e) => e.id === p.id);
+          if (!element) return null;
+          return (
+            <rect
+              key={p.id}
+              data-id={p.id}
+              className={p.id === selected ? "selected" : undefined}
+              x={p.xMm}
+              y={p.yMm}
+              width={Math.max(p.widthMm, 1)}
+              height={Math.max(p.heightMm, 1)}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                (event.target as Element).setPointerCapture?.(event.pointerId);
+                drag.current = { id: p.id, x: event.clientX, y: event.clientY, xMm: element.xMm, yMm: element.yMm };
+                if (p.id !== selected) onChange(page, p.id);
+              }}
+              onPointerMove={move}
+              onPointerUp={() => (drag.current = null)}
+              onPointerCancel={() => (drag.current = null)}
+            >
+              <title>{elementName(element)}</title>
+            </rect>
+          );
+        })}
+      </svg>
+      {chosen && chosenElement && (
+        <span
+          className="design-handle"
+          data-testid="resize-handle"
+          title={t("Drag this corner to resize the element")}
+          style={{ left: `${((chosen.xMm + chosen.widthMm) / page.widthMm) * 100}%`, top: `${((chosen.yMm + chosen.heightMm) / page.heightMm) * 100}%` }}
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            (event.target as Element).setPointerCapture?.(event.pointerId);
+            resizing.current = { x: event.clientX, y: event.clientY, element: chosenElement, placed: chosen, sizing: sizing[chosen.id] };
+          }}
+          onPointerMove={resize}
+          onPointerUp={() => (resizing.current = null)}
+          onPointerCancel={() => (resizing.current = null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -500,7 +540,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
         </div>
         <div>
           {!element ? (
-            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label to move it.")}</p>
+            <p className="hint">{t("Choose an element in the list or on the label to change it; drag it on the label to move it, or drag its corner to resize it.")}</p>
           ) : (
             <div className="grid">
               {element.kind === "symbol" ? (

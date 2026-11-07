@@ -254,7 +254,11 @@ of my own (barcodes and text placed freely)*:
    **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
    down, and again, so that it is never hidden under another.
 3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
-   type **Left (mm)** and **Top (mm)**.
+   type **Left (mm)** and **Top (mm)**. The chosen element shows a small square at its bottom right corner: drag it to
+   make the element larger or smaller, its top left corner kept. A box takes the corner's width and height and a line
+   its length (by half millimetres); an image keeps its proportions; a barcode takes the nearest **Size** its scanning
+   environment allows (its bars or modules follow the corner, its text keeps its height), and a text block the nearest
+   **Text height**. The properties show the new size as it changes.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,

@@ -395,6 +395,9 @@ footer.about .hint { margin-top: 12px; }
 .design-overlay rect { fill: transparent; stroke: transparent; stroke-width: 0.4; cursor: move; }
 .design-overlay rect:hover { stroke: #1a73e8; stroke-dasharray: 1 1; }
 .design-overlay rect.selected { stroke: #1a73e8; stroke-dasharray: 1.2 0.8; fill: rgba(26, 115, 232, 0.06); }
+/* The chosen element's handle at its bottom right corner (resize.ts): a few pixels whatever the zoom, larger to a finger */
+.design-handle { position: absolute; width: 12px; height: 12px; transform: translate(-50%, -50%); box-sizing: border-box; background: #fff; border: 2px solid #1a73e8; border-radius: 2px; cursor: nwse-resize; touch-action: none; }
+@media (pointer: coarse) { .design-handle { width: 22px; height: 22px; } }
 .designer input[type="number"], .designer textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--field-line); border-radius: 6px; background: var(--field); color: var(--ink); }
 .designer .wide { grid-column: 1 / -1; }
 .designer fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; margin: 6px 0; }
