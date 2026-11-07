@@ -267,7 +267,9 @@ of my own (barcodes and text placed freely)*:
    corner half a millimetre, or 5 mm with **Shift**. A box takes **→** and **←** on its width and **↓** and **↑** on
    its height, a line the two along it; an image, a barcode and a text block keep their proportions, **→** and **↓**
    making them larger, **←** and **↑** smaller, a barcode and a text block a size at a time (with **Shift**, about
-   5 mm at a time).
+   5 mm at a time). After each press the hint starts with the new place (**Left** and **Top**) or the new size, and
+   says when a barcode or a text block has no larger or smaller size or the element runs past the label's edge; a
+   screen reader is told the same.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,

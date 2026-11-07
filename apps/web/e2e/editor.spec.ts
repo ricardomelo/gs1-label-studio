@@ -2241,7 +2241,8 @@ test("a label of one's own: an element resized from the keyboard, by the arrow k
   await handle.focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.locator("#el-height")).toHaveValue("2.5");
-  expect(await handle.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Setas: redimensionam · Shift: passos maiores"');
+  // The hint after a key: the new size, then the keys (said.ts)
+  expect(await handle.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Altura do texto 2,5 mm\\a Setas: redimensionam · Shift: passos maiores"');
 });
 
 // Moving from the keyboard (backlog 4.2, mock-up A of two, 7 November 2026): Tab reaches the chosen element's outline,
@@ -2326,7 +2327,87 @@ test("a label of one's own: an element moved from the keyboard, by the arrow key
   await outline.focus();
   await page.keyboard.press("ArrowDown");
   await expect(page.locator("#el-y")).toHaveValue("30.5");
-  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Setas: movem · Shift: passos maiores"');
+  // The hint after a key: the new place, then the keys (said.ts)
+  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Esquerda 50 mm · topo 30,5 mm\\a Setas: movem · Shift: passos maiores"');
+});
+
+// What an arrow key did (backlog 4.2, mock-up B of two, 7 November 2026, taken under the owner's rule): the element's new
+// place or size at the head of the hint under the outline or the handle, and the same in a live region for a screen
+// reader; the end of a barcode's sizes and the label's edge said too; nothing said once the focus has left them.
+test("a label of one's own: what an arrow key did, in the hint and to a screen reader", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  const outline = page.getByTestId("move-outline");
+  const handle = page.getByTestId("resize-handle");
+  const said = page.getByTestId("design-said");
+  // A live region from the start, unseen, saying nothing yet
+  await expect(said).toHaveAttribute("aria-live", "polite");
+  await expect(said).toHaveText("");
+  expect((await said.boundingBox())!.width).toBeLessThanOrEqual(1);
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  for (let n = 0; n < 40 && !(await outline.evaluate((element) => element === document.activeElement)); n++) await page.keyboard.press("Shift+Tab");
+  await expect(outline).toBeFocused();
+  await expect(outline).toHaveAttribute("data-keys", "Arrow keys: move · Shift: larger steps");
+  // The hint drawn from it, its lines kept: what was said, then the keys on a line of their own
+  const hint = (element: typeof outline) => element.evaluate((e) => [getComputedStyle(e, "::after").content, getComputedStyle(e, "::after").whiteSpace]);
+  expect(await hint(outline)).toEqual(['"Arrow keys: move · Shift: larger steps"', "pre"]);
+  // Moved: its place in the live region and at the head of the hint, on a line of its own; the name unchanged
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Left 2.5 mm · top 2 mm");
+  await expect(outline).toHaveAttribute("data-keys", "Left 2.5 mm · top 2 mm\nArrow keys: move · Shift: larger steps");
+  expect(await hint(outline)).toEqual(['"Left 2.5 mm · top 2 mm\\a Arrow keys: move · Shift: larger steps"', "pre"]);
+  await expect(outline).toHaveAccessibleName("QR code (GS1 Digital Link): press the arrow keys to move it");
+  await expect(handle).toHaveAttribute("data-keys", "Arrow keys: resize · Shift: larger steps"); // the handle's own hint
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(said).toHaveText("Left 2.5 mm · top 7 mm");
+  // Tab to the handle: nothing said until its own key; the QR code smaller than 100 % is not allowed, then 120 %
+  await page.keyboard.press("Tab");
+  await expect(handle).toBeFocused();
+  await expect(said).toHaveText("");
+  await expect(outline).toHaveAttribute("data-keys", "Arrow keys: move · Shift: larger steps");
+  await expect(handle).toHaveAttribute("data-keys", "Arrow keys: resize · Shift: larger steps");
+  await page.keyboard.press("ArrowLeft");
+  await expect(said).toHaveText("Size 100 % · no smaller size");
+  await expect(handle).toHaveAttribute("data-keys", "Size 100 % · no smaller size\nArrow keys: resize · Shift: larger steps");
+  expect((await hint(handle))[0]).toBe('"Size 100 % · no smaller size\\a Arrow keys: resize · Shift: larger steps"');
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Size 120 %");
+  await expect(page.locator("#el-size")).toHaveValue("120");
+  // A box past the right edge: said with its place and with its size; back within the label, the edge no longer said
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await page.fill("#el-x", "70");
+  await page.fill("#el-y", "30");
+  await outline.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Left 70.5 mm · top 30 mm · past the label's edge");
+  for (let n = 0; n < 3; n++) await page.keyboard.press("Shift+ArrowLeft");
+  await expect(said).toHaveText("Left 55.5 mm · top 30 mm");
+  await handle.focus();
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(said).toHaveText("Width 40 mm · height 25 mm");
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Width 40.5 mm · height 25 mm");
+  // The focus gone elsewhere: nothing said, the hint back to the keys alone
+  await page.locator("#el-x").focus();
+  await expect(said).toHaveText("");
+  await expect(handle).toHaveAttribute("data-keys", "Arrow keys: resize · Shift: larger steps");
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await outline.focus();
+  await page.keyboard.press("ArrowUp");
+  await expect(said).toHaveText("Esquerda 55,5 mm · topo 29,5 mm");
+  await expect(outline).toHaveAttribute("data-keys", "Esquerda 55,5 mm · topo 29,5 mm\nSetas: movem · Shift: passos maiores");
+  await handle.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(said).toHaveText("Largura 40 mm · altura 25 mm");
 });
 
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the

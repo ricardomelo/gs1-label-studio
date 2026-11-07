@@ -3147,6 +3147,34 @@
    "area": "Exports and prepress: SVG, PNG, PDF, EPS, zip"
   },
   {
+   "program": "said",
+   "file": "apps/web/test/said.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "what an arrow key on the outline says › the element's top left corner, as Left and Top say, in the interface's language",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the outline says › the label's edge when the element's box runs past any of its four sides",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the handle says › each kind's size as its properties give it",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the handle says › the end of its sizes, and the label's edge after it",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the handle says › an end only when the key changed nothing, and never for a line's keys across it",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "sequence",
    "file": "packages/core/test/sequence.test.ts",
    "kind": "unit",
@@ -4624,6 +4652,15 @@
     },
     {
      "name": "a label of one's own: an element moved from the keyboard, by the arrow keys on its outline",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: what an arrow key did, in the hint and to a screen reader",
      "status": "listed",
      "projects": [
       "desktop",

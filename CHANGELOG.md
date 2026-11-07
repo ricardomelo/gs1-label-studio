@@ -282,4 +282,7 @@
 - Moving from the keyboard (backlog 4.2, 7 November): Tab reaches the chosen element's outline on a label of one's
   own, just before its handle, a hint under it says what the keys do, and each arrow key moves the element half a
   millimetre, or 5 mm with Shift.
+- What an arrow key did, said (backlog 4.2, 7 November): after an arrow key on the chosen element's outline or handle,
+  the hint under it starts with the element's new place or size (and says when it has no larger or smaller size or
+  runs past the label's edge), and a screen reader is told the same.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

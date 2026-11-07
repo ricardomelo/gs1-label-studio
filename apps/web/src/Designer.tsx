@@ -6,6 +6,7 @@ import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { freeCorner, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
 import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
+import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
@@ -29,7 +30,9 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // a hint under it while it has the keyboard's focus; B gave the keyboard to the element's outline, the arrows moving it.
 // Then moving from the keyboard (mock-up A of two, 7 November 2026, taken under the owner's rule): Tab reaches the
 // chosen element's outline, just before its handle, and the arrow keys move it, Shift by 5 mm (place.ts keyMoved); B
-// moved it by the arrow keys on its button in the list of elements.
+// moved it by the arrow keys on its button in the list of elements. Then what an arrow key did, said after it (mock-up
+// B of two, 7 November 2026, taken under the owner's rule): the hint under the outline or the handle starts with the
+// element's new place or size, and a live region tells a screen reader the same (said.ts); A told the screen reader alone.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -189,13 +192,17 @@ const graphic = (page: DesignPage, id: string) => page.elements.some((e) => e.id
 /**
  * Over the drawn page, in its millimetres: each element's box, selected by a click, moved by dragging; the chosen one's
  * handle at its bottom right corner, resizing it by dragging or by the arrow keys once Tab reaches it (resize.ts); its
- * outline, just before the handle, moving it by the arrow keys once Tab reaches it (place.ts).
+ * outline, just before the handle, moving it by the arrow keys once Tab reaches it (place.ts); what the last arrow key did,
+ * in the hint under the one that has the focus and in a live region for a screen reader (said.ts).
  */
 export function DesignerOverlay({ page, placed, sizing, selected, onChange }: OverlayProps) {
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ id: string; x: number; y: number; xMm: number; yMm: number } | null>(null);
   // The pointer's start and where the corner was taken from: the handle as drawn, held within the label (handleAt)
   const resizing = useRef<{ x: number; y: number; xMm: number; yMm: number; element: DesignElement; placed: PlacedElement; sizing?: SymbolSizing } | null>(null);
+  // The last arrow key's work on the chosen element, until the focus leaves its outline or handle: said from the element
+  // as it is now, so that a page redrawn later (the box past the edge, a barcode's size) is what it says
+  const [keyed, setKeyed] = useState<{ id: string; what: "move" | "size"; end: number } | null>(null);
   const mmPerPx = () => page.widthMm / svg.current!.getBoundingClientRect().width;
   const move = (event: React.PointerEvent) => {
     const d = drag.current;
@@ -222,8 +229,14 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
   const chosen = placed.find((p) => p.id === selected);
   const chosenElement = page.elements.find((e) => e.id === selected);
   const handle = chosen && handleAt(chosen, page);
+  const said = !keyed || !chosen || !chosenElement || keyed.id !== chosen.id ? ""
+    : keyed.what === "move" ? placeSaid(chosenElement, chosen, page) : sizeSaid(chosenElement, chosen, page, keyed.end);
+  const keys = (what: "move" | "size", hint: string) => (said && keyed?.what === what ? `${said}\n${hint}` : hint);
   return (
     <>
+      <p className="visually-hidden" aria-live="polite" data-testid="design-said">
+        {said}
+      </p>
       <svg
         ref={svg}
         className="design-overlay"
@@ -267,7 +280,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           type="button"
           className="design-move"
           data-testid="move-outline"
-          data-keys={t("Arrow keys: move · Shift: larger steps")}
+          data-keys={keys("move", t("Arrow keys: move · Shift: larger steps"))}
           aria-label={t("{name}: press the arrow keys to move it", { name: elementName(chosenElement) })}
           aria-keyshortcuts="ArrowRight ArrowLeft ArrowDown ArrowUp Shift+ArrowRight Shift+ArrowLeft Shift+ArrowDown Shift+ArrowUp"
           style={outlineStyle(chosen, page)}
@@ -278,7 +291,9 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
             if (next.xMm !== chosenElement.xMm || next.yMm !== chosenElement.yMm) {
               onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
             }
+            setKeyed({ id: next.id, what: "move", end: 0 });
           }}
+          onBlur={() => setKeyed(null)}
         />
       )}
       {chosen && chosenElement && handle && (
@@ -286,7 +301,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           type="button"
           className={handle.past ? "design-handle past" : "design-handle"}
           data-testid="resize-handle"
-          data-keys={t("Arrow keys: resize · Shift: larger steps")}
+          data-keys={keys("size", t("Arrow keys: resize · Shift: larger steps"))}
           aria-keyshortcuts="ArrowRight ArrowLeft ArrowDown ArrowUp Shift+ArrowRight Shift+ArrowLeft Shift+ArrowDown Shift+ArrowUp"
           title={
             handle.past
@@ -309,7 +324,9 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
             if (JSON.stringify(next) !== JSON.stringify(chosenElement)) {
               onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
             }
+            setKeyed({ id: next.id, what: "size", end: keyEnd(chosenElement, next, event.key) });
           }}
+          onBlur={() => setKeyed(null)}
         />
       )}
     </>

@@ -529,7 +529,10 @@ complete.
   (7011) and (8008) keep a cell's time after the date, (8008) its seconds, and an Excel cell keeps the time its format
   shows. Moving from the keyboard since 7 November (mock-up A of two, taken under the owner's rule; B moved the
   element by the arrow keys on its button in the list): Tab reaches the chosen element's outline on the label, just
-  before its handle, and the arrow keys move it by half a millimetre, 5 mm with Shift. Saving the label is 4.3*
+  before its handle, and the arrow keys move it by half a millimetre, 5 mm with Shift. What an arrow key did, said
+  since 7 November (mock-up B of two, taken under the owner's rule; A told a screen reader alone): the hint under the
+  outline or the handle starts with the new place or size, the end of a barcode's or a text's sizes and the label's
+  edge, and a live region tells a screen reader the same. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**
