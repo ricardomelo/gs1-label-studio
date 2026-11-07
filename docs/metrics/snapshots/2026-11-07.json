@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-07",
+  "head": "bbb24de",
+  "commits": {
+    "total": 52,
+    "first": "2026-11-04",
+    "last": "2026-11-07",
+    "daysWithCommits": 3,
+    "calendarDays": 4,
+    "perDay": {
+      "2026-11-07": 3,
+      "2026-11-06": 28,
+      "2026-11-04": 21
+    }
+  },
+  "lines": {
+    "config": {
+      "files": 14,
+      "lines": 252
+    },
+    "docs": {
+      "files": 21,
+      "lines": 9986
+    },
+    "excluded": {
+      "files": 33,
+      "lines": 12980
+    },
+    "tests": {
+      "files": 60,
+      "lines": 9605
+    },
+    "code": {
+      "files": 91,
+      "lines": 16753
+    },
+    "data": {
+      "files": 7,
+      "lines": 23635
+    },
+    "generated": {
+      "files": 9,
+      "lines": 1780
+    }
+  },
+  "tests": 893
+}
