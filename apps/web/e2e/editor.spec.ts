@@ -1862,6 +1862,50 @@ test("in bulk: a patient list's columns guessed, names with accents encoded for 
   }
 });
 
+// One code (backlog 1.9, an open point since session 42): a name typed with spaces and accents as people write it, the
+// tool writing it as %XX for the code, as in bulk; a pasted name shown as people read it.
+test("one code: a name typed with spaces and accents written as %XX in the code, a pasted one shown as written", async ({ page }) => {
+  await page.fill("#paste", "(8018)950600013435200008(7254)Jo%C3%A3o");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  const name = page.locator(".attr").first();
+  await expect(name.getByLabel("Attribute value")).toHaveValue("João");
+  await expect(name.locator(".hint")).toHaveText("up to 40 characters · spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9) → In the code: (7254) Jo%C3%A3o");
+  await name.getByLabel("Attribute value").fill("Maria José");
+  await expect(name.locator(".hint")).toContainText("→ In the code: (7254) Maria%20Jos%C3%A9");
+  await page.getByRole("button", { name: "+ Add attributes" }).click();
+  const surname = page.locator(".attr").last();
+  await surname.getByLabel("Attribute (AI)").fill("7253");
+  await surname.getByLabel("Attribute value").fill("Conceição");
+  await expect(surname.locator(".hint")).toContainText("→ In the code: (7253) Concei%C3%A7%C3%A3o");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/8018/950600013435200008?7254=Maria%2520Jos%25C3%25A9&7253=Concei%25C3%25A7%25C3%25A3o");
+  await expect(page.locator(".status")).toContainText("✓");
+  // A data attribute that is not percent-encoded is left to the Syntax Engine, which refuses the space
+  await page.getByRole("button", { name: "+ Add attributes" }).click();
+  await page.locator(".attr").last().getByLabel("Attribute (AI)").fill("7240");
+  await page.locator(".attr").last().getByLabel("Attribute value").fill("Maria José");
+  await expect(page.locator(".attr").last().locator(".hint")).not.toContainText("In the code");
+  await expect(page.locator(".status")).toContainText("CSET 82");
+  await page.locator(".attr").last().getByRole("button", { name: "Remove attribute" }).click();
+  // On the label: the barcode carries the encoded name, a {7254} field the name as written
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-y", "52");
+  await expect(page.locator('#el-field option[value="{7254}"]')).toHaveText("{7254} — Maria José");
+  await page.fill("#el-text", "{7254} {7253}");
+  await expect(page.locator('.preview .symbol svg [aria-label="Maria José Conceição"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (8018)950600013435200008(7254)Maria%20Jos%C3%A9(7253)Concei%C3%A7%C3%A3o", { timeout: 30_000 });
+  await on(page, "export");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const text = readFileSync((await zpl.path())!, "utf8");
+  expect(text).toContain("^FDMaria José Conceição^FS");
+  expect(text).toContain("_17254Maria%20Jos%C3%A9_17253Concei%C3%A7%C3%A3o");
+});
+
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {

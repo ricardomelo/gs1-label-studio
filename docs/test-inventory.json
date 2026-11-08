@@ -1824,6 +1824,22 @@
      "status": "passed"
     },
     {
+     "name": "names and addresses typed as people write them (backlog 1.9) › writes a percent-encoded AI's spaces and accents as %XX in the code, and leaves every other AI as typed",
+     "status": "passed"
+    },
+    {
+     "name": "names and addresses typed as people write them (backlog 1.9) › checks a name typed with spaces and accents through the Syntax Engine, trimmed, and puts it in both forms",
+     "status": "passed"
+    },
+    {
+     "name": "names and addresses typed as people write them (backlog 1.9) › shows a pasted name as people read it, and writes it back the same",
+     "status": "passed"
+    },
+    {
+     "name": "names and addresses typed as people write them (backlog 1.9) › keeps a pasted name as written when reading it would change what goes back in the code",
+     "status": "passed"
+    },
+    {
      "name": "qualifiers and attributes as one list (backlog 1.15) › sends a row with a qualifier's AI to the path, in the path's order whatever the row's place; the rest are attributes",
      "status": "passed"
     },
@@ -5102,6 +5118,15 @@
     },
     {
      "name": "in bulk: a patient list's columns guessed, names with accents encoded for the barcode and shown as written",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "one code: a name typed with spaces and accents written as %XX in the code, a pasted one shown as written",
      "status": "listed",
      "projects": [
       "desktop",

@@ -1,4 +1,13 @@
-import { dataAttributes, elementStringAttributes, formatHint, pathAis, type Attribute, type Component } from "./dictionary.ts";
+import {
+  dataAttributes,
+  elementStringAttributes,
+  formatHint,
+  isPercentEncoded,
+  pathAis,
+  percentEncode,
+  type Attribute,
+  type Component,
+} from "./dictionary.ts";
 
 /**
  * Data attributes — informative AIs (expiry date, net weight, price…) beside the identification (backlog item 1.9):
@@ -163,6 +172,17 @@ export function resolveDecimal(ai: string, value: string): [string, string] {
   if (digits.length > last.max) throw new AttributeError("attr.tooManyDigits", { ai, max: last.max });
   if (last.min === last.max) digits = digits.padStart(last.max, "0");
   return [`${familyCode.slice(0, 3)}${decimals}`, prefix + digits];
+}
+
+/**
+ * An attribute as typed, as the code carries it: a decimal family's number as its digits (`resolveDecimal`), and a
+ * percent-encoded AI's text (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, with its spaces and
+ * other characters outside CSET 82 written as %XX (`percentEncode`: "Maria José" → "Maria%20Jos%C3%A9"; %XX already
+ * written is kept). Anything else is left unchanged, for the Syntax Engine to check.
+ */
+export function resolveAttribute(ai: string, value: string): [string, string] {
+  const [code, digits] = resolveDecimal(ai, value);
+  return isPercentEncoded(code) ? [code, percentEncode(digits)] : [code, digits];
 }
 
 /**

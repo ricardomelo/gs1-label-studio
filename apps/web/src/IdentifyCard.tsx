@@ -16,7 +16,7 @@ import {
   normaliseKeyValue,
   parametersProblem,
   qualifiersOf,
-  resolveDecimal,
+  resolveAttribute,
   rowsOf,
   splitRows,
   SYNTAX_ENGINE,
@@ -190,7 +190,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           problem = tm(checkDigitProblem(ai, value) ?? "");
         } else if (attribute && value.trim()) {
           try {
-            const [code, digits] = resolveDecimal(ai, value.trim());
+            const [code, digits] = resolveAttribute(ai, value.trim());
             if (code !== ai || digits !== value.trim()) converted = t("→ In the code: ({code}) {digits}", { code, digits });
           } catch (error) {
             problem = tm(error instanceof AttributeError ? error.message : String(error));

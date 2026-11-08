@@ -166,6 +166,10 @@ One list holds the key's qualifiers (batch, serial number, variant…) and its d
 - Each value is checked on its row, with a hint of the format (*6 digits · date YYMMDD*, *up to 20 characters*).
 - Decimal attributes take a comma or a point: a net weight of `0,5` kg becomes *(3103) 000500*; the hint shows what goes
   in the code.
+- Names and addresses are typed as people write them: a patient's (7253) family name or (7254) given name, a ship-to
+  address (4300)–(4320) take their spaces and accents as %XX in the code, and the tool writes them so — *Maria José*
+  becomes *(7254) Maria%20Jos%C3%A9*, which the hint shows; %XX already written is kept. A pasted name is shown as
+  people read it (*Jo%C3%A3o* → *João*), and a `{7254}` field on a label of one's own shows it as written.
 - Two qualifiers the key does not take together are said on the row (*Not with (22), (10) and (21): the key takes one
   or the other.*).
 - Attributes that only element strings carry — (8014), (8040) to (8043), (8200)… — are offered and marked so.

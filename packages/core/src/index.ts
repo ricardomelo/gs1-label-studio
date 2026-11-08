@@ -169,6 +169,7 @@ export {
   MAX_ATTRIBUTES,
   offeredAttributes,
   refuseDayZero,
+  resolveAttribute,
   resolveDecimal,
   type Offered,
   type Resolved,

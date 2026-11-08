@@ -324,4 +324,8 @@
   arrow keys used to carry it past the label's edge, where print files refuse it; it now stops at the edge, its corner
   on the last half millimetre that keeps it on the label, an element already past the edge is never moved further
   past it, and the arrow keys' hint says when the edge is reached. **Left** and **Top** typed still place it anywhere.
+- Names and addresses as written in One code (8 November; an open point since session 42): a name or address whose AI
+  is percent-encoded ((4300)–(4320), (7253)–(7259)) used to be refused for its first space or accent unless typed as
+  %XX by hand; it is now typed as people write it and goes in the code as %XX, as in bulk, the row's hint showing the
+  code's form; a pasted name is shown as people read it.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

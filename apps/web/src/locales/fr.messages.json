@@ -43,7 +43,7 @@
  "sex: 0, 1, 2 or 9 (ISO 5218)": "sexe : 0, 1, 2 ou 9 (ISO 5218)",
  "not zero": "pas zéro",
  "starts with a GS1 Company Prefix": "commence par un préfixe d’entreprise GS1",
- "other characters written as %XX (e.g. %C3%A9 for é)": "autres caractères écrits %XX (p. ex. %C3%A9 pour é)",
+ "spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9)": "espaces, accents et autres caractères écrits %XX dans le code (p. ex. é en %C3%A9)",
  "piece and total, e.g. 0102 (piece 1 of 2)": "pièce et total, p. ex. 0102 (pièce 1 sur 2)",
  "position/total, e.g. 1/2": "position/total, p. ex. 1/2",
  "AIDC media type (2 digits)": "type de support AIDC (2 chiffres)",

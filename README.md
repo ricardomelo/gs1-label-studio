@@ -272,7 +272,8 @@ complete.
   Prefix's length from GS1's GCP length table, loaded by the user and kept in the browser — *done, checked against the
   resolver and read back by epc-tds; the tag's hexadecimal filled to the 16-bit word*
 - 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
-  1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it*
+  1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it;
+  since 8 November names and addresses typed as people write them, their spaces and accents as %XX in the code*
 
 *The owner's review of 29 October 2026 added items 1.10 to 1.14.*
 

@@ -98,7 +98,7 @@ cd packages/core && NODE_USE_ENV_PROXY=1 LABELARY=1 npx vitest run test/labelary
    element string, the GS1 Digital Link URI) or an `InputError` with the characters at fault marked. `fieldsOf()` turns
    it into the editor's `Identification`: key, value, qualifiers, attributes, parameters.
 2. **Identification.** As the person types, `identify(engine, id, stem)` writes the element string (`elementStringOf`:
-   qualifiers in path order, decimal families resolved by `attributes.ts`), has the engine check it, and appends the
+   qualifiers in path order, decimal families and percent-encoded names resolved by `attributes.ts`' `resolveAttribute`), has the engine check it, and appends the
    URI's own parameters (`withParameters`). `checkKeyValue` and `checkDigitProblem` check digits on the row.
 3. **Where it is scanned.** `walk(key, answers)` follows figure 5-68 to a leaf — a section 2 application with its
    symbol specification table; `guidance(leaf, identified)` lists the carriers in the standard's order and recommends
@@ -133,7 +133,7 @@ Each module, in the order of the flow above.
 | `elementString.ts` | Bracketed element strings into AIs and values; `hasPredefinedLength` |
 | `checkDigit.ts` | The GS1 check digit |
 | `dictionary.ts` | The resolver's dictionary file: keys, qualifiers in path order, exclusive qualifier sets, AIs with their formats; `primaryKeys`, `isDigitalLinkKey`; `SYNTAX_ENGINE` (the engine's release and its dictionary's date, which the screen and the files made name) |
-| `attributes.ts` | Data attributes as the resolver offered them, decimal families (310n, 392n…) and their conversion; dates with day zero |
+| `attributes.ts` | Data attributes as the resolver offered them, decimal families (310n, 392n…) and their conversion, a percent-encoded AI's text as %XX (`resolveAttribute`); dates with day zero |
 | `identify.ts` | `Identification` → `Identified`: `identify`, `elementStringOf`, `fieldsOf`, `rowsOf`/`splitRows` (one list of qualifiers and attributes), `OTHER_KEYS` (the pairings of 4.13), `parametersProblem`, `withParameters`, `uriParameters` |
 
 ### Where it is scanned
@@ -287,7 +287,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
-| `identify` | the editor's identification, one list, parameters, several keys | 14 |
+| `identify` | the editor's identification, one list, parameters, several keys | 18 |
 | `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 70 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
@@ -318,7 +318,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached (apps/web/test) | 6 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 80 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 81 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

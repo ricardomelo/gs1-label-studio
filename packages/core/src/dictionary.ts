@@ -242,7 +242,7 @@ const LINTS: Record<string, string> = {
   longitude: "longitude",
   iban: "IBAN",
   key: "starts with a GS1 Company Prefix",
-  pcenc: "other characters written as %XX (e.g. %C3%A9 for é)",
+  pcenc: "spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9)",
   pieceoftotal: "piece and total, e.g. 0102 (piece 1 of 2)",
   posinseqslash: "position/total, e.g. 1/2",
   mediatype: "AIDC media type (2 digits)",

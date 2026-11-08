@@ -15,6 +15,7 @@ import {
   OTHER_KEYS,
   parametersProblem,
   qualifiersOf,
+  resolveAttribute,
   rowsOf,
   splitRows,
   syntaxEngine,
@@ -105,6 +106,49 @@ describe("the editor's identification", () => {
     expect(offered).toContain("310n");
     expect(attributeHint(attributeByCode("17")!)).toBe("6 digits · date YYMMDD");
     expect(attributeHint(attributeByCode("3103")!)).toBe("3 decimal places: type with a comma or point (e.g. 1.5) or the digits only");
+  });
+});
+
+describe("names and addresses typed as people write them (backlog 1.9)", () => {
+  const PATIENT: Identification = { key: "8018", value: "950600013435200008", qualifiers: {}, attributes: [] };
+
+  it("writes a percent-encoded AI's spaces and accents as %XX in the code, and leaves every other AI as typed", () => {
+    expect(resolveAttribute("7254", "Maria José")).toEqual(["7254", "Maria%20Jos%C3%A9"]);
+    expect(resolveAttribute("4302", "Rua 25 de Março, 7")).toEqual(["4302", "Rua%2025%20de%20Mar%C3%A7o,%207"]);
+    expect(resolveAttribute("7253", "Jo%C3%A3o")).toEqual(["7253", "Jo%C3%A3o"]); // %XX already written: kept
+    expect(resolveAttribute("7253", "50% off")).toEqual(["7253", "50%25%20off"]);
+    expect(resolveAttribute("240", "A B é")).toEqual(["240", "A B é"]); // not percent-encoded: for the engine to refuse
+    expect(resolveAttribute("310n", "0,5")).toEqual(["3101", "000005"]);
+    expect(resolveAttribute("7254", "")).toEqual(["7254", ""]);
+    expect(attributeHint(attributeByCode("7254")!)).toBe("up to 40 characters · spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9)");
+  });
+
+  it("checks a name typed with spaces and accents through the Syntax Engine, trimmed, and puts it in both forms", () => {
+    const result = identify(engine, { ...PATIENT, attributes: [["7254", " Maria José "], ["7253", "Conceição"], ["7250", "19600115"]] });
+    expect(result.elementString).toBe("(8018)950600013435200008(7254)Maria%20Jos%C3%A9(7253)Concei%C3%A7%C3%A3o(7250)19600115");
+    expect(result.digitalLinkUri).toBe("https://id.gs1.org/8018/950600013435200008?7254=Maria%2520Jos%25C3%25A9&7253=Concei%25C3%25A7%25C3%25A3o&7250=19600115");
+    expect(result.resolvedAttributes).toEqual([["7254", "Maria%20Jos%C3%A9"], ["7253", "Concei%C3%A7%C3%A3o"], ["7250", "19600115"]]);
+    expect(() => identify(engine, { ...PATIENT, attributes: [["7240", "Maria José"]] })).toThrow(/CSET 82/);
+  });
+
+  it("shows a pasted name as people read it, and writes it back the same", () => {
+    for (const text of [
+      "(8018)950600013435200008(7254)Maria%20Jos%C3%A9(7253)50%25",
+      "https://id.gs1.org/8018/950600013435200008?7254=Maria%2520Jos%25C3%25A9&7253=50%2525",
+    ]) {
+      const pasted = engine.parse(text);
+      const fields = fieldsOf(pasted);
+      expect(fields.attributes).toEqual([["7254", "Maria José"], ["7253", "50%"]]);
+      expect(identify(engine, fields).elementString).toBe(pasted.elementString);
+    }
+  });
+
+  it("keeps a pasted name as written when reading it would change what goes back in the code", () => {
+    // %2541 reads %41, which would go back as A; lower-case %c3%a3 would go back in capitals; %C3 alone is not UTF-8; (240) is not percent-encoded
+    const pasted = engine.parse("(8018)950600013435200008(7254)%2541(7253)Jo%c3%a3o(7257)Ana%C3");
+    expect(fieldsOf(pasted).attributes).toEqual([["7254", "%2541"], ["7253", "Jo%c3%a3o"], ["7257", "Ana%C3"]]);
+    expect(identify(engine, fieldsOf(pasted)).elementString).toBe(pasted.elementString);
+    expect(fieldsOf(engine.parse("(01)09506000134376(240)AB%20C")).attributes).toEqual([["240", "AB%20C"]]);
   });
 });
 

@@ -1,6 +1,6 @@
-import { attributeByCode, attributeComponents, AttributeError, MAX_ATTRIBUTES, resolveDecimal, refuseDayZero } from "./attributes.ts";
+import { attributeByCode, attributeComponents, AttributeError, MAX_ATTRIBUTES, resolveAttribute, refuseDayZero } from "./attributes.ts";
 import { checkDigit } from "./checkDigit.ts";
-import { aiEntry, exclusiveQualifiers, pathAis, qualifiersOf } from "./dictionary.ts";
+import { aiEntry, exclusiveQualifiers, isPercentEncoded, pathAis, percentDecode, percentEncode, qualifiersOf } from "./dictionary.ts";
 import { InputError, type ParsedInput, type SyntaxEngine } from "./syntax.ts";
 
 /**
@@ -24,7 +24,10 @@ export interface Identification {
 }
 
 export interface Identified extends ParsedInput {
-  /** The attributes as they went in: [AI, value] after decimal resolution ("310n", "0,5" → "3101", "000005"). */
+  /**
+   * The attributes as they went in: [AI, value] after decimal resolution ("310n", "0,5" → "3101", "000005") and
+   * percent-encoding ("7254", "João" → "7254", "Jo%C3%A3o"): `resolveAttribute`.
+   */
   resolvedAttributes: [string, string][];
 }
 
@@ -49,7 +52,8 @@ export function checkKeyValue(key: string, value: string): string | null {
 
 /**
  * The element string of the identification, in order — key, qualifiers in path order, attributes —, after the
- * resolver's checks on the attributes as chosen ("392n", "17": names the user sees), then decimal conversion.
+ * resolver's checks on the attributes as chosen ("392n", "17": names the user sees), then decimal conversion and a
+ * name's or address's characters outside CSET 82 written as %XX (`resolveAttribute`).
  */
 export function elementStringOf(id: Identification): { elementString: string; resolved: [string, string][] } {
   const inPath = new Set([id.key, ...(PATH_AIS[id.key] ?? [])]);
@@ -65,7 +69,7 @@ export function elementStringOf(id: Identification): { elementString: string; re
   }
   const chosen = new Set<string>();
   const resolved = attributes.map(([ai, value]) => {
-    const [code, digits] = resolveDecimal(ai, value);
+    const [code, digits] = resolveAttribute(ai, value);
     if (chosen.has(code)) throw new AttributeError("attr.duplicate", { ai }); // 310n twice, both with the same decimals
     chosen.add(code);
     const components = attributeComponents(code) ?? aiEntry(code)?.components;
@@ -158,7 +162,9 @@ export function uriParameters(text: string): [string, string][] {
 
 /**
  * The fields of what someone pasted: the first primary key is the key, the AIs of its path its qualifiers, the rest
- * attributes in the order given. Attributes keep their GS1 form ("3103", "000500"), which the fields show as typed.
+ * attributes in the order given. Attributes keep their GS1 form ("3103", "000500"), which the fields show as typed;
+ * a name or address of a percent-encoded AI is shown as people read it (`Jo%C3%A3o` → `João`), unless it would not be
+ * written back the same (`%2541` reads `%41`, which is A: kept as pasted).
  */
 export function fieldsOf(parsed: ParsedInput): Identification {
   const key = parsed.elements.find((e) => aiEntry(e.ai)?.dlpkey)?.ai ?? parsed.elements[0]?.ai ?? "01";
@@ -167,9 +173,15 @@ export function fieldsOf(parsed: ParsedInput): Identification {
   for (const e of parsed.elements) {
     if (e.ai === key && !id.value) id.value = e.value;
     else if (inPath.has(e.ai) && !(e.ai in id.qualifiers)) id.qualifiers[e.ai] = e.value;
-    else id.attributes.push([e.ai, e.value]);
+    else id.attributes.push([e.ai, readable(e.ai, e.value)]);
   }
   return id;
+}
+
+function readable(ai: string, value: string): string {
+  if (!isPercentEncoded(ai)) return value;
+  const decoded = percentDecode(value);
+  return percentEncode(decoded) === value ? decoded : value;
 }
 
 /**
