@@ -1,0 +1,151 @@
+name: Syntax Engine
+
+# Following the GS1 Barcode Syntax Engine's releases (docs/developer-guide.md, "A new Syntax Engine release").
+# Every Monday, and on demand from the Actions tab:
+#   1. the dictionary and the engine's messages are made again from our release's own sources and compared with the
+#      files in the repository (scripts/syntax-engine.mjs --verify), so that the script stays faithful;
+#   2. when npm has a newer gs1encoder, a branch syntax-engine/X.Y.Z gets the new release, the dictionary and the
+#      messages made from its sources, the release named in the documents, and the lockfile; pnpm check runs on it;
+#   3. a draft pull request (or, when the repository does not let Actions open one, an issue) says what changed and
+#      what is left for a person: the new messages to translate, the tests that failed. CI runs on the branch.
+# Nothing reaches main by itself: a new release may change what is accepted, and its messages need five translations.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "A gs1encoder release to move to (default: the newest on npm)"
+        required: false
+
+permissions:
+  contents: write       # the branch syntax-engine/X.Y.Z
+  pull-requests: write  # the draft pull request
+  issues: write         # the issue, when a pull request cannot be opened
+  actions: write        # CI started on the branch (a push by this workflow's token starts no workflow)
+
+concurrency:
+  group: syntax-engine
+  cancel-in-progress: false
+
+jobs:
+  follow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: The dictionary and the messages as our release's sources give them
+        run: node scripts/syntax-engine.mjs --verify
+
+      - name: The newest release on npm
+        id: latest
+        run: node scripts/syntax-engine.mjs --latest
+
+      - name: The release to move to
+        id: target
+        env:
+          ASKED: ${{ inputs.release }}
+          LATEST: ${{ steps.latest.outputs.latest }}
+          BEHIND: ${{ steps.latest.outputs.behind }}
+          CURRENT: ${{ steps.latest.outputs.current }}
+        run: |
+          release="${ASKED:-$LATEST}"
+          if [ -n "$ASKED" ] && [ "$ASKED" != "$CURRENT" ]; then move=true; else move="$BEHIND"; fi
+          branch="syntax-engine/$release"
+          if [ "$move" = true ] && git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "$branch already exists: its pull request or issue is waiting"
+            move=false
+          fi
+          echo "gs1encoder $CURRENT; npm has $LATEST; moving: $move"
+          { echo "release=$release"; echo "branch=$branch"; echo "move=$move"; } >> "$GITHUB_OUTPUT"
+
+      - name: Move to the new release
+        if: steps.target.outputs.move == 'true'
+        run: |
+          node scripts/syntax-engine.mjs --update "${{ steps.target.outputs.release }}" --report "$RUNNER_TEMP/report.txt"
+          pnpm install --no-frozen-lockfile
+
+      # poppler's pdftoppm and Ghostscript, which the tests use to read the PDFs and EPS back (as ci.yml).
+      - if: steps.target.outputs.move == 'true'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils ghostscript
+
+      - name: pnpm check on the new release
+        id: check
+        if: steps.target.outputs.move == 'true'
+        run: |
+          # pnpm check's steps, each run whatever the one before gave, so that the pull request lists every failure.
+          status=0
+          pnpm typecheck > "$RUNNER_TEMP/check.log" 2>&1 || status=1
+          pnpm -r --no-bail test >> "$RUNNER_TEMP/check.log" 2>&1 || status=1
+          pnpm build >> "$RUNNER_TEMP/check.log" 2>&1 || status=1
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          # The failures, for the pull request: Vitest's summary lines and the failed tests' names.
+          { grep -E "FAIL |✗|×|Test Files|Tests |error TS" "$RUNNER_TEMP/check.log" || true; } | head -60 > "$RUNNER_TEMP/failures.txt"
+          tail -40 "$RUNNER_TEMP/check.log"
+          exit 0
+
+      - name: The branch, its pull request, and CI
+        if: steps.target.outputs.move == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ steps.target.outputs.release }}
+          BRANCH: ${{ steps.target.outputs.branch }}
+          CURRENT: ${{ steps.latest.outputs.current }}
+          STATUS: ${{ steps.check.outputs.status }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -q -F - <<EOF
+          core: GS1 Barcode Syntax Engine $RELEASE, its dictionary and messages made from its sources
+
+          Made by .github/workflows/syntax-engine.yml (scripts/syntax-engine.mjs --update $RELEASE): gs1encoder
+          $CURRENT → $RELEASE, gs1_dictionary.json and engine-messages.json made again from the release's sources,
+          and the release named in the documents. Not yet reviewed: see the pull request.
+          EOF
+          git push -u origin "$BRANCH"
+
+          if [ "$STATUS" = 0 ]; then verdict="pnpm check passed on the new release."; else verdict="pnpm check failed on the new release: the failures below are what is left to do."; fi
+          {
+            echo "The weekly workflow found **gs1encoder $RELEASE** on npm (this repository has $CURRENT) and moved this branch to it."
+            echo
+            echo "## What was done"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/report.txt"
+            echo '```'
+            echo
+            echo "## pnpm check"
+            echo
+            echo "$verdict"
+            echo
+            if [ -s "$RUNNER_TEMP/failures.txt" ]; then echo '```'; cat "$RUNNER_TEMP/failures.txt"; echo '```'; echo; fi
+            echo "CI (the Labelary checks and the browser tests) was started on the branch; its result shows on the commit."
+            echo
+            echo "## Left for a person (docs/developer-guide.md, \"A new Syntax Engine release\")"
+            echo
+            echo "- [ ] Read the engine's release notes: https://github.com/gs1/gs1-syntax-engine/releases/tag/$RELEASE"
+            echo "- [ ] Each message added or changed above, translated in \`apps/web/src/locales/*.messages.json\` (\`apps/web/test/i18n.test.ts\` names them)"
+            echo "- [ ] New or changed AIs: their titles in \`packages/core/src/data/data_titles.json\` (the GS1 Logistic Label) and anything the tests above name"
+            echo "- [ ] The comparisons with the resolver (pinned at the release it was ported with, ADR 0004): differences explained in the tests, not hidden"
+            echo "- [ ] CHANGELOG, \`docs/features.md\`, the inventory (\`node scripts/inventory.mjs\`) and the metrics, as for any change"
+            echo "- [ ] Merged into main by a fast-forward once \`pnpm check\` and CI pass"
+            echo
+            echo "The release named on the screen (the data check and About) and in the files made (the zip's README, the PDF's Producer, the EPS's Creator) follows from \`gs1_dictionary.json\` by itself."
+          } > "$RUNNER_TEMP/body.md"
+
+          title="GS1 Barcode Syntax Engine $RELEASE"
+          if ! gh pr create --draft --base main --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"; then
+            echo "No pull request (Settings → Actions → General → 'Allow GitHub Actions to create and approve pull requests' is off): an issue instead."
+            { echo "Branch: https://github.com/${{ github.repository }}/tree/$BRANCH"; echo; cat "$RUNNER_TEMP/body.md"; } > "$RUNNER_TEMP/issue.md"
+            gh issue create --title "$title" --body-file "$RUNNER_TEMP/issue.md"
+          fi
+          gh workflow run ci.yml --ref "$BRANCH"

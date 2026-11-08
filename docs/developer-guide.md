@@ -132,7 +132,7 @@ Each module, in the order of the flow above.
 | `syntax.ts` | The Syntax Engine: `SyntaxEngine.parse`, `dataFor` (what each symbol carries: the GTIN in its length, the element string, the URI), `zeroSuppress` (UPC-E), `encodedCount` (the caption's characters, FNC1 and separators) |
 | `elementString.ts` | Bracketed element strings into AIs and values; `hasPredefinedLength` |
 | `checkDigit.ts` | The GS1 check digit |
-| `dictionary.ts` | The resolver's dictionary file: keys, qualifiers in path order, exclusive qualifier sets, AIs with their formats; `primaryKeys`, `isDigitalLinkKey` |
+| `dictionary.ts` | The resolver's dictionary file: keys, qualifiers in path order, exclusive qualifier sets, AIs with their formats; `primaryKeys`, `isDigitalLinkKey`; `SYNTAX_ENGINE` (the engine's release and its dictionary's date, which the screen and the files made name) |
 | `attributes.ts` | Data attributes as the resolver offered them, decimal families (310n, 392n…) and their conversion; dates with day zero |
 | `identify.ts` | `Identification` → `Identified`: `identify`, `elementStringOf`, `fieldsOf`, `rowsOf`/`splitRows` (one list of qualifiers and attributes), `OTHER_KEYS` (the pairings of 4.13), `parametersProblem`, `withParameters`, `uriParameters` |
 
@@ -256,6 +256,9 @@ A signing key is never kept: the person saves it as a JWK and loads it again.
   the logs), build, then the browser tests against the build on a desktop, a phone and a tablet held horizontally.
 - **`docs.yml`** when only documents change: the documents' test (`packages/core/test/docs.test.ts`).
 - **`pages.yml`** on every push to `main`: builds with `BASE_PATH=/gs1-label-studio/` and publishes to GitHub Pages.
+- **`syntax-engine.yml`** every Monday and on demand: follows the GS1 Barcode Syntax Engine's releases (section 11,
+  *A new Syntax Engine release*). `ci.yml` also runs on demand (`workflow_dispatch`), which is how this workflow
+  starts it on the branch it pushes.
 - After a push that changes code, read the run (`gh run list`, `gh run view --log-failed`, or the check run's
   annotations).
 - Releases (backlog 0.4): `main` holds the stable version and `develop` the work in progress once there is a first
@@ -303,6 +306,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `sign` | the signed payload, JWS, workflows, saved keys, credentials | 8 |
 | `specifications` | every row of tables 1 to 13 against the standard's text | 143 |
 | `syntax` | input through the Syntax Engine, what each symbol carries, characters encoded | 15 |
+| `syntax-engine` | the engine's release, one for the code, the screen and the files; the dictionary and messages made from a release's sources | 11 |
 | `table` | CSV and Excel read without a library | 14 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
@@ -314,7 +318,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 76 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 77 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 
@@ -343,9 +347,24 @@ The core's and the web application's unit tests run with `pnpm test` (Vitest); t
   `labelZip` and `generateBatch`; read the file back in a test through a program that draws it.
 - **A printer language.** Follow ADR 0002: the printer's own commands, each symbol proven by a test that prints it and
   reads it back, refusals with their reason; a profile per language in `printer.ts`.
-- **An AI or a key.** The Syntax Engine and the dictionary file decide; update `gs1encoder` and
-  `src/data/gs1_dictionary.json` together and run the tests of `identify`, `identifiers` and `attributes`; a new data
-  title fails `logistic` until `src/data/data_titles.json` translates it or the test lists it as an acronym.
+- **An AI or a key.** The Syntax Engine and the dictionary file decide; they move together with a new release (next
+  point). Run the tests of `identify`, `identifiers` and `attributes`; a new data title fails `logistic` until
+  `src/data/data_titles.json` translates it or the test lists it as an acronym.
+- **A new Syntax Engine release.** `src/data/gs1_dictionary.json` and `apps/web/test/engine-messages.json` are not
+  written by hand: `scripts/syntax-engine.mjs` makes them from the release's sources (`gs1-syntax-dictionary.txt`,
+  `tr_EN.h`, the linters' codes and texts in `gs1syntaxdictionary.h` and `.c`, fetched with git from
+  github.com/gs1/gs1-syntax-engine at the release's tag), byte for byte as the resolver's tools made them for 1.4.1.
+  `--latest` compares our `gs1encoder` with npm's; `--verify` makes both files again from our release and compares;
+  `--update [X.Y.Z]` moves to a release: `packages/core/package.json`, both files, and the release where the documents
+  name it (the script's `RELEASE_MENTIONS`), printing the engine messages added, changed and removed. Then
+  `pnpm install` and `pnpm check`. The workflow `syntax-engine.yml` does this every Monday: `--verify` (a red run
+  means the script no longer gives what the repository holds), and on a newer release a branch `syntax-engine/X.Y.Z`
+  with the update, the lockfile and `pnpm check`'s result, a draft pull request (or an issue, when *Settings → Actions
+  → General → Allow GitHub Actions to create and approve pull requests* is off) listing what is left, and CI started
+  on the branch. Nothing is merged by itself: the new messages need their translations (`i18n.test.ts` names them),
+  a new data title its place in `data_titles.json`, and the comparisons with the resolver (pinned at 1.4.1, ADR 0004)
+  their differences explained. The release named on the screen and in the files made follows from
+  `gs1_dictionary.json` (`SYNTAX_ENGINE`), and `syntax-engine.test.ts` holds it equal to the `gs1encoder` installed.
 - **A screen.** Mock-ups first (Playwright screenshots of the real application), then the component in `apps/web/src`,
   a browser test in `e2e/editor.spec.ts`, and its screenshots for the user guide.
 - **A text.** In English through `t("…")` (a constant marked `en("…")` or kept in `src/texts.ts`), with its

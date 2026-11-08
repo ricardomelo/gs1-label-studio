@@ -1,6 +1,7 @@
 import { deflate } from "./deflate.ts";
 import type { HriFont } from "./hri.ts";
 import type { LabelOptions, Layout } from "./layout.ts";
+import { SYNTAX_ENGINE_NAME } from "./dictionary.ts";
 import { MM_PER_INCH } from "./dots.ts";
 import { pyFixed } from "./pyformat.ts";
 
@@ -8,6 +9,9 @@ import { pyFixed } from "./pyformat.ts";
 // the label, the modules and bars as filled rectangles, the human readable text as glyph outlines (no font to embed,
 // nothing to substitute where it is printed). The content stream is the resolver's, operator for operator, except the
 // colours: process black alone (100 % K) on white, in DeviceCMYK, as prepress asks (the resolver wrote DeviceGray).
+
+/** The document's Producer, which a PDF reader shows among its properties: the tool, and the engine that checked the data. */
+export const PRODUCER = `GS1 Label Studio, data checked by the ${SYNTAX_ENGINE_NAME}`;
 
 export const CMYK_WHITE = "0 0 0 0 k";
 export const CMYK_BLACK = "0 0 0 1 k";
@@ -90,7 +94,7 @@ export async function pdfDocument(pages: readonly PdfPage[], title: string): Pro
       [ascii(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, ascii("\nendstream")],
     );
   }
-  objects.push([latin1(`<< /Title ${pdfText(title)} /Producer (GS1 Label Studio) >>`)]);
+  objects.push([latin1(`<< /Title ${pdfText(title)} /Producer (${PRODUCER}) >>`)]);
   const parts: Uint8Array[] = [Uint8Array.from([...ascii("%PDF-1.4\n%"), 0xe2, 0xe3, 0xcf, 0xd3, 0x0a])];
   let length = parts[0]!.length;
   const push = (bytes: Uint8Array) => {

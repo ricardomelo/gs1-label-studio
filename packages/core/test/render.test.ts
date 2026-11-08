@@ -16,6 +16,7 @@ import {
   pdfContent,
   PNG_PIXELS_PER_MODULE,
   pngDpi,
+  SYNTAX_ENGINE,
   type LabelOptions,
 } from "../src/index.ts";
 import { hriFont } from "./font.ts";
@@ -97,7 +98,8 @@ describe.each(renders.renders.map((r, i) => [i, JSON.stringify(r.options), r] as
     expect(pdfStream(pdf)).toBe(content);
     checkXref(pdf);
     const info = /5 0 obj\n(.*?)\nendobj/s.exec(Buffer.from(pdf).toString("latin1"))![1];
-    expect(info).toBe(r.pdf.info.replace("(GS1 Resolver CE portal)", "(GS1 Label Studio)"));
+    // The Producer names the tool and the engine release that checked the data, where the resolver named itself.
+    expect(info).toBe(r.pdf.info.replace("(GS1 Resolver CE portal)", `(GS1 Label Studio, data checked by the GS1 Barcode Syntax Engine ${SYNTAX_ENGINE.release})`));
     expect(await read(drawPdf(pdf, 600))).toEqual(expected(options));
   }, SLOW);
 
@@ -160,7 +162,9 @@ describe.each(renders.renders.map((r, i) => [i, JSON.stringify(r.options), r] as
     expect(files.get("label.pdf")).toEqual(await labelPdf(options, layout, font));
     const readme = new TextDecoder().decode(files.get("README.txt"));
     expect(readme).toBe(r.readme.replace("Data Matrix with a GS1 Digital Link URI:", "Data Matrix (GS1 Digital Link):")
-      .replace("SVG and PDF are vector", "SVG, PDF and EPS are vector"));
+      .replace("SVG and PDF are vector", "SVG, PDF and EPS are vector") +
+      // Beyond the resolver: the engine release that checked the data.
+      `Data checked by the GS1 Barcode Syntax Engine ${SYNTAX_ENGINE.release} (dictionary ${SYNTAX_ENGINE.dictionary}).\r\n`);
     expect(readme).toBe(labelReadme(options, layout));
   }, SLOW);
 });

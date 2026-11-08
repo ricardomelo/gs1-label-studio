@@ -57,6 +57,7 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
 .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
 .hint.ok, .status.ok { color: var(--ok); }
+.status a.engine-release { color: inherit; }
 .hint.error, .status.error, .error { color: var(--error); }
 .error.small { font-size: 13px; }
 .status { font-size: 13px; margin-top: 12px; }

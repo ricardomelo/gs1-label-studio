@@ -150,6 +150,8 @@ export {
   primaryKeys,
   qualifiersOf,
   shownQualifiers,
+  SYNTAX_ENGINE,
+  SYNTAX_ENGINE_NAME,
   type AiEntry,
   type Attribute,
   type Component,

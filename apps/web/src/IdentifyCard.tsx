@@ -19,6 +19,7 @@ import {
   resolveDecimal,
   rowsOf,
   splitRows,
+  SYNTAX_ENGINE,
   type Identification,
 } from "@gs1-label-studio/core";
 import { AiCombo } from "./AiCombo.tsx";
@@ -337,9 +338,35 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
             )}
           </>
         ) : status.count ? (
-          status.count === 1 ? t("✓ Checked by the GS1 Barcode Syntax Engine: 1 element string.") : t("✓ Checked by the GS1 Barcode Syntax Engine: {n} element strings.", { n: status.count })
+          <EngineNamed
+            text={status.count === 1 ? t("✓ Checked by the GS1 Barcode Syntax Engine: 1 element string.") : t("✓ Checked by the GS1 Barcode Syntax Engine: {n} element strings.", { n: status.count })}
+          />
         ) : null}
       </div>
     </section>
+  );
+}
+
+const ENGINE = "GS1 Barcode Syntax Engine";
+
+/**
+ * The check's line with the engine named by its release, a link to that release's notes, so that what checked the data
+ * can be told (SYNTAX_ENGINE). The engine's name is the same in every language; a translation without it gets the
+ * release after its text.
+ */
+function EngineNamed({ text }: { text: string }) {
+  const link = (
+    <a href={`https://github.com/gs1/gs1-syntax-engine/releases/tag/${SYNTAX_ENGINE.release}`} className="engine-release">
+      {ENGINE} {SYNTAX_ENGINE.release}
+    </a>
+  );
+  const at = text.indexOf(ENGINE);
+  if (at < 0) return <>{text} ({link})</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      {link}
+      {text.slice(at + ENGINE.length)}
+    </>
   );
 }

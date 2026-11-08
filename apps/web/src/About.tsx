@@ -1,3 +1,4 @@
+import { SYNTAX_ENGINE } from "@gs1-label-studio/core";
 import { en, t } from "./i18n.ts";
 
 // About the studio, at the foot of the page (the owner, 31 October 2026): its repository, its licence, the version
@@ -7,9 +8,10 @@ import { en, t } from "./i18n.ts";
 export const REPOSITORY = "https://github.com/ricardomelo/gs1-label-studio";
 
 /** The software the application contains, as docs/third-party.md lists it ("In the application"). */
-export const MADE_WITH: readonly { name: string; url: string; licence: string; use: string }[] = [
+export const MADE_WITH: readonly { name: string; url: string; licence: string; use: string; release?: string }[] = [
   { name: "bwip-js", url: "https://github.com/metafloor/bwip-js", licence: "MIT", use: en("encodes every symbol") },
-  { name: "GS1 Barcode Syntax Engine", url: "https://github.com/gs1/gs1-syntax-engine", licence: "Apache 2.0, © GS1 AISBL", use: en("checks element strings and GS1 Digital Link URIs") },
+  // Its release, the one that checks the data (SYNTAX_ENGINE; the weekly workflow syntax-engine.yml follows new ones).
+  { name: "GS1 Barcode Syntax Engine", url: "https://github.com/gs1/gs1-syntax-engine", licence: "Apache 2.0, © GS1 AISBL", use: en("checks element strings and GS1 Digital Link URIs"), release: SYNTAX_ENGINE.release },
   { name: "node-qrcode", url: "https://github.com/soldair/node-qrcode", licence: "MIT", use: en("a QR code in one encoding mode") },
   { name: "dijkstrajs", url: "https://github.com/tcort/dijkstrajs", licence: "MIT", use: en("used by node-qrcode") },
   { name: "opentype.js", url: "https://github.com/opentypejs/opentype.js", licence: "MIT", use: en("the human readable text as outlines") },
@@ -51,7 +53,11 @@ export function About() {
       <ul className="made-with">
         {MADE_WITH.map((m) => (
           <li key={m.name}>
-            <a href={m.url}>{m.name}</a> <span className="opt">— {t(m.use)} · {m.licence}</span>
+            <a href={m.url}>{m.release ? `${m.name} ${m.release}` : m.name}</a>{" "}
+            <span className="opt">
+              — {t(m.use)}
+              {m.release && <> · {t("GS1 Barcode Syntax Dictionary of {date}", { date: SYNTAX_ENGINE.dictionary })}</>} · {m.licence}
+            </span>
           </li>
         ))}
       </ul>

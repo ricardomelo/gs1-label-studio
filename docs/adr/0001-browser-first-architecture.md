@@ -34,7 +34,11 @@ send them to as many printers as possible. Managing links is out of scope.
    parsing and validating input — bracketed element strings, unbracketed with GS separators as a scanner sends them,
    GS1 Digital Link URIs — and for the messages explaining what is wrong. It is the gate: the data a symbol carries is
    derived from what the engine accepted (`packages/core/src/syntax.ts`), and bwip-js only draws. A value holding "("
-   is refused for now: the engine escapes it as "\(", which bwip-js's bracketed input cannot take.
+   is refused for now: the engine escapes it as "\(", which bwip-js's bracketed input cannot take. Its releases are
+   followed (the owner, 8 November 2026): the dictionary and the engine's messages are made from each release's
+   sources by `scripts/syntax-engine.mjs`, a weekly workflow (`syntax-engine.yml`) proposes a new release as a draft
+   pull request that a person completes and merges, and the release that checked the data is named on the screen and
+   in the files made (`SYNTAX_ENGINE`).
 5. **Tests**: Vitest; every symbol is read back by an independent decoder (ZXing, `zxing-wasm`), comparing the
    symbology identifier and the data, as the resolver's tests did with zxing-cpp. Playwright for the browser. Mutation
    checks prove that a new check can fail.

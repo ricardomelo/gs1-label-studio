@@ -10,6 +10,7 @@ import {
   labelEps,
   labelPng,
   labelReadme,
+  SYNTAX_ENGINE,
   labelSvg,
   layoutLabel,
   pdfContent,
@@ -81,6 +82,8 @@ describe("EPS: the PDF's drawing in PostScript", () => {
     expect(lines).toContain(`%%BoundingBox: 0 0 ${Math.ceil(width)} ${Math.ceil(height)}`);
     expect(lines).toContain(`%%HiResBoundingBox: 0 0 ${width.toFixed(3)} ${height.toFixed(3)}`);
     expect(lines).toContain("%%DocumentProcessColors: Black");
+    // The tool, and the engine release that checked the data.
+    expect(lines).toContain(`%%Creator: GS1 Label Studio, data checked by the GS1 Barcode Syntax Engine ${SYNTAX_ENGINE.release}`);
     // Every rectangle and outline of the PDF, in the same order.
     expect(lines.filter((l) => / (re|m|l|c)$/.test(l))).toEqual(
       pdfContent(layout, font).content.split("\n").filter((l) => / (re|m|l|c)$/.test(l)));

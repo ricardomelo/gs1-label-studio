@@ -71,7 +71,9 @@ English.
 On a computer the page takes the screen's whole width, as above. At its foot, **About GS1 Label Studio**: the
 repository on GitHub, the licence (Apache 2.0), links to this guide and the printing guide, the version published (the
 commit it was built from, with its date — the way to tell whether the page shows the latest work), and the software it
-is made with, each linked to its repository.
+is made with, each linked to its repository; the GS1 Barcode Syntax Engine with the release that checks the data and the
+date of its GS1 Barcode Syntax Dictionary (*GS1 Barcode Syntax Engine 1.4.1 — … · GS1 Barcode Syntax Dictionary of
+2026-01-27*).
 
 ### On a phone
 
@@ -185,7 +187,9 @@ Syntax Engine with its reason.
 encoded. A name of digits only is an AI and is refused, as are a missing name and a name given twice. Element strings
 have no place for them, so they appear only in URI symbols.
 
-At the bottom of the step: *✓ Checked by the GS1 Barcode Syntax Engine: 5 element strings*, or the engine's message.
+At the bottom of the step: *✓ Checked by the GS1 Barcode Syntax Engine 1.4.1: 5 element strings*, or the engine's
+message. The engine's name, with the release that checked the data, links to that release's notes on GitHub; the files
+made name it too (section 8).
 
 ## 4. Step 2 — where it is scanned
 
@@ -412,6 +416,10 @@ with the page.
 | Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it |
 | ZPL (203 dpi) | The label in ZPL II with the printer's own commands, for the printer profile chosen (section 10) |
 | ZPL template | The same ZPL with `{{01}}`, `{{10}}`… or `{{URI}}` where the values go, each described in a comment at the top |
+
+The release of the GS1 Barcode Syntax Engine that checked the data is written where a file has a place for it that is
+never printed: the zip's README (*Data checked by the GS1 Barcode Syntax Engine 1.4.1 (dictionary 2026-01-27).*), the
+PDF's *Producer* (a PDF reader shows it among the document's properties) and the EPS's `%%Creator` comment.
 
 Files are named after the symbol, the key and its qualifiers: `gs1-128_00_106141411234567897.zpl`. What ZPL cannot print
 correctly is refused with the reason, never printed wrong (section 16). How to use each file: the

@@ -230,6 +230,11 @@ complete.
 - 0.5 Documentation by reader, as in the resolver's project (the owner, 31 October 2026): user and printing guides,
   features each naming the tests that prove it, an inventory drawn from the tests, the core's API reference, a
   developer guide, conformance and licences, kept in step by a test (ADR 0005) — *done 31 October*
+- 0.6 Following the GS1 Barcode Syntax Engine's releases, and naming the release that checked the data (the owner,
+  8 November 2026): a weekly workflow finds a new `gs1encoder`, makes the dictionary and the engine's messages again
+  from its sources, runs `pnpm check` and opens a draft pull request with what is left (translations, the resolver's
+  comparisons); the release on the screen (the data check, About) and in the files made (the zip's README, the PDF's
+  Producer, the EPS's Creator) — *done 8 November*
 
 **Phase 1 — one code, right by construction** (ported from the resolver's label studio where it had it: ADR 0004)
 

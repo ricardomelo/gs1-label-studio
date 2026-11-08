@@ -75,6 +75,28 @@ test("pasted scanner output fills the fields and day 00 is explained", async ({ 
   await expect(page.locator(".status")).toContainText("day 00");
 });
 
+// The engine named by its release where it checks the data and in About (mock-up A of two, 8 November 2026), so that a
+// symbol can be traced to the rules it was checked by; the release is the one the dictionary was made from.
+test("the data check and About name the GS1 Barcode Syntax Engine's release, linked to its notes", async ({ page }) => {
+  const { release, dictionary } = JSON.parse(readFileSync(new URL("../../../packages/core/src/data/gs1_dictionary.json", import.meta.url), "utf8")) as { release: string; dictionary: string };
+  await page.fill("#paste", "(01)09506000134352(10)ABC123(17)271231");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  const status = page.locator(".status.ok");
+  await expect(status).toHaveText(`✓ Checked by the GS1 Barcode Syntax Engine ${release}: 3 element strings.`);
+  const link = status.getByRole("link", { name: `GS1 Barcode Syntax Engine ${release}` });
+  await expect(link).toHaveAttribute("href", `https://github.com/gs1/gs1-syntax-engine/releases/tag/${release}`);
+  await on(page, "more");
+  const engine = page.locator("footer.about li", { has: page.getByRole("link", { name: `GS1 Barcode Syntax Engine ${release}` }) });
+  await expect(engine).toContainText(`checks element strings and GS1 Digital Link URIs · GS1 Barcode Syntax Dictionary of ${dictionary} · Apache 2.0`);
+  await expect(engine.getByRole("link")).toHaveAttribute("href", "https://github.com/gs1/gs1-syntax-engine");
+  // In German, the release still in its place
+  await page.selectOption("#language", "de");
+  await expect(engine).toContainText(`GS1 Barcode Syntax Dictionary vom ${dictionary}`);
+  await on(page, "data");
+  await expect(status).toHaveText(`✓ Von der GS1 Barcode Syntax Engine ${release} geprüft: 3 Element-Strings.`);
+  await expect(status.getByRole("link")).toHaveText(`GS1 Barcode Syntax Engine ${release}`);
+});
+
 test("an SSCC gets the logistic tables and no linear barcode", async ({ page }) => {
   await page.fill("#paste", "https://id.gs1.org/00/106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();

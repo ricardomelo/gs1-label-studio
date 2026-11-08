@@ -1,6 +1,6 @@
 import type { HriFont } from "./hri.ts";
 import type { LabelOptions, Layout } from "./layout.ts";
-import { pdfContent } from "./pdf.ts";
+import { pdfContent, PRODUCER } from "./pdf.ts";
 
 // The label as EPS for prepress (backlog 1.5): the PDF's content stream itself, its operators defined in PostScript by
 // a short prolog, so that the EPS draws exactly what the PDF draws: the bars and modules, the text as outlines, process
@@ -44,7 +44,7 @@ export function labelEps(options: LabelOptions, layout: Layout, font: HriFont): 
     `%%BoundingBox: 0 0 ${Math.ceil(width)} ${Math.ceil(height)}`,
     `%%HiResBoundingBox: 0 0 ${width.toFixed(3)} ${height.toFixed(3)}`,
     `%%Title: ${comment(options.data)}`,
-    "%%Creator: GS1 Label Studio",
+    `%%Creator: ${PRODUCER}`,
     "%%LanguageLevel: 2",
     "%%DocumentProcessColors: Black",
     "%%EndComments",

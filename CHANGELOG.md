@@ -304,4 +304,11 @@
   … DEZ) or Italian (GEN, FEB … DIC); headers such as *Numéro de lot*, *Chargennummer*, *MHD*, *Scadenza* or
   *Quantità* guessed in bulk, and a harvest period with *au*, *à* or *bis* between its dates. A data title the second
   language writes as English does is no longer repeated under it. Drafts, to be reviewed by native speakers.
+- The GS1 Barcode Syntax Engine's releases followed (backlog 0.6, 8 November, the owner's request): the dictionary and
+  the engine's messages are made from a release's sources by `scripts/syntax-engine.mjs` (byte for byte what the
+  repository held for 1.4.1); every Monday the workflow *Syntax Engine* checks npm for a newer `gs1encoder` and, when
+  there is one, pushes a branch with the update and `pnpm check`'s result, opens a draft pull request listing the
+  engine messages to translate and what else is left, and starts CI on it. The release that checked the data is named
+  on the screen (*✓ Checked by the GS1 Barcode Syntax Engine 1.4.1*, linked to its notes; About, with the dictionary's
+  date) and in the files made: the zip's README, the PDF's Producer and the EPS's Creator.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

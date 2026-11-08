@@ -4087,6 +4087,58 @@
    "area": "Input and identification: the Syntax Engine, keys, qualifiers, attributes"
   },
   {
+   "program": "syntax-engine",
+   "file": "packages/core/test/syntax-engine.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the Syntax Engine's release, one for the code, the screen and the files › is the gs1encoder installed and pinned, and the release the dictionary and the messages were made from",
+     "status": "passed"
+    },
+    {
+     "name": "the Syntax Engine's release, one for the code, the screen and the files › is named, by the words the update moves, in every document that names it",
+     "status": "passed"
+    },
+    {
+     "name": "a newer release on npm (scripts/syntax-engine.mjs --latest) › compares releases part by part, as numbers",
+     "status": "passed"
+    },
+    {
+     "name": "the dictionary from the GS1 Barcode Syntax Dictionary's text (scripts/syntax-engine.mjs) › gives each AI the entry gs1_dictionary.json holds, ranges one AI each, in the dictionary's order",
+     "status": "passed"
+    },
+    {
+     "name": "the dictionary from the GS1 Barcode Syntax Dictionary's text (scripts/syntax-engine.mjs) › refuses what it does not know rather than leave it out",
+     "status": "passed"
+    },
+    {
+     "name": "the dictionary from the GS1 Barcode Syntax Dictionary's text (scripts/syntax-engine.mjs) › writes the file byte for byte as the resolver's tool did",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages from tr_EN.h and the linters (scripts/syntax-engine.mjs) › turns each printf conversion into {p1}, {p2}… and C escapes into their characters",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages from tr_EN.h and the linters (scripts/syntax-engine.mjs) › pairs the linters' codes with their texts, leaving out OK and the unused codes",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages from tr_EN.h and the linters (scripts/syntax-engine.mjs) › writes the catalogue byte for byte as it is",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages from tr_EN.h and the linters (scripts/syntax-engine.mjs) › lists the messages a release adds, changes and removes, for the translations",
+     "status": "passed"
+    },
+    {
+     "name": "the documents' release moved with the engine (scripts/syntax-engine.mjs) › moves the engine's release and nothing else that reads the same",
+     "status": "passed"
+    }
+   ],
+   "area": "Input and identification: the Syntax Engine, keys, qualifiers, attributes"
+  },
+  {
    "program": "table",
    "file": "packages/core/test/table.test.ts",
    "kind": "unit",
@@ -4271,6 +4323,15 @@
     },
     {
      "name": "pasted scanner output fills the fields and day 00 is explained",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the data check and About name the GS1 Barcode Syntax Engine's release, linked to its notes",
      "status": "listed",
      "projects": [
       "desktop",

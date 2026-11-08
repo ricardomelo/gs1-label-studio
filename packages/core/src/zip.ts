@@ -4,6 +4,7 @@ import type { HriFont } from "./hri.ts";
 import { labelEps } from "./eps.ts";
 import { labelSvg, QUIET_ZONE, reductionNote, specDescription, type LabelOptions, type Layout } from "./layout.ts";
 import { BAR_HEIGHT, LINEAR_NAMES, type LinearKind } from "./linear.ts";
+import { SYNTAX_ENGINE, SYNTAX_ENGINE_NAME } from "./dictionary.ts";
 import { labelPdf } from "./pdf.ts";
 import { labelPng } from "./png.ts";
 import { pyFixed } from "./pyformat.ts";
@@ -57,6 +58,7 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
     `Label size: ${pyFixed(layout.width * layout.xMm, 1)} x ${pyFixed(layout.height * layout.xMm, 1)} mm; print at 100 % ` +
       "(no scaling) to keep these dimensions.",
     "Files: SVG, PDF and EPS are vector (for artwork); PNG is for screens and documents (its DPI gives the size).",
+    `Data checked by the ${SYNTAX_ENGINE_NAME} (dictionary ${SYNTAX_ENGINE.dictionary}).`,
   );
   return lines.join("\r\n") + "\r\n";
 }

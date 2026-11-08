@@ -127,7 +127,8 @@ test("About: the repository, the licence, the version and the software it is mad
   await expect(about.getByRole("link", { name: "user guide" })).toHaveAttribute("href", /docs\/user-guide\.md$/);
   await expect(about.locator("a.mono")).toHaveAttribute("href", /\/commit\/[0-9a-f]{7,}$/);
   const made = about.locator(".made-with a");
-  await expect(made).toHaveText(["bwip-js", "GS1 Barcode Syntax Engine", "node-qrcode", "dijkstrajs", "opentype.js", "zxing-wasm", "zxing-cpp", "React", "Liberation Sans"]);
+  // The engine with the release that checks the data (backlog 0.6)
+  await expect(made).toHaveText(["bwip-js", /^GS1 Barcode Syntax Engine \d+\.\d+\.\d+$/, "node-qrcode", "dijkstrajs", "opentype.js", "zxing-wasm", "zxing-cpp", "React", "Liberation Sans"]);
   for (const href of await made.evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href))) expect(href).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/);
   await expect(about).toContainText("not maintained by GS1");
 });

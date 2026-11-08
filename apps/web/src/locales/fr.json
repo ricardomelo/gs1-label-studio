@@ -554,6 +554,7 @@
  "a QR code in one encoding mode": "un QR code dans un seul mode d’encodage",
  "all documents": "tous les documents",
  "checks element strings and GS1 Digital Link URIs": "vérifie les chaînes d’éléments et les URI GS1 Digital Link",
+ "GS1 Barcode Syntax Dictionary of {date}": "GS1 Barcode Syntax Dictionary du {date}",
  "encodes every symbol": "encode tous les symboles",
  "free and open source, for any use": "libre et open source, pour tout usage",
  "printing guide": "guide d’impression",
