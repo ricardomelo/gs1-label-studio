@@ -9,7 +9,8 @@ Releases read: GS1 General Specifications release 26.0 (2026); GS1 Barcode Synta
 GS1 Digital Link URI syntax as the engine implements it; EPC Tag Data Standard 2.3 (October 2025) and Tag Data
 Translation 2.3 (February 2025); GS1 Digital Signatures Technical Implementation Guideline 1.1.0 (January 2026); GS1
 Verifiable Credentials data model 1.2.1; NFC Forum URI Record Type Definition; Zebra's ZPL II Programming Guide
-P1134473-11EN Rev A.
+P1134473-11EN Rev A; TSC's TSPL/TSPL2 Programming Manual 3.0; Zebra's EPL Programming Guide 14245L-003; Datamax's
+Class Series 2 Programmer's Manual 88-2341-01 (DPL).
 
 ## Contents
 
@@ -19,7 +20,7 @@ P1134473-11EN Rev A.
 4. [EPC Tag Data Standard and NFC](#4-epc-tag-data-standard-and-nfc)
 5. [GS1 Digital Signatures and Verifiable Credentials](#5-gs1-digital-signatures-and-verifiable-credentials)
 6. [ZPL II](#6-zpl-ii)
-    1. [TSPL/TSPL2 and EPL2](#6a-tspltspl2-and-epl2)
+    1. [TSPL/TSPL2, EPL2 and DPL](#6a-tspltspl2-epl2-and-dpl)
 7. [Deliberate differences and open points](#7-deliberate-differences-and-open-points)
 
 ## 1. GS1 General Specifications
@@ -111,7 +112,7 @@ Findings no manual showed, from Labelary: mode D joins element strings without F
 Code); the Data Matrix escape character changed between firmware versions; `^BQ`'s manual mode was not honoured; `^BQ` prints the QR code as far below `^FO` as the bar height `^BY` last set (10 dots by default), so it is given a
 one-dot `^BY` and `^FO` a dot higher.
 
-## 6a. TSPL/TSPL2 and EPL2
+## 6a. TSPL/TSPL2, EPL2 and DPL
 
 The printer's own commands from TSC's *TSPL/TSPL2 Programming Manual* 3.0, Zebra's *EPL Programming Guide*
 14245L-003 and Datamax's *Class Series 2 Programmer's Manual* 88-2341-01 (DPL), each rendered by Labelize (an open-source emulator, not the printers' firmware) and read back by ZXing in

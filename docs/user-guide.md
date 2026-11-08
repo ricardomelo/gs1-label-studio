@@ -42,8 +42,11 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
   symbol is read back by an independent decoder in the tests. GS1 DotCode is named but not drawn (no decoder is
   available to check it), and GS1 QR Code is not offered (beside the QR code with a GS1 Digital Link URI it confuses;
   [ADR 0003](adr/0003-product-scope-and-ux.md)).
-- **Files for artwork and for printers.** SVG, PNG, PDF and EPS at real size, a zip of all, and ZPL II with the
-  printer's own commands (also as a template with placeholders). The GS1 Logistic Label for an SSCC.
+- **Files for artwork and for printers.** SVG, PNG, PDF and EPS at real size, a zip of all, and ZPL II, TSPL, EPL2
+  and DPL with the printer's own commands (ZPL also as a template with placeholders).
+- **Labels.** The GS1 Logistic Label for an SSCC, and a label of your own: barcodes, text with fields from the data,
+  lines, boxes and images placed, turned and resized (section 5). The work is saved as a file and opened again
+  (section 8), and the last one is offered again on your next visit.
 - **In bulk.** Rows from CSV, Excel or a paste; each row checked, fixed or skipped; serial numbers and SSCCs made for
   you; a file a row, one PDF, laser label sheets, one ZPL file and a CSV of what was made.
 - **RFID, NFC and signatures.** The EPC of the key for RFID and NFC tags, an NFC tag written from a phone, and a GS1

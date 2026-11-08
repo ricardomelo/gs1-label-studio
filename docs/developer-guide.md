@@ -54,7 +54,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | Path | What |
 |---|---|
 | `packages/core/src/` | The core's modules (section 5); `index.ts` exports its API |
-| `packages/core/src/data/` | `gs1_dictionary.json` (the GS1 Barcode Syntax Dictionary as the resolver read it, release 1.4.1) `epc_schemes.json` (the EPC schemes derived from GS1's Tag Data Translation artefacts) and `data_titles.json` (the data titles in Portuguese and Spanish for the GS1 Logistic Label, keyed by the English title, an AI in brackets where one title has two meanings; drafts by Claude) |
+| `packages/core/src/data/` | `gs1_dictionary.json` (the GS1 Barcode Syntax Dictionary as the resolver read it, release 1.4.1) `epc_schemes.json` (the EPC schemes derived from GS1's Tag Data Translation artefacts) and `data_titles.json` (the data titles in Portuguese, Spanish, French, German and Italian for the GS1 Logistic Label, keyed by the English title, an AI in brackets where one title has two meanings; drafts by Claude) |
 | `packages/core/assets/fonts/` | Liberation Sans (SIL Open Font License), for the human readable text as outlines |
 | `packages/core/test/` | Vitest tests (`*.test.ts`), helpers (`files.ts`, `font.ts`, `png.ts`, `resolver.ts`) and fixtures |
 | `packages/core/test/fixtures/resolver/` | The resolver's own answers, written by `scripts/resolver-reference/golden.py` |
@@ -69,8 +69,9 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `scripts/metrics.mjs` | Development indicators |
 | `scripts/inventory.mjs` | The inventory of tests (`docs/test-inventory.*`) |
 | `scripts/api-reference.mjs` | The core's API reference (`docs/core-api.md`) |
+| `scripts/syntax-engine.mjs` | The dictionary and the engine's messages made from a GS1 Barcode Syntax Engine release (section 11) |
 | `scripts/resolver-reference/golden.py` | Runs the resolver's Python and writes its answers as fixtures |
-| `.github/workflows/` | `ci.yml` (checks), `pages.yml` (publication), `docs.yml` (the documents' test) |
+| `.github/workflows/` | `ci.yml` (checks), `pages.yml` (publication), `docs.yml` (the documents' test), `syntax-engine.yml` (a new Syntax Engine release, section 8) |
 
 ## 3. Getting started
 

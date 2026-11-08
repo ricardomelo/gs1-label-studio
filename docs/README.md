@@ -11,14 +11,14 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 
 | Document | What it holds |
 |---|---|
-| [User guide](user-guide.md) | every task, step by step, with screenshots: pasting data, the key, qualifiers, attributes and parameters, several keys, where the code is scanned and the symbol recommended, the label and its options, real size and the scan test, exports, the GS1 Logistic Label, printer profiles, RFID and NFC, digital signatures, in bulk (rows, the report, sequences, generating), messages and what to do, a glossary |
+| [User guide](user-guide.md) | every task, step by step, with screenshots: the screen on a computer, a tablet and a phone, and its six languages; pasting data, the key, qualifiers, attributes and parameters, several keys, where the code is scanned and the symbol recommended, the label and its options, a label of one's own (barcodes, text with fields, lines, boxes and images placed, turned and resized, a grid and rulers), real size and the scan test, exports, saving the work and opening it again, the GS1 Logistic Label, printer profiles and languages, RFID and NFC, digital signatures, in bulk (rows, the report, sequences, generating), messages and what to do, a glossary |
 | [Features](features.md) | every feature, what it does, the commit that brought it and the tests that prove it |
 
 ## People who print
 
 | Document | What it holds |
 |---|---|
-| [Printing guide](printing-guide.md) | which file for which printing; artwork and prepress (no scaling, process black, bar width reduction); laser printers and label sheets; thermal printers and ZPL (dots, profiles, test print, sending the file); ZPL templates for systems; checking a printed symbol; what ZPL refuses and why |
+| [Printing guide](printing-guide.md) | which file for which printing; artwork and prepress (no scaling, process black, bar width reduction); laser printers and label sheets; thermal printers and ZPL (dots, profiles, test print, sending the file); ZPL templates for systems; checking a printed symbol; what ZPL refuses and why; TSPL, EPL2 and DPL, and the printer languages still to come |
 
 ## Integrators
 
@@ -33,7 +33,7 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 |---|---|
 | [Developer guide](developer-guide.md) | architecture, repository layout, how a label is made, every module of the core and file of the application, what the browser keeps, CI and publication, the tests with their counts, how to extend, conventions |
 | [Inventory of features](test-inventory.md) | every test of the core and of the browser, grouped by area |
-| [Conformance](conformance.md) | each standard section by section — GS1 General Specifications, the Syntax Engine and GS1 Digital Link, the ISO/IEC symbologies, EPC and NFC, digital signatures, ZPL — with what is done, what is not, and the evidence |
+| [Conformance](conformance.md) | each standard section by section — GS1 General Specifications, the Syntax Engine and GS1 Digital Link, the ISO/IEC symbologies, EPC and NFC, digital signatures, ZPL, TSPL, EPL2 and DPL — with what is done, what is not, and the evidence |
 | [Third-party software, data and licences](third-party.md) | what the studio is made of besides its own code, each licence, and why nothing restricts commercial use |
 | [History](history.md) | how the project grew, session by session, with the decisions on the way |
 | [Changelog](../CHANGELOG.md) | every change |

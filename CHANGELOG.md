@@ -328,4 +328,8 @@
   is percent-encoded ((4300)–(4320), (7253)–(7259)) used to be refused for its first space or accent unless typed as
   %XX by hand; it is now typed as people write it and goes in the code as %XX, as in bulk, the row's hint showing the
   code's form; a pasted name is shown as people read it.
+- Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
+  for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
+  commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,
+  conformance's DPL heading and manuals, and the developer guide's layout.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
