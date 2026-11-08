@@ -5,7 +5,7 @@
 ![GS1 General Specifications 26.0](https://img.shields.io/badge/GS1%20General%20Specifications-26.0-002c6c)
 ![GS1 Barcode Syntax Engine 1.4.1](https://img.shields.io/badge/GS1%20Barcode%20Syntax%20Engine-1.4.1-002c6c)
 ![Every symbol read back by ZXing](https://img.shields.io/badge/every%20symbol-read%20back%20by%20ZXing-2e7d32)
-![Languages: 3](https://img.shields.io/badge/languages-3-f26334)
+![Languages: 6](https://img.shields.io/badge/languages-6-f26334)
 ![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue)
 
 **GS1 barcodes and labels, right by construction, made in your browser.** Say what the code identifies and where it
@@ -36,10 +36,13 @@ source.
   wrong.
 - **Proved, not assumed.** Every symbol an export makes is read back by an independent decoder (ZXing) in the tests —
   its symbology identifier and its data —; PDFs are drawn by poppler, EPS by Ghostscript, ZPL printed by Labelary.
-  More than 700 automated tests, each feature naming the tests that prove it ([features](docs/features.md)).
-- **For artwork and for printers.** SVG, PNG, PDF and EPS at real size, process black, bar width reduction; ZPL II
-  with the printer's own barcode commands (not pictures), templates with placeholders for systems, printer profiles in
-  whole dots.
+  More than 1,100 automated tests, each feature naming the tests that prove it ([features](docs/features.md)).
+- **For artwork and for printers.** SVG, PNG, PDF and EPS at real size, process black, bar width reduction; ZPL II,
+  TSPL, EPL2 and DPL with the printer's own barcode commands (not pictures), templates with placeholders for systems,
+  printer profiles in whole dots.
+- **A label of your own.** Barcodes, text with fields from the data, lines, boxes and images placed freely, turned and
+  resized, with a grid and rulers; or the GS1 Logistic Label laid out as section 6.6 asks. The work is saved as a file
+  and opened again, and the last one is kept in the browser.
 - **Thousands at once.** Rows from Excel, CSV or a paste, each checked, fixed in place or skipped; serial numbers and
   SSCCs made for you; a file a row, one PDF, laser label sheets, one ZPL file and a CSV of what was made.
 - **Beyond the barcode.** The GS1 Logistic Label, the EPC for RFID and NFC tags, NFC tags written from a phone, GS1
@@ -47,9 +50,11 @@ source.
 - **Private, offline, anywhere.** Everything runs in the page: no server, no account, no upload. After the first visit
   it works without a connection, and installs as an application.
 
-> **Status:** early development, published at <https://ricardomelo.github.io/gs1-label-studio/> (31 October 2026); the
-> [backlog](#backlog) says what is done and what comes next. Phase 3 (more printer languages) and phase 4 (a label
-> designer) are on the way.
+> **Status (8 November 2026):** in development before its first release, published at
+> <https://ricardomelo.github.io/gs1-label-studio/> since 31 October 2026. One code (phase 1), in bulk (phase 2) and
+> the labels (phase 4: the GS1 Logistic Label, the designer, the saved work) are done; of the printers (phase 3), ZPL,
+> TSPL, EPL2 and DPL are done, PPLB and PPLA wait for their manuals, and direct printing and tests on physical printers
+> are still to come. The [backlog](#backlog) says what is done and what comes next.
 
 > **Community software.** GS1 Label Studio is maintained by its community, not by GS1 or any GS1 Member Organisation;
 > GS1 is a registered trademark of GS1 AISBL. It is provided "as is", without warranties or conditions of any kind
@@ -113,7 +118,24 @@ each at its table's sizes and bar height, its human readable text placed and siz
 → [User guide, the label's options](docs/user-guide.md#6-the-labels-options) ·
 [the GS1 Logistic Label](docs/user-guide.md#9-the-gs1-logistic-label)
 
-### 5. Files for artwork, print files for label printers
+### 5. A label of your own, or the GS1 Logistic Label
+
+<p align="center">
+  <img src="docs/images/guide/designer.png" alt="A label of one's own: a QR code, GS1-128, text with a field, a box, a line, an image and a turned text placed on a 150 × 90 mm label" width="420">
+  &nbsp;
+  <img src="docs/images/guide/logistic-label.png" alt="The GS1 Logistic Label in A5: From and To, the data titles and their content, a QR code beside them, two GS1-128 symbols" width="420">
+</p>
+
+**A label of my own** places barcodes, text blocks, lines, boxes and images on a label of any size: each dragged or
+moved from the keyboard, held within the label, turned by quarter turns and resized from its corner, a barcode only to
+the sizes its scanning environment allows. Text takes fields from the data — `{10}`, a date as `{17:DD/MM/YYYY}`, a
+spreadsheet's column such as `{Produto}` — so every row in bulk gets its own label; a grid and rulers help to line
+things up. The **GS1 Logistic Label** lays out an SSCC's label as section 6.6 asks, in A6, A5, 4 × 6 or 6 × 8 inches,
+its data titles also in a second language. **Save** keeps the work as a file to open again.
+→ [User guide, a label of one's own](docs/user-guide.md#a-label-of-ones-own-barcodes-text-lines-boxes-and-images-placed-freely) ·
+[saving the work](docs/user-guide.md#saving-the-work-and-opening-it-again)
+
+### 6. Files for artwork, print files for label printers
 
 <p align="center">
   <img src="docs/images/guide/printer.png" alt="Printer (ZPL, TSPL, EPL2, DPL): a printer profile, the module in whole dots within the table's range, a test print" width="560">
@@ -125,7 +147,7 @@ Labelary and reading it back; **TSPL**, **EPL2** and **DPL** the same way throug
 with placeholders for an ERP or a WMS; printer profiles that put each module on whole dots.
 → [Printing guide](docs/printing-guide.md)
 
-### 6. Thousands of labels from a spreadsheet
+### 7. Thousands of labels from a spreadsheet
 
 <p align="center">
   <img src="docs/images/guide/bulk-report.png" alt="In bulk: the validation report, the cell at fault outlined and fixed in place" width="260">
@@ -139,7 +161,7 @@ numbers or SSCCs for you; and generates every label in one zip — a file a row 
 sheets (Avery or your own), one ZPL file and a CSV of what was made — in the background, with its progress.
 → [User guide, in bulk](docs/user-guide.md#13-in-bulk-rows-from-a-spreadsheet)
 
-### 7. RFID, NFC and digital signatures
+### 8. RFID, NFC and digital signatures
 
 <p align="center">
   <img src="docs/images/guide/epc.png" alt="RFID and NFC: the EPC of an SGTIN-198 as hexadecimal, tag URI, pure identity and the links for NFC" width="420">
@@ -153,7 +175,7 @@ GS1 Digital Signatures guideline) and GS1 verifiable credentials, the key kept i
 → [User guide, RFID and NFC](docs/user-guide.md#11-rfid-and-nfc-epc-and-nfc-tags) ·
 [digital signature](docs/user-guide.md#12-digital-signature-gs1-jws)
 
-### 8. On a computer, a tablet or a phone — in three languages
+### 9. On a computer, a tablet or a phone — in six languages
 
 <p align="center">
   <img src="docs/images/guide/phone-data.png" alt="On a phone: Data, with the live preview at the top and the tab bar at the bottom" width="180">
@@ -194,8 +216,14 @@ Requires Node.js 22 and pnpm 10 (`corepack enable`).
 pnpm install
 pnpm dev          # the web application on http://localhost:5173
 pnpm check        # typecheck, tests and build — what CI runs
+pnpm --filter @gs1-label-studio/web e2e          # browser tests on a desktop, a phone and a tablet, after pnpm build
+pnpm --filter @gs1-label-studio/web screenshots  # the manuals' screenshots, after pnpm build
 node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 ```
+
+Some tests run programs outside Node: poppler's `pdftoppm` and Ghostscript (`apt-get install poppler-utils
+ghostscript`); the ZPL printed through Labelary only with `LABELARY=1`. The [developer guide](docs/developer-guide.md)
+says more.
 
 | Path | What |
 |---|---|
@@ -203,21 +231,28 @@ node scripts/metrics.mjs   # development indicators (docs/metrics/README.md)
 | `apps/web` | the web application (React + Vite); `src/locales/` its languages, `test/` their test |
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
-| `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
+| `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `syntax-engine.mjs` makes the dictionary and the engine's messages from a Syntax Engine release (0.6); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
+| `.github/workflows` | `ci.yml` (checks, Labelary and the browser tests), `pages.yml` (publication), `docs.yml` (the documents' test), `syntax-engine.yml` (a new Syntax Engine release, every Monday) |
 
 ## Backlog
 
-**Order from here** (29 October 2026; 2.2 done the same day, 1.10 and 1.11 on 30 October, 1.11 at the owner's
-request before 2.4; the owner's ideas of 30 October, 1.15 to 1.19, placed where they cost least; 2.4 done the same
-day, 1.15, 1.17, 1.12, 2.3, 1.16, 1.13, 2.5 and 1.14 too; 1.18 and 1.19 on 31 October): phase 3 (3.1, 3.3 and 3.6 done
-on 31 October, 3.7 on 2 November; PPLB and PPLA wait for their manuals), then the GS1 Logistic Label in ZPL (3.2,
-4.1; 2 November). The
-editor's corrections (1.10) came first, being small and seen every day; the qualifiers and attributes in one block
-(1.15) and the URI's own parameters (1.17) before several keys (1.12), whose other keys are rows of that same block;
-several keys before the generated SSCCs (2.3), which a logistic unit's label needs; the human readable text placed and
-sized (1.16) before GS1-128 over several symbols (1.13), whose stacked symbols each carry it, opening the logistic
-label of phase 4; signatures and verifiable credentials (1.18) and writing NFC tags (1.19) after the symbols are
-complete.
+**Where it stands** (8 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
+first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
+saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
+and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
+printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. No step is waiting unconditionally: what
+comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL, resizing held within
+the label, and a review of the French, German and Italian texts by native speakers.
+
+**How the order went.** On 29 October: the editor's corrections (1.10) first, being small and seen every day; the
+qualifiers and attributes in one block (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose
+other keys are rows of that same block; several keys before the generated SSCCs (2.3), which a logistic unit's label
+needs; the human readable text placed and sized (1.16) before GS1-128 over several symbols (1.13), whose stacked
+symbols each carry it, opening the logistic label of phase 4; signatures and verifiable credentials (1.18) and writing
+NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
+EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
+designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
+Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -262,7 +297,7 @@ complete.
   PDF's drawing in PostScript, read back through Ghostscript); PDF and EPS in process black alone; a bar width
   reduction for linear symbols; the PNG at 300, 600 or 1200 dpi. Margins and crop marks later, with the labels of
   phase 4*
-- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width (the tool is in English) — *done:
+- 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width — *done:
   the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
   between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with
   ZXing in the browser (mock-up A)*
@@ -478,84 +513,92 @@ complete.
   November (3 mm when 3.5 mm leaves the page too short). No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*
 - 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
-  to spreadsheet columns — *barcodes and text blocks done 3 November (mock-up A of two: in step 3, "Label" offers "A
-  label of my own"; + Barcode, + Text and Delete over the canvas, each element chosen and dragged on it; under it the
-  page's size, the elements and the chosen one's properties; text with {AI} fields filled from the data, so the files in
-  bulk fill every row's label; one Layout, so SVG, PNG, PDF and EPS; every barcode read back). In ZPL and EPL2 since 3
-  November (each barcode as the symbol alone, where the page puts it; checked through Labelary and Labelize). Lines and
-  boxes since 3 November (mock-up B of two, the owner's choice: + Shape beside + Barcode and + Text, a line across or
-  down, a box or a filled box chosen in its properties; in ZPL `^GB`, in EPL2 `LO` and `X`, to the dot through Labelary
-  and Labelize). A date field in a format since 3 November (mock-up B of two,
-  taken under the owner's rule: Insert a field offers each date also as `{17:DD/MM/YYYY}` and four other formats, each
-  with the date it gives; any format of DD, MM, MMM, YY and YYYY typed; the month's abbreviation in English, Portuguese
-  or Spanish, and since 8 November French, German or Italian, chosen for each text block, the interface's language first). A new element never lands exactly on
-  another (the owner, 3 November 2026: one made over another went unnoticed): where an element already has its
-  corner, it goes 5 mm right and down, and again — done the same day. Images since 4 November (mock-up A of two, taken
-  under the owner's rule; B added an empty image to fill in its properties, with a preview): **+ Image** takes a file
-  at once and places it 20 mm wide, its height from its proportions, in black and white as label printers print; in
-  ZPL `^GFA`, every dot checked through Labelary; in EPL2 since 4 November as `GW` with raw bytes (a print file of
-  bytes; 0 prints black, as Zebra says, the other way round in Labelize, so its tests invert the bits). Rotation since
-  4 November (mock-up A of two, taken under the owner's rule; B turned the chosen element a quarter at a time from a
-  button over the label): **Rotation** 0°, 90°, 180° or 270° in a barcode's, a text block's or an image's properties,
-  its box's corner kept; in ZPL each field with its orientation (`R`, `I`, `B`), every dot of each symbol as the
-  upright one turned through Labelary; a QR code stays upright (`^BQ` has no orientation); in EPL2 since 4 November with
-  `A`'s and `B`'s rotation, the origin turned with the object as the guide shows (Labelize places it otherwise; a
-  turned Data Matrix refused, `b` has no rotation). In TSPL since 4 November: barcodes, text (`TEXT` at its capitals'
-  height, measured through Labelize), lines and boxes (`BAR`, `BOX`) and images (`BITMAP`, raw bytes as in EPL2), every
-  one checked through Labelize; turned barcodes and text with TSPL's rotation, about the origin as the manual's own
-  example prints it (a turned QR code refused: Labelize does not turn it). In DPL since 6 November: barcodes, text (the
-  internal fonts at their capitals' height, measured through Labelize), lines and boxes (`X` records), each by its bottom
-  left corner in tenths of a millimetre, checked through Labelize; an image refused (DPL's `Y` record prints a stored
-  image, which Labelize does not draw); turned barcodes and text with their record's rotation, about their bottom left
-  corner as the manual's figure shows (a turned Data Matrix or QR code refused: Labelize does not turn them). Fields
-  bound to spreadsheet columns since 6 November (mock-up A of two, taken under the owner's rule; B offered the columns
-  in a second list): in bulk, **Insert a field from the data** also offers each column holding no AI, such as
-  `{Produto}`, with the row shown's value; each row's label and print file show its own cell; a name no column has
-  stays as typed; the bulk **File names** take a column's header too, such as `{Produto}_{10}`, on any label (6
-  November, session 22). An image's darkness since 6 November (mock-up A of two, taken under the owner's rule; B
-  offered five steps in a list): **Darkness**, a slider from lighter to darker in the image's properties, makes the
-  black and white again from the file's grey levels, kept in the page's memory only (the work keeps the picture and
-  its threshold; after a reload the file is chosen again to change it). Images in ZPL in ZPL's own compression since 6
-  November (repeat counts, `,`, `!` and `:`, which every ZPL II printer reads; several times smaller, every dot checked
-  through Labelary). Resizing by dragging a corner since 7 November (mock-up A of two, taken under the owner's rule;
-  B had a handle at each corner): the chosen element's handle at its bottom right corner, its top left corner kept; a
-  box and a line to the corner, an image in its proportions, a barcode to the nearest size its environment allows, a
-  text block to the nearest text height. A date's time since 7 November (the recommended of two, taken under the
-  owner's rule: `hh`, `mm` and `ss` in lower case, so that `MM` stays the month; the other was `HH` and `MI`): Insert a
-  field offers a date followed by a time, such as (7003) or (8008), also as `{7003:DD/MM/YYYY hh:mm}` and three other
-  formats, with seconds where the AI has them; a part the value lacks is left out with the text before it. Names
-  offered for the bulk file names since 7 November (mock-up A of two, taken under the owner's rule; B offered each
-  name as a button): **Insert a name** under File names lists `{row}`, `{symbol}`, `{key}`, the first row's AIs and the
-  columns holding no AI, each with the first row's value, and adds the one chosen at the end. Greys as dots for a photo
-  since 7 November (mock-up A of two, taken under the owner's rule; B offered two buttons): a box under an image's
-  Darkness dithers its greys (Floyd and Steinberg), the darkness then darkening the greys; each printer dithers the
-  picture again at its own dots, so a grey prints as dark as it is (checked through Labelary). The handle of an
-  element past the label's edge since 7 November (mock-up A of two, taken under the owner's rule; B drew the whole
-  outline past the edge): held at the edge, in red, and dragged, the corner under the pointer. A date of birth since
-  7 November: (7250) and (7251), whose dates are YYYYMMDD, offered in the date fields' formats with the year as given,
-  (7251) with its time, and read from ISO and DD/MM/YYYY cells in bulk. Resizing from the keyboard since 7 November
-  (mock-up A of two, taken under the owner's rule; B gave the keyboard to the element's outline, the arrows moving
-  it): Tab reaches the chosen element's handle, and the arrow keys move its corner by half a millimetre, 5 mm with
-  Shift, a barcode and a text block a size at a time. A date's time in bulk since 7 November: (7003), (4324), (4325),
-  (7011) and (8008) keep a cell's time after the date, (8008) its seconds, and an Excel cell keeps the time its format
-  shows. Moving from the keyboard since 7 November (mock-up A of two, taken under the owner's rule; B moved the
-  element by the arrow keys on its button in the list): Tab reaches the chosen element's outline on the label, just
-  before its handle, and the arrow keys move it by half a millimetre, 5 mm with Shift. What an arrow key did, said
-  since 7 November (mock-up B of two, taken under the owner's rule; A told a screen reader alone): the hint under the
-  outline or the handle starts with the new place or size, the end of a barcode's or a text's sizes and the label's
-  edge, and a live region tells a screen reader the same. The keyboard's order since 8 November (mock-up A of two,
-  taken under the owner's rule; B sent the focus to the outline as an element was chosen): **On the label** beside the
-  chosen element in the list takes the focus to its outline, which comes before the panel, and Escape on the outline
-  or the handle brings it back to the element's row. Times in bulk since 8 November: a time with AM or PM, an Excel
-  cell that holds a time alone (HH:MM, as on a 24-hour clock), and (7007)'s harvest period from two dates in one cell
-  (`01/09/2027 - 15/09/2027`). A grid and rulers since 8 November (mock-up A of two, taken under the owner's rule; B
-  had the grid alone, from a button beside the zoom): **Grid and rulers** over the canvas turns on lines every 1, 2, 5
-  or 10 mm as the label is drawn, stronger every 10 mm, and rulers in millimetres along its top and left, the chosen
-  element's span marked on them; kept on or off in this browser. Moving held within the label since 8 November (an
-  open point since 7 November, taken under the owner's rule; B kept moving free, the page reporting the edge):
-  dragging or the arrow keys stop an element at the label's edge, its corner on the last half millimetre that keeps it
-  on the label; one already past the edge is never moved further past it but comes back as far as it is moved, and the
-  hint says when the edge is reached; **Left** and **Top** typed still place it anywhere. Saving the label is 4.3*
+  to spreadsheet columns — *done, step by step (each mock-up choice taken under the owner's rule unless said):*
+  - *Barcodes and text blocks, 3 November (mock-up A of two): in step 3, "Label" offers "A label of my own"; + Barcode,
+    + Text and Delete over the canvas, each element chosen and dragged on it; under it the page's size, the elements
+    and the chosen one's properties; text with {AI} fields filled from the data, so the files in bulk fill every row's
+    label; one Layout, so SVG, PNG, PDF and EPS; every barcode read back. In ZPL and EPL2 the same day (each barcode as
+    the symbol alone, where the page puts it; checked through Labelary and Labelize).*
+  - *Lines and boxes, 3 November (mock-up B of two, the owner's choice): + Shape beside + Barcode and + Text, a line
+    across or down, a box or a filled box chosen in its properties; in ZPL `^GB`, in EPL2 `LO` and `X`, to the dot
+    through Labelary and Labelize.*
+  - *A date field in a format, 3 November (mock-up B of two): Insert a field offers each date also as
+    `{17:DD/MM/YYYY}` and four other formats, each with the date it gives; any format of DD, MM, MMM, YY and YYYY
+    typed; the month's abbreviation in English, Portuguese or Spanish, and since 8 November French, German or
+    Italian, chosen for each text block, the interface's language first.*
+  - *A new element never lands exactly on another, 3 November (the owner: one made over another went unnoticed):
+    where an element already has its corner, it goes 5 mm right and down, and again.*
+  - *Images, 4 November (mock-up A of two; B added an empty image to fill in its properties, with a preview):
+    **+ Image** takes a file at once and places it 20 mm wide, its height from its proportions, in black and white as
+    label printers print; in ZPL `^GFA`, every dot checked through Labelary; in EPL2 as `GW` with raw bytes (a print
+    file of bytes; 0 prints black, as Zebra says, the other way round in Labelize, so its tests invert the bits).*
+  - *Rotation, 4 November (mock-up A of two; B turned the chosen element a quarter at a time from a button over the
+    label): **Rotation** 0°, 90°, 180° or 270° in a barcode's, a text block's or an image's properties, its box's
+    corner kept; in ZPL each field with its orientation (`R`, `I`, `B`), every dot of each symbol as the upright one
+    turned through Labelary; a QR code stays upright (`^BQ` has no orientation); in EPL2 with `A`'s and `B`'s
+    rotation, the origin turned with the object as the guide shows (Labelize places it otherwise; a turned Data
+    Matrix refused, `b` has no rotation).*
+  - *TSPL, 4 November: barcodes, text (`TEXT` at its capitals' height, measured through Labelize), lines and boxes
+    (`BAR`, `BOX`) and images (`BITMAP`, raw bytes as in EPL2), every one checked through Labelize; turned barcodes
+    and text with TSPL's rotation, about the origin as the manual's own example prints it (a turned QR code refused:
+    Labelize does not turn it).*
+  - *DPL, 6 November: barcodes, text (the internal fonts at their capitals' height, measured through Labelize), lines
+    and boxes (`X` records), each by its bottom left corner in tenths of a millimetre, checked through Labelize; an
+    image refused (DPL's `Y` record prints a stored image, which Labelize does not draw); turned barcodes and text
+    with their record's rotation, about their bottom left corner as the manual's figure shows (a turned Data Matrix or
+    QR code refused: Labelize does not turn them).*
+  - *Fields bound to spreadsheet columns, 6 November (mock-up A of two; B offered the columns in a second list): in
+    bulk, **Insert a field from the data** also offers each column holding no AI, such as `{Produto}`, with the row
+    shown's value; each row's label and print file show its own cell; a name no column has stays as typed; the bulk
+    **File names** take a column's header too, such as `{Produto}_{10}`, on any label.*
+  - *An image's darkness, 6 November (mock-up A of two; B offered five steps in a list): **Darkness**, a slider from
+    lighter to darker in the image's properties, makes the black and white again from the file's grey levels, kept in
+    the page's memory only (the work keeps the picture and its threshold; after a reload the file is chosen again to
+    change it).*
+  - *Images in ZPL's own compression, 6 November (repeat counts, `,`, `!` and `:`, which every ZPL II printer reads;
+    several times smaller, every dot checked through Labelary).*
+  - *Resizing by dragging a corner, 7 November (mock-up A of two; B had a handle at each corner): the chosen element's
+    handle at its bottom right corner, its top left corner kept; a box and a line to the corner, an image in its
+    proportions, a barcode to the nearest size its environment allows, a text block to the nearest text height.*
+  - *A date's time, 7 November (the recommended of two: `hh`, `mm` and `ss` in lower case, so that `MM` stays the
+    month; the other was `HH` and `MI`): Insert a field offers a date followed by a time, such as (7003) or (8008),
+    also as `{7003:DD/MM/YYYY hh:mm}` and three other formats, with seconds where the AI has them; a part the value
+    lacks is left out with the text before it.*
+  - *Names offered for the bulk file names, 7 November (mock-up A of two; B offered each name as a button): **Insert a
+    name** under File names lists `{row}`, `{symbol}`, `{key}`, the first row's AIs and the columns holding no AI, each
+    with the first row's value, and adds the one chosen at the end.*
+  - *Greys as dots for a photo, 7 November (mock-up A of two; B offered two buttons): a box under an image's Darkness
+    dithers its greys (Floyd and Steinberg), the darkness then darkening the greys; each printer dithers the picture
+    again at its own dots, so a grey prints as dark as it is (checked through Labelary).*
+  - *The handle of an element past the label's edge, 7 November (mock-up A of two; B drew the whole outline past the
+    edge): held at the edge, in red, and dragged, the corner under the pointer.*
+  - *A date of birth, 7 November: (7250) and (7251), whose dates are YYYYMMDD, offered in the date fields' formats with
+    the year as given, (7251) with its time, and read from ISO and DD/MM/YYYY cells in bulk.*
+  - *Resizing from the keyboard, 7 November (mock-up A of two; B gave the keyboard to the element's outline, the arrows
+    moving it): Tab reaches the chosen element's handle, and the arrow keys move its corner by half a millimetre, 5 mm
+    with Shift, a barcode and a text block a size at a time.*
+  - *A date's time in bulk, 7 November: (7003), (4324), (4325), (7011) and (8008) keep a cell's time after the date,
+    (8008) its seconds, and an Excel cell keeps the time its format shows.*
+  - *Moving from the keyboard, 7 November (mock-up A of two; B moved the element by the arrow keys on its button in the
+    list): Tab reaches the chosen element's outline on the label, just before its handle, and the arrow keys move it
+    by half a millimetre, 5 mm with Shift.*
+  - *What an arrow key did, said, 7 November (mock-up B of two; A told a screen reader alone): the hint under the
+    outline or the handle starts with the new place or size, the end of a barcode's or a text's sizes and the label's
+    edge, and a live region tells a screen reader the same.*
+  - *The keyboard's order, 8 November (mock-up A of two; B sent the focus to the outline as an element was chosen):
+    **On the label** beside the chosen element in the list takes the focus to its outline, which comes before the
+    panel, and Escape on the outline or the handle brings it back to the element's row.*
+  - *Times in bulk, 8 November: a time with AM or PM, an Excel cell that holds a time alone (HH:MM, as on a 24-hour
+    clock), and (7007)'s harvest period from two dates in one cell (`01/09/2027 - 15/09/2027`).*
+  - *A grid and rulers, 8 November (mock-up A of two; B had the grid alone, from a button beside the zoom): **Grid and
+    rulers** over the canvas turns on lines every 1, 2, 5 or 10 mm as the label is drawn, stronger every 10 mm, and
+    rulers in millimetres along its top and left, the chosen element's span marked on them; kept on or off in this
+    browser.*
+  - *Moving held within the label, 8 November (an open point since 7 November; B kept moving free, the page reporting
+    the edge): dragging or the arrow keys stop an element at the label's edge, its corner on the last half millimetre
+    that keeps it on the label; one already past the edge is never moved further past it but comes back as far as it
+    is moved, and the hint says when the edge is reached; **Left** and **Top** typed still place it anywhere.*
+  - *Saving the label is 4.3.*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**
