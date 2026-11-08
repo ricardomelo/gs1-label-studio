@@ -308,7 +308,7 @@ Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it ses
   resolver and read back by epc-tds; the tag's hexadecimal filled to the 16-bit word*
 - 1.9 Data attributes in the GS1 Digital Link URI, with the resolver's decimal families (e.g. a net weight typed as
   1,25 kg); the URI's domain — *done: ported with the resolver's editor (key, qualifiers, attributes), checked against it;
-  since 8 November names and addresses typed as people write them, their spaces and accents as %XX in the code*
+  since 8 November names and addresses typed as people write them, their spaces as + and accents as %XX in the code*
 
 *The owner's review of 29 October 2026 added items 1.10 to 1.14.*
 
@@ -442,7 +442,7 @@ Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it ses
   code" (mock-up A): CSV (comma, semicolon or tab), pasted rows and Excel workbooks read without a library; each
   column's AI guessed from its header and remembered for the same headers; values for every row; each row checked by
   the Syntax Engine, its label in the preview; since 8 November a patient list's headers too (GSRN, date of birth,
-  names), its names' spaces and accents as %XX, a person's sex from words in the six languages*
+  names), its names' spaces as + and accents as %XX, a person's sex from words in the six languages*
 - 2.2 Validation report; fix or skip rows — *done (mock-up A of three): in the rows card, the rows with errors, fixed,
   skipped or all; each with its reason and its cells, the one at fault outlined and fixed in place (the file is not
   changed); a hint when Excel kept 15 digits of a code or a CSV wrote it in scientific notation; one row or every row

@@ -338,6 +338,13 @@
   now also taken as a word in any of the six languages (*Feminino*, *male*, *männlich*, *Inconnu*, *Não aplicável*),
   in One code and in bulk, the hint showing the digit; a letter is still refused, as M is male in English and female
   in Spanish. The hint names the four codes and says *one digit*, not *1 digits*.
+- Names and addresses as GS1 writes them (8 November; an open point since session 44): a percent-encoded AI's space
+  now goes in the code as + rather than %20, as the General Specifications say it should (3.8.29, 7.11: "A space
+  character should be encoded as a single plus symbol, +"): *Maria José* is *(7254) Maria+Jos%C3%A9*; a + already
+  written is kept as a space, a plus sign meant as itself is typed %2B; a value written with %20 before is kept and
+  still read. On the GS1 Logistic Label the middle block shows such a name as people read it (*Café Rio*), being text
+  with a data title and no AI (6.6.4.2, 4.14.1); the HRI under the symbols keeps the value as the barcode carries it
+  (4.14).
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

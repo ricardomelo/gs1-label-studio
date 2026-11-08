@@ -170,8 +170,9 @@ One list holds the key's qualifiers (batch, serial number, variant…) and its d
 - Decimal attributes take a comma or a point: a net weight of `0,5` kg becomes *(3103) 000500*; the hint shows what goes
   in the code.
 - Names and addresses are typed as people write them: a patient's (7253) family name or (7254) given name, a ship-to
-  address (4300)–(4320) take their spaces and accents as %XX in the code, and the tool writes them so — *Maria José*
-  becomes *(7254) Maria%20Jos%C3%A9*, which the hint shows; %XX already written is kept. A pasted name is shown as
+  address (4300)–(4320) take their spaces as + and their accents as %XX in the code, and the tool writes them so —
+  *Maria José* becomes *(7254) Maria+Jos%C3%A9*, which the hint shows; %XX and + already written are kept (a plus sign
+  meant as itself is typed %2B). A pasted name is shown as
   people read it (*Jo%C3%A3o* → *João*), and a `{7254}` field on a label of one's own shows it as written.
 - A patient's sex, (7252), is ISO/IEC 5218's digit — 0 not known, 1 male, 2 female, 9 not applicable — and may be
   typed as a word in any of the six languages: *Feminino*, *female*, *weiblich* become *(7252) 2*, which the hint shows.
@@ -595,7 +596,7 @@ its preview steps through the rows.
    in the other languages, or their data titles (*DOB*, *FAMILY NAME*), to (7250)–(7259). A bare *Nome* or *Name* is
    left for you to choose, as it may hold a full name or a surname. A name or an address whose AI takes its other
    characters as %XX — (7253), (7254), (7256), (7257), (7259) and the ship-to and return-to AIs (4300)–(4320) — has its
-   spaces and accents written so for the barcode (`Maria José → Maria%20Jos%C3%A9`); %XX already written is kept. A
+   spaces written as + and accents as %XX for the barcode (`Maria José → Maria+Jos%C3%A9`); %XX already written is kept. A
    field such as `{7254}` on a label of one's own shows the name as written, *Maria José*. (7252)'s sex is ISO/IEC
    5218's digit (0, 1, 2 or 9) or a word in any of the six languages (`Feminino → 2`, `Männlich → 1`, `Inconnu → 0`);
    a letter such as *F* is refused.

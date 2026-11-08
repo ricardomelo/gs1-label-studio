@@ -43,7 +43,7 @@
  "sex: 0 not known, 1 male, 2 female, 9 not applicable (ISO 5218), or the word": "Geschlecht: 0 unbekannt, 1 männlich, 2 weiblich, 9 nicht zutreffend (ISO 5218) oder das Wort",
  "not zero": "nicht null",
  "starts with a GS1 Company Prefix": "beginnt mit einer GS1-Basisnummer",
- "spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9)": "Leerzeichen, Akzente und andere Zeichen im Code als %XX geschrieben (z. B. é als %C3%A9)",
+ "spaces written as + and accents and other characters as %XX in the code (e.g. é as %C3%A9)": "Leerzeichen im Code als + und Akzente und andere Zeichen als %XX geschrieben (z. B. é als %C3%A9)",
  "piece and total, e.g. 0102 (piece 1 of 2)": "Teil und Gesamtzahl, z. B. 0102 (Teil 1 von 2)",
  "position/total, e.g. 1/2": "Position/Gesamtzahl, z. B. 1/2",
  "AIDC media type (2 digits)": "AIDC-Medientyp (2 Ziffern)",

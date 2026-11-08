@@ -293,7 +293,7 @@ Logistic Label's data titles, under each English title as 6.6.4.2 allows. Resizi
 what an arrow key did said in the hint. The browser tests found a phone bug on the way: a long barcode in the live
 preview widened the page until the tab bar could not be tapped.
 
-## Sessions 36 to 47 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
+## Sessions 36 to 48 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
 
 The handover had no unconditional step left, so each session took the recommended option under the owner's rule
 unless the owner asked for something. The keyboard's order (**On the label** beside the chosen element, Escape back),
@@ -316,5 +316,8 @@ and the documents' index up to date. Session 46 held resizing within the label a
 the arrow keys make an element no larger than the label's edge allows, a barcode measured at each size with its text,
 which keeps its size, so that its box is not simply in proportion; the properties typed stay free. Session 47 let
 (7252)'s sex be typed as a word in any of the six languages, in One code and in bulk, a letter still refused since M
-is male in English and female in Spanish. By then the inventory held 1,145 tests in 47 files, and a full browser run
-passed 257 tests across a desktop, a phone and a tablet.
+is male in English and female in Spanish. Session 48, taking up such names shown encoded under the symbols, read the
+General Specifications instead: the HRI is the data as the barcode carries it (4.14), so it stays encoded, while the
+GS1 Logistic Label's middle block, text with a data title and no AI, may show *Café Rio* (6.6.4.2, 4.14.1); and a space
+should be a plus sign, not %20 (3.8.29), which the studio now writes. By then the inventory held 1,147 tests in 47
+files, and a full browser run passed 260 tests across a desktop, a phone and a tablet.

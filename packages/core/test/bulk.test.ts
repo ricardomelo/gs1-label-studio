@@ -155,13 +155,15 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("7251", "198001150830")).toBe("198001150830");
   });
 
-  it("writes a name or an address whose AI is percent-encoded with its spaces and accents as %XX, once", () => {
-    expect(normaliseCell("7254", "Maria José")).toBe("Maria%20Jos%C3%A9");
+  it("writes a name or an address whose AI is percent-encoded with its spaces as + and accents as %XX, once", () => {
+    expect(normaliseCell("7254", "Maria José")).toBe("Maria+Jos%C3%A9");
     expect(normaliseCell("7253", " Conceição ")).toBe("Concei%C3%A7%C3%A3o");
-    expect(normaliseCell("7256", "Müller-Lüdenscheidt, Hans")).toBe("M%C3%BCller-L%C3%BCdenscheidt,%20Hans");
-    expect(normaliseCell("4302", "Rua São João, 100")).toBe("Rua%20S%C3%A3o%20Jo%C3%A3o,%20100");
+    expect(normaliseCell("7256", "Müller-Lüdenscheidt, Hans")).toBe("M%C3%BCller-L%C3%BCdenscheidt,+Hans");
+    expect(normaliseCell("4302", "Rua São João, 100")).toBe("Rua+S%C3%A3o+Jo%C3%A3o,+100");
     expect(normaliseCell("7254", "Jo%C3%A3o")).toBe("Jo%C3%A3o"); // encoded already: not encoded again
-    expect(normaliseCell("7257", "Sala 3 – 50% ala")).toBe("Sala%203%20%E2%80%93%2050%25%20ala"); // a bare % is %25
+    expect(normaliseCell("7254", "Maria+Jos%C3%A9")).toBe("Maria+Jos%C3%A9"); // a + already stands for a space
+    expect(normaliseCell("7254", "Maria%20Jos%C3%A9")).toBe("Maria%20Jos%C3%A9"); // %20 as written before: kept
+    expect(normaliseCell("7257", "Sala 3 – 50% ala")).toBe("Sala+3+%E2%80%93+50%25+ala"); // a bare % is %25
     expect(normaliseCell("7259", "Silva")).toBe("Silva");
     expect(normaliseCell("10", "Lote A 1")).toBe("Lote A 1"); // not percent-encoded: for the Syntax Engine to judge
     expect(normaliseCell("7252", "F")).toBe("F"); // ISO/IEC 5218's digit is not guessed from a letter
@@ -243,7 +245,7 @@ describe("rows as identifications", () => {
     expect(rows[0]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Jo%C3%A3o(7253)Concei%C3%A7%C3%A3o(7252)1");
     expect(rows[1]!.error).toMatch(/7252/); // F is not ISO/IEC 5218's digit
     expect(rows[1]!.columns).toEqual([4]);
-    expect(rows[2]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Maria%20Jos%C3%A9(7253)Silva(7252)2");
+    expect(rows[2]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Maria+Jos%C3%A9(7253)Silva(7252)2");
   });
 
   it("checks pasted rows the same way, a date the engine refuses reported for its row", () => {

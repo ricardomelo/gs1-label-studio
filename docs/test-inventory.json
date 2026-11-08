@@ -716,7 +716,7 @@
      "status": "passed"
     },
     {
-     "name": "cells as the AI takes them › writes a name or an address whose AI is percent-encoded with its spaces and accents as %XX, once",
+     "name": "cells as the AI takes them › writes a name or an address whose AI is percent-encoded with its spaces as + and accents as %XX, once",
      "status": "passed"
     },
     {
@@ -1836,7 +1836,7 @@
      "status": "passed"
     },
     {
-     "name": "names and addresses typed as people write them (backlog 1.9) › writes a percent-encoded AI's spaces and accents as %XX in the code, and leaves every other AI as typed",
+     "name": "names and addresses typed as people write them (backlog 1.9) › writes a percent-encoded AI's spaces as + and accents as %XX in the code, and leaves every other AI as typed",
      "status": "passed"
     },
     {
@@ -2473,6 +2473,10 @@
     },
     {
      "name": "the GS1 Logistic Label › adds a second language under each data title and under FROM and TO, the contents on a row level",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › shows a percent-encoded name or address in the middle block as people read it, as the code carries it under the symbols",
      "status": "passed"
     },
     {
@@ -5183,6 +5187,15 @@
     },
     {
      "name": "one code: a name typed with spaces and accents written as %XX in the code, a pasted one shown as written",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label: a ship-to name as people read it in the middle block, as the code carries it under the symbols",
      "status": "listed",
      "projects": [
       "desktop",

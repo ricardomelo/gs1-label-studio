@@ -636,17 +636,21 @@ describe("a label of one's own", () => {
     const patient = engine.parse("(8018)950600013435200008(7254)Maria%20Jos%C3%A9(7253)Concei%C3%A7%C3%A3o(7257)Rua%20A,%2050%25") as Identified;
     expect(fillFields("{7254} {7253}", patient)).toBe("Maria José Conceição");
     expect(fillFields("{7257}", patient)).toBe("Rua A, 50%");
+    expect(fillFields("{7254}", engine.parse("(8018)950600013435200008(7254)Maria+Jos%C3%A9") as Identified)).toBe("Maria José");
     expect(fillFields("{8018}", patient)).toBe("950600013435200008");
     // Only a percent-encoded AI is decoded: %41 in a batch is what the data says
     expect(fillFields("{10}", { elements: [{ ai: "10", title: "BATCH/LOT", value: "B%41" }] })).toBe("B%41");
     expect(["7253", "7254", "7255", "7256", "7257", "7259", "4300", "4320"].map(isPercentEncoded)).toEqual([true, true, false, true, true, true, true, true]);
     expect(["10", "21", "7250", "8018", "90"].some(isPercentEncoded)).toBe(false);
     // Encoded once, decoded back: four-byte characters, a bare % and %XX already written, lower-case hexadecimal
-    expect(percentEncode("Zoë 😀")).toBe("Zo%C3%AB%20%F0%9F%98%80");
-    expect(percentEncode("100% %2a %G1")).toBe("100%25%20%2a%20%25G1");
-    expect(percentEncode('ABC-123_(x) "a";b')).toBe('ABC-123_(x)%20"a";b'); // CSET 82 as it is, quotes too
+    expect(percentEncode("Zoë 😀")).toBe("Zo%C3%AB+%F0%9F%98%80"); // a space as + (General Specifications 3.8.29, 7.11)
+    expect(percentEncode("100% %2a %G1")).toBe("100%25+%2a+%25G1");
+    expect(percentEncode('ABC-123_(x) "a";b+c')).toBe('ABC-123_(x)+"a";b+c'); // CSET 82 as it is, quotes and + too
+    expect(percentEncode(percentEncode("Rua São João, 50% + 1"))).toBe("Rua+S%C3%A3o+Jo%C3%A3o,+50%25+++1"); // once
     expect(percentEncode("a\tb")).toBe("a%09b"); // a byte below 16 with its leading zero
     expect(percentDecode("Zo%C3%AB%20%F0%9F%98%80")).toBe("Zoë 😀");
+    expect(percentDecode("Zo%C3%AB+%F0%9F%98%80")).toBe("Zoë 😀"); // + as a space
+    expect(percentDecode("A%2BB+C%2b")).toBe("A+B C+"); // %2B a plus sign, not a space
     expect(percentDecode("%2a%2A")).toBe("**");
     expect(percentDecode("bad %C3 here %FF%FE")).toBe("bad %C3 here %FF%FE"); // not UTF-8: kept as it is
     // Through the page: the drawing and the print file

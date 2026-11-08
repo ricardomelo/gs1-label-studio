@@ -53,7 +53,7 @@ export function checkKeyValue(key: string, value: string): string | null {
 /**
  * The element string of the identification, in order — key, qualifiers in path order, attributes —, after the
  * resolver's checks on the attributes as chosen ("392n", "17": names the user sees), then decimal conversion and a
- * name's or address's characters outside CSET 82 written as %XX (`resolveAttribute`).
+ * name's or address's spaces written as plus signs and its other characters outside CSET 82 as %XX (`resolveAttribute`).
  */
 export function elementStringOf(id: Identification): { elementString: string; resolved: [string, string][] } {
   const inPath = new Set([id.key, ...(PATH_AIS[id.key] ?? [])]);

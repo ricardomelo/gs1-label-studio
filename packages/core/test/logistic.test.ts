@@ -255,6 +255,32 @@ describe("the GS1 Logistic Label", () => {
     expect(zplLogisticLabel(logisticLabel({ ...routed, secondLanguage: "de" }, font), 300, 3)).toMatch(/\^FDEMPFÄNGER\^FS/);
   }, SLOW);
 
+  it("shows a percent-encoded name or address in the middle block as people read it, as the code carries it under the symbols", async () => {
+    // 6.6.4.2: text with data titles is the data elements' text equivalent for manual operations; it carries no AI, so
+    // it may differ from the HRI (4.14.1), which is the data as the barcode carries it (4.14)
+    const elementString = "(00)106141411234567897(4300)Caf%C3%A9+Rio(4305)S%C3%A3o+Paulo(4307)BR";
+    const label = logisticLabel({ ...INPUT, elementString }, font);
+    const texts = label.printer.texts.map((t) => t.text);
+    expect(texts).toEqual(expect.arrayContaining(["SHIP TO COMP", "Café Rio", "SHIP TO LOC", "São Paulo", "BR"]));
+    expect(texts.filter((t) => t.includes("%") || t.includes("+"))).toEqual([]);
+    expect(label.parts).toEqual(["(4300)Caf%C3%A9+Rio", "(4305)S%C3%A3o+Paulo", "(4307)BR", "(00)106141411234567897"]);
+    const hri = label.layout.texts.map((t) => t.text);
+    expect(hri).toEqual(expect.arrayContaining(["(4300)Caf%C3%A9+Rio", "(4305)S%C3%A3o+Paulo"]));
+    expect(hri).not.toContain("(4300)Café Rio");
+    // Only a percent-encoded AI: a batch's + and %41 are what the data says
+    const batch = logisticLabel({ ...INPUT, elementString: "(00)106141411234567897(10)A+B%41" }, font).printer.texts.map((t) => t.text);
+    expect(batch).toContain("A+B%41");
+    // The content measured as it reads, the room a printer's font keeps within
+    const cafe = label.printer.texts.find((t) => t.text === "Café Rio")!;
+    expect(cafe.heightMm).toBe(7);
+    expect(cafe.width).toBeCloseTo(font.textWidth("Café Rio", ((7 / label.layout.xMm) * font.unitsPerEm) / font.capHeight), 9);
+    // ZPL writes the readable text in UTF-8, the symbol's data as the code carries it; the symbols read back
+    const zpl = zplLogisticLabel(label, 300, 3);
+    expect(zpl).toMatch(/\^FDCafé Rio\^FS/);
+    expect(zpl).toMatch(/\^FDSão Paulo\^FS/);
+    expect(await read(new Resvg(labelSvg(label.options, label.layout, font), { fitTo: { mode: "zoom", value: 1.5 }, background: "#fff" }).render().asPng())).toEqual(["]C1 (00)106141411234567897", "]C1 (4300)Caf%C3%A9+Rio", "]C1 (4305)S%C3%A3o+Paulo", "]C1 (4307)BR"]);
+  }, SLOW);
+
   it("names a data title in Portuguese, Spanish, French, German and Italian, an AI of its own where one title has two meanings", () => {
     expect(secondTitle("SHIP TO LOC", "pt-BR", "410")).toBe("LOCAL DE ENTREGA");
     expect(secondTitle("SHIP TO LOC", "pt-BR", "4305")).toBe("CIDADE DE ENTREGA");

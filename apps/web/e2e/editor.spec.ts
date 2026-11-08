@@ -1821,7 +1821,7 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
 });
 
 // A patient list in bulk (backlog 2.1, an open point since session 30): GSRN, the date of birth and the names guessed
-// from their headers; a name's spaces and accents written as %XX for the Syntax Engine, and shown as written on the label.
+// from their headers; a name's spaces written as + and accents as %XX for the Syntax Engine, and shown as written on the label.
 test("in bulk: a patient list's columns guessed, names with accents encoded for the barcode and shown as written", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();
   await page.fill("#rows-paste",
@@ -1835,7 +1835,7 @@ test("in bulk: a patient list's columns guessed, names with accents encoded for 
   }
   const first = page.locator("table.mapping tbody td.mono");
   await expect(first.nth(1)).toHaveText("15/01/1960 → 19600115");
-  await expect(first.nth(2)).toHaveText("Maria José → Maria%20Jos%C3%A9");
+  await expect(first.nth(2)).toHaveText("Maria José → Maria+Jos%C3%A9");
   await expect(first.nth(3)).toHaveText("Conceição → Concei%C3%A7%C3%A3o");
   await expect(first.nth(4)).toHaveText("Maria José Conceição"); // a column holding no AI is left as it is
   await on(page, "scan");
@@ -1857,27 +1857,27 @@ test("in bulk: a patient list's columns guessed, names with accents encoded for 
   await page.locator(".generate label.check", { hasText: "One ZPL file" }).locator("input").check();
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
   const zpl = execFileSync("unzip", ["-p", (await download.path())!, "labels_gs1-datamatrix_203dpi.zpl"], { encoding: "utf8" });
-  for (const field of ["^FDMaria José Conceição^FS", "^FDJoão Silva^FS", "_17254Maria%20Jos%C3%A9_17253Concei%C3%A7%C3%A3o^FS", "_17254Jo%C3%A3o_17253Silva^FS"]) {
+  for (const field of ["^FDMaria José Conceição^FS", "^FDJoão Silva^FS", "_17254Maria+Jos%C3%A9_17253Concei%C3%A7%C3%A3o^FS", "_17254Jo%C3%A3o_17253Silva^FS"]) {
     expect(zpl).toContain(field);
   }
 });
 
 // One code (backlog 1.9, an open point since session 42): a name typed with spaces and accents as people write it, the
-// tool writing it as %XX for the code, as in bulk; a pasted name shown as people read it.
+// tool writing its spaces as + and its accents as %XX for the code, as in bulk; a pasted name shown as people read it.
 test("one code: a name typed with spaces and accents written as %XX in the code, a pasted one shown as written", async ({ page }) => {
   await page.fill("#paste", "(8018)950600013435200008(7254)Jo%C3%A3o");
   await page.getByRole("button", { name: "Fill in" }).click();
   const name = page.locator(".attr").first();
   await expect(name.getByLabel("Attribute value")).toHaveValue("João");
-  await expect(name.locator(".hint")).toHaveText("up to 40 characters · spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9) → In the code: (7254) Jo%C3%A3o");
+  await expect(name.locator(".hint")).toHaveText("up to 40 characters · spaces written as + and accents and other characters as %XX in the code (e.g. é as %C3%A9) → In the code: (7254) Jo%C3%A3o");
   await name.getByLabel("Attribute value").fill("Maria José");
-  await expect(name.locator(".hint")).toContainText("→ In the code: (7254) Maria%20Jos%C3%A9");
+  await expect(name.locator(".hint")).toContainText("→ In the code: (7254) Maria+Jos%C3%A9");
   await page.getByRole("button", { name: "+ Add attributes" }).click();
   const surname = page.locator(".attr").last();
   await surname.getByLabel("Attribute (AI)").fill("7253");
   await surname.getByLabel("Attribute value").fill("Conceição");
   await expect(surname.locator(".hint")).toContainText("→ In the code: (7253) Concei%C3%A7%C3%A3o");
-  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/8018/950600013435200008?7254=Maria%2520Jos%25C3%25A9&7253=Concei%25C3%25A7%25C3%25A3o");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/8018/950600013435200008?7254=Maria%2BJos%25C3%25A9&7253=Concei%25C3%25A7%25C3%25A3o");
   await expect(page.locator(".status")).toContainText("✓");
   // A data attribute that is not percent-encoded is left to the Syntax Engine, which refuses the space
   await page.getByRole("button", { name: "+ Add attributes" }).click();
@@ -1898,12 +1898,38 @@ test("one code: a name typed with spaces and accents written as %XX in the code,
   await page.fill("#el-text", "{7254} {7253}");
   await expect(page.locator('.preview .symbol svg [aria-label="Maria José Conceição"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Scan test" }).click();
-  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (8018)950600013435200008(7254)Maria%20Jos%C3%A9(7253)Concei%C3%A7%C3%A3o", { timeout: 30_000 });
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (8018)950600013435200008(7254)Maria+Jos%C3%A9(7253)Concei%C3%A7%C3%A3o", { timeout: 30_000 });
   await on(page, "export");
   const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
   const text = readFileSync((await zpl.path())!, "utf8");
   expect(text).toContain("^FDMaria José Conceição^FS");
-  expect(text).toContain("_17254Maria%20Jos%C3%A9_17253Concei%C3%A7%C3%A3o");
+  expect(text).toContain("_17254Maria+Jos%C3%A9_17253Concei%C3%A7%C3%A3o");
+});
+
+// A name or address on the GS1 Logistic Label (backlog 4.1, an open point since session 44): typed as people write it,
+// its spaces written as + (General Specifications 3.8.29, 7.11: "A space character should be encoded as a single plus
+// symbol") and its accents as %XX in the code and the HRI, as the barcode carries it (4.14); the middle block's content
+// as people read it, being text with a data title and no AI (6.6.4.2, 4.14.1).
+test("the GS1 Logistic Label: a ship-to name as people read it in the middle block, as the code carries it under the symbols", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await page.getByRole("button", { name: "+ Add attributes" }).click();
+  const row = page.locator(".attr").last();
+  await row.getByLabel("Attribute (AI)").fill("4300");
+  await row.getByLabel("Attribute value").fill("Café Rio");
+  await expect(row.locator(".hint")).toContainText("spaces written as + and accents and other characters as %XX in the code");
+  await expect(row.locator(".hint")).toContainText("→ In the code: (4300) Caf%C3%A9+Rio");
+  await expect(page.locator(".status")).toContainText("✓");
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "a5");
+  const svg = page.locator(".preview .symbol svg");
+  await expect(svg.locator('[aria-label="SHIP TO COMP"]')).toHaveCount(1);
+  await expect(svg.locator('[aria-label="Café Rio"]')).toHaveCount(1);
+  await expect(svg.locator('[aria-label="(4300)Caf%C3%A9+Rio"]')).toHaveCount(1);
+  await expect(svg.locator('[aria-label="Caf%C3%A9+Rio"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("]C1 (4300)Caf%C3%A9+Rio", { timeout: 30_000 });
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended");
 });
 
 // A person's sex typed as a word (backlog 2.1, an open point since session 42): (7252) takes ISO/IEC 5218's digit, which

@@ -83,7 +83,7 @@ export function carriesTime(ai: string): boolean {
 
 /**
  * Whether an AI's value is percent-encoded (the pcenc linter): a character outside the General Specifications' CSET 82,
- * such as a space or a letter with an accent, written as %XX for each of its UTF-8 bytes, as the names and addresses of
+ * such as a letter with an accent written as %XX for each of its UTF-8 bytes, a space as a plus sign, as the names and addresses of
  * (4300)–(4320) and (7253)–(7259).
  */
 export function isPercentEncoded(ai: string): boolean {
@@ -96,15 +96,19 @@ const PCENC_LINTERS = new Set(["pcenc"]);
 const CSET82_BUT_PERCENT = /[!"&'()*+,\-./0-9:;<=>?A-Z_a-z]/;
 
 /**
- * Text as a percent-encoded AI takes it (`isPercentEncoded`): each character outside CSET 82 as %XX for each of its
- * UTF-8 bytes, in capitals (`Maria José` → `Maria%20Jos%C3%A9`). A percent sign followed by two hexadecimal digits is
- * taken as already encoded and kept, so text encoded once is not encoded again; any other percent sign becomes %25.
+ * Text as a percent-encoded AI takes it (`isPercentEncoded`): a space as a plus sign, as the General Specifications
+ * say it should be (3.8.29, 7.11: "A space character should be encoded as a single plus symbol, +"), and each other
+ * character outside CSET 82 as %XX for each of its UTF-8 bytes, in capitals (`Maria José` → `Maria+Jos%C3%A9`). A plus
+ * sign already stands for a space and is kept, as is a percent sign followed by two hexadecimal digits, taken as
+ * already encoded, so text encoded once is not encoded again (a plus sign meant as itself is typed %2B); any other
+ * percent sign becomes %25.
  */
 export function percentEncode(text: string): string {
   let out = "";
   for (let i = 0; i < text.length; ) {
     const char = String.fromCodePoint(text.codePointAt(i)!);
-    if (CSET82_BUT_PERCENT.test(char) || (char === "%" && /^[0-9A-Fa-f]{2}$/.test(text.slice(i + 1, i + 3)))) out += char;
+    if (char === " ") out += "+";
+    else if (CSET82_BUT_PERCENT.test(char) || (char === "%" && /^[0-9A-Fa-f]{2}$/.test(text.slice(i + 1, i + 3)))) out += char;
     else for (const byte of new TextEncoder().encode(char)) out += `%${byte.toString(16).toUpperCase().padStart(2, "0")}`;
     i += char.length;
   }
@@ -112,11 +116,13 @@ export function percentEncode(text: string): string {
 }
 
 /**
- * A percent-encoded value as people read it (`Maria%20Jos%C3%A9` → `Maria José`); a run of %XX that is not UTF-8 is
- * kept as it is.
+ * A percent-encoded value as people read it (`Maria+Jos%C3%A9` and `Maria%20Jos%C3%A9` → `Maria José`): a plus sign
+ * as a space, each run of %XX as the characters its UTF-8 bytes make (%2B a plus sign); a run that is not UTF-8 is kept
+ * as it is.
  */
 export function percentDecode(value: string): string {
-  return value.replace(/(?:%[0-9A-Fa-f]{2})+/g, (run) => {
+  return value.replace(/\+|(?:%[0-9A-Fa-f]{2})+/g, (run) => {
+    if (run === "+") return " ";
     try {
       return decodeURIComponent(run);
     } catch {
@@ -284,7 +290,7 @@ const LINTS: Record<string, string> = {
   longitude: "longitude",
   iban: "IBAN",
   key: "starts with a GS1 Company Prefix",
-  pcenc: "spaces, accents and other characters written as %XX in the code (e.g. é as %C3%A9)",
+  pcenc: "spaces written as + and accents and other characters as %XX in the code (e.g. é as %C3%A9)",
   pieceoftotal: "piece and total, e.g. 0102 (piece 1 of 2)",
   posinseqslash: "position/total, e.g. 1/2",
   mediatype: "AIDC media type (2 digits)",

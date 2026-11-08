@@ -1,4 +1,4 @@
-import { aiEntry } from "./dictionary.ts";
+import { aiEntry, isPercentEncoded, percentDecode } from "./dictionary.ts";
 import { dotsWithin, MM_PER_INCH } from "./dots.ts";
 import { parseElementString, type Element } from "./elementString.ts";
 import { encode, widthInModules } from "./encode.ts";
@@ -156,7 +156,9 @@ function wrapped(line: string, room: number, measure: (text: string) => number):
 
 /**
  * The GS1 Logistic Label of an element string with an SSCC; a `RangeError` when it has none or does not fit the page.
- * The free text is 3.5 mm high, or 3 mm when its wrapped lines would leave the label too short at 3.5.
+ * The free text is 3.5 mm high, or 3 mm when its wrapped lines would leave the label too short at 3.5. A name or an
+ * address whose AI is percent-encoded shows in the middle block as people read it (`percentDecode`), under the
+ * symbols as the code carries it.
  */
 export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabel {
   try {
@@ -260,13 +262,17 @@ function layOut(input: LogisticInput, font: HriFont, freeTextMm: number): Logist
     y += u(BLOCK_GAP_MM);
   }
 
-  // Middle block: each element string's data title above its content, as many on a row as fit (6.6.4.2, 6.6.4.3)
+  // Middle block: each element string's data title above its content, as many on a row as fit (6.6.4.2, 6.6.4.3). A
+  // percent-encoded AI's content as people read it (Jo%C3%A3o+Silva → João Silva): this is text with data titles,
+  // "the text equivalent of the data elements" for manual operations, which carries no AI and so may differ from the
+  // HRI (4.14.1); the HRI under the symbols keeps the encoded value, as the barcode carries it (4.14).
   const items = elements.map((e) => {
     const titles = titleLines(aiEntry(e.ai)?.title ?? `AI (${e.ai})`, e.ai);
+    const value = isPercentEncoded(e.ai) ? percentDecode(e.value) : e.value;
     // A content wider than the page with its margins takes narrower margins, and a smaller height only when even they fail
     const room = width - 2 * u(NARROW_MARGIN_MM);
-    const content = Math.min(DATA_CONTENT_MM, (DATA_CONTENT_MM * room) / font.textWidth(e.value, em(DATA_CONTENT_MM)));
-    return { titles, value: e.value, content, w: Math.max(...titles.map((t) => font.textWidth(t, em(DATA_TITLE_MM))), font.textWidth(e.value, em(content))) };
+    const content = Math.min(DATA_CONTENT_MM, (DATA_CONTENT_MM * room) / font.textWidth(value, em(DATA_CONTENT_MM)));
+    return { titles, value, content, w: Math.max(...titles.map((t) => font.textWidth(t, em(DATA_TITLE_MM))), font.textWidth(value, em(content))) };
   });
   // The block's left edge: the margin, or as far left as its widest line needs
   const left = Math.max(u(NARROW_MARGIN_MM), Math.min(u(MARGIN_MM), width - u(NARROW_MARGIN_MM) - Math.max(...items.map((i) => i.w))));

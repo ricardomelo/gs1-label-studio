@@ -178,9 +178,9 @@ export function resolveDecimal(ai: string, value: string): [string, string] {
 
 /**
  * An attribute as typed, as the code carries it: a decimal family's number as its digits (`resolveDecimal`), and a
- * percent-encoded AI's text (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, with its spaces and
- * other characters outside CSET 82 written as %XX (`percentEncode`: "Maria José" → "Maria%20Jos%C3%A9"; %XX already
- * written is kept); and a person's sex, (7252) BIO SEX (`isSexCode`), as ISO/IEC 5218's code from a word in any of the
+ * percent-encoded AI's text (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, with its spaces
+ * written as plus signs and its other characters outside CSET 82 as %XX (`percentEncode`: "Maria José" →
+ * "Maria+Jos%C3%A9"; %XX already written is kept); and a person's sex, (7252) BIO SEX (`isSexCode`), as ISO/IEC 5218's code from a word in any of the
  * six languages (`sexCode`: "Feminino" → "2"; a letter is not guessed). Anything else is left unchanged, for the Syntax
  * Engine to check.
  */
