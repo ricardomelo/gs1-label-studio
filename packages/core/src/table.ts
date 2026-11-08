@@ -1,6 +1,6 @@
 // Rows for bulk generation (backlog 2.1): a CSV file, rows pasted from a spreadsheet, or an Excel workbook, read in the
 // browser without a library. The first row holds the headers. Cells stay text, as typed: a GTIN keeps its leading
-// zeros; a date Excel stores as a number comes out as YYYY-MM-DD.
+// zeros; a date Excel stores as a number comes out as YYYY-MM-DD, a time alone as HH:MM.
 
 export interface Table {
   headers: string[];
@@ -131,14 +131,28 @@ function attribute(tag: string, name: string): string | undefined {
 }
 
 /** Built-in number formats that are dates (ECMA-376, 18.8.30), and custom ones that show a day, month or year. */
-const DATE_FORMATS = new Set([14, 15, 16, 17, 22, 27, 30, 36, 45, 46, 47, 50, 57]);
+const DATE_FORMATS = new Set([14, 15, 16, 17, 22, 27, 30, 36, 50, 57]);
 
-/** How much of a time a date format shows after its date: none, hours and minutes, or seconds too. */
+/** Built-in number formats that are a time alone (ECMA-376, 18.8.30): h:mm, h:mm:ss, with AM/PM or not; mm:ss. */
+const TIME_FORMATS = new Map<number, ExcelTime>([[18, "minutes"], [19, "seconds"], [20, "minutes"], [21, "seconds"],
+  [45, "seconds"], [46, "seconds"], [47, "seconds"]]);
+
+/** How much of a time a format shows: none, hours and minutes, or seconds too. */
 export type ExcelTime = "none" | "minutes" | "seconds";
 
-/** The date styles by their index, each with the time its format shows (the built-in format 22, m/d/yy h:mm, minutes). */
-function dateStyles(styles: string | undefined): Map<number, ExcelTime> {
-  const out = new Map<number, ExcelTime>();
+/** A style that shows a date (with the time its format shows after it) or a time alone. */
+interface TimeStyle {
+  date: boolean;
+  time: ExcelTime;
+}
+
+/**
+ * The styles that show a date or a time, by their index: a date with the time its format shows (the built-in format
+ * 22, m/d/yy h:mm, minutes), or a time alone (h:mm, h:mm:ss, a custom format holding h or s but no day, month or year).
+ * AM/PM is not read as a month's M.
+ */
+function timeStyles(styles: string | undefined): Map<number, TimeStyle> {
+  const out = new Map<number, TimeStyle>();
   if (!styles) return out;
   const custom = new Map<number, string>();
   for (const [tag] of styles.matchAll(/<(?:\w+:)?numFmt\s[^>]*>/g)) {
@@ -147,11 +161,14 @@ function dateStyles(styles: string | undefined): Map<number, ExcelTime> {
   const xfs = /<(?:\w+:)?cellXfs[^>]*>([\s\S]*?)<\/(?:\w+:)?cellXfs>/.exec(styles)?.[1] ?? "";
   [...xfs.matchAll(/<(?:\w+:)?xf\s[^>]*>/g)].forEach(([tag], index) => {
     const id = Number(attribute(tag, "numFmtId") ?? 0);
-    const code = (custom.get(id) ?? "").replace(/"[^"]*"|\[[^\]]*\]|\\./g, "");
+    const builtIn = TIME_FORMATS.get(id);
+    if (builtIn) return out.set(index, { date: false, time: builtIn });
+    // Quoted text, escapes and brackets (a colour, a locale) left out, but an elapsed time's [h], [m] or [s] kept
+    const code = (custom.get(id) ?? "").replace(/"[^"]*"|\[(?!h+\]|m+\]|s+\])[^\]]*\]|\\./gi, "")
+      .replace(/AM\/PM/gi, "");
     const date = DATE_FORMATS.has(id) || /[dy]/i.test(code) || /m/i.test(code.replace(/h+[^a-z]*m+|m+[^a-z]*s+/gi, ""));
-    if (!date) return;
-    const time = id === 22 || /h/i.test(code) ? (/s/i.test(code) ? "seconds" : "minutes") : "none";
-    out.set(index, time);
+    const time = /s/i.test(code) ? "seconds" : id === 22 || /h/i.test(code) ? "minutes" : "none";
+    if (date || time !== "none") out.set(index, { date, time });
   });
   return out;
 }
@@ -164,6 +181,17 @@ export function excelDate(serial: number, time: ExcelTime = "none"): string {
   const seconds = time === "none" ? Math.floor(serial) * 86_400 : Math.round(serial * 86_400);
   const iso = new Date((seconds - 25569 * 86_400) * 1000).toISOString(); // 25569: 1970-01-01
   return time === "none" ? iso.slice(0, 10) : `${iso.slice(0, 10)} ${iso.slice(11, time === "seconds" ? 19 : 16)}`;
+}
+
+/**
+ * The time of day of an Excel serial whose format shows a time alone, as HH:MM, or HH:MM:SS when the format shows
+ * seconds, on a 24-hour clock whatever AM/PM the format shows, to the nearest second; any whole days are left out.
+ */
+export function excelTimeOfDay(serial: number, time: Exclude<ExcelTime, "none">): string {
+  const seconds = ((Math.round(serial * 86_400) % 86_400) + 86_400) % 86_400;
+  const two = (n: number) => String(n).padStart(2, "0");
+  const clock = `${two(Math.floor(seconds / 3600))}:${two(Math.floor(seconds / 60) % 60)}`;
+  return time === "seconds" ? `${clock}:${two(seconds % 60)}` : clock;
 }
 
 /** A number cell as Excel shows it: at most 15 significant digits (0.1 + 0.2 is 0.3, not 0.30000000000000004). */
@@ -198,7 +226,7 @@ export async function parseXlsx(bytes: Uint8Array): Promise<Table> {
   const sheet = text(sheetPath);
   if (!sheet) throw new TableError(`The workbook's first worksheet (${sheetPath}) is missing.`);
   const shared = [...(text("xl/sharedStrings.xml") ?? "").matchAll(/<(?:\w+:)?si>([\s\S]*?)<\/(?:\w+:)?si>/g)].map((m) => texts(m[1]!));
-  const dates = dateStyles(text("xl/styles.xml"));
+  const times = timeStyles(text("xl/styles.xml"));
 
   const records: string[][] = [];
   for (const [, rowXml] of sheet.matchAll(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g)) {
@@ -208,12 +236,13 @@ export async function parseXlsx(bytes: Uint8Array): Promise<Table> {
       const index = reference ? column(reference) : record.length;
       const type = attribute(tag!, "t") ?? "n";
       const value = unescapeXml(/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/.exec(body ?? "")?.[1] ?? "");
-      const dateTime = dates.get(Number(attribute(tag!, "s") ?? 0));
+      const style = times.get(Number(attribute(tag!, "s") ?? 0));
       let cell: string;
       if (type === "s") cell = shared[Number(value)] ?? "";
       else if (type === "inlineStr") cell = texts(body ?? "");
       else if (type === "b") cell = value === "1" ? "TRUE" : "FALSE";
-      else if (type === "n" && value && dateTime) cell = excelDate(Number(value), dateTime);
+      else if (type === "n" && value && style?.date) cell = excelDate(Number(value), style.time);
+      else if (type === "n" && value && style && style.time !== "none") cell = excelTimeOfDay(Number(value), style.time);
       else if (type === "n" && value) cell = excelNumber(value);
       else cell = value;
       while (record.length < index) record.push("");

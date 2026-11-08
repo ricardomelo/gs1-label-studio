@@ -58,7 +58,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `packages/core/assets/fonts/` | Liberation Sans (SIL Open Font License), for the human readable text as outlines |
 | `packages/core/test/` | Vitest tests (`*.test.ts`), helpers (`files.ts`, `font.ts`, `png.ts`, `resolver.ts`) and fixtures |
 | `packages/core/test/fixtures/resolver/` | The resolver's own answers, written by `scripts/resolver-reference/golden.py` |
-| `packages/core/test/fixtures/bulk/` | The test workbooks (`products.xlsx`, `times.xlsx` with dates and times) and the scripts that write them |
+| `packages/core/test/fixtures/bulk/` | The test workbooks (`products.xlsx`, `times.xlsx` with dates and times, a harvest period and cells of a time alone) and the scripts that write them |
 | `apps/web/src/` | The application (section 6) |
 | `apps/web/e2e/` | Playwright browser tests of the editor |
 | `apps/web/test/` | Vitest unit tests of the web application: its languages |
@@ -272,7 +272,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
 | `batch` | label sheets, several-page PDF, file names, generating every row | 15 |
-| `bulk` | columns guessed from headers, cells normalised, rows checked | 42 |
+| `bulk` | columns guessed from headers, cells normalised, rows checked | 44 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
 | `dots` | the printer's dot grid | 3 |
@@ -301,7 +301,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `sign` | the signed payload, JWS, workflows, saved keys, credentials | 8 |
 | `specifications` | every row of tables 1 to 13 against the standard's text | 143 |
 | `syntax` | input through the Syntax Engine, what each symbol carries, characters encoded | 15 |
-| `table` | CSV and Excel read without a library | 11 |
+| `table` | CSV and Excel read without a library | 14 |
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 9 |
@@ -311,7 +311,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 72 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 73 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

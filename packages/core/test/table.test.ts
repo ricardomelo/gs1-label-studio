@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { excelDate, excelNumber, parseDelimited, parseTableFile, parseXlsx, TableError, zipArchive } from "../src/index.ts";
+import { excelDate, excelNumber, excelTimeOfDay, parseDelimited, parseTableFile, parseXlsx, TableError, zipArchive } from "../src/index.ts";
 
 // Rows for bulk generation (item 2.1): CSV, rows pasted from a spreadsheet and Excel workbooks, read without a library.
 
@@ -78,11 +78,53 @@ describe("Excel workbooks", () => {
     expect(excelDate(46387, "minutes")).toBe("2026-12-31 00:00");
   });
 
+  it("writes a time alone on a 24-hour clock, to the nearest second, any whole days left out", () => {
+    expect(excelTimeOfDay(0.6458333333333334, "minutes")).toBe("15:30");
+    expect(excelTimeOfDay(0.6458333333333334, "seconds")).toBe("15:30:00");
+    expect(excelTimeOfDay(0.999988425925926, "seconds")).toBe("23:59:59");
+    expect(excelTimeOfDay(0.99999999, "seconds")).toBe("00:00:00"); // 23:59:59.999 rounds to midnight
+    expect(excelTimeOfDay(0.33690972222, "seconds")).toBe("08:05:09");
+    expect(excelTimeOfDay(0.33690972222, "minutes")).toBe("08:05");
+    expect(excelTimeOfDay(0, "minutes")).toBe("00:00");
+    expect(excelTimeOfDay(46387.75, "minutes")).toBe("18:00");
+  });
+
   it("reads a workbook's date cells with the time their format shows: its own, Excel's built-in 22, or none", async () => {
     const table = await parseXlsx(new Uint8Array(readFileSync(new URL("./fixtures/bulk/times.xlsx", import.meta.url))));
-    expect(table.rows).toEqual([
+    expect(table.rows.map((row) => row.slice(0, 5))).toEqual([
       ["09506000134376", "2027-12-31 15:30", "2026-10-01 08:05:09", "2027-06-30", "2027-12-31 15:30"],
       ["09506000134352", "2028-01-05 00:00", "2026-10-01 23:59:59", "2027-06-30", "2028-01-05 23:59"],
+    ]);
+  });
+
+  it("tells a time alone from a date by each style's format: built-in or custom, AM/PM and brackets left out", async () => {
+    // One column per style: the format, then how 1.75 (a day and 18:00) or 46387.75 (31/12/2026 18:00) reads.
+    const formats: [number | string, number, string][] = [
+      [20, 0.75, "18:00"], [21, 0.75, "18:00:00"], [18, 0.75, "18:00"], [19, 0.75, "18:00:00"],
+      [45, 0.75, "18:00:00"], [46, 1.75, "18:00:00"], [47, 0.75, "18:00:00"], // mm:ss, [h]:mm:ss, mmss.0
+      ["h:mm AM/PM", 0.75, "18:00"], ["hh:mm A/P", 0.75, "18:00"], ["[h]:mm", 1.75, "18:00"], ["mm:ss", 0.75, "18:00:00"],
+      ["[$-409]h:mm:ss AM/PM;@", 0.75, "18:00:00"], ['h"h"mm', 0.75, "18:00"],
+      [14, 46387.75, "2026-12-31"], ["dd/mm/yyyy h:mm AM/PM", 46387.75, "2026-12-31 18:00"], ["mmm-yy", 46387, "2026-12-31"],
+      [0, 0.75, "0.75"], ["0.00", 0.75, "0.75"], ["[Red]0.00;[Blue]-0.00", 0.75, "0.75"], ['0 "pcs"', 3, "3"],
+    ];
+    const custom = formats.flatMap(([f], i) => (typeof f === "string" ? [`<numFmt numFmtId="${164 + i}" formatCode="${f.replace(/"/g, "&quot;")}"/>`] : []));
+    const xfs = formats.map(([f], i) => `<xf numFmtId="${typeof f === "string" ? 164 + i : f}"/>`);
+    const cells = formats.map(([, v], i) => `<c r="${String.fromCharCode(65 + i)}2" s="${i}"><v>${v}</v></c>`);
+    const header = formats.map((_, i) => `<c r="${String.fromCharCode(65 + i)}1" t="inlineStr"><is><t>c${i}</t></is></c>`);
+    const encode = (text: string) => new TextEncoder().encode(text);
+    const zip = await zipArchive([
+      { name: "xl/workbook.xml", bytes: encode('<workbook><sheets><sheet name="T" sheetId="1"/></sheets></workbook>') },
+      { name: "xl/styles.xml", bytes: encode(`<styleSheet><numFmts>${custom.join("")}</numFmts><cellXfs>${xfs.join("")}</cellXfs></styleSheet>`) },
+      { name: "xl/worksheets/sheet1.xml", bytes: encode(`<worksheet><sheetData><row r="1">${header.join("")}</row><row r="2">${cells.join("")}</row></sheetData></worksheet>`) },
+    ]);
+    expect((await parseXlsx(zip)).rows[0]).toEqual(formats.map(([, , out]) => out));
+  });
+
+  it("reads a workbook's time cells as HH:MM or HH:MM:SS: Excel's built-in 18, a custom format with AM/PM", async () => {
+    const table = await parseXlsx(new Uint8Array(readFileSync(new URL("./fixtures/bulk/times.xlsx", import.meta.url))));
+    expect(table.rows.map((row) => row.slice(5))).toEqual([
+      ["01/09/2027 - 15/09/2027", "15:30"],
+      ["2027-09-01 to 2027-09-15", "23:59:59"],
     ]);
   });
 });

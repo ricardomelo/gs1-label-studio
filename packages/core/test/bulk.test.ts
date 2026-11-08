@@ -75,7 +75,43 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("7011", "2027-06-30 00:00")).toBe("2706300000"); // midnight typed
     expect(normaliseCell("7011", "2027-06-30 00:00:00")).toBe("270630"); // a date alone, exported: its time optional
     expect(normaliseCell("7011", "30/06/2027 00:00:00")).toBe("270630");
-    expect(normaliseCell("7011", "2027-06-30 10:15 AM")).toBe("2027-06-30 10:15 AM"); // left for the engine to refuse
+  });
+
+  it("reads a time on a 12-hour clock with AM or PM: 12 AM is 00, 12 PM is 12", () => {
+    expect(normaliseCell("7011", "2027-06-30 10:15 AM")).toBe("2706301015");
+    expect(normaliseCell("7003", "31/12/2027 3:30 PM")).toBe("2712311530");
+    expect(normaliseCell("7003", "31/12/2027 3:30PM")).toBe("2712311530");
+    expect(normaliseCell("7003", "31/12/2027 03:30 p.m.")).toBe("2712311530");
+    expect(normaliseCell("7003", "31/12/2027 9:05 am")).toBe("2712310905");
+    expect(normaliseCell("7003", "31/12/2027 12:10 AM")).toBe("2712310010");
+    expect(normaliseCell("7003", "31/12/2027 12:10 PM")).toBe("2712311210");
+    expect(normaliseCell("7003", "2027-12-31 11:59 PM")).toBe("2712312359");
+    expect(normaliseCell("8008", "01/10/2026 8:05:09 PM")).toBe("261001200509");
+    expect(normaliseCell("7011", "2027-06-30 12:00:00 AM")).toBe("270630"); // midnight with its seconds, as exported
+    expect(normaliseCell("7003", "31/12/2027 13:30 PM")).toBe("31/12/2027 13:30 PM"); // left for the engine to refuse
+    expect(normaliseCell("7003", "31/12/2027 0:30 AM")).toBe("31/12/2027 0:30 AM");
+    expect(normaliseCell("17", "31/12/2027 3:30 PM")).toBe("271231"); // (17) carries no time: dropped
+    expect(normaliseCell("17", "31/12/2027 0:30 AM")).toBe("271231");
+  });
+
+  it("reads (7007)'s harvest period as two dates, YYMMDDYYMMDD, and its first date alone as YYMMDD", () => {
+    expect(normaliseCell("7007", "01/09/2027 - 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027–15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "2027-09-01 — 2027-09-15")).toBe("270901270915");
+    expect(normaliseCell("7007", "2027-09-01 to 2027-09-15")).toBe("270901270915");
+    expect(normaliseCell("7007", "1/9/27 a 15/9/27")).toBe("270901270915");
+    expect(normaliseCell("7007", "01.09.2027 até 15.09.2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027 AL 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027 hasta 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "2027-09-01 2027-09-15")).toBe("270901270915");
+    expect(normaliseCell("7007", "270901 - 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "270901270915")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027")).toBe("270901");
+    expect(normaliseCell("7007", "2027-09-01 00:00:00")).toBe("270901"); // an Excel date: (7007) carries no time
+    expect(normaliseCell("7007", "01/09/2027 - soon")).toBe("01/09/2027 - soon"); // left for the engine to refuse
+    expect(normaliseCell("7007", "01/09/2027 - 15/09/2027 - 30/09/2027")).toBe("01/09/2027 - 15/09/2027 - 30/09/2027");
+    expect(normaliseCell("7003", "2027-09-01 2027-09-15")).toBe("2027-09-01 2027-09-15"); // (7003)'s second part is a time
+    expect(normaliseCell("17", "01/09/2027 - 15/09/2027")).toBe("01/09/2027 - 15/09/2027");
   });
 
   it("writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM", () => {
@@ -137,11 +173,11 @@ describe("rows as identifications", () => {
   it("keeps the time of a workbook's date cells for the AIs that carry one, as each cell's format shows it", async () => {
     const table = await parseXlsx(new Uint8Array(readFileSync(new URL("./fixtures/bulk/times.xlsx", import.meta.url))));
     const mapping = guessMapping(table.headers);
-    expect(mapping).toEqual(["01", "7003", "8008", "7011", "17"]);
+    expect(mapping).toEqual(["01", "7003", "8008", "7011", "17", "7007", null]);
     const rows = checkRows(engine, table, mapping);
     expect(rows.map((r) => r.identified?.elementString ?? r.error)).toEqual([
-      "(01)09506000134376(7003)2712311530(8008)261001080509(7011)270630(17)271231",
-      "(01)09506000134352(7003)2801050000(8008)261001235959(7011)270630(17)280105",
+      "(01)09506000134376(7003)2712311530(8008)261001080509(7011)270630(17)271231(7007)270901270915",
+      "(01)09506000134352(7003)2801050000(8008)261001235959(7011)270630(17)280105(7007)270901270915",
     ]);
   });
 

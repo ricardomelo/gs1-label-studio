@@ -90,30 +90,62 @@ export function guessMapping(headers: string[]): ColumnMapping {
  * A cell as the AI takes it. Dates — AIs whose value starts with YYMMDD — are also read as YYYY-MM-DD (what an Excel
  * date becomes), day first as DD/MM/YYYY or DD/MM/YY (also with "-" or "."), and given as YYMMDD. A time HH:MM after a
  * date is kept as HHMM when the AI carries one (`carriesTime`), as (7003), (4324) or (8008), with its seconds when the
- * AI takes them, as (8008); else it is dropped. Midnight with its seconds, 00:00:00, is how a date alone is exported,
- * so an AI whose time is optional, as (7011), leaves it out. A date whose year has four digits, YYYYMMDD as (7250)'s
- * (`isFullYearDate`), is read from YYYY-MM-DD and DD/MM/YYYY alone, since a date of birth's century cannot be guessed.
- * Anything else is left as it is, for the Syntax Engine to judge.
+ * AI takes them, as (8008); else it is dropped. A time may be on a 12-hour clock, followed by AM or PM (also am, a.m.,
+ * p.m.): 12 AM is 00, 12 PM is 12. Midnight with its seconds, 00:00:00, is how a date alone is exported, so an AI whose
+ * time is optional, as (7011), leaves it out. An AI whose second part is a date too, as (7007)'s harvest period, also
+ * takes two dates, a range with a dash, "to", "a", "al", "até" or "hasta" between them (or spaces alone), as YYMMDDYYMMDD.
+ * A date whose year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), is read from YYYY-MM-DD and DD/MM/YYYY
+ * alone, since a date of birth's century cannot be guessed. Anything else is left as it is, for the Syntax Engine to
+ * judge.
  */
 export function normaliseCell(ai: string, raw: string): string {
   const value = raw.trim();
   if (!isDateAi(ai)) return value;
   if (/^\d{6}$/.test(value)) return value;
-  const full = isFullYearDate(ai);
-  const time = (hh?: string, mi?: string, ss?: string) => {
-    const parts = aiEntry(ai)?.components.slice(1) ?? [];
-    if (!hh || !carriesTime(ai) || (hh === "00" && mi === "00" && ss === "00" && parts[0]?.optional)) return "";
-    return hh + mi + (ss && parts.some((c) => c.linters.includes("ss")) ? ss : "");
-  };
-  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(value);
-  if (iso) return (full ? iso[1]! : iso[1]!.slice(2)) + iso[2] + iso[3] + time(iso[4], iso[5], iso[6]);
-  const dayFirst = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})(?: (\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(value);
-  if (dayFirst) {
-    const [, d, m, y, hh, mi, ss] = dayFirst;
-    if (full && y!.length === 2) return value;
-    return (full ? y! : y!.slice(-2)) + m!.padStart(2, "0") + d!.padStart(2, "0") + time(hh?.padStart(2, "0"), mi, ss);
+  const date = dateCell(ai, value);
+  if (date !== undefined) return date;
+  const parts = aiEntry(ai)?.components ?? [];
+  if (parts[1]?.linters.includes("yymmdd")) {
+    const range = /^(.+?)(?:\s*[–—]\s*|\s+-\s+|\s+(?:to|a|al|até|hasta)\s+|\s+)(.+)$/i.exec(value);
+    const half = (text: string) => (/^\d{6}$/.test(text) ? text : dateCell(ai, text, false));
+    const [first, second] = range ? [half(range[1]!), half(range[2]!)] : [];
+    if (first && second) return first + second;
   }
   return value;
+}
+
+/** A time after a date, HH:MM or HH:MM:SS, perhaps on a 12-hour clock with AM or PM (also am, a.m., p.m.). */
+const CLOCK = /(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([ap])\.?\s?m\.?)?)?/.source;
+
+/** A date, with its time if the AI carries one (see `normaliseCell`), or undefined when the cell is not a date. */
+function dateCell(ai: string, value: string, timed = true): string | undefined {
+  const full = isFullYearDate(ai);
+  const clock = timed ? CLOCK : "";
+  const time = (hh?: string, mi?: string, ss?: string, half?: string): string | undefined => {
+    const parts = aiEntry(ai)?.components.slice(1) ?? [];
+    if (!hh || !carriesTime(ai)) return "";
+    if (half) {
+      const hour = Number(hh);
+      if (hour < 1 || hour > 12) return undefined; // 0 AM or 13 PM: left for the Syntax Engine to refuse
+      hh = String((hour % 12) + (/p/i.test(half) ? 12 : 0));
+    }
+    hh = hh.padStart(2, "0");
+    if (hh === "00" && mi === "00" && ss === "00" && parts[0]?.optional) return "";
+    return hh + mi + (ss && parts.some((c) => c.linters.includes("ss")) ? ss : "");
+  };
+  const iso = new RegExp(`^(\\d{4})-(\\d{2})-(\\d{2})${clock}$`, "i").exec(value);
+  if (iso) {
+    const at = time(iso[4], iso[5], iso[6], iso[7]);
+    return at === undefined ? undefined : (full ? iso[1]! : iso[1]!.slice(2)) + iso[2] + iso[3] + at;
+  }
+  const dayFirst = new RegExp(`^(\\d{1,2})[/.-](\\d{1,2})[/.-](\\d{4}|\\d{2})${clock.replace("[ T]", " ")}$`, "i").exec(value);
+  if (dayFirst) {
+    const [, d, m, y, hh, mi, ss, half] = dayFirst;
+    if (full && y!.length === 2) return undefined;
+    const at = time(hh, mi, ss, half);
+    return at === undefined ? undefined : (full ? y! : y!.slice(-2)) + m!.padStart(2, "0") + d!.padStart(2, "0") + at;
+  }
+  return undefined;
 }
 
 /**

@@ -209,7 +209,7 @@ export { labelEps } from "./eps.ts";
 export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
 export { expectedReads } from "./scan.ts";
-export { excelDate, excelNumber, parseDelimited, parseTableFile, parseXlsx, TableError, unzip, type ExcelTime, type Table } from "./table.ts";
+export { excelDate, excelNumber, excelTimeOfDay, parseDelimited, parseTableFile, parseXlsx, TableError, unzip, type ExcelTime, type Table } from "./table.ts";
 export {
   cellHint,
   checkRows,

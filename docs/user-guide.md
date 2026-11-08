@@ -546,7 +546,11 @@ its preview steps through the rows.
    to**. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
    (7003), (4324) or (8008), keeps a time after the date (`31/12/2027 15:30 → 2712311530`), (8008) its seconds too;
    (7011), whose time is optional, leaves out a midnight written with its seconds (`00:00:00`, how a date alone is
-   exported); other dates drop it. An Excel cell keeps the time its format shows (`dd/mm/yyyy hh:mm`). A date
+   exported); other dates drop it. A time may be on a 12-hour clock, with AM or PM (`31/12/2027 8:05 PM →
+   2712312005`). An Excel cell keeps the time its format shows (`dd/mm/yyyy hh:mm`), and a cell that holds a time
+   alone (`h:mm`, `h:mm AM/PM`) comes as HH:MM, as on a 24-hour clock, for a column shown on the label. (7007)'s
+   harvest period takes two dates in one cell, with a dash, *to*, *a* or *até* between them
+   (`01/09/2027 - 15/09/2027 → 270901270915`); its first date alone is a single day. A date
    of birth, (7250) or (7251), becomes YYYYMMDD from `1960-01-15` or `15/01/1960`, and (7251) keeps its time
    (`1960-01-15 08:30 → 196001150830`); a two-digit year such as `15/01/60` is left as typed and refused, since its
    century cannot be told.

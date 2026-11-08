@@ -571,7 +571,7 @@ test("in bulk: a date's time kept for the AIs that carry one, from a workbook an
   await expect(page.locator(".source")).toContainText("times.xlsx · sheet “Times” · 2 rows");
   await expect(page.locator(".summary")).toContainText("2 rows ready");
   // (7003) and (8008) keep their times, (8008) its seconds; (7011)'s cell shows no time; (17) carries none
-  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376?17=271231&7003=2712311530&8008=261001080509&7011=270630");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376?17=271231&7003=2712311530&8008=261001080509&7011=270630&7007=270901270915");
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
@@ -589,6 +589,34 @@ test("in bulk: a date's time kept for the AIs that carry one, from a workbook an
   const zip = (await download.path())!;
   const name = execFileSync("unzip", ["-Z1", zip], { encoding: "utf8" }).split("\n").find((n) => n.endsWith(".zpl"))!;
   expect(execFileSync("unzip", ["-p", zip, name], { encoding: "utf8" }).match(/\^FDEXP [^^]*\^FS/g)).toEqual(["^FDEXP 31/12/2027 15:30^FS", "^FDEXP 05/01/2028 00:00^FS"]);
+});
+
+// Backlog 4.2: a time on a 12-hour clock, (7007)'s harvest period and a workbook's time cell, read in bulk
+test("in bulk: a time with AM or PM, (7007)'s harvest period, and a workbook's time cell shown on the label", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\t(7003) Expiry time\t(7007) Harvest\n09506000134376\t31/12/2027 8:05 PM\t01/09/2027 – 15/09/2027\n" +
+    "09506000134352\t31/12/2027 12:30 AM\t01/09/2027 a 15/09/2027\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376?7003=2712312005&7007=270901270915");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352?7003=2712310030&7007=270901270915");
+  await on(page, "data");
+  // A workbook: the time cells (h:mm AM/PM, a custom hh:mm:ss AM/PM) as HH:MM and HH:MM:SS, in a column of its own
+  await page.locator("#rows-file").setInputFiles(new URL("../../../packages/core/test/fixtures/bulk/times.xlsx", import.meta.url).pathname);
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await expect(page.locator("#el-field option[value='{Packed at}']")).toHaveText("{Packed at} — 15:30");
+  await page.fill("#el-text", "PACKED {Packed at}");
+  await expect(page.locator('.preview .symbol svg [aria-label="PACKED 15:30"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator('.preview .symbol svg [aria-label="PACKED 23:59:59"]')).toHaveCount(1);
 });
 
 test("in bulk: pasted rows, a value for every row, and the columns remembered for the same headers", async ({ page }) => {

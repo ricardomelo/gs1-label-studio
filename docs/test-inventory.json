@@ -424,6 +424,14 @@
      "status": "passed"
     },
     {
+     "name": "cells as the AI takes them › reads a time on a 12-hour clock with AM or PM: 12 AM is 00, 12 PM is 12",
+     "status": "passed"
+    },
+    {
+     "name": "cells as the AI takes them › reads (7007)'s harvest period as two dates, YYMMDDYYMMDD, and its first date alone as YYMMDD",
+     "status": "passed"
+    },
+    {
      "name": "cells as the AI takes them › writes a date of birth as YYYYMMDD, its century never guessed, and (7251)'s time as HHMM",
      "status": "passed"
     },
@@ -3940,7 +3948,19 @@
      "status": "passed"
     },
     {
+     "name": "Excel workbooks › writes a time alone on a 24-hour clock, to the nearest second, any whole days left out",
+     "status": "passed"
+    },
+    {
      "name": "Excel workbooks › reads a workbook's date cells with the time their format shows: its own, Excel's built-in 22, or none",
+     "status": "passed"
+    },
+    {
+     "name": "Excel workbooks › tells a time alone from a date by each style's format: built-in or custom, AM/PM and brackets left out",
+     "status": "passed"
+    },
+    {
+     "name": "Excel workbooks › reads a workbook's time cells as HH:MM or HH:MM:SS: Excel's built-in 18, a custom format with AM/PM",
      "status": "passed"
     }
    ],
@@ -4274,6 +4294,15 @@
     },
     {
      "name": "in bulk: a date's time kept for the AIs that carry one, from a workbook and from pasted rows, on the label and in the print file",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a time with AM or PM, (7007)'s harvest period, and a workbook's time cell shown on the label",
      "status": "listed",
      "projects": [
       "desktop",

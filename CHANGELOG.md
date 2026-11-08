@@ -288,4 +288,9 @@
 - The keyboard's order (backlog 4.2, 8 November): **On the label** beside the chosen element in the list takes the
   focus to its outline on the label, which comes before the panel, so that Tab no longer has to go back past the
   export; Escape on the outline or the handle brings it back to the element in the list.
+- Times in bulk (backlog 4.2, 8 November): a cell's time may be on a 12-hour clock with AM or PM
+  (`31/12/2027 8:05 PM` → 2712312005); an Excel cell whose format shows a time alone (`h:mm`, `h:mm AM/PM`) comes out
+  as HH:MM or HH:MM:SS, as on a 24-hour clock, for a field on the label; it came out as a fraction of a day, and the
+  built-in `mm:ss` formats as a date of 1899; (7007)'s harvest period is read from two dates in one cell,
+  `01/09/2027 - 15/09/2027` → 270901270915.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
