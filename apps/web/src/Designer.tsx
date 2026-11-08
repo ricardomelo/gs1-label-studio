@@ -1,9 +1,10 @@
 import {
   aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
+import { gridLines, rulerTicks } from "./guides.ts";
 import { freeCorner, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
 import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
@@ -36,7 +37,8 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // Then the keyboard's order (mock-up A of two, 8 November 2026, taken under the owner's rule): the outline and the handle
 // come before the panel, so "On the label" beside the chosen element in the list takes the focus to its outline, and
 // Escape on the outline or the handle brings it back to the element's row; B sent the focus to the outline as soon as an
-// element was chosen in the list.
+// element was chosen in the list. Then the grid and rulers (mock-up A of two, 8 November 2026, taken under the owner's
+// rule; guides.ts): one button over the canvas turns them on or off; B had the grid alone, from a button by the zoom.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -126,13 +128,16 @@ interface ToolsProps {
   selected: string | null;
   symbology: SymbologyId;
   onChange: (page: DesignPage, selected: string | null) => void;
+  /** Whether the grid and rulers are drawn, and turning them on or off. */
+  guides: boolean;
+  onGuides: (on: boolean) => void;
 }
 
 /** The image file's name, without its extension, as the element is named. */
 const imageName = (file: File) => file.name.replace(/\.[^.]+$/, "") || file.name;
 
-/** + Barcode, + Text, + Shape, + Image and Delete, over the canvas. */
-export function DesignerTools({ page, selected, symbology, onChange }: ToolsProps) {
+/** + Barcode, + Text, + Shape, + Image, the grid and rulers, and Delete, over the canvas. */
+export function DesignerTools({ page, selected, symbology, onChange, guides, onGuides }: ToolsProps) {
   const file = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
   // A new element never lands exactly on another: a step right and down from one at its corner (place.ts)
@@ -176,6 +181,16 @@ export function DesignerTools({ page, selected, symbology, onChange }: ToolsProp
         }}
       />
       <span className="grow" />
+      <button
+        type="button"
+        className="btn toggle"
+        aria-pressed={guides}
+        data-testid="guides"
+        title={t("Lines every few millimetres over the label, and rulers along its top and left")}
+        onClick={() => onGuides(!guides)}
+      >
+        <span aria-hidden="true">#</span> {t("Grid and rulers")}
+      </button>
       <button type="button" className="btn" disabled={!selected} onClick={() => onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null)}>
         {t("Delete")}
       </button>
@@ -344,6 +359,80 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           onBlur={() => setKeyed(null)}
         />
       )}
+    </>
+  );
+}
+
+/** The width this element is drawn at, in CSS pixels, followed as the canvas is zoomed or the window resized. */
+function useDrawnWidth(element: React.RefObject<Element | null>): number {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const target = element.current;
+    if (!target) return;
+    setWidth(target.getBoundingClientRect().width);
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setWidth(target.getBoundingClientRect().width));
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [element]);
+  return width;
+}
+
+const percent = (mm: number, of: number) => `${(mm / of) * 100}%`;
+
+/**
+ * The grid and rulers (guides.ts), over the drawn page under the elements' boxes: the grid's lines as fine as the label's
+ * drawn size allows, and rulers in millimetres beside its top and left edges, the chosen element's span marked on them.
+ * Only drawn, never in the files made; the pointer goes through them.
+ */
+export function DesignerGuides({ page, placed, selected }: { page: DesignPage; placed: PlacedElement[]; selected: string | null }) {
+  const grid = useRef<SVGSVGElement>(null);
+  const pxPerMm = useDrawnWidth(grid) / page.widthMm;
+  const chosen = placed.find((p) => p.id === selected);
+  // The chosen element's span, held within the label as its outline is
+  const span = (from: number, length: number, max: number) => {
+    const [start, end] = [Math.min(Math.max(from, 0), max), Math.min(Math.max(from + length, 0), max)];
+    return end > start ? { start, end } : null;
+  };
+  const across = chosen && span(chosen.xMm, chosen.widthMm, page.widthMm);
+  const down = chosen && span(chosen.yMm, chosen.heightMm, page.heightMm);
+  const tickLength = { long: 9, middle: 6, short: 3 } as const;
+  return (
+    <>
+      <svg ref={grid} className="design-grid" data-testid="design-grid" aria-hidden="true" viewBox={`0 0 ${page.widthMm} ${page.heightMm}`} preserveAspectRatio="none">
+        {gridLines(page.widthMm, pxPerMm).map((line) => (
+          <line key={`x${line.atMm}`} className={line.major ? "major" : undefined} x1={line.atMm} x2={line.atMm} y1={0} y2={page.heightMm} />
+        ))}
+        {gridLines(page.heightMm, pxPerMm).map((line) => (
+          <line key={`y${line.atMm}`} className={line.major ? "major" : undefined} y1={line.atMm} y2={line.atMm} x1={0} x2={page.widthMm} />
+        ))}
+      </svg>
+      <svg className="design-ruler across" data-testid="ruler-across" aria-hidden="true">
+        {across && <rect className="span" x={percent(across.start, page.widthMm)} width={percent(across.end - across.start, page.widthMm)} y={0} height="100%" />}
+        {rulerTicks(page.widthMm, pxPerMm).map((tick) => (
+          <g key={tick.atMm}>
+            <line x1={percent(tick.atMm, page.widthMm)} x2={percent(tick.atMm, page.widthMm)} y1="100%" y2={20 - tickLength[tick.size]} />
+            {tick.number !== undefined && tick.number < page.widthMm && (
+              <text x={percent(tick.atMm, page.widthMm)} dx={2} y={8}>
+                {formatNumber(tick.number)}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      <svg className="design-ruler down" data-testid="ruler-down" aria-hidden="true">
+        {down && <rect className="span" y={percent(down.start, page.heightMm)} height={percent(down.end - down.start, page.heightMm)} x={0} width="100%" />}
+        {rulerTicks(page.heightMm, pxPerMm).map((tick) => (
+          <g key={tick.atMm}>
+            <line y1={percent(tick.atMm, page.heightMm)} y2={percent(tick.atMm, page.heightMm)} x1="100%" x2={20 - tickLength[tick.size]} />
+            {tick.number !== undefined && tick.number < page.heightMm && (
+              <text y={percent(tick.atMm, page.heightMm)} dy={9} x={1}>
+                {formatNumber(tick.number)}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
     </>
   );
 }

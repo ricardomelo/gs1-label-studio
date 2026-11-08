@@ -672,5 +672,7 @@
  "Insert a name": "Einen Namen einfügen",
  "(empty on the first row)": "(leer in der ersten Zeile)",
  "On the label": "Auf dem Etikett",
- "On the label — {name}: press the arrow keys to move or resize it": "Auf dem Etikett — {name}: Drücken Sie die Pfeiltasten, um es zu verschieben oder seine Größe zu ändern"
+ "On the label — {name}: press the arrow keys to move or resize it": "Auf dem Etikett — {name}: Drücken Sie die Pfeiltasten, um es zu verschieben oder seine Größe zu ändern",
+ "Grid and rulers": "Raster und Lineale",
+ "Lines every few millimetres over the label, and rulers along its top and left": "Linien im Abstand weniger Millimeter über dem Etikett und Lineale oben und links"
 }

@@ -214,6 +214,7 @@ Each module, in the order of the flow above.
 | `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes), `handleAt` (the handle held within the label when the element runs past its edge), `keyResized` (an arrow key on the handle: the corner by a step, a barcode and a text block to their next size) |
 | `src/place.ts` | A label of one's own: `freeCorner` (where a new element lands, never on another), `keyMoved` (an arrow key on the chosen element's outline: the element by a step, its corner on the half millimetres) |
 | `src/said.ts` | A label of one's own: what an arrow key did, said in the hint and in a live region: `placeSaid` (Left and Top), `sizeSaid` (the size as the properties give it, the end of the sizes), `keyEnd` (which end a key that changed nothing met); the label's edge after either |
+| `src/guides.ts` | A label of one's own: the grid and rulers, `gridLines` (every 1, 2, 5 or 10 mm as the label is drawn, stronger every 10 mm), `rulerTicks` (ticks and the millimetres numbered where they have room), `keptGuides` and `keepGuides` (on or off, in localStorage); drawn by `DesignerGuides` in `Designer.tsx` |
 | `src/scan.ts` | The scan test: the SVG drawn on a canvas, read by zxing-wasm (its WebAssembly served by the application) |
 | `src/BulkCard.tsx` | Step 1 in bulk: rows, column mapping, fixed values, the validation report |
 | `src/SequenceForm.tsx` | Serial numbers and SSCCs |
@@ -240,6 +241,7 @@ Nothing is sent anywhere. What the browser keeps, for convenience only — the p
 | The screen's calibration | localStorage | set by `RealSize.tsx` |
 | The columns chosen for a file's headers | localStorage | `gs1-label-studio.columns.<headers>` |
 | The bulk generation's choices | localStorage | set by `GeneratePanel.tsx` |
+| The designer's grid and rulers, on | localStorage | `gs1-label-studio.guides` |
 | Printer profiles of one's own | localStorage | set by `PrinterSection.tsx` |
 | GS1's GCP length table | IndexedDB `gs1-label-studio` / `kept` | `gcp` |
 | The last work (its work file), offered on the next visit; emptied by *Start over* | IndexedDB `gs1-label-studio` / `kept` | `work` |
@@ -311,7 +313,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 75 |
+| `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 76 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

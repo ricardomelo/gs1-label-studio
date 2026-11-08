@@ -540,7 +540,10 @@ complete.
   chosen element in the list takes the focus to its outline, which comes before the panel, and Escape on the outline
   or the handle brings it back to the element's row. Times in bulk since 8 November: a time with AM or PM, an Excel
   cell that holds a time alone (HH:MM, as on a 24-hour clock), and (7007)'s harvest period from two dates in one cell
-  (`01/09/2027 - 15/09/2027`). Saving the label is 4.3*
+  (`01/09/2027 - 15/09/2027`). A grid and rulers since 8 November (mock-up A of two, taken under the owner's rule; B
+  had the grid alone, from a button beside the zoom): **Grid and rulers** over the canvas turns on lines every 1, 2, 5
+  or 10 mm as the label is drawn, stronger every 10 mm, and rulers in millimetres along its top and left, the chosen
+  element's span marked on them; kept on or off in this browser. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

@@ -273,6 +273,12 @@ of my own (barcodes and text placed freely)*:
    5 mm at a time). After each press the hint starts with the new place (**Left** and **Top**) or the new size, and
    says when a barcode or a text block has no larger or smaller size or the element runs past the label's edge; a
    screen reader is told the same.
+   **Grid and rulers**, over the label beside **Delete**, draws lines over the label every few millimetres (finer as
+   you zoom in: every 2 mm at 100 % on a computer, every millimetre at 200 %), a stronger one every 10 mm, and rulers
+   in millimetres above and to the left of the label; the chosen element's width and height are marked in blue on the
+   rulers and follow it as it moves. They are only drawn on the screen, never in the label or its files, and the
+   pointer goes through them to the elements. Press it again to hide them; the studio remembers the choice in this
+   browser for the next visit. In **Real size** the label has its own rulers instead.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,

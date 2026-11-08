@@ -672,5 +672,7 @@
  "Insert a name": "Insertar un nombre",
  "(empty on the first row)": "(vacío en la primera fila)",
  "On the label": "En la etiqueta",
- "On the label — {name}: press the arrow keys to move or resize it": "En la etiqueta — {name}: pulse las flechas para mover el elemento o cambiar su tamaño"
+ "On the label — {name}: press the arrow keys to move or resize it": "En la etiqueta — {name}: pulse las flechas para mover el elemento o cambiar su tamaño",
+ "Grid and rulers": "Cuadrícula y reglas",
+ "Lines every few millimetres over the label, and rulers along its top and left": "Líneas cada pocos milímetros sobre la etiqueta, y reglas arriba y a la izquierda"
 }

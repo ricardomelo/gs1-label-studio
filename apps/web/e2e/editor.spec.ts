@@ -2699,3 +2699,84 @@ test("a label of one's own: each new element a step right and down from one alre
   expect(await corner()).toEqual(["19", "19"]);
   await expect(page.locator(".design-list button[aria-pressed]")).toHaveCount(7);
 });
+
+// The grid and rulers (backlog 4.2, mock-up A of two, 8 November 2026, taken under the owner's rule): one button over the
+// canvas turns them on or off, kept in this browser; lines every few millimetres, stronger every 10 mm; rulers in
+// millimetres along the label's top and left, the chosen element's span marked on them; drawn only, never in the label.
+test("a label of one's own: a grid and rulers turned on and off, kept for the next visit, never in the label", async ({ page }) => {
+  const open = async () => {
+    await on(page, "scan");
+    await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+    await on(page, "label");
+    await page.selectOption("#opt-logistic", "designer");
+  };
+  await open();
+  const toggle = page.getByRole("button", { name: "Grid and rulers" });
+  const grid = page.getByTestId("design-grid");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(grid).toHaveCount(0);
+  await expect(page.locator(".design-ruler")).toHaveCount(0);
+  const label = await page.locator(".designed .symbol").innerHTML();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  // 100 × 60 mm: a major line every 10 mm, 9 down and 5 across, the edges left out; the finer ones at least 6 pixels apart
+  await expect(grid.locator("line.major")).toHaveCount(14);
+  const [first, second] = await grid.locator("line").evaluateAll((lines) => lines.slice(0, 2).map((line) => line.getBoundingClientRect().x));
+  expect(second! - first!).toBeGreaterThanOrEqual(6);
+  // Every step across and down, the same step both ways
+  const lines = await grid.locator("line").evaluateAll((all) => all.map((line) => ["x1", "x2", "y1", "y2"].map((name) => Number(line.getAttribute(name)))));
+  const downward = lines.filter(([x1, x2]) => x1 === x2).map(([x1]) => x1!);
+  const sideways = lines.filter(([, , y1, y2]) => y1 === y2).map(([, , y1]) => y1!);
+  const stepMm = downward[0]!;
+  expect([1, 2, 5]).toContain(stepMm);
+  expect(downward).toEqual(Array.from({ length: 100 / stepMm - 1 }, (_, n) => (n + 1) * stepMm));
+  expect(sideways).toEqual(Array.from({ length: 60 / stepMm - 1 }, (_, n) => (n + 1) * stepMm));
+  expect(await page.locator(".designed .symbol").innerHTML()).toBe(label); // the label itself unchanged
+  // Rulers above and left of the label, numbered in millimetres
+  const drawn = (await page.locator(".designed .symbol").boundingBox())!;
+  const across = (await page.getByTestId("ruler-across").boundingBox())!;
+  const down = (await page.getByTestId("ruler-down").boundingBox())!;
+  expect(across.y + across.height).toBeLessThanOrEqual(drawn.y);
+  expect(across.width).toBeCloseTo(drawn.width, 0);
+  expect(down.x + down.width).toBeLessThanOrEqual(drawn.x);
+  expect(down.height).toBeCloseTo(drawn.height, 0);
+  expect((await page.getByTestId("ruler-across").locator("text").allTextContents()).slice(0, 3)).toEqual(["0", "10", "20"]);
+  expect((await page.getByTestId("ruler-down").locator("text").allTextContents()).slice(0, 3)).toEqual(["0", "10", "20"]);
+  // The chosen element's span on the rulers, following it as it moves: the text block, wider than it is tall
+  await expect(page.locator(".design-ruler .span")).toHaveCount(0);
+  await page.locator(".design-list button").nth(1).click();
+  const span = async () => {
+    const outline = (await page.getByTestId("move-outline").boundingBox())!;
+    const x = (await page.getByTestId("ruler-across").locator(".span").boundingBox())!;
+    const y = (await page.getByTestId("ruler-down").locator(".span").boundingBox())!;
+    expect(x.x).toBeCloseTo(outline.x, 0);
+    expect(x.width).toBeCloseTo(outline.width, 0);
+    expect(y.y).toBeCloseTo(outline.y, 0);
+    expect(y.height).toBeCloseTo(outline.height, 0);
+    return x.x;
+  };
+  const before = await span();
+  await page.fill("#el-x", "30");
+  await expect.poll(span).toBeGreaterThan(before + 20);
+  // Past the label's foot, held within the label as its outline is
+  await page.fill("#el-y", "58.5");
+  await expect.poll(async () => (await page.getByTestId("ruler-down").locator(".span").boundingBox())!.height).toBeLessThan(drawn.height * 0.03);
+  await span();
+  // The pointer goes through the grid to the elements
+  await page.locator('.design-overlay rect[data-id="e1"]').click();
+  await expect(page.locator(".design-list button[aria-pressed='true']")).toHaveText(/QR code/);
+  // Kept for the next visit, then turned off and kept off
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  if (!(await page.locator(".designed").count())) await open();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(grid.locator("line.major")).toHaveCount(14);
+  await toggle.click();
+  await expect(grid).toHaveCount(0);
+  await expect(page.locator(".design-ruler")).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  if (!(await page.locator(".designed").count())) await open();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(grid).toHaveCount(0);
+});

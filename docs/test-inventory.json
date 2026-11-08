@@ -1411,6 +1411,54 @@
    "area": "Where it is scanned: the guided choice and the symbol specification tables"
   },
   {
+   "program": "guides",
+   "file": "apps/web/test/guides.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the grid's lines › every millimetre where a millimetre is drawn 6 pixels or more, stronger every 10 mm, the edges left out",
+     "status": "passed"
+    },
+    {
+     "name": "the grid's lines › every 2, 5 or 10 mm as the label is drawn smaller; the major lines stay every 10 mm",
+     "status": "passed"
+    },
+    {
+     "name": "the grid's lines › past 10 mm, a major line every five",
+     "status": "passed"
+    },
+    {
+     "name": "the grid's lines › none for a label not yet drawn or of no size",
+     "status": "passed"
+    },
+    {
+     "name": "a ruler's ticks › from 0 to the label's end, numbered every 10 mm, longer at 5",
+     "status": "passed"
+    },
+    {
+     "name": "a ruler's ticks › further apart, and numbered less often, as the label is drawn smaller",
+     "status": "passed"
+    },
+    {
+     "name": "a ruler's ticks › numbered every 10 mm still when the label is drawn large",
+     "status": "passed"
+    },
+    {
+     "name": "a ruler's ticks › none for a label not yet drawn",
+     "status": "passed"
+    },
+    {
+     "name": "the choice kept › off at first, on once turned on, off again once turned off",
+     "status": "passed"
+    },
+    {
+     "name": "the choice kept › off, and nothing thrown, where the browser keeps nothing",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "hriplace",
    "file": "packages/core/test/hriplace.test.ts",
    "kind": "unit",
@@ -4871,6 +4919,15 @@
     },
     {
      "name": "a label of one's own: each new element a step right and down from one already at its corner",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: a grid and rulers turned on and off, kept for the next visit, never in the label",
      "status": "listed",
      "projects": [
       "desktop",

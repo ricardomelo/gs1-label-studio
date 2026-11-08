@@ -24,7 +24,8 @@ import {
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useState } from "react";
-import { DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
+import { DesignerGuides, DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
+import { keepGuides, keptGuides } from "./guides.ts";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
 import type { SymbolSizing } from "./resize.ts";
 import { scanSvg } from "./scan.ts";
@@ -210,6 +211,12 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
     setReal(next);
     setZoom(1);
   };
+  // The designer's grid and rulers, on or off as this browser last left them (guides.ts)
+  const [guides, setGuides] = useState(keptGuides);
+  const showGuides = (on: boolean) => {
+    setGuides(on);
+    keepGuides(on);
+  };
   const [calibrating, setCalibrating] = useState(false);
   const [pxPerMm, setPxPerMm] = useState(keptScale);
   const [scanned, setScanned] = useState<Scan | null>(null);
@@ -307,7 +314,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
             </div>
           )}
           {s.designer && s.page && (
-            <DesignerTools page={s.page} selected={s.selected} symbology={s.symbology} onChange={(page, selected) => onChange({ ...s, page, selected })} />
+            <DesignerTools page={s.page} selected={s.selected} symbology={s.symbology} onChange={(page, selected) => onChange({ ...s, page, selected })} guides={guides} onGuides={showGuides} />
           )}
           <div className="canvas-frame" data-pane="label" data-beside="">
             <div className="canvas">
@@ -315,13 +322,14 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 <RealSizeView svg={view.svg} widthMm={view.widthMm} heightMm={view.heightMm} pxPerMm={pxPerMm * zoom} />
               ) : (
                 <div
-                  className="preview"
+                  className={guides && s.designer && s.page && view.designer ? "preview guided" : "preview"}
                   aria-live="polite"
                   style={zoom === 1 ? undefined : { width: `calc(min(100%, var(--fit, ${FIT_PX}px)) * ${zoom})` }}
                 >
                   {view.svg && s.designer && s.page && view.designer ? (
                     <div className="designed">
                       <div className="symbol" dangerouslySetInnerHTML={{ __html: view.svg }} />
+                      {guides && <DesignerGuides page={s.page} placed={view.designer.placed} selected={s.selected} />}
                       <DesignerOverlay page={s.page} placed={view.designer.placed} sizing={view.designer.sizing} selected={s.selected} onChange={(page, selected) => onChange({ ...s, page, selected })} />
                     </div>
                   ) : view.svg ? (

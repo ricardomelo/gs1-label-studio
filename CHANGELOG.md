@@ -288,6 +288,10 @@
 - The keyboard's order (backlog 4.2, 8 November): **On the label** beside the chosen element in the list takes the
   focus to its outline on the label, which comes before the panel, so that Tab no longer has to go back past the
   export; Escape on the outline or the handle brings it back to the element in the list.
+- Grid and rulers (backlog 4.2, 8 November): on a label of one's own, **Grid and rulers** over the canvas turns on
+  lines over the label every 1, 2, 5 or 10 mm as fine as its drawn size allows, stronger every 10 mm, and rulers in
+  millimetres along its top and left with the chosen element's span marked on them; drawn only, never in the files;
+  kept on or off in this browser.
 - Times in bulk (backlog 4.2, 8 November): a cell's time may be on a 12-hour clock with AM or PM
   (`31/12/2027 8:05 PM` → 2712312005); an Excel cell whose format shows a time alone (`h:mm`, `h:mm AM/PM`) comes out
   as HH:MM or HH:MM:SS, as on a 24-hour clock, for a field on the label; it came out as a fraction of a day, and the

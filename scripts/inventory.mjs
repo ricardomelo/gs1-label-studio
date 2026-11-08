@@ -19,7 +19,7 @@ const fromIndex = args.indexOf("--from");
 export const AREAS = [
   ["Input and identification: the Syntax Engine, keys, qualifiers, attributes", ["syntax", "identify", "identifiers", "attributes", "checkDigit"]],
   ["Where it is scanned: the guided choice and the symbol specification tables", ["guide", "specifications", "environments"]],
-  ["Symbols and the label's layout", ["layout", "labelsvg", "bars", "hriplace", "gs1128", "qrmode", "logistic", "design", "place", "picture", "imagefile", "resize", "said", "pyformat"]],
+  ["Symbols and the label's layout", ["layout", "labelsvg", "bars", "hriplace", "gs1128", "qrmode", "logistic", "design", "place", "picture", "imagefile", "resize", "said", "guides", "pyformat"]],
   ["Exports and prepress: SVG, PNG, PDF, EPS, zip", ["render", "prepress", "roundtrip"]],
   ["In bulk: rows, the report, sequences, generation", ["table", "bulk", "report", "sequence", "batch"]],
   ["Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL", ["dots", "printer", "zpl", "labelary", "printlangs"]],
