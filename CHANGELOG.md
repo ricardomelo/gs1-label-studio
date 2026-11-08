@@ -311,4 +311,8 @@
   engine messages to translate and what else is left, and starts CI on it. The release that checked the data is named
   on the screen (*✓ Checked by the GS1 Barcode Syntax Engine 1.4.1*, linked to its notes; About, with the dictionary's
   date) and in the files made: the zip's README, the PDF's Producer and the EPS's Creator.
+- The GS1 Logistic Label's From and To wrapped (8 November; an open point since 2 November): a line too long for its
+  half of the label used to run on under the other column and past the page's edge; each is now broken between words
+  within its column, a line of its own in the drawing, the files and every print language, at 3.5 mm or, when that
+  leaves the label too short, at the 3 mm that 6.6.4.4 allows; a refusal then names shorter text among the cures.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

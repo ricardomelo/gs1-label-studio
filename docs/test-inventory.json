@@ -2232,6 +2232,14 @@
      "status": "passed"
     },
     {
+     "name": "the GS1 Logistic Label › wraps From and To between words within their halves of the label, at 3.5 mm while the label has room",
+     "status": "passed"
+    },
+    {
+     "name": "the GS1 Logistic Label › takes the free text down to 3 mm (6.6.4.4) when its lines leave the label too short, and then names it among the cures",
+     "status": "passed"
+    },
+    {
      "name": "the GS1 Logistic Label › reads back every symbol from the SVG and the PDF",
      "status": "passed"
     },
@@ -4764,6 +4772,15 @@
     },
     {
      "name": "the GS1 Logistic Label: the data titles also in Portuguese, Spanish, French, German or Italian, on the label, in ZPL and in the work saved",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label: From and To wrapped within their columns, smaller before refused, the refusal naming them",
      "status": "listed",
      "projects": [
       "desktop",

@@ -27,12 +27,14 @@ export type LogisticSize = keyof typeof LOGISTIC_SIZES;
 
 const MARGIN_MM = 4;
 const NARROW_MARGIN_MM = 2; // a line of data content too wide for MARGIN_MM: an SSCC at 7 mm is 96 mm, a 4 × 6 in label 101.6
-const FREE_TEXT_MM = 3.5; // 6.6.4.4: no less than 3 mm
+const FREE_TEXT_MM = 3.5;
+const FREE_TEXT_MIN_MM = 3; // 6.6.4.4: no less than 3 mm, taken when the free text at 3.5 mm leaves the label too short
 const DATA_TITLE_MM = 2.5;
 const DATA_CONTENT_MM = 7; // 6.6.4.2: at least 7 mm
 const HRI_MM = 3; // 4.14, rule 5c: no less than 3 mm on a GS1 Logistic Label
 const RULE_MM = 0.3; // the lines between the building blocks
 const BLOCK_GAP_MM = 3;
+const COLUMN_GAP_MM = 3; // between the top block's FROM and TO columns
 const TWO_D_GAP_MM = 3; // between the middle block's text and the 2D symbol's quiet zone
 
 /**
@@ -69,7 +71,7 @@ export interface LogisticInput {
   spec: SymbolSpecification;
   table?: number;
   percent: number;
-  /** The top block's free text: who sends it, who receives it; a line an entry. */
+  /** The top block's free text: who sends it, who receives it; a line an entry, wrapped between words within its half of the label. */
   from?: readonly string[];
   to?: readonly string[];
   /**
@@ -125,8 +127,50 @@ function symbols(elements: Element[], fits: (part: string) => boolean): string[]
   return [...(others.length ? splitGs1128(text(others), undefined, fits) : []), text(sscc)];
 }
 
-/** The GS1 Logistic Label of an element string with an SSCC; a `RangeError` when it has none or does not fit the page. */
+/**
+ * A line of free text in lines no wider than `room` as `measure` gives widths: broken between words (runs of spaces
+ * become one), and a word wider than the room on its own broken between its characters.
+ */
+function wrapped(line: string, room: number, measure: (text: string) => number): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const word of line.split(/\s+/).filter(Boolean)) {
+    const joined = current ? current + " " + word : word;
+    if (measure(joined) <= room) {
+      current = joined;
+      continue;
+    }
+    if (current) lines.push(current);
+    current = "";
+    for (const char of word) {
+      if (current && measure(current + char) > room) {
+        lines.push(current);
+        current = "";
+      }
+      current += char;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+/**
+ * The GS1 Logistic Label of an element string with an SSCC; a `RangeError` when it has none or does not fit the page.
+ * The free text is 3.5 mm high, or 3 mm when its wrapped lines would leave the label too short at 3.5.
+ */
 export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabel {
+  try {
+    return layOut(input, font, FREE_TEXT_MM);
+  } catch (error) {
+    if (!(error instanceof TooShortError)) throw error;
+    return layOut(input, font, FREE_TEXT_MIN_MM);
+  }
+}
+
+/** The label's content needs more height than the page has: the one refusal smaller free text may cure. */
+class TooShortError extends RangeError {}
+
+function layOut(input: LogisticInput, font: HriFont, freeTextMm: number): LogisticLabel {
   const elements = parseElementString(input.elementString);
   if (!elements.some((e) => e.ai === "00")) throw new RangeError("A GS1 Logistic Label needs an SSCC (00): it is its one mandatory element.");
   if (!specSizesFor(input.spec, [input.percent]).length) throw new RangeError(`${input.percent} % is outside the table's range for GS1-128.`);
@@ -196,20 +240,22 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
     return other && other !== title ? [title, other] : [title];
   };
   if (from.length || to.length) {
-    const column = (title: string, lines: string[], x: number) => {
+    // Each column's lines wrapped within it: FROM up to a gap before the middle, TO up to the right margin
+    const column = (title: string, lines: string[], x: number, end: number) => {
       let cy = y;
       if (!lines.length) return cy;
       for (const line of titleLines(title)) {
         text(line, x, cy, DATA_TITLE_MM);
         cy += u(DATA_TITLE_MM * 1.6);
       }
-      for (const line of lines) {
-        text(line, x, cy, FREE_TEXT_MM);
-        cy += u(FREE_TEXT_MM * 1.5);
+      for (const line of lines.flatMap((l) => wrapped(l, end - x, (s) => font.textWidth(s, em(freeTextMm))))) {
+        text(line, x, cy, freeTextMm);
+        cy += u(freeTextMm * 1.5);
       }
       return cy;
     };
-    y = Math.max(column("FROM", from, u(MARGIN_MM)), column("TO", to, width / 2)) + u(BLOCK_GAP_MM / 2);
+    const middle = width / 2;
+    y = Math.max(column("FROM", from, u(MARGIN_MM), middle - u(COLUMN_GAP_MM)), column("TO", to, middle, width - u(MARGIN_MM))) + u(BLOCK_GAP_MM / 2);
     rule(y);
     y += u(BLOCK_GAP_MM);
   }
@@ -298,7 +344,11 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   while (waiting.length) newRow();
   y = Math.max(textBottom, besideUntil) + u(BLOCK_GAP_MM / 2);
   if (y > bottomTop - u(RULE_MM)) {
-    throw new RangeError(`The label's text and symbols need ${((y + (height - bottomTop)) * xMm).toFixed(0)} mm; the ${page.name} label is ${page.heightMm} mm high. Choose a smaller size, fewer element strings, or the larger label.`);
+    const mm = ((y + (height - bottomTop)) * xMm).toFixed(0);
+    // Smaller free text may fit (logisticLabel tries it); at its smallest, shorter text is one of the cures
+    if (!(from.length || to.length)) throw new RangeError(`The label's text and symbols need ${mm} mm; the ${page.name} label is ${page.heightMm} mm high. Choose a smaller size, fewer element strings, or the larger label.`);
+    if (freeTextMm > FREE_TEXT_MIN_MM) throw new TooShortError(mm);
+    throw new RangeError(`The label's text and symbols need ${mm} mm; the ${page.name} label is ${page.heightMm} mm high. Choose a smaller size, fewer element strings, shorter text in From and To, or the larger label.`);
   }
   rule(Math.min(y, bottomTop - u(RULE_MM)));
 

@@ -49,6 +49,76 @@ describe("the GS1 Logistic Label", () => {
     for (const t of layout.texts) expect(t.x + font.textWidth(t.text, t.em)).toBeLessThanOrEqual(layout.width + 1e-9);
   });
 
+  // From and To wrapped (an open point since session 26): a line too long for its half of the label went on under the
+  // other column and past the page's edge
+  const SENDER = ["Distribuidora de Alimentos Dal Giardino Ltda.", "Avenida Engenheiro Luís Carlos Berrini 1748, conjunto 1201, Cidade Monções, São Paulo SP 04571-000"];
+  const RECEIVER = ["Supermercados Exemplo S.A. — Centro de Distribuição 12", "Rodovia Anhanguera km 26, Cajamar SP"];
+  const freeText = (label: ReturnType<typeof logisticLabel>, x: number) =>
+    label.printer.texts.filter((t) => Math.abs(t.x - x) < 1e-9 && t.heightMm >= 3 && t.heightMm <= 3.5); // the free text's sizes alone
+
+  it("wraps From and To between words within their halves of the label, at 3.5 mm while the label has room", () => {
+    const label = logisticLabel({ ...INPUT, from: SENDER, to: RECEIVER }, font);
+    const { width, xMm } = label.layout;
+    const from = freeText(label, 4 / xMm);
+    const to = freeText(label, width / 2);
+    expect(from.map((t) => t.text)).toEqual(["Distribuidora de Alimentos", "Dal Giardino Ltda.", "Avenida Engenheiro Luís", "Carlos Berrini 1748, conjunto", "1201, Cidade Monções, São", "Paulo SP 04571-000"]);
+    expect(to.map((t) => t.text)).toEqual(["Supermercados Exemplo S.A.", "— Centro de Distribuição 12", "Rodovia Anhanguera km 26,", "Cajamar SP"]);
+    for (const t of from) expect(t.x + t.width).toBeLessThanOrEqual(width / 2 - 3 / xMm + 1e-9);
+    for (const t of to) expect(t.x + t.width).toBeLessThanOrEqual(width - 4 / xMm + 1e-9);
+    // Each line a line pitch below the one before, at 3.5 mm, and the middle block's rule below them all
+    for (const column of [from, to]) {
+      expect(column.every((t) => t.heightMm === 3.5)).toBe(true);
+      for (let i = 1; i < column.length; i++) expect((column[i]!.top - column[i - 1]!.top) * xMm).toBeCloseTo(5.25, 6);
+    }
+    const rule = Math.min(...label.printer.rules.map((r) => r[1]));
+    expect(rule).toBeGreaterThan(from.at(-1)!.top + 3.5 / xMm);
+    // A word wider than the column alone is broken between its characters; runs of spaces become one
+    const long = logisticLabel({ ...INPUT, from: ["X".repeat(60) + "   end"], to: [] }, font);
+    const pieces = freeText(long, 4 / xMm).map((t) => t.text);
+    expect(pieces.length).toBeGreaterThan(1);
+    expect(pieces.join("")).toBe("X".repeat(60) + " end");
+    expect(pieces.at(-1)).toMatch(/X end$/);
+    for (const t of freeText(long, 4 / xMm)) expect(t.x + t.width).toBeLessThanOrEqual(width / 2 - 3 / xMm + 1e-9);
+    expect(pieces.every(Boolean)).toBe(true); // no empty line before the word
+    // Each column's pieces as long as its room allows: FROM up to 3 mm before the middle, TO up to the 4 mm margin
+    const words = logisticLabel({ ...INPUT, from: ["X".repeat(60)], to: ["X".repeat(60)] }, font);
+    const em = words.layout.texts.find((t) => t.text.startsWith("X"))!.em;
+    for (const [x, end] of [[4 / xMm, width / 2 - 3 / xMm], [width / 2, width - 4 / xMm]] as const) {
+      const column = freeText(words, x);
+      expect(column.map((t) => t.text).join("")).toBe("X".repeat(60));
+      for (const t of column) expect(t.x + t.width).toBeLessThanOrEqual(end + 1e-9);
+      expect(x + font.textWidth(column[0]!.text + "X", em)).toBeGreaterThan(end);
+    }
+    // Tabs and other spaces between words become one space
+    const tabbed = logisticLabel({ ...INPUT, from: ["Dal\tGiardino \u00a0S.p.A."], to: [] }, font);
+    expect(freeText(tabbed, 4 / xMm).map((t) => t.text)).toEqual(["Dal Giardino S.p.A."]);
+    // In ZPL each wrapped line is a field of its own
+    const zpl = zplLogisticLabel(label, 300, 3);
+    expect(zpl).toContain("^FDDistribuidora de Alimentos^FS");
+    expect(zpl).toContain("^FDDal Giardino Ltda.^FS");
+  });
+
+  it("takes the free text down to 3 mm (6.6.4.4) when its lines leave the label too short, and then names it among the cures", () => {
+    const a6 = { ...INPUT, size: "a6" as const, elementString: "(00)106141411234567897(02)09506000134376(37)24" };
+    // Two lines each fit at 3.5 mm
+    const short = logisticLabel({ ...a6, from: ["Dal Giardino S.p.A."], to: ["Supermarket DC 12"] }, font);
+    expect(short.printer.texts.find((t) => t.text === "Dal Giardino S.p.A.")!.heightMm).toBe(3.5);
+    // Wrapped to five lines, 3.5 mm needs 149 mm, 3 mm fits
+    const sender = ["Dal Giardino Alimentos Ltda.", "Av. Eng. Luís Carlos Berrini 1748, São Paulo SP"];
+    const smaller = logisticLabel({ ...a6, from: sender, to: RECEIVER }, font);
+    const from = freeText(smaller, 4 / smaller.layout.xMm);
+    expect(from.map((t) => t.text)).toEqual(["Dal Giardino Alimentos", "Ltda.", "Av. Eng. Luís Carlos", "Berrini 1748, São", "Paulo SP"]);
+    expect(from.every((t) => t.heightMm === 3)).toBe(true);
+    for (let i = 1; i < from.length; i++) expect((from[i]!.top - from[i - 1]!.top) * smaller.layout.xMm).toBeCloseTo(4.5, 6);
+    // Too long even at 3 mm: the refusal names the text; without free text it does not
+    expect(() => logisticLabel({ ...a6, from: SENDER, to: RECEIVER }, font)).toThrow(
+      /^The label's text and symbols need \d+ mm; the A6 label is 148 mm high\. Choose a smaller size, fewer element strings, shorter text in From and To, or the larger label\.$/);
+    expect(() => logisticLabel({ ...INPUT, size: "a6", from: [], to: [] }, font)).toThrow(
+      /148 mm high\. Choose a smaller size, fewer element strings, or the larger label\.$/);
+    // Another refusal is not retried into a different one
+    expect(() => logisticLabel({ ...a6, from: SENDER, percent: 190 }, font)).toThrow(/outside the table's range/);
+  });
+
   it("reads back every symbol from the SVG and the PDF", async () => {
     const { layout, options, parts } = logisticLabel(INPUT, font);
     const expected = parts.map((p) => `]C1 ${p}`).sort();

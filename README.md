@@ -472,7 +472,8 @@ complete.
   since 3 November, TSPL and DPL since 6 November for an SSCC alone (their GS1-128 carries nothing else yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Data titles in a
   second language since 7 November (mock-up A of two, taken under the owner's rule; B put the translation on the English
-  title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2); French, German and Italian since 8 November. No product or healthcare templates (the owner, 3 November 2026: every place has its
+  title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2); French, German and Italian since 8 November. From and To wrapped between words within their halves since 8
+  November (3 mm when 3.5 mm leaves the page too short). No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*
 - 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
   to spreadsheet columns — *barcodes and text blocks done 3 November (mock-up A of two: in step 3, "Label" offers "A

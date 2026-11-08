@@ -291,7 +291,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 70 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
-| `logistic` | the GS1 Logistic Label | 10 |
+| `logistic` | the GS1 Logistic Label | 12 |
 | `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 16 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
@@ -318,7 +318,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 77 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 78 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

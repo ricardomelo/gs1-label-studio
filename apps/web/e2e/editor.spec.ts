@@ -1272,7 +1272,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   const plain = await page.locator(".preview .symbol svg").innerHTML();
   // The second line takes room: with who sends it this label no longer fits its page, refused with the reason
   await page.selectOption("#opt-logistic-second", "pt-BR");
-  await expect(page.locator(".preview .error")).toContainText("The label's text and symbols need 156 mm; the 4 × 6 in label is 152.4 mm high");
+  await expect(page.locator(".preview .error")).toContainText("The label's text and symbols need 155 mm; the 4 × 6 in label is 152.4 mm high"); // with the free text at 3 mm
   await page.fill("#opt-from", "");
   await expect(page.locator(".preview .error")).toHaveCount(0);
   await expect.poll(() => page.locator(".preview .symbol svg").innerHTML()).not.toBe(plain);
@@ -1317,6 +1317,34 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await on(page, "label");
   await expect(page.locator('label[for="opt-logistic-second"]')).toHaveText("Títulos de dados também em");
   await expect(page.locator("#opt-logistic-second option").first()).toHaveText("Só em inglês");
+});
+
+// Item 4.1, From and To wrapped (8 November 2026, an open point since session 26): a line too long for its half of the
+// label went on under the other column; now broken between words, at 3 mm when 3.5 mm leaves the label too short.
+test("the GS1 Logistic Label: From and To wrapped within their columns, smaller before refused, the refusal naming them", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "4x6");
+  await page.fill("#opt-from", "Distribuidora de Alimentos Dal Giardino Ltda.\nAvenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP");
+  await page.fill("#opt-to", "Supermercados Exemplo S.A. — Centro de Distribuição 12\nRodovia Anhanguera km 26, Cajamar SP");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await on(page, "export");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields.slice(0, 9)).toEqual(["FROM", "Distribuidora de", "Alimentos Dal", "Giardino Ltda.", "Avenida", "Engenheiro Luís", "Carlos Berrini", "1748, São Paulo", "SP"]);
+  expect(fields.slice(9, 17)).toEqual(["TO", "Supermercados", "Exemplo S.A. —", "Centro de", "Distribuição 12", "Rodovia", "Anhanguera km 26,", "Cajamar SP"]);
+  expect(fields).not.toContain("Distribuidora de Alimentos Dal Giardino Ltda.");
+  // Too long even at 3 mm: refused, the free text among the cures, in Portuguese too
+  await on(page, "label");
+  await page.fill("#opt-from", Array(12).fill("Avenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP").join("\n"));
+  await expect(page.locator(".preview .error")).toContainText("Choose a smaller size, fewer element strings, shorter text in From and To, or the larger label.");
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(page.locator(".preview .error")).toContainText("textos mais curtos em De e Até, ou a etiqueta maior.");
 });
 
 // Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
