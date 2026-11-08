@@ -5078,6 +5078,15 @@
      ]
     },
     {
+     "name": "the GS1 Logistic Label: two marks in a row kept together, no line starting with a mark",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "the GS1 Logistic Label of an SSCC alone in TSPL and DPL",
      "status": "listed",
      "projects": [

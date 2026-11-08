@@ -321,5 +321,5 @@ General Specifications instead: the HRI is the data as the barcode carries it (4
 GS1 Logistic Label's middle block, text with a data title and no AI, may show *Café Rio* (6.6.4.2, 4.14.1); and a space
 should be a plus sign, not %20 (3.8.29), which the studio now writes. Session 49 broke a word too long for From or To
 after its hyphen, slash or comma before its letters, never between two digits, so a postcode stays whole; session 50
-kept two such marks in a row together, so that no line starts with one. By then the
-inventory held 1,148 tests in 47 files, and a full browser run passed 263 tests across a desktop, a phone and a tablet.
+kept two such marks in a row together, so that no line starts with one. By then the inventory held 1,149 tests in 47
+files, and a full browser run passed 266 tests across a desktop, a phone and a tablet.

@@ -1363,6 +1363,27 @@ test("the GS1 Logistic Label: a word too long for its column broken after a hyph
   expect(fields.slice(0, 9)).toEqual(["FROM", "Hortifrutigranjeira-", "Cooperativa", "Rua Augusta,1500,", "Consolação", "CEP 01305-100", "TO", "Armazém/", "Recebimento"]);
 });
 
+// Session 50 (8 November 2026): two marks in a row kept together, the line broken after the last, so that on A5 the
+// column's edge, which falls between the comma and the hyphen, does not start a line with the hyphen.
+test("the GS1 Logistic Label: two marks in a row kept together, no line starting with a mark", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "a5");
+  await page.fill("#opt-from", "Cooperativa Supermercados,-Agroindustrial");
+  await page.fill("#opt-to", "");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5");
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await page.selectOption("#prn-profile", "new");
+  await page.fill("#prn-name", "Six-inch printer");
+  await page.fill("#prn-width", "168");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields.slice(0, 4)).toEqual(["FROM", "Cooperativa", "Supermercados,-", "Agroindustrial"]);
+});
+
 // Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
 test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897");
