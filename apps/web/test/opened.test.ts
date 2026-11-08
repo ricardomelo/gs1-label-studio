@@ -24,7 +24,7 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
 
   it("keep the editor's own where a setting is unknown, of another kind or a choice not offered", () => {
     const opened = openedSettings(
-      { symbology: "aztec", size: "100", hri: "all", version: "7", error: "x", gs1128Starts: 3, expert: 1, stem: null, futureSetting: true, designer: true, qrMode: "kanji", logisticSecond: "de" },
+      { symbology: "aztec", size: "100", hri: "all", version: "7", error: "x", gs1128Starts: 3, expert: 1, stem: null, futureSetting: true, designer: true, qrMode: "kanji", logisticSecond: "nl" },
       null,
       START_SETTINGS,
     );
@@ -32,5 +32,6 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
     expect(Object.keys(opened)).not.toContain("futureSetting");
     expect(openedSettings({ version: null, linearSize: 120, pngResolution: 600 }, null, { ...START_SETTINGS, version: 4 }))
       .toEqual({ ...START_SETTINGS, version: null, linearSize: 120, pngResolution: 600 });
+    for (const second of ["fr", "de", "it"]) expect(openedSettings({ logisticSecond: second }, null, START_SETTINGS).logisticSecond).toBe(second);
   });
 });

@@ -1,9 +1,16 @@
+import de from "./locales/de.json";
+import deMessages from "./locales/de.messages.json";
 import es from "./locales/es.json";
 import esMessages from "./locales/es.messages.json";
+import fr from "./locales/fr.json";
+import frMessages from "./locales/fr.messages.json";
+import it from "./locales/it.json";
+import itMessages from "./locales/it.messages.json";
 import ptBR from "./locales/pt-BR.json";
 import ptBRMessages from "./locales/pt-BR.messages.json";
 
-// The interface's languages (the owner, 31 October 2026; ADR 0003): English, Brazilian Portuguese and Spanish. The
+// The interface's languages (ADR 0003): English, Brazilian Portuguese and Spanish (the owner, 31 October 2026), French,
+// German and Italian (the owner, 8 November 2026). The
 // English text is the key: `t("Fill in")` reads as English in the code, and each other language is a catalogue
 // (`locales/<tag>.json`) from the English text to its own, with the same {placeholders}. Messages the core and the
 // GS1 Barcode Syntax Engine write in English are translated where they are shown (`tm()`), from a catalogue of their
@@ -12,28 +19,36 @@ import ptBRMessages from "./locales/pt-BR.messages.json";
 // " · " or " + " part by part. What a catalogue lacks is shown in English.
 // `apps/web/test/i18n.test.ts` checks that every text of the page and every message of the core has its translation.
 
-export type Locale = "en" | "pt-BR" | "es";
+export type Locale = "en" | "pt-BR" | "es" | "fr" | "de" | "it";
 
 /** Each language named in itself, as the menu shows it. */
 export const LOCALES: readonly { tag: Locale; name: string }[] = [
   { tag: "en", name: "English" },
   { tag: "pt-BR", name: "Português (Brasil)" },
   { tag: "es", name: "Español" },
+  { tag: "fr", name: "Français" },
+  { tag: "de", name: "Deutsch" },
+  { tag: "it", name: "Italiano" },
 ];
 
 const CATALOGUES: Record<Exclude<Locale, "en">, { page: Record<string, string>; messages: Record<string, string> }> = {
   "pt-BR": { page: ptBR, messages: ptBRMessages },
   es: { page: es, messages: esMessages },
+  fr: { page: fr, messages: frMessages },
+  de: { page: de, messages: deMessages },
+  it: { page: it, messages: itMessages },
 };
 const STORAGE = "gs1-label-studio.locale";
 
-/** The language a browser asks for, among ours: pt-* → pt-BR, es-* → es, anything else → English. */
+/**
+ * The language a browser asks for, among ours: pt-* → pt-BR, es-* → es, fr-* → fr, de-* → de, it-* → it, en-* → en,
+ * the first of its languages we have; none of them → English.
+ */
 export function localeFor(tags: readonly string[]): Locale {
   for (const tag of tags) {
-    const lower = tag.toLowerCase();
-    if (lower.startsWith("pt")) return "pt-BR";
-    if (lower.startsWith("es")) return "es";
-    if (lower.startsWith("en")) return "en";
+    const language = tag.toLowerCase().split(/[-_]/)[0];
+    if (language === "pt") return "pt-BR";
+    if (language === "es" || language === "fr" || language === "de" || language === "it" || language === "en") return language;
   }
   return "en";
 }
@@ -118,6 +133,6 @@ export function tm(message: string): string {
   return message;
 }
 
-/** Numbers as the language writes them: 1,089 in English, 1.089 in Portuguese and Spanish. */
+/** Numbers as the language writes them: 1,089 in English, 1.089 in Portuguese, Spanish, German and Italian, 1 089 in French. */
 export const formatNumber = (n: number, digits?: number) =>
   n.toLocaleString(current, digits === undefined ? undefined : { minimumFractionDigits: digits, maximumFractionDigits: digits });

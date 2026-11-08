@@ -92,7 +92,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isString = (value: unknown): value is string => typeof value === "string";
 const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const isPair = (value: unknown): value is [string, string] => Array.isArray(value) && value.length === 2 && value.every(isString);
-const MONTHS: readonly MonthLanguage[] = ["en", "pt", "es"];
+const MONTHS: readonly MonthLanguage[] = ["en", "pt", "es", "fr", "de", "it"];
 
 /** The parts of a work file a refusal names. */
 const PARTS = {

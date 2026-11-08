@@ -51,7 +51,8 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 - **Private and offline.** Everything runs in the page. After the first visit the studio works without a connection,
   and it can be installed as an application from the browser's menu.
 
-The studio speaks English, Brazilian Portuguese and Spanish (section 2); this guide is in English.
+The studio speaks English, Brazilian Portuguese, Spanish, French, German and Italian (section 2); this guide is in
+English.
 
 ## 2. The screen at a glance
 
@@ -112,10 +113,11 @@ typed.
 
 The page follows the system's light or dark theme.
 
-**Language**: English, Português (Brasil) or Español. The studio opens in the browser's language (Portuguese for any
-Portuguese, Spanish for any Spanish, English otherwise) and remembers the choice in this browser. Changing it redraws
-the page at once, keeping what you typed; the messages of the GS1 Barcode Syntax Engine are translated too. The data
-titles of the AIs are GS1's English ones in Spanish, and Portuguese names in Portuguese. The files the studio makes —
+**Language**: English, Português (Brasil), Español, Français, Deutsch or Italiano. The studio opens in the browser's
+language (Portuguese for any Portuguese, and likewise Spanish, French, German and Italian; English otherwise) and
+remembers the choice in this browser. Changing it redraws the page at once, keeping what you typed; the messages of the
+GS1 Barcode Syntax Engine are translated too. The data titles of the AIs are Portuguese names in Portuguese, and GS1's
+English ones in the other languages. The files the studio makes —
 the README in the zip, the CSVs, the notes of a test print — stay in English.
 
 ![The studio in Portuguese](images/guide/language.png)
@@ -280,7 +282,8 @@ of my own (barcodes and text placed freely)*:
    *31 DEC 2027*. Other formats can be typed after the colon, with `DD`, `MM`, `MMM` (the month's abbreviation),
    `YY` and `YYYY`; the century is the one section 7.12 of the General Specifications chooses, and a day 00 is the
    month's last. When the text has `MMM`, **Month names** chooses its language: *English* (JAN to DEC), *Portuguese*
-   (JAN, FEV … DEZ) or *Spanish* (ENE, FEB … DIC); a new text block starts in the interface's language.
+   (JAN, FEV … DEZ), *Spanish* (ENE, FEB … DIC), *French* (JAN, FEV, MAR, AVR … DEC, without accents), *German* (JAN,
+   FEB, MRZ … DEZ) or *Italian* (GEN, FEB … DIC); a new text block starts in the interface's language.
    A date followed by a time, such as (7003) *expiration date and time*, (7011), (4324), (4325) or (8008), is also
    offered with its time: `{7003:DD/MM/YYYY hh:mm}` *31/12/2027 15:30*, `{7003:DD.MM.YYYY hh:mm}`,
    `{7003:YYYY-MM-DD hh:mm}` and `{7003:hh:mm}` *15:30*, and (8008) with its seconds, `{8008:YYYY-MM-DD hh:mm:ss}`.
@@ -433,7 +436,7 @@ correctly is refused with the reason, never printed wrong (section 16). How to u
 For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6) in A6 (105 × 148 mm), 4 × 6 in, A5
 (148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it. **2D symbol beside the data** adds
 a QR code or a Data Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix with the element string, to the right of
-the middle block (6.6.4.1.1). **Data titles also in** adds Portuguese or Spanish to the English data titles (6.6.4.2:
+the middle block (6.6.4.1.1). **Data titles also in** adds Portuguese, Spanish, French, German or Italian to the English data titles (6.6.4.2:
 English unless the trading partners agree on another language, and a second one at the labeller's discretion).
 
 ![A GS1 Logistic Label in A5](images/guide/logistic-label.png)
@@ -442,8 +445,9 @@ English unless the trading partners agree on another language, and a second one 
 - The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high. A content wider than the label (an 18-digit SSCC is 102 mm at 7 mm, wider
   than a 4 × 6 in label) takes 2 mm margins and is made just small enough to fit.
 - With a second language, each title has its translation on a line of its own under it (CONTENT, then CONTEÚDO or
-  CONTENIDO), and so have FROM and TO (REMETENTE, DESTINATÁRIO; REMITENTE, DESTINATARIO); a title that is the same in
-  every language, such as SSCC or GTIN, stays one line, its content level with the others on its row. The second line
+  CONTENIDO, CONTENU, INHALT, CONTENUTO), and so have FROM and TO (REMETENTE, DESTINATÁRIO; ABSENDER, EMPFÄNGER…); a
+  title that is the same in every language, such as SSCC or GTIN, or that the language writes as English does (ROUTE
+  in German), stays one line, its content level with the others on its row. The second line
   takes 4 mm a row, so a label that was just full may then need the larger size. The translations are drafts, to be
   reviewed by native speakers. ZPL prints their accents (UTF-8, checked through Labelary) and TSPL declares UTF-8;
   EPL2 and DPL files carry them in UTF-8 too, which a printer set to another code page may print otherwise.
@@ -542,14 +546,15 @@ its preview steps through the rows.
 1. **Drop a CSV or Excel file**, **Choose a file**, or paste rows copied from a spreadsheet (the header row first) and
    **Use the pasted rows**. CSV with comma, semicolon or tab; Excel's first worksheet (`.xlsx`).
 2. Each column's AI is guessed from its header — an AI (`(01)`, `(17) Expiry` always go to that AI), a GS1 data title,
-   or a common word in English, Portuguese or Spanish (*Lote*, *Validade*, *Código de barras*). Change it under **Goes
+   or a common word in English, Portuguese, Spanish, French, German or Italian (*Lote*, *Validade*, *Código de barras*,
+   *Numéro de lot*, *Verfallsdatum*, *Scadenza*). Change it under **Goes
    to**. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
    (7003), (4324) or (8008), keeps a time after the date (`31/12/2027 15:30 → 2712311530`), (8008) its seconds too;
    (7011), whose time is optional, leaves out a midnight written with its seconds (`00:00:00`, how a date alone is
    exported); other dates drop it. A time may be on a 12-hour clock, with AM or PM (`31/12/2027 8:05 PM →
    2712312005`). An Excel cell keeps the time its format shows (`dd/mm/yyyy hh:mm`), and a cell that holds a time
    alone (`h:mm`, `h:mm AM/PM`) comes as HH:MM, as on a 24-hour clock, for a column shown on the label. (7007)'s
-   harvest period takes two dates in one cell, with a dash, *to*, *a* or *até* between them
+   harvest period takes two dates in one cell, with a dash, *to*, *a*, *até*, *au* or *bis* between them
    (`01/09/2027 - 15/09/2027 → 270901270915`); its first date alone is a single day. A date
    of birth, (7250) or (7251), becomes YYYYMMDD from `1960-01-15` or `15/01/1960`, and (7251) keeps its time
    (`1960-01-15 08:30 → 196001150830`); a two-digit year such as `15/01/60` is left as typed and refused, since its

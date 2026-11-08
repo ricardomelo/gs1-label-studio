@@ -1,14 +1,21 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { localeFor, setLocale, t, tm } from "../src/i18n.ts";
+import de from "../src/locales/de.json";
+import deMessages from "../src/locales/de.messages.json";
 import es from "../src/locales/es.json";
 import esMessages from "../src/locales/es.messages.json";
+import fr from "../src/locales/fr.json";
+import frMessages from "../src/locales/fr.messages.json";
+import italian from "../src/locales/it.json";
+import itMessages from "../src/locales/it.messages.json";
 import ptBR from "../src/locales/pt-BR.json";
 import ptBRMessages from "../src/locales/pt-BR.messages.json";
 import { coreTexts, dynamicCalls, pageTexts } from "./texts.ts";
 
-// The interface's languages (ADR 0003, the owner's request of 31 October 2026): every text of the page and every message
-// of the core and of the GS1 Barcode Syntax Engine in Brazilian Portuguese and Spanish, with the same placeholders.
+// The interface's languages (ADR 0003, the owner's requests of 31 October and 8 November 2026): every text of the page and
+// every message of the core and of the GS1 Barcode Syntax Engine in Brazilian Portuguese, Spanish, French, German and
+// Italian, with the same placeholders.
 
 const engine = JSON.parse(readFileSync(new URL("./engine-messages.json", import.meta.url), "utf8")) as {
   messages: Record<string, string>;
@@ -18,6 +25,9 @@ const engineTexts = [...Object.values(engine.messages), ...Object.values(engine.
 const CATALOGUES: Record<string, { page: Record<string, string>; messages: Record<string, string> }> = {
   "pt-BR": { page: ptBR, messages: ptBRMessages },
   es: { page: es, messages: esMessages },
+  fr: { page: fr, messages: frMessages },
+  de: { page: de, messages: deMessages },
+  it: { page: italian, messages: itMessages },
 };
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
@@ -67,11 +77,18 @@ describe("the catalogues", async () => {
 });
 
 describe("translating", () => {
-  it("chooses the browser's language among English, Brazilian Portuguese and Spanish", () => {
+  it("chooses the browser's language among English, Brazilian Portuguese, Spanish, French, German and Italian", () => {
     expect(localeFor(["pt-PT", "en"])).toBe("pt-BR");
     expect(localeFor(["es-MX"])).toBe("es");
-    expect(localeFor(["fr-FR", "en-GB"])).toBe("en");
-    expect(localeFor(["de"])).toBe("en");
+    expect(localeFor(["fr-CA", "en-GB"])).toBe("fr");
+    expect(localeFor(["de"])).toBe("de");
+    expect(localeFor(["de_AT"])).toBe("de");
+    expect(localeFor(["it-CH"])).toBe("it");
+    // The first language the browser lists that we have; a language that only begins like one of ours is not it
+    expect(localeFor(["nl-BE", "fr-BE", "de"])).toBe("fr");
+    expect(localeFor(["ja", "ru"])).toBe("en");
+    expect(localeFor(["frr", "dsb", "ita"])).toBe("en");
+    expect(localeFor(["en-GB", "it"])).toBe("en");
   });
 
   it("fills placeholders, and translates a core or engine message by its template, the linter's text inside too", () => {
@@ -93,6 +110,15 @@ describe("translating", () => {
       .toContain("(38.1 × 21.2 mm)");
     setLocale("es", false);
     expect(t("Fill in")).toBe(es["Fill in"]);
+    for (const [tag, catalogue] of [["fr", fr], ["de", de], ["it", italian]] as const) {
+      setLocale(tag, false);
+      expect(t("Fill in")).toBe(catalogue["Fill in"]);
+      expect(t("Fill in")).not.toBe("Fill in");
+    }
+    setLocale("de", false);
+    expect(tm("AI (17): The date contains an illegal day of the month.")).toBe(
+      `AI (17): ${deMessages["The date contains an illegal day of the month."]}`,
+    );
     setLocale("en", false);
     expect(t("Fill in")).toBe("Fill in");
     expect(tm("The check digit does not match: it should be 6.")).toBe("The check digit does not match: it should be 6.");

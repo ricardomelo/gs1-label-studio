@@ -40,7 +40,7 @@ const TWO_D_GAP_MM = 3; // between the middle block's text and the 2D symbol's q
  * trading partners, data titles must be printed in English. As an option left at the discretion of the labeller, a
  * second language can be added"), each named in itself.
  */
-export const SECOND_LANGUAGES = { "pt-BR": "Português", es: "Español" } as const;
+export const SECOND_LANGUAGES = { "pt-BR": "Português", es: "Español", fr: "Français", de: "Deutsch", it: "Italiano" } as const;
 export type SecondLanguage = keyof typeof SECOND_LANGUAGES;
 
 /**
@@ -189,10 +189,11 @@ export function logisticLabel(input: LogisticInput, font: HriFont): LogisticLabe
   const from = (input.from ?? []).map((l) => l.trim()).filter(Boolean);
   const to = (input.to ?? []).map((l) => l.trim()).filter(Boolean);
   const second = input.secondLanguage;
-  // A title's lines: the English one, then the second language's where it differs (an acronym stays one line)
+  // A title's lines: the English one, then the second language's where it differs (an acronym, or a title written the
+  // same, as German's BABY or Italian's AREA (m²), stays one line)
   const titleLines = (title: string, ai?: string) => {
     const other = second ? secondTitle(title, second, ai) : null;
-    return other ? [title, other] : [title];
+    return other && other !== title ? [title, other] : [title];
   };
   if (from.length || to.length) {
     const column = (title: string, lines: string[], x: number) => {

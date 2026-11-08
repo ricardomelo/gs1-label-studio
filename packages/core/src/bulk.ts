@@ -23,24 +23,36 @@ function plain(text: string): string {
     .trim();
 }
 
-// Words people put in headers, in English, Portuguese and Spanish (data, not the interface's language: ADR 0003).
+// Words people put in headers, in English, Portuguese, Spanish, French, German and Italian, without their accents (data,
+// not the interface's language: ADR 0003).
 const SYNONYMS: Record<string, string[]> = {
-  "01": ["gtin", "gtin 14", "gtin 13", "ean", "ean 13", "ean13", "upc", "barcode", "codigo de barras", "cod barras", "codigo ean"],
+  "01": ["gtin", "gtin 14", "gtin 13", "ean", "ean 13", "ean13", "upc", "barcode", "codigo de barras", "cod barras", "codigo ean",
+    "code barre", "code barres", "code a barres", "strichcode", "codice a barre", "codice ean"],
   "00": ["sscc"],
-  "10": ["batch", "lot", "batch lot", "lot number", "batch number", "lote", "numero do lote", "numero de lote"],
-  "21": ["serial", "serial number", "serial no", "sn", "serie", "numero de serie", "n serie", "no serie"],
+  "10": ["batch", "lot", "batch lot", "lot number", "batch number", "lote", "numero do lote", "numero de lote",
+    "numero de lot", "charge", "chargennummer", "charge nr", "chargen nr", "lotto", "numero lotto", "numero di lotto"],
+  "21": ["serial", "serial number", "serial no", "sn", "serie", "numero de serie", "n serie", "no serie",
+    "seriennummer", "serien nr", "numero di serie"],
   "17": ["expiry", "expiry date", "expiration", "expiration date", "use by", "validade", "data de validade", "vencimento",
-    "data de vencimento", "caducidad", "fecha de caducidad", "vencimiento"],
-  "15": ["best before", "best by", "best before date", "consumir antes de", "consumir preferencialmente antes de"],
+    "data de vencimento", "caducidad", "fecha de caducidad", "vencimiento", "date de peremption", "peremption", "dlc",
+    "date limite de consommation", "verfallsdatum", "verfall", "verwendbar bis", "ablaufdatum", "scadenza", "data di scadenza"],
+  "15": ["best before", "best by", "best before date", "consumir antes de", "consumir preferencialmente antes de", "dluo", "ddm",
+    "date de durabilite minimale", "mhd", "mindesthaltbarkeitsdatum", "mindestens haltbar bis", "tmc",
+    "da consumarsi preferibilmente entro"],
   "11": ["production date", "manufacturing date", "manufacture date", "prod date", "fabricacao", "data de fabricacao",
-    "fecha de fabricacion"],
-  "13": ["pack date", "packaging date", "packing date", "embalagem", "data de embalagem", "data de embalamento"],
-  "16": ["sell by", "sell by date"],
+    "fecha de fabricacion", "date de fabrication", "herstelldatum", "produktionsdatum", "data di produzione",
+    "data di fabbricazione"],
+  "13": ["pack date", "packaging date", "packing date", "embalagem", "data de embalagem", "data de embalamento",
+    "date d emballage", "date de conditionnement", "verpackungsdatum", "packdatum", "data di confezionamento"],
+  "16": ["sell by", "sell by date", "date limite de vente", "verkaufen bis", "da vendere entro"],
   "22": ["cpv", "variant", "variante", "product variant"],
-  "310n": ["net weight", "net weight kg", "weight kg", "peso", "peso kg", "peso liquido", "peso liquido kg", "peso neto"],
-  "37": ["count", "quantity", "qty", "quantidade", "qtd", "cantidad"],
-  "414": ["gln", "location", "localizacao"],
-  "422": ["origin", "country of origin", "origem", "pais de origem", "pais de origen"],
+  "310n": ["net weight", "net weight kg", "weight kg", "peso", "peso kg", "peso liquido", "peso liquido kg", "peso neto",
+    "poids net", "poids", "poids net kg", "nettogewicht", "nettogewicht kg", "gewicht", "gewicht kg", "peso netto",
+    "peso netto kg"],
+  "37": ["count", "quantity", "qty", "quantidade", "qtd", "cantidad", "quantite", "qte", "menge", "anzahl", "quantita"],
+  "414": ["gln", "location", "localizacao", "localisation", "standort", "ubicazione"],
+  "422": ["origin", "country of origin", "origem", "pais de origem", "pais de origen",
+    "pays d origine", "origine", "ursprungsland", "herkunftsland", "paese di origine"],
 };
 
 const BY_WORDS = new Map<string, string>(Object.entries(SYNONYMS).flatMap(([ai, words]) => words.map((w) => [w, ai])));
@@ -93,7 +105,8 @@ export function guessMapping(headers: string[]): ColumnMapping {
  * AI takes them, as (8008); else it is dropped. A time may be on a 12-hour clock, followed by AM or PM (also am, a.m.,
  * p.m.): 12 AM is 00, 12 PM is 12. Midnight with its seconds, 00:00:00, is how a date alone is exported, so an AI whose
  * time is optional, as (7011), leaves it out. An AI whose second part is a date too, as (7007)'s harvest period, also
- * takes two dates, a range with a dash, "to", "a", "al", "até" or "hasta" between them (or spaces alone), as YYMMDDYYMMDD.
+ * takes two dates, a range with a dash, "to", "a", "al", "até", "hasta", "au", "à" or "bis" between them (or spaces alone),
+ * as YYMMDDYYMMDD.
  * A date whose year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), is read from YYYY-MM-DD and DD/MM/YYYY
  * alone, since a date of birth's century cannot be guessed. Anything else is left as it is, for the Syntax Engine to
  * judge.
@@ -106,7 +119,7 @@ export function normaliseCell(ai: string, raw: string): string {
   if (date !== undefined) return date;
   const parts = aiEntry(ai)?.components ?? [];
   if (parts[1]?.linters.includes("yymmdd")) {
-    const range = /^(.+?)(?:\s*[–—]\s*|\s+-\s+|\s+(?:to|a|al|até|hasta)\s+|\s+)(.+)$/i.exec(value);
+    const range = /^(.+?)(?:\s*[–—]\s*|\s+-\s+|\s+(?:to|a|al|até|hasta|au|à|bis)\s+|\s+)(.+)$/i.exec(value);
     const half = (text: string) => (/^\d{6}$/.test(text) ? text : dateCell(ai, text, false));
     const [first, second] = range ? [half(range[1]!), half(range[2]!)] : [];
     if (first && second) return first + second;

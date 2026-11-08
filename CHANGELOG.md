@@ -293,4 +293,11 @@
   as HH:MM or HH:MM:SS, as on a 24-hour clock, for a field on the label; it came out as a fraction of a day, and the
   built-in `mm:ss` formats as a date of 1899; (7007)'s harvest period is read from two dates in one cell,
   `01/09/2027 - 15/09/2027` → 270901270915.
+- French, German and Italian (backlog 1.20, 8 November, the owner's request): the interface in Français, Deutsch and
+  Italiano from the language menu, or a browser's French, German or Italian on a first visit, the core's and the
+  Syntax Engine's messages included; the GS1 Logistic Label's **Data titles also in** French, German or Italian
+  (EXPÉDITEUR, ABSENDER, MITTENTE…); a text block's **Month names** in French (JAN, FEV … DEC), German (JAN, FEB, MRZ
+  … DEZ) or Italian (GEN, FEB … DIC); headers such as *Numéro de lot*, *Chargennummer*, *MHD*, *Scadenza* or
+  *Quantità* guessed in bulk, and a harvest period with *au*, *à* or *bis* between its dates. A data title the second
+  language writes as English does is no longer repeated under it. Drafts, to be reviewed by native speakers.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

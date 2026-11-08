@@ -9,10 +9,12 @@ this public repository.
 ## Language
 
 - Code, comments, identifiers, commit messages and documents: **British English**.
-- User-facing texts: **English, Brazilian Portuguese and Spanish** (the owner, 31 October 2026; ADR 0003). Write each
-  text in English through `t("…")` (or `en("…")` for a constant, `tm()` for a message of the core) and add its
-  translations to `apps/web/src/locales/` (`pt-BR.json` and `es.json` for the page, `*.messages.json` for the core's
-  and the engine's messages); `apps/web/test/i18n.test.ts` fails when one is missing. The files made stay in English.
+- User-facing texts: **English, Brazilian Portuguese, Spanish, French, German and Italian** (the owner, 31 October and
+  8 November 2026; ADR 0003). Write each text in English through `t("…")` (or `en("…")` for a constant, `tm()` for a
+  message of the core) and add its translations to `apps/web/src/locales/` (`pt-BR.json`, `es.json`, `fr.json`,
+  `de.json` and `it.json` for the page, `*.messages.json` for the core's and the engine's messages);
+  `apps/web/test/i18n.test.ts` fails when one is missing. A data title of the GS1 Logistic Label goes in all five
+  languages of `packages/core/src/data/data_titles.json`. The files made stay in English.
 - Documentation: **English only**, whatever languages the tool speaks (the owner, 31 October 2026).
 - The conversation with the maintainer is in Portuguese.
 

@@ -97,7 +97,8 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(changed((c) => { (c.settings as Record<string, unknown>).size = { percent: 100 }; })).toBe(at("the label's settings"));
     expect(element(0, { kind: "circle" })).toBe(at("element 1 of the label's page"));
     expect(element(5, { symbology: "aztec" })).toBe(at("element 6 of the label's page"));
-    expect(element(6, { months: "fr" })).toBe(at("element 7 of the label's page"));
+    expect(element(6, { months: "nl" })).toBe(at("element 7 of the label's page"));
+    for (const months of ["fr", "de", "it"]) expect(() => readWork(JSON.stringify({ ...saved, page: { ...page, elements: page.elements.map((e, i) => (i === 6 ? { ...e, months } : e)) } }))).not.toThrow();
     expect(element(1, { thicknessMm: "0.5" })).toBe(at("element 2 of the label's page"));
     expect(element(3, { filled: 1 })).toBe(at("element 4 of the label's page"));
     // A rotation other than a quarter turn's, or on a line or box, which are drawn across or down instead

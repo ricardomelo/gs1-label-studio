@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
-import { DICTIONARY, labelPdf, labelSvg, logisticLabel, secondTitle, specificationFor, zplLogisticLabel, type LogisticInput, type LogisticTwoD } from "../src/index.ts";
+import { DICTIONARY, labelPdf, labelSvg, logisticLabel, SECOND_LANGUAGES, secondTitle, specificationFor, zplLogisticLabel, type LogisticInput, type LogisticTwoD, type SecondLanguage } from "../src/index.ts";
 import { drawPdf } from "./files.ts";
 import { hriFont } from "./font.ts";
 
@@ -173,9 +173,19 @@ describe("the GS1 Logistic Label", () => {
     const zpl = zplLogisticLabel(logisticLabel({ ...INPUT, secondLanguage: "pt-BR" }, font), 300, 3);
     expect(zpl).toContain("^CI28");
     expect(zpl).toMatch(/\^FDDESTINATÁRIO\^FS/);
+    // In French, German and Italian; a title the language writes as English does (German's ROUTE, (403)) on one line
+    const routed = { ...INPUT, elementString: `${INPUT.elementString}(403)ROUTE42` };
+    const titles = (secondLanguage: SecondLanguage) => logisticLabel({ ...routed, secondLanguage }, font).printer.texts.map((t) => t.text);
+    expect(titles("fr")).toEqual(expect.arrayContaining(["EXPÉDITEUR", "DESTINATAIRE", "CONTENU", "QUANTITÉ", "LOT", "ITINÉRAIRE"]));
+    expect(titles("it")).toEqual(expect.arrayContaining(["MITTENTE", "DESTINATARIO", "CONTENUTO", "QUANTITÀ", "LOTTO", "PERCORSO"]));
+    const german = titles("de");
+    expect(german).toEqual(expect.arrayContaining(["ABSENDER", "EMPFÄNGER", "INHALT", "ANZAHL", "CHARGE"]));
+    expect(german.filter((t) => t === "ROUTE")).toEqual(["ROUTE"]);
+    expect(german.length).toBe(logisticLabel(routed, font).printer.texts.length + 5);
+    expect(zplLogisticLabel(logisticLabel({ ...routed, secondLanguage: "de" }, font), 300, 3)).toMatch(/\^FDEMPFÄNGER\^FS/);
   }, SLOW);
 
-  it("names a data title in Portuguese and Spanish, an AI of its own where one title has two meanings", () => {
+  it("names a data title in Portuguese, Spanish, French, German and Italian, an AI of its own where one title has two meanings", () => {
     expect(secondTitle("SHIP TO LOC", "pt-BR", "410")).toBe("LOCAL DE ENTREGA");
     expect(secondTitle("SHIP TO LOC", "pt-BR", "4305")).toBe("CIDADE DE ENTREGA");
     expect(secondTitle("SHIP TO LOC", "es", "4305")).toBe("CIUDAD DE ENTREGA");
@@ -185,16 +195,25 @@ describe("the GS1 Logistic Label", () => {
     expect(secondTitle("USE BY or EXPIRY", "es")).toBe("CADUCIDAD");
     expect(secondTitle("SSCC", "pt-BR")).toBeNull();
     expect(secondTitle("AI (99999)", "es")).toBeNull();
+    expect(secondTitle("SHIP TO LOC", "fr", "4305")).toBe("VILLE DE LIVRAISON");
+    expect(secondTitle("SHIP TO LOC", "de", "410")).toBe("LIEFERORT");
+    expect(secondTitle("SHIP TO LOC", "it", "4305")).toBe("CITTÀ DI CONSEGNA");
+    expect(secondTitle("BATCH/LOT", "de")).toBe("CHARGE");
+    expect(secondTitle("USE BY or EXPIRY", "it")).toBe("DATA DI SCADENZA");
+    expect(secondTitle("NET WEIGHT (kg)", "fr", "3102")).toBe("POIDS NET (kg)");
+    expect(secondTitle("GTIN", "it")).toBeNull();
     // Every title of the dictionary in both languages, or an acronym that is the same in every one: a title added to a
     // newer dictionary fails here until it is translated or listed
     const ACRONYMS = ["CPID", "CPV", "DIGSIG", "ESIM", "GCN", "GDTI", "GIAI", "GINC", "GMN", "GRAI", "GSIN", "GTIN", "IBAN", "IMEI",
       "IMEI2", "ITIP", "MUDI", "NHRN AIC", "NHRN AIM", "NHRN CIP", "NHRN CN", "NHRN DRN", "NHRN NDC", "NHRN PZN", "NHRN SRN", "NSN",
       "OPTSEN", "PCN", "PSIM", "SRIN", "SSCC", "TPX", "UIC+EXT", "VCN"];
     const titles = new Set(Object.values(DICTIONARY.ais).map((e) => e.title).filter(Boolean));
+    const languages = Object.keys(SECOND_LANGUAGES) as SecondLanguage[];
+    expect(languages).toEqual(["pt-BR", "es", "fr", "de", "it"]);
     for (const title of titles) {
-      const [pt, es] = [secondTitle(title, "pt-BR"), secondTitle(title, "es")];
-      if (ACRONYMS.includes(title)) expect([title, pt, es]).toEqual([title, null, null]);
-      else expect([title, typeof pt, typeof es]).toEqual([title, "string", "string"]);
+      const seconds = languages.map((language) => secondTitle(title, language));
+      if (ACRONYMS.includes(title)) expect([title, ...seconds]).toEqual([title, ...languages.map(() => null)]);
+      else expect([title, ...seconds.map((s) => typeof s)]).toEqual([title, ...languages.map(() => "string")]);
     }
   });
 

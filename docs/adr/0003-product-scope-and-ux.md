@@ -48,7 +48,7 @@
    take it out): the live region of 7 November that says what an arrow key did reads the same text as the visible
    hint, and the buttons' names (`aria-label`) also serve the keyboard and voice control. Nothing new is made for a
    screen reader, and none is used in the test plans.*
-7. **In English, Brazilian Portuguese and Spanish.** The owner first fixed the tool in English (28 October 2026): one
+7. **In English, Brazilian Portuguese, Spanish, French, German and Italian.** The owner first fixed the tool in English (28 October 2026): one
    language to write, test and document, the texts kept apart from the code so that a translation remained possible.
    *On 31 October 2026 the owner asked for Brazilian Portuguese and Spanish besides English, the documentation staying
    in English only. Decided then, the recommended option on each point: a language menu in the header, each language
@@ -60,7 +60,16 @@
    come from the resolver's catalogues (ADR 0004), Spanish keeping GS1's English data titles as the resolver does. A
    test fails when a text of the page or a message of the core lacks its translation or its placeholders differ. The
    files made (README, CSV, ZPL notes, SVG descriptions) stay in English, as data exchanged with other systems. The
-   translations are drafts by Claude, to be reviewed by native speakers (the owner for Portuguese).*
+   translations are drafts by Claude, to be reviewed by native speakers (the owner for Portuguese).* *On 8 November
+   2026 the owner asked for French, German and Italian too. Taken under the owner's rule, the recommended option of
+   three (the others were the interface alone, or the interface and the label without the spreadsheets' headers):
+   everywhere a language enters, as for Portuguese and Spanish — the menu (Français, Deutsch, Italiano, a browser's
+   fr-*, de-* and it-* chosen on a first visit), the page's and the messages' catalogues, the GS1 Logistic Label's
+   data titles in a second language, a text block's month names and the headers a spreadsheet's columns are guessed
+   from. The AIs' data titles stay GS1's English ones in these languages, as in Spanish. The months are written in the
+   letters every printer language's font has: French without accents (FEV, AOU, DEC), German's March as MRZ, as German
+   Excel writes it. A data title a language writes as English does (German's BABY, Italian's AREA) is not repeated
+   under it. Drafts by Claude, to be reviewed by native speakers.*
 
 ## Screens
 

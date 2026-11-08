@@ -412,6 +412,118 @@
      "status": "passed"
     },
     {
+     "name": "which AI a column holds, from its header › Code-barres → (01)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Numéro de lot → (10)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Date de péremption → (17)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › DLUO → (15)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Date de fabrication → (11)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Poids net (kg) → (310n)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Quantité → (37)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Pays d'origine → (422)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Strichcode → (01)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Charge → (10)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Chargennummer → (10)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Seriennummer → (21)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Verfallsdatum → (17)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › MHD → (15)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Herstelldatum → (11)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nettogewicht (kg) → (310n)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Menge → (37)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Ursprungsland → (422)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Codice a barre → (01)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Lotto → (10)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Numero di serie → (21)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Data di scadenza → (17)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Scadenza → (17)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › TMC → (15)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Data di produzione → (11)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Peso netto (kg) → (310n)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Quantità → (37)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Paese di origine → (422)",
+     "status": "passed"
+    },
+    {
      "name": "which AI a column holds, from its header › leaves out what it does not know, and a second column for an AI already taken",
      "status": "passed"
     },
@@ -544,7 +656,7 @@
      "status": "passed"
     },
     {
-     "name": "a label of one's own › writes a date's month in the text block's language: English, Portuguese or Spanish",
+     "name": "a label of one's own › writes a date's month in the text block's language: English, Portuguese, Spanish, French, German or Italian",
      "status": "passed"
     },
     {
@@ -1376,6 +1488,30 @@
      "status": "passed"
     },
     {
+     "name": "the catalogues › fr: every text of the page, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › fr: every message of the core and of the Syntax Engine, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › de: every text of the page, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › de: every message of the core and of the Syntax Engine, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › it: every text of the page, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogues › it: every message of the core and of the Syntax Engine, with the same placeholders, and nothing else",
+     "status": "passed"
+    },
+    {
      "name": "the catalogues › finds the texts: the page's own, the core's messages and the engine's",
      "status": "passed"
     },
@@ -1388,7 +1524,7 @@
      "status": "passed"
     },
     {
-     "name": "translating › chooses the browser's language among English, Brazilian Portuguese and Spanish",
+     "name": "translating › chooses the browser's language among English, Brazilian Portuguese, Spanish, French, German and Italian",
      "status": "passed"
     },
     {
@@ -1396,7 +1532,7 @@
      "status": "passed"
     }
    ],
-   "area": "The interface's languages: English, Brazilian Portuguese, Spanish"
+   "area": "The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian"
   },
   {
    "program": "identifiers",
@@ -2076,7 +2212,7 @@
      "status": "passed"
     },
     {
-     "name": "the GS1 Logistic Label › names a data title in Portuguese and Spanish, an AI of its own where one title has two meanings",
+     "name": "the GS1 Logistic Label › names a data title in Portuguese, Spanish, French, German and Italian, an AI of its own where one title has two meanings",
      "status": "passed"
     },
     {
@@ -4518,7 +4654,7 @@
      ]
     },
     {
-     "name": "the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on the label, in ZPL and in the work saved",
+     "name": "the GS1 Logistic Label: the data titles also in Portuguese, Spanish, French, German or Italian, on the label, in ZPL and in the work saved",
      "status": "listed",
      "projects": [
       "desktop",
@@ -4546,6 +4682,24 @@
     },
     {
      "name": "the interface in Brazilian Portuguese and Spanish, kept for the next visit, messages included",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the interface in French, German and Italian, kept for the next visit, messages included",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a browser in German, French or Italian opens the studio in its language, a new text block's months in it too",
      "status": "listed",
      "projects": [
       "desktop",

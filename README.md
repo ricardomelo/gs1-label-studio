@@ -12,7 +12,8 @@
 is scanned: the studio follows the GS1 General Specifications to the symbol, its size, its quiet zones and its human
 readable text, reads what it drew back to prove it, and exports it for artwork or for a label printer — one code at a
 time, or thousands from a spreadsheet. Nothing you type or upload leaves your computer; it works offline, on a
-computer, a tablet or a phone, in English, Brazilian Portuguese and Spanish. Free and open source.
+computer, a tablet or a phone, in English, Brazilian Portuguese, Spanish, French, German and Italian. Free and open
+source.
 
 <p align="center">
   <a href="https://ricardomelo.github.io/gs1-label-studio/"><b>Open the studio → ricardomelo.github.io/gs1-label-studio</b></a>
@@ -164,7 +165,7 @@ GS1 Digital Signatures guideline) and GS1 verifiable credentials, the key kept i
 
 On a phone, one part at a time — Data, Scan, Label, Export, More — chosen in a tab bar at the bottom, as phone apps
 do; on a tablet held horizontally, a rail with the label always beside you; on a computer, everything at once. English,
-Português (Brasil) and Español, in the browser's language from the first visit.
+Português (Brasil), Español, Français, Deutsch and Italiano, in the browser's language from the first visit.
 → [User guide, the screen at a glance](docs/user-guide.md#2-the-screen-at-a-glance)
 
 ---
@@ -379,7 +380,9 @@ complete.
   itself): the browser's language on the first visit, the choice kept afterwards, the page redrawn in place; every
   text of the page and every message of the core and of the GS1 Barcode Syntax Engine in each language, the engine's
   and the keys' texts from the resolver's catalogues; a test refuses a text without its translation. Drafts by
-  Claude, to be reviewed by native speakers; the files made stay in English*
+  Claude, to be reviewed by native speakers; the files made stay in English. French, German and Italian too since 8
+  November (the owner's request; everywhere a language enters: the menu, the page and the messages, the GS1 Logistic
+  Label's data titles, a text block's months, the spreadsheets' headers)*
 - 1.21 A design for phones and tablets, the computer's left as it is, and About at the foot of the page (the owner,
   31 October 2026) — *done 31 October (mock-up A of three: B was one long column with step chips and a floating
   download button, C a drawer menu): on a phone, a tablet held upright or a narrow window, one column and one
@@ -464,7 +467,7 @@ complete.
   since 3 November, TSPL and DPL since 6 November for an SSCC alone (their GS1-128 carries nothing else yet). A 2D symbol beside the middle block since 2 November (mock-up A of two: a QR code or Data
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Data titles in a
   second language since 7 November (mock-up A of two, taken under the owner's rule; B put the translation on the English
-  title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2). No product or healthcare templates (the owner, 3 November 2026: every place has its
+  title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2); French, German and Italian since 8 November. No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*
 - 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
   to spreadsheet columns — *barcodes and text blocks done 3 November (mock-up A of two: in step 3, "Label" offers "A
@@ -477,7 +480,7 @@ complete.
   and Labelize). A date field in a format since 3 November (mock-up B of two,
   taken under the owner's rule: Insert a field offers each date also as `{17:DD/MM/YYYY}` and four other formats, each
   with the date it gives; any format of DD, MM, MMM, YY and YYYY typed; the month's abbreviation in English, Portuguese
-  or Spanish, chosen for each text block, the interface's language first). A new element never lands exactly on
+  or Spanish, and since 8 November French, German or Italian, chosen for each text block, the interface's language first). A new element never lands exactly on
   another (the owner, 3 November 2026: one made over another went unnoticed): where an element already has its
   corner, it goes 5 mm right and down, and again — done the same day. Images since 4 November (mock-up A of two, taken
   under the owner's rule; B added an empty image to fill in its properties, with a preview): **+ Image** takes a file

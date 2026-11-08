@@ -30,6 +30,13 @@ describe("which AI a column holds, from its header", () => {
     // AIs as headers, for import files that work for every AI (the owner, 29 October 2026)
     ["00", "00"], ["(00) SSCC", "00"], ["(01) GTIN", "01"], ["(21) Número de série", "21"], ["AI (17) expiry", "17"],
     ["(310n)", "310n"], ["310n - net weight", "310n"], ["(3922) Price", "3922"], ["(8020)", "8020"],
+    // French, German and Italian (the owner, 8 November 2026)
+    ["Code-barres", "01"], ["Numéro de lot", "10"], ["Date de péremption", "17"], ["DLUO", "15"], ["Date de fabrication", "11"],
+    ["Poids net (kg)", "310n"], ["Quantité", "37"], ["Pays d'origine", "422"], ["Strichcode", "01"], ["Charge", "10"],
+    ["Chargennummer", "10"], ["Seriennummer", "21"], ["Verfallsdatum", "17"], ["MHD", "15"], ["Herstelldatum", "11"],
+    ["Nettogewicht (kg)", "310n"], ["Menge", "37"], ["Ursprungsland", "422"], ["Codice a barre", "01"], ["Lotto", "10"],
+    ["Numero di serie", "21"], ["Data di scadenza", "17"], ["Scadenza", "17"], ["TMC", "15"], ["Data di produzione", "11"],
+    ["Peso netto (kg)", "310n"], ["Quantità", "37"], ["Paese di origine", "422"],
   ])("%s → (%s)", (header, ai) => {
     expect(guessColumn(header)).toBe(ai);
   });
@@ -103,6 +110,10 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("7007", "01.09.2027 até 15.09.2027")).toBe("270901270915");
     expect(normaliseCell("7007", "01/09/2027 AL 15/09/2027")).toBe("270901270915");
     expect(normaliseCell("7007", "01/09/2027 hasta 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027 au 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01/09/2027 à 15/09/2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01.09.2027 bis 15.09.2027")).toBe("270901270915");
+    expect(normaliseCell("7007", "01.09.2027 BIS 15.09.2027")).toBe("270901270915");
     expect(normaliseCell("7007", "2027-09-01 2027-09-15")).toBe("270901270915");
     expect(normaliseCell("7007", "270901 - 15/09/2027")).toBe("270901270915");
     expect(normaliseCell("7007", "270901270915")).toBe("270901270915");

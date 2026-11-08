@@ -1238,7 +1238,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
 
 // Item 4.1, a second language for the data titles (7 November 2026, mock-up A of two, taken under the owner's rule; B
 // put it on the English title's line): each title's second line under it, in the drawing, the ZPL and the work saved.
-test("the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on the label, in ZPL and in the work saved", async ({ page }) => {
+test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, French, German or Italian, on the label, in ZPL and in the work saved", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
@@ -1246,7 +1246,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on 
   await page.fill("#opt-from", "Dal Giardino S.p.A.");
   await expect(page.locator(".preview .error")).toHaveCount(0);
   await expect(page.locator("#opt-logistic-second")).toHaveValue("none");
-  await expect(page.locator("#opt-logistic-second option")).toHaveText(["English only", "Português", "Español"]);
+  await expect(page.locator("#opt-logistic-second option")).toHaveText(["English only", "Português", "Español", "Français", "Deutsch", "Italiano"]);
   const plain = await page.locator(".preview .symbol svg").innerHTML();
   // The second line takes room: with who sends it this label no longer fits its page, refused with the reason
   await page.selectOption("#opt-logistic-second", "pt-BR");
@@ -1278,6 +1278,17 @@ test("the GS1 Logistic Label: the data titles also in Portuguese or Spanish, on 
   const es = readFileSync((await spanish.path())!, "utf8");
   for (const title of ["CONTENIDO", "CANTIDAD"]) expect(es).toContain(`^FD${title}^FS`);
   expect(es).not.toContain("^FDCONTEÚDO^FS");
+  // German, French and Italian write theirs (the owner, 8 November 2026)
+  for (const [language, titles] of [["de", ["INHALT", "ANZAHL"]], ["fr", ["CONTENU", "QUANTITÉ"]], ["it", ["CONTENUTO", "QUANTITÀ"]]] as const) {
+    await on(page, "label");
+    await page.selectOption("#opt-logistic-second", language);
+    await expect(page.locator(".preview .error")).toHaveCount(0);
+    await on(page, "export");
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    const zplText = readFileSync((await download.path())!, "utf8");
+    for (const title of titles) expect(zplText).toContain(`^FD${title}^FS`);
+    expect(zplText).not.toContain("^FDCONTENIDO^FS");
+  }
   // In Portuguese, the option's name and its first choice
   await on(page, "more");
   await page.selectOption("#language", "pt-BR");
@@ -1369,6 +1380,65 @@ test("the interface in Brazilian Portuguese and Spanish, kept for the next visit
   await expect(page.getByRole("button", { name: "Empezar de nuevo" })).toBeVisible();
   await page.selectOption("#language", "en");
   await expect(page.locator("#identify-title")).toHaveText("1 What does the code identify?");
+});
+
+// French, German and Italian (the owner, 8 November 2026): the same menu, the same catalogues, the same messages.
+test("the interface in French, German and Italian, kept for the next visit, messages included", async ({ page }) => {
+  await on(page, "more");
+  await expect(page.locator("#language option")).toHaveText(["English", "Português (Brasil)", "Español", "Français", "Deutsch", "Italiano"]);
+  await page.selectOption("#language", "fr");
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(page.locator("#identify-title")).toHaveText("1 Qu’est-ce que le code identifie ?");
+  await expect(page.locator("#scan-title")).toHaveText("2 Où est-il lu ?");
+  await on(page, "data");
+  await expect(page.locator("#key-value")).toHaveValue("09506000134376");
+  await page.fill("#key-value", "09506000134377");
+  await expect(page.locator("#key-hint")).toHaveText("La clé de contrôle ne correspond pas : elle devrait être 6.");
+  await page.fill("#key-value", "09506000134376");
+  await on(page, "more");
+  await page.selectOption("#language", "de");
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  await expect(page.locator("#identify-title")).toHaveText("1 Was identifiziert der Code?");
+  await on(page, "scan");
+  await expect(page.getByRole("group", { name: "Wird er an einer allgemeinen Einzelhandelskasse gescannt?" })).toBeVisible();
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134352(17)271331");
+  await page.getByRole("button", { name: "Ausfüllen" }).click();
+  await expect(page.locator(".paste .hint")).toContainText("Das Datum enthält einen ungültigen Monat.");
+  // Kept for the next visit
+  await page.reload();
+  await expect(page.locator("#identify-title")).toHaveText("1 Was identifiziert der Code?");
+  await on(page, "more");
+  await page.selectOption("#language", "it");
+  await expect(page.locator("html")).toHaveAttribute("lang", "it");
+  await expect(page.locator("#identify-title")).toHaveText("1 Che cosa identifica il codice?");
+  await expect(page.getByRole("button", { name: "Ricomincia" })).toBeVisible();
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134352(17)271331");
+  await page.getByRole("button", { name: "Compila" }).click();
+  await expect(page.locator(".paste .hint")).toContainText("La data contiene un mese dell’anno non valido.");
+});
+
+test("a browser in German, French or Italian opens the studio in its language, a new text block's months in it too", async ({ browser }) => {
+  for (const [locale, title, fill, own, text, months, december] of [
+    ["de-AT", "1 Was identifiziert der Code?", "Ausfüllen", "Selbst ein Symbol wählen", "+ Text", "de", "DEZ"],
+    ["fr-CA", "1 Qu’est-ce que le code identifie ?", "Remplir", "Choisir un symbole soi-même", "+ Texte", "fr", "DEC"],
+    ["it-IT", "1 Che cosa identifica il codice?", "Compila", "Scegli tu un simbolo", "+ Testo", "it", "DIC"],
+  ] as const) {
+    const context = await browser.newContext({ locale, viewport: { width: 1400, height: 950 } });
+    const page = await context.newPage();
+    await page.goto("/");
+    await expect(page.locator("#identify-title")).toHaveText(title);
+    await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
+    await page.getByRole("button", { name: fill }).click();
+    await page.getByRole("button", { name: own }).click();
+    await page.selectOption("#opt-logistic", "designer");
+    await page.getByRole("button", { name: text, exact: true }).click();
+    await page.fill("#el-text", "EXP {17:DD MMM YYYY}");
+    await expect(page.locator("#el-months")).toHaveValue(months);
+    await expect(page.locator(`.preview .symbol svg [aria-label="EXP 31 ${december} 2027"]`)).toHaveCount(1);
+    await context.close();
+  }
 });
 
 test("a browser in Portuguese opens the studio in Portuguese", async ({ browser }) => {

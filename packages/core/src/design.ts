@@ -228,14 +228,24 @@ export const TIME_FORMATS = ["DD/MM/YYYY hh:mm", "DD.MM.YYYY hh:mm", "YYYY-MM-DD
 const DATE_TOKENS = /YYYY|YY|MMM|MM|DD|hh|mm|ss/g;
 const TIME_TOKENS = /hh|mm|ss/;
 
-/** The languages a date's month (`MMM`) can be written in: English, Portuguese and Spanish, the interface's (ADR 0003). */
-export type MonthLanguage = "en" | "pt" | "es";
+/**
+ * The languages a date's month (`MMM`) can be written in: English, Portuguese, Spanish, French, German and Italian, the
+ * interface's (ADR 0003).
+ */
+export type MonthLanguage = "en" | "pt" | "es" | "fr" | "de" | "it";
 
-/** Each language's month abbreviations, in capitals as labels print them (the owner, 3 November 2026). */
+/**
+ * Each language's month abbreviations, in capitals as labels print them (the owner, 3 November 2026), in the letters
+ * every printer language's font has: French without accents (FEV, AOU, DEC), German's March as MRZ (as German Excel
+ * writes it) rather than MÄR.
+ */
 export const MONTH_NAMES: Record<MonthLanguage, readonly string[]> = {
   en: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
   pt: ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"],
   es: ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"],
+  fr: ["JAN", "FEV", "MAR", "AVR", "MAI", "JUN", "JUL", "AOU", "SEP", "OCT", "NOV", "DEC"],
+  de: ["JAN", "FEB", "MRZ", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"],
+  it: ["GEN", "FEB", "MAR", "APR", "MAG", "GIU", "LUG", "AGO", "SET", "OTT", "NOV", "DIC"],
 };
 
 /**

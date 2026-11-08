@@ -47,13 +47,19 @@ const IMAGE_FILES = "image/png,image/jpeg,image/gif,image/webp,image/svg+xml";
 const round = (mm: number) => Math.round(mm / STEP_MM) * STEP_MM;
 
 /** A new text block's month language: the interface's (the owner, 3 November 2026). */
-const interfaceMonths = (): MonthLanguage => (locale() === "pt-BR" ? "pt" : locale() === "es" ? "es" : "en");
+const interfaceMonths = (): MonthLanguage => {
+  const language = locale();
+  return language === "pt-BR" ? "pt" : language;
+};
 
 /** The month languages a text block offers, each named with its December. */
 const MONTH_LANGUAGES: { id: MonthLanguage; name: () => string }[] = [
   { id: "en", name: () => t("English ({dec})", { dec: MONTH_NAMES.en[11]! }) },
   { id: "pt", name: () => t("Portuguese ({dec})", { dec: MONTH_NAMES.pt[11]! }) },
   { id: "es", name: () => t("Spanish ({dec})", { dec: MONTH_NAMES.es[11]! }) },
+  { id: "fr", name: () => t("French ({dec})", { dec: MONTH_NAMES.fr[11]! }) },
+  { id: "de", name: () => t("German ({dec})", { dec: MONTH_NAMES.de[11]! }) },
+  { id: "it", name: () => t("Italian ({dec})", { dec: MONTH_NAMES.it[11]! }) },
 ];
 
 function nextId(page: DesignPage): string {

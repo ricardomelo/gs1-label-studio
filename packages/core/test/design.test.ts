@@ -20,6 +20,7 @@ import {
   formatDate,
   generateBatch,
   MONTH_NAMES,
+  type MonthLanguage,
   InputError,
   labelFor,
   parseDelimited,
@@ -628,14 +629,21 @@ describe("a label of one's own", () => {
     expect(zplPage(printPageFor(designed, 203))).toContain("^FDDOB 15/01/1960 08:30^FS");
   });
 
-  it("writes a date's month in the text block's language: English, Portuguese or Spanish", () => {
+  it("writes a date's month in the text block's language: English, Portuguese, Spanish, French, German or Italian", () => {
     const today = new Date(Date.UTC(2026, 10, 3));
-    const month = (months: "en" | "pt" | "es") =>
+    const month = (months: MonthLanguage) =>
       Array.from({ length: 12 }, (_, i) => formatDate(`27${String(i + 1).padStart(2, "0")}15`, "MMM", { today, months })).join(" ");
     expect(month("en")).toBe("JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC");
     expect(month("pt")).toBe("JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ");
     expect(month("es")).toBe("ENE FEB MAR ABR MAY JUN JUL AGO SEP OCT NOV DIC");
-    expect(Object.keys(MONTH_NAMES)).toEqual(["en", "pt", "es"]);
+    expect(month("fr")).toBe("JAN FEV MAR AVR MAI JUN JUL AOU SEP OCT NOV DEC");
+    expect(month("de")).toBe("JAN FEB MRZ APR MAI JUN JUL AUG SEP OKT NOV DEZ");
+    expect(month("it")).toBe("GEN FEB MAR APR MAG GIU LUG AGO SET OTT NOV DIC");
+    expect(Object.keys(MONTH_NAMES)).toEqual(["en", "pt", "es", "fr", "de", "it"]);
+    // In the letters every printer language's font has: no accents, no umlauts
+    for (const names of Object.values(MONTH_NAMES)) for (const name of names) expect(name).toMatch(/^[A-Z]{3}$/);
+    expect(fillFields("{17:DD MMM YYYY}", data, { today, months: "de" })).toBe("31 DEZ 2027");
+    expect(fillFields("{17:DD MMM YYYY}", data, { today, months: "it" })).toBe("31 DIC 2027");
     expect(fillFields("VAL {17:DD MMM YYYY}", data, { today, months: "pt" })).toBe("VAL 31 DEZ 2027");
     expect(fillFields("{17:MMM/YY}", data, { today, months: "es" })).toBe("DIC/27");
     expect(fillFields("{17:DD/MM/YYYY}", data, { today, months: "pt" })).toBe("31/12/2027"); // only MMM changes
