@@ -37,6 +37,16 @@ describe("which AI a column holds, from its header", () => {
     ["Nettogewicht (kg)", "310n"], ["Menge", "37"], ["Ursprungsland", "422"], ["Codice a barre", "01"], ["Lotto", "10"],
     ["Numero di serie", "21"], ["Data di scadenza", "17"], ["Scadenza", "17"], ["TMC", "15"], ["Data di produzione", "11"],
     ["Peso netto (kg)", "310n"], ["Quantità", "37"], ["Paese di origine", "422"],
+    // A patient's wristband: GSRN alone is the recipient's, as (7250)–(7259) require (8018); data titles too
+    ["GSRN", "8018"], ["GSRN do paciente", "8018"], ["GSRN - RECIPIENT", "8018"], ["GSRN - PROVIDER", "8017"],
+    ["SRIN", "8019"], ["Atendimento", "8019"], ["Data de nascimento", "7250"], ["Date of birth", "7250"], ["DOB", "7250"],
+    ["Fecha de nacimiento", "7250"], ["Date de naissance", "7250"], ["Geburtsdatum", "7250"], ["Data di nascita", "7250"],
+    ["Data e hora de nascimento", "7251"], ["DOB TIME", "7251"], ["Sex", "7252"], ["Sexo", "7252"], ["Sexe", "7252"], ["Geschlecht", "7252"],
+    ["Sesso", "7252"], ["BIO SEX", "7252"], ["Sobrenome", "7253"], ["Apellidos", "7253"], ["Nom de famille", "7253"],
+    ["Nachname", "7253"], ["Cognome", "7253"], ["Last name", "7253"], ["Primeiro nome", "7254"], ["Prénom", "7254"],
+    ["Vorname", "7254"], ["Nombre de pila", "7254"], ["First name", "7254"], ["Sufixo", "7255"], ["Nome completo", "7256"],
+    ["Nombre completo", "7256"], ["Nom complet", "7256"], ["Vollständiger Name", "7256"], ["Patient name", "7256"],
+    ["Endereço do paciente", "7257"], ["PERSON ADDR", "7257"], ["Ordem de nascimento", "7258"], ["Baby", "7259"],
   ])("%s → (%s)", (header, ai) => {
     expect(guessColumn(header)).toBe(ai);
   });
@@ -48,6 +58,11 @@ describe("which AI a column holds, from its header", () => {
     expect(guessColumn("(399n)")).toBeNull(); // no such decimal family
     expect(guessColumn("(99)")).toBe("99");
     expect(guessMapping(["GTIN", "EAN", "Lote", "Notes"])).toEqual(["01", null, "10", null]);
+    // Words that may hold something else: a name that may be a full name, a surname or a given name; a hospital's own
+    // number; a nickname in Brazil; a season in English
+    for (const header of ["Nome", "Name", "Nombre", "Nom", "Patient ID", "Apelido", "Fall", "Endereço", "Address"]) {
+      expect(guessColumn(header)).toBeNull();
+    }
   });
 });
 
@@ -139,6 +154,18 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("7251", "1980-01-15")).toBe("19800115"); // its time missing: the Syntax Engine says so
     expect(normaliseCell("7251", "198001150830")).toBe("198001150830");
   });
+
+  it("writes a name or an address whose AI is percent-encoded with its spaces and accents as %XX, once", () => {
+    expect(normaliseCell("7254", "Maria José")).toBe("Maria%20Jos%C3%A9");
+    expect(normaliseCell("7253", " Conceição ")).toBe("Concei%C3%A7%C3%A3o");
+    expect(normaliseCell("7256", "Müller-Lüdenscheidt, Hans")).toBe("M%C3%BCller-L%C3%BCdenscheidt,%20Hans");
+    expect(normaliseCell("4302", "Rua São João, 100")).toBe("Rua%20S%C3%A3o%20Jo%C3%A3o,%20100");
+    expect(normaliseCell("7254", "Jo%C3%A3o")).toBe("Jo%C3%A3o"); // encoded already: not encoded again
+    expect(normaliseCell("7257", "Sala 3 – 50% ala")).toBe("Sala%203%20%E2%80%93%2050%25%20ala"); // a bare % is %25
+    expect(normaliseCell("7259", "Silva")).toBe("Silva");
+    expect(normaliseCell("10", "Lote A 1")).toBe("Lote A 1"); // not percent-encoded: for the Syntax Engine to judge
+    expect(normaliseCell("7252", "F")).toBe("F"); // ISO/IEC 5218's digit is not guessed from a letter
+  });
 });
 
 describe("a row's cells by their column's header", () => {
@@ -190,6 +217,19 @@ describe("rows as identifications", () => {
       "(01)09506000134376(7003)2712311530(8008)261001080509(7011)270630(17)271231(7007)270901270915",
       "(01)09506000134352(7003)2801050000(8008)261001235959(7011)270630(17)280105(7007)270901270915",
     ]);
+  });
+
+  it("checks a patient list: GSRN, date of birth, names with accents and spaces, each row accepted by the Syntax Engine", () => {
+    const table = parseDelimited(
+      "GSRN\tData de nascimento\tPrimeiro nome\tSobrenome\tSexo\tObservações\n" +
+        "795260646688514634\t15/01/1960\tJoão\tConceição\t1\tAlergia\n" +
+        "795260646688514634\t1960-01-15\tMaria José\tSilva\tF\t\n",
+    );
+    const mapping = guessMapping(table.headers);
+    expect(mapping).toEqual(["8018", "7250", "7254", "7253", "7252", null]);
+    const rows = checkRows(engine, table, mapping);
+    expect(rows[0]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Jo%C3%A3o(7253)Concei%C3%A7%C3%A3o(7252)1");
+    expect(rows[1]!.error).toMatch(/7252/); // F is not ISO/IEC 5218's digit
   });
 
   it("checks pasted rows the same way, a date the engine refuses reported for its row", () => {

@@ -405,7 +405,8 @@ complete.
 - 2.1 CSV, Excel and pasted rows; column mapping remembered by header; fixed values — *done: "In bulk" beside "One
   code" (mock-up A): CSV (comma, semicolon or tab), pasted rows and Excel workbooks read without a library; each
   column's AI guessed from its header and remembered for the same headers; values for every row; each row checked by
-  the Syntax Engine, its label in the preview*
+  the Syntax Engine, its label in the preview; since 8 November a patient list's headers too (GSRN, date of birth,
+  names), its names' spaces and accents as %XX*
 - 2.2 Validation report; fix or skip rows — *done (mock-up A of three): in the rows card, the rows with errors, fixed,
   skipped or all; each with its reason and its cells, the one at fault outlined and fixed in place (the file is not
   changed); a hint when Excel kept 15 digits of a code or a CSV wrote it in scientific notation; one row or every row

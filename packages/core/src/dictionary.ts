@@ -81,6 +81,50 @@ export function carriesTime(ai: string): boolean {
   return isDateAi(ai) && (aiEntry(ai)?.components.some((c) => c.linters.some((l) => TIME_LINTERS.has(l))) ?? false);
 }
 
+/**
+ * Whether an AI's value is percent-encoded (the pcenc linter): a character outside the General Specifications' CSET 82,
+ * such as a space or a letter with an accent, written as %XX for each of its UTF-8 bytes, as the names and addresses of
+ * (4300)–(4320) and (7253)–(7259).
+ */
+export function isPercentEncoded(ai: string): boolean {
+  return startsWith(ai, PCENC_LINTERS);
+}
+
+const PCENC_LINTERS = new Set(["pcenc"]);
+
+/** CSET 82 but the percent sign: what a percent-encoded value carries as it is. */
+const CSET82_BUT_PERCENT = /[!"&'()*+,\-./0-9:;<=>?A-Z_a-z]/;
+
+/**
+ * Text as a percent-encoded AI takes it (`isPercentEncoded`): each character outside CSET 82 as %XX for each of its
+ * UTF-8 bytes, in capitals (`Maria José` → `Maria%20Jos%C3%A9`). A percent sign followed by two hexadecimal digits is
+ * taken as already encoded and kept, so text encoded once is not encoded again; any other percent sign becomes %25.
+ */
+export function percentEncode(text: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; ) {
+    const char = String.fromCodePoint(text.codePointAt(i)!);
+    if (CSET82_BUT_PERCENT.test(char) || (char === "%" && /^[0-9A-Fa-f]{2}$/.test(text.slice(i + 1, i + 3)))) out += char;
+    else for (const byte of new TextEncoder().encode(char)) out += `%${byte.toString(16).toUpperCase().padStart(2, "0")}`;
+    i += char.length;
+  }
+  return out;
+}
+
+/**
+ * A percent-encoded value as people read it (`Maria%20Jos%C3%A9` → `Maria José`); a run of %XX that is not UTF-8 is
+ * kept as it is.
+ */
+export function percentDecode(value: string): string {
+  return value.replace(/(?:%[0-9A-Fa-f]{2})+/g, (run) => {
+    try {
+      return decodeURIComponent(run);
+    } catch {
+      return run;
+    }
+  });
+}
+
 export interface Attribute {
   ai: string;
   title: string;

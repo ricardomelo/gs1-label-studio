@@ -1,4 +1,4 @@
-import { carriesTime, isDateAi, isFullYearDate } from "./dictionary.ts";
+import { carriesTime, isDateAi, isFullYearDate, isPercentEncoded, percentDecode } from "./dictionary.ts";
 import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { Identified } from "./identify.ts";
@@ -304,7 +304,8 @@ export function columnCell(cells: Readonly<Record<string, string>> | undefined, 
 /**
  * The value of each `{AI}` in a text, from the data, and of each `{AI:format}` of a date AI its date in that format
  * (`formatDate`, its year as given for a YYYYMMDD date, `isFullYearDate`), and its time too when the AI carries one (`carriesTime`); an AI the data does not have leaves
- * nothing. A format after an AI that is not a date, or with a time after an AI that carries none, raises an
+ * nothing. A percent-encoded AI's value (`isPercentEncoded`), as (7254) GIVEN NAME, is shown as people read it
+ * (`percentDecode`: `Jo%C3%A3o` → `João`). A format after an AI that is not a date, or with a time after an AI that carries none, raises an
  * `InputError`. Any other name in braces is a spreadsheet column's (backlog 4.2): `{Description}` shows the row's cell
  * under that header (`columnCell`); a name no column has stays as typed, so that a mistyped field shows on the label.
  */
@@ -313,7 +314,10 @@ export function fillFields(text: string, identified: Pick<Identified, "elements"
     const field = /^(\d{2,4})(?::(.*))?$/s.exec(inside);
     if (!field) return columnCell(options.cells, inside) ?? whole;
     const [, ai, format] = field as unknown as [string, string, string | undefined];
-    if (format === undefined) return identified.elements.find((e) => e.ai === ai)?.value ?? "";
+    if (format === undefined) {
+      const value = identified.elements.find((e) => e.ai === ai)?.value ?? "";
+      return isPercentEncoded(ai) ? percentDecode(value) : value;
+    }
     if (!isDateAi(ai)) throw new InputError(`(${ai}) is not a date, so its field takes no date format.`);
     if (!carriesTime(ai) && TIME_TOKENS.test(format)) throw new InputError(`(${ai}) carries no time, so its field takes no hh, mm or ss.`);
     const value = identified.elements.find((e) => e.ai === ai)?.value;

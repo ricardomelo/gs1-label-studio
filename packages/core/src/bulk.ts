@@ -1,5 +1,14 @@
 import { attributeByCode, AttributeError } from "./attributes.ts";
-import { aiEntry, carriesTime, identifierKeys, isDateAi, isFullYearDate, qualifiersOf } from "./dictionary.ts";
+import {
+  aiEntry,
+  carriesTime,
+  identifierKeys,
+  isDateAi,
+  isFullYearDate,
+  isPercentEncoded,
+  percentEncode,
+  qualifiersOf,
+} from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
@@ -24,7 +33,8 @@ function plain(text: string): string {
 }
 
 // Words people put in headers, in English, Portuguese, Spanish, French, German and Italian, without their accents (data,
-// not the interface's language: ADR 0003).
+// not the interface's language: ADR 0003). Each list starts with a single word: the web's catalogue test would take a
+// first text with a space for a message to translate.
 const SYNONYMS: Record<string, string[]> = {
   "01": ["gtin", "gtin 14", "gtin 13", "ean", "ean 13", "ean13", "upc", "barcode", "codigo de barras", "cod barras", "codigo ean",
     "code barre", "code barres", "code a barres", "strichcode", "codice a barre", "codice ean"],
@@ -53,6 +63,36 @@ const SYNONYMS: Record<string, string[]> = {
   "414": ["gln", "location", "localizacao", "localisation", "standort", "ubicazione"],
   "422": ["origin", "country of origin", "origem", "pais de origem", "pais de origen",
     "pays d origine", "origine", "ursprungsland", "herkunftsland", "paese di origine"],
+  // A patient's wristband: GSRN alone is the recipient's, (8018), as the patient's data below require it. Left out, as
+  // they may hold something else: a bare "name" (nome, nombre, nom: a full name, a surname or a given name), "patient
+  // id" (often a hospital's own number), "apelido" (a surname in Portugal, a nickname in Brazil), "fall" (a case in
+  // German, a season in English).
+  "8018": ["gsrn", "patient gsrn", "gsrn do paciente", "gsrn del paciente", "gsrn du patient", "gsrn des patienten",
+    "gsrn del paziente"],
+  "8019": ["srin", "service relation instance number", "episode", "encounter", "atendimento", "numero do atendimento",
+    "episodio", "numero de episodio", "sejour", "numero de sejour", "fallnummer", "numero di ricovero"],
+  "7250": ["dob", "date of birth", "birth date", "birthdate", "data de nascimento", "nascimento", "dt nascimento",
+    "data nascimento", "fecha de nacimiento", "nacimiento", "f nacimiento", "date de naissance", "naissance",
+    "geburtsdatum", "geb datum", "data di nascita", "nascita"],
+  "7251": ["geburtszeitpunkt", "dob time", "date and time of birth", "birth date and time", "time of birth", "data e hora de nascimento",
+    "hora de nascimento", "fecha y hora de nacimiento", "hora de nacimiento", "date et heure de naissance",
+    "heure de naissance", "geburtsdatum und uhrzeit", "geburtszeit", "data e ora di nascita",
+    "ora di nascita"],
+  "7252": ["sex", "biological sex", "gender", "sexo", "sexo biologico", "genero", "sexe", "sexe biologique",
+    "geschlecht", "biologisches geschlecht", "sesso", "sesso biologico"],
+  "7253": ["surname", "family name", "last name", "sobrenome", "apellido", "apellidos", "nom de famille",
+    "nachname", "familienname", "cognome"],
+  "7254": ["forename", "given name", "first name", "primeiro nome", "prenome", "nome proprio", "nombre de pila",
+    "prenom", "vorname", "nome di battesimo"],
+  "7255": ["suffix", "name suffix", "sufixo", "sufijo", "suffixe", "namenszusatz", "suffisso"],
+  "7256": ["patientenname", "full name", "patient name", "patient s name", "nome completo", "nome do paciente", "nombre completo",
+    "nombre del paciente", "nom complet", "nom du patient", "vollstandiger name", "name des patienten",
+    "nome del paziente"],
+  "7257": ["patientenadresse", "patient address", "patient s address", "home address", "endereco do paciente",
+    "direccion del paciente", "adresse du patient", "adresse des patienten", "indirizzo del paziente"],
+  "7258": ["geburtsreihenfolge", "birth sequence", "birth order", "ordem de nascimento", "orden de nacimiento",
+    "rang de naissance", "ordine di nascita"],
+  "7259": ["baby", "baby of", "bebe de", "baby von", "neonato di"],
 };
 
 const BY_WORDS = new Map<string, string>(Object.entries(SYNONYMS).flatMap(([ai, words]) => words.map((w) => [w, ai])));
@@ -77,10 +117,17 @@ export function guessColumn(header: string): string | null {
 
 let titles: Map<string, string> | undefined;
 
-/** The GS1 data titles of the keys, their qualifiers and the common attributes, in plain words ("batch lot"). */
+/** A patient's data, (7250) DOB to (7259) BABY, whose GS1 data titles a header may also be. */
+const PATIENT = ["7250", "7251", "7252", "7253", "7254", "7255", "7256", "7257", "7258", "7259"];
+
+/**
+ * The GS1 data titles of the keys, their qualifiers, the common attributes and a patient's data, in plain words ("batch
+ * lot", "dob").
+ */
 function dataTitles(): Map<string, string> {
   titles ??= new Map(
-    [...identifierKeys().flatMap((key) => [key, ...qualifiersOf(key)]), "11", "13", "15", "16", "17", "30", "37", "422"]
+    [...identifierKeys().flatMap((key) => [key, ...qualifiersOf(key)]), "11", "13", "15", "16", "17", "30", "37", "422",
+      ...PATIENT]
       .map((ai) => [ai, plain(aiEntry(ai)?.title ?? "")] as [string, string])
       .filter(([, title]) => title),
   );
@@ -108,11 +155,14 @@ export function guessMapping(headers: string[]): ColumnMapping {
  * takes two dates, a range with a dash, "to", "a", "al", "até", "hasta", "au", "à" or "bis" between them (or spaces alone),
  * as YYMMDDYYMMDD.
  * A date whose year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), is read from YYYY-MM-DD and DD/MM/YYYY
- * alone, since a date of birth's century cannot be guessed. Anything else is left as it is, for the Syntax Engine to
- * judge.
+ * alone, since a date of birth's century cannot be guessed. A name or an address whose AI is percent-encoded
+ * (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, has its spaces and other characters outside CSET 82
+ * written as %XX (`percentEncode`: `Conceição` → `Concei%C3%A7%C3%A3o`). Anything else is left as it is, for the Syntax
+ * Engine to judge.
  */
 export function normaliseCell(ai: string, raw: string): string {
   const value = raw.trim();
+  if (isPercentEncoded(ai)) return percentEncode(value);
   if (!isDateAi(ai)) return value;
   if (/^\d{6}$/.test(value)) return value;
   const date = dateCell(ai, value);

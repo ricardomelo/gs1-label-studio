@@ -1,5 +1,5 @@
 import {
-  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useLayoutEffect, useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
@@ -690,7 +690,7 @@ function FieldInsert({ elements, columns, months, onInsert }: {
             </optgroup>
           ) : (
             <option key={x.ai} value={`{${x.ai}}`}>
-              {`{${x.ai}}`} — {x.text}
+              {`{${x.ai}}`} — {isPercentEncoded(x.ai) ? percentDecode(valueOf(x)) : x.text}
             </option>
           ),
         )}

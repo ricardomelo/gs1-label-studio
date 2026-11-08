@@ -181,7 +181,7 @@ Each module, in the order of the flow above.
 | Module | What it does |
 |---|---|
 | `table.ts` | `parseDelimited` (RFC 4180, delimiter detected), `parseXlsx` (the workbook's zip and XML), `parseTableFile` |
-| `bulk.ts` | `guessColumn`/`guessMapping`, `normaliseCell`, `rowIdentification`, `checkRows` (columns at fault, hints) |
+| `bulk.ts` | `guessColumn`/`guessMapping`, `normaliseCell` (dates, names as %XX), `rowIdentification`, `checkRows` (columns at fault, hints) |
 | `report.ts` | `CellEdits`, `applyEdits`, `editCell`, `rowStatus`, `reportCounts`, `reportCsv`, `correctedCsv` |
 | `sequence.ts` | `sequenceValues`, `ssccFor`, `sequenceProblem`, `sequenceTable`, `withSequence` (at most `MAX_SEQUENCE` rows) |
 | `sheets.ts` | Avery sheets with centred margins, `sheetProblem`, `fitsSheet` |
@@ -277,7 +277,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
 | `batch` | label sheets, several-page PDF, file names, generating every row | 15 |
-| `bulk` | columns guessed from headers, cells normalised, rows checked | 72 |
+| `bulk` | columns guessed from headers, cells normalised, rows checked | 116 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
 | `dots` | the printer's dot grid | 3 |
@@ -292,7 +292,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 12 |
-| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 16 |
+| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 17 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 10 |
@@ -318,7 +318,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 78 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 79 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

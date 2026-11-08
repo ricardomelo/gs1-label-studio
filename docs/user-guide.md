@@ -575,7 +575,14 @@ its preview steps through the rows.
    (`01/09/2027 - 15/09/2027 → 270901270915`); its first date alone is a single day. A date
    of birth, (7250) or (7251), becomes YYYYMMDD from `1960-01-15` or `15/01/1960`, and (7251) keeps its time
    (`1960-01-15 08:30 → 196001150830`); a two-digit year such as `15/01/60` is left as typed and refused, since its
-   century cannot be told.
+   century cannot be told. A patient list's headers are guessed too: *GSRN* alone goes to (8018), the recipient's, which
+   a patient's data require; *Data de nascimento*, *Sexo*, *Primeiro nome*, *Sobrenome*, *Nome completo* and their words
+   in the other languages, or their data titles (*DOB*, *FAMILY NAME*), to (7250)–(7259). A bare *Nome* or *Name* is
+   left for you to choose, as it may hold a full name or a surname. A name or an address whose AI takes its other
+   characters as %XX — (7253), (7254), (7256), (7257), (7259) and the ship-to and return-to AIs (4300)–(4320) — has its
+   spaces and accents written so for the barcode (`Maria José → Maria%20Jos%C3%A9`); %XX already written is kept. A
+   field such as `{7254}` on a label of one's own shows the name as written, *Maria José*. (7252)'s sex is ISO/IEC
+   5218's digit (0, 1, 2 or 9): a letter such as *F* is refused.
 3. **Same value on every row** → **+ Add**: an AI with the same value on every row, such as a country of origin (422).
 4. The rows are checked at once: *2 rows ready · 2 with errors*.
 

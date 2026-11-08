@@ -315,4 +315,9 @@
   half of the label used to run on under the other column and past the page's edge; each is now broken between words
   within its column, a line of its own in the drawing, the files and every print language, at 3.5 mm or, when that
   leaves the label too short, at the 3 mm that 6.6.4.4 allows; a refusal then names shorter text among the cures.
+- A patient list in bulk (8 November; an open point since 7 November): *GSRN* alone is guessed as (8018), the
+  recipient's, and a date of birth, sex, names, address, birth order and SRIN from their words in the six languages or
+  their data titles; a name or address whose AI is percent-encoded ((4300)–(4320), (7253)–(7259)) has its spaces and
+  accents written as %XX for the barcode, where every accented name used to be refused, and a `{7254}` field shows the
+  name as written.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

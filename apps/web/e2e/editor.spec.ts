@@ -1820,6 +1820,48 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDDOB 15/01/1960 08:30^FS");
 });
 
+// A patient list in bulk (backlog 2.1, an open point since session 31): GSRN, the date of birth and the names guessed
+// from their headers; a name's spaces and accents written as %XX for the Syntax Engine, and shown as written on the label.
+test("in bulk: a patient list's columns guessed, names with accents encoded for the barcode and shown as written", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste",
+    "GSRN\tData de nascimento\tPrimeiro nome\tSobrenome\tNome\n" +
+      "795260646688514634\t15/01/1960\tMaria José\tConceição\tMaria José Conceição\n" +
+      "795260646688514634\t1985-07-02\tJoão\tSilva\tJoão Silva\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  for (const [column, ai] of [[0, "8018"], [1, "7250"], [2, "7254"], [3, "7253"], [4, ""]] as const) {
+    await expect(page.locator(`#map-${column}`)).toHaveValue(ai);
+  }
+  const first = page.locator("table.mapping tbody td.mono");
+  await expect(first.nth(1)).toHaveText("15/01/1960 → 19600115");
+  await expect(first.nth(2)).toHaveText("Maria José → Maria%20Jos%C3%A9");
+  await expect(first.nth(3)).toHaveText("Conceição → Concei%C3%A7%C3%A3o");
+  await expect(first.nth(4)).toHaveText("Maria José Conceição"); // a column holding no AI is left as it is
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.getByRole("button", { name: "+ Text" }).click();
+  await page.fill("#el-y", "52");
+  await expect(page.locator('#el-field option[value="{7254}"]')).toHaveText("{7254} — Maria José");
+  await page.fill("#el-text", "{7254} {7253}");
+  await expect(page.locator('.preview .symbol svg [aria-label="Maria José Conceição"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator('.preview .symbol svg [aria-label="João Silva"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (8018)795260646688514634(7250)19850702(7254)Jo%C3%A3o(7253)Silva", { timeout: 30_000 });
+  // Generated: the barcode carries the encoded name, the text the name as written
+  await on(page, "export");
+  await page.locator(".generate label.check", { hasText: "One ZPL file" }).locator("input").check();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Generate 2 labels" }).click()]);
+  const zpl = execFileSync("unzip", ["-p", (await download.path())!, "labels_gs1-datamatrix_203dpi.zpl"], { encoding: "utf8" });
+  for (const field of ["^FDMaria José Conceição^FS", "^FDJoão Silva^FS", "_17254Maria%20Jos%C3%A9_17253Concei%C3%A7%C3%A3o^FS", "_17254Jo%C3%A3o_17253Silva^FS"]) {
+    expect(zpl).toContain(field);
+  }
+});
+
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {

@@ -524,6 +524,174 @@
      "status": "passed"
     },
     {
+     "name": "which AI a column holds, from its header › GSRN → (8018)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › GSRN do paciente → (8018)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › GSRN - RECIPIENT → (8018)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › GSRN - PROVIDER → (8017)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › SRIN → (8019)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Atendimento → (8019)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Data de nascimento → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Date of birth → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › DOB → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Fecha de nacimiento → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Date de naissance → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Geburtsdatum → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Data di nascita → (7250)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Data e hora de nascimento → (7251)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › DOB TIME → (7251)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sex → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sexo → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sexe → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Geschlecht → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sesso → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › BIO SEX → (7252)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sobrenome → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Apellidos → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nom de famille → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nachname → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Cognome → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Last name → (7253)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Primeiro nome → (7254)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Prénom → (7254)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Vorname → (7254)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nombre de pila → (7254)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › First name → (7254)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Sufixo → (7255)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nome completo → (7256)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nombre completo → (7256)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Nom complet → (7256)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Vollständiger Name → (7256)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Patient name → (7256)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Endereço do paciente → (7257)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › PERSON ADDR → (7257)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Ordem de nascimento → (7258)",
+     "status": "passed"
+    },
+    {
+     "name": "which AI a column holds, from its header › Baby → (7259)",
+     "status": "passed"
+    },
+    {
      "name": "which AI a column holds, from its header › leaves out what it does not know, and a second column for an AI already taken",
      "status": "passed"
     },
@@ -548,6 +716,10 @@
      "status": "passed"
     },
     {
+     "name": "cells as the AI takes them › writes a name or an address whose AI is percent-encoded with its spaces and accents as %XX, once",
+     "status": "passed"
+    },
+    {
      "name": "a row's cells by their column's header › keeps each cell trimmed under its header, leaves out a column without one and keeps the first of two",
      "status": "passed"
     },
@@ -569,6 +741,10 @@
     },
     {
      "name": "rows as identifications › keeps the time of a workbook's date cells for the AIs that carry one, as each cell's format shows it",
+     "status": "passed"
+    },
+    {
+     "name": "rows as identifications › checks a patient list: GSRN, date of birth, names with accents and spaces, each row accepted by the Syntax Engine",
      "status": "passed"
     },
     {
@@ -653,6 +829,10 @@
     },
     {
      "name": "a label of one's own › writes a date of birth, YYYYMMDD, with its year as given, and (7251)'s time",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › shows a percent-encoded name or address as people read it, in the drawing and the print file",
      "status": "passed"
     },
     {
@@ -4889,6 +5069,15 @@
     },
     {
      "name": "a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251)'s time, in the drawing and the ZPL",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a patient list's columns guessed, names with accents encoded for the barcode and shown as written",
      "status": "listed",
      "projects": [
       "desktop",
