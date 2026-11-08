@@ -532,7 +532,10 @@ complete.
   before its handle, and the arrow keys move it by half a millimetre, 5 mm with Shift. What an arrow key did, said
   since 7 November (mock-up B of two, taken under the owner's rule; A told a screen reader alone): the hint under the
   outline or the handle starts with the new place or size, the end of a barcode's or a text's sizes and the label's
-  edge, and a live region tells a screen reader the same. Saving the label is 4.3*
+  edge, and a live region tells a screen reader the same. The keyboard's order since 8 November (mock-up A of two,
+  taken under the owner's rule; B sent the focus to the outline as an element was chosen): **On the label** beside the
+  chosen element in the list takes the focus to its outline, which comes before the panel, and Escape on the outline
+  or the handle brings it back to the element's row. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

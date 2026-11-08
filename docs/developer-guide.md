@@ -311,7 +311,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader (apps/web/test) | 5 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 71 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 72 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

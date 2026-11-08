@@ -285,4 +285,7 @@
 - What an arrow key did, said (backlog 4.2, 7 November): after an arrow key on the chosen element's outline or handle,
   the hint under it starts with the element's new place or size (and says when it has no larger or smaller size or
   runs past the label's edge), and a screen reader is told the same.
+- The keyboard's order (backlog 4.2, 8 November): **On the label** beside the chosen element in the list takes the
+  focus to its outline on the label, which comes before the panel, so that Tab no longer has to go back past the
+  export; Escape on the outline or the handle brings it back to the element in the list.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

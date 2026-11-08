@@ -1,5 +1,5 @@
 {
- "date": "2026-11-07",
+ "date": "2026-11-08",
  "skipped": 0,
  "programs": [
   {
@@ -4661,6 +4661,15 @@
     },
     {
      "name": "a label of one's own: what an arrow key did, in the hint and to a screen reader",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: from the list to the chosen element's outline on the label, and back with Escape",
      "status": "listed",
      "projects": [
       "desktop",

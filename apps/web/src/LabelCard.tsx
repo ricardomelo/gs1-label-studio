@@ -460,6 +460,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 problems={view.designer?.problems ?? []}
                 onEnvironment={(environment) => set("environment", environment)}
                 onChange={(page, selected) => onChange({ ...s, page, selected })}
+                outlined={!real && Boolean(view.svg && view.designer)}
               />
             )}
             {!s.designer && (<>

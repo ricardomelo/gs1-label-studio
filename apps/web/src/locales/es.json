@@ -667,5 +667,7 @@
  "Greys as dots, for a photo": "Grises en puntos, para una foto",
  "Its greys print as dots, closer together where it is darker. Darker prints all its greys darker; lighter, lighter.": "Los grises se imprimen en puntos, más juntos donde la imagen es más oscura. Más oscura imprime todos los grises más oscuros; más clara, más claros.",
  "Insert a name": "Insertar un nombre",
- "(empty on the first row)": "(vacío en la primera fila)"
+ "(empty on the first row)": "(vacío en la primera fila)",
+ "On the label": "En la etiqueta",
+ "On the label — {name}: press the arrow keys to move or resize it": "En la etiqueta — {name}: pulse las flechas para mover el elemento o cambiar su tamaño"
 }

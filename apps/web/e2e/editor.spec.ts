@@ -2410,6 +2410,85 @@ test("a label of one's own: what an arrow key did, in the hint and to a screen r
   await expect(said).toHaveText("Largura 40 mm · altura 25 mm");
 });
 
+// The keyboard's order (backlog 4.2, mock-up A of two, 8 November 2026): the outline and the handle come before the
+// panel, so "On the label" beside the chosen element in the list takes the focus to its outline, and Escape on the
+// outline or the handle brings it back to the element's row; B sent the focus to the outline as the element was chosen.
+test("a label of one's own: from the list to the chosen element's outline on the label, and back with Escape", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const outline = page.getByTestId("move-outline");
+  const handle = page.getByTestId("resize-handle");
+  const toLabel = page.getByTestId("to-label");
+  const row = page.locator(".design-list button", { hasText: "QR code" });
+  await expect(toLabel).toHaveCount(0); // nothing chosen
+  // Chosen with Enter: "On the label" beside it alone, next in the keyboard's order
+  await row.press("Enter");
+  await expect(toLabel).toHaveCount(1);
+  await expect(page.locator(".design-list li").first().getByTestId("to-label")).toHaveText("On the label");
+  await expect(toLabel).toHaveAccessibleName("On the label — QR code (GS1 Digital Link): press the arrow keys to move or resize it");
+  const [a, b] = [(await row.boundingBox())!, (await toLabel.boundingBox())!];
+  expect(Math.abs(a.y - b.y)).toBeLessThan(2); // on the element's line
+  expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+  await page.keyboard.press("Tab");
+  await expect(toLabel).toBeFocused();
+  // Enter: the outline has the focus, its ring and hint showing; the arrow keys move the element
+  await page.keyboard.press("Enter");
+  await expect(outline).toBeFocused();
+  expect(await outline.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("solid");
+  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Arrow keys: move · Shift: larger steps"');
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("#el-x")).toHaveValue("2.5");
+  // Escape: back to the element's row, which stays chosen; Tab then Enter go to the outline again, Tab to the handle,
+  // whose Escape comes back too
+  await page.keyboard.press("Escape");
+  await expect(row).toBeFocused();
+  await expect(row).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("design-said")).toHaveText(""); // the outline's blur
+  await expect(outline).not.toHaveAttribute("data-called");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await expect(handle).toBeFocused();
+  await page.keyboard.press("Shift+ArrowRight");
+  await expect(page.locator("#el-size")).not.toHaveValue("100");
+  await page.keyboard.press("Escape");
+  await expect(row).toBeFocused();
+  // A tap or a click on it: the outline's ring and hint shown all the same, which :focus-visible alone leaves out
+  await toLabel.click();
+  await expect(outline).toBeFocused();
+  await expect(outline).toHaveAttribute("data-called", "");
+  expect(await outline.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("solid");
+  expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).not.toBe("none");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("#el-y")).toHaveValue("2.5");
+  // Another element chosen: the button goes with it
+  await page.locator(".design-list button", { hasText: "{01}" }).click();
+  await expect(toLabel).toHaveCount(1);
+  await expect(outline).not.toHaveAttribute("data-called");
+  await expect(page.locator(".design-list li").nth(1).getByTestId("to-label")).toHaveCount(1);
+  // and Escape comes back to that element's row
+  await toLabel.press("Enter");
+  await expect(outline).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".design-list button", { hasText: "{01}" })).toBeFocused();
+  // In real size the label has no outline to go to
+  await page.getByRole("button", { name: "Real size" }).click();
+  await expect(outline).toHaveCount(0);
+  await expect(toLabel).toHaveCount(0);
+  await page.getByRole("button", { name: "Fit" }).click();
+  await expect(toLabel).toHaveCount(1);
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(toLabel).toHaveText("Na etiqueta");
+  await expect(toLabel).toHaveAccessibleName(/^Na etiqueta — .+: use as setas para mover ou redimensionar o elemento$/);
+});
+
 // Rotation (backlog 4.2, mock-up A of two): a barcode and a text block turned from their properties, their box on the
 // label turned with them, printed in ZPL with its field orientation and in EPL2 and TSPL with their rotation, and kept
 // in the work; a QR code stays upright.
@@ -2443,7 +2522,7 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   await expect.poll(box).toEqual([h, w]);
   await expect(page.locator("#el-x")).toHaveValue("2");
   // A text block read upwards
-  await page.locator(".design-list button").nth(1).click();
+  await page.locator(".design-list button[aria-pressed]").nth(1).click();
   await page.fill("#el-text", "BATCH {10}");
   await page.fill("#el-x", "80");
   await rotation.getByRole("button", { name: "270°", exact: true }).click();
@@ -2520,5 +2599,5 @@ test("a label of one's own: each new element a step right and down from one alre
   // A shape's corner (4, 4) is taken by the first text, (9, 9) by the second, (14, 14) by the third
   await page.getByRole("button", { name: "+ Shape" }).click();
   expect(await corner()).toEqual(["19", "19"]);
-  await expect(page.locator(".design-list button")).toHaveCount(7);
+  await expect(page.locator(".design-list button[aria-pressed]")).toHaveCount(7);
 });

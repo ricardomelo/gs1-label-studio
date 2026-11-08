@@ -33,6 +33,10 @@ import { ENVIRONMENT_NAMES } from "./texts.ts";
 // moved it by the arrow keys on its button in the list of elements. Then what an arrow key did, said after it (mock-up
 // B of two, 7 November 2026, taken under the owner's rule): the hint under the outline or the handle starts with the
 // element's new place or size, and a live region tells a screen reader the same (said.ts); A told the screen reader alone.
+// Then the keyboard's order (mock-up A of two, 8 November 2026, taken under the owner's rule): the outline and the handle
+// come before the panel, so "On the label" beside the chosen element in the list takes the focus to its outline, and
+// Escape on the outline or the handle brings it back to the element's row; B sent the focus to the outline as soon as an
+// element was chosen in the list.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -285,6 +289,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           aria-keyshortcuts="ArrowRight ArrowLeft ArrowDown ArrowUp Shift+ArrowRight Shift+ArrowLeft Shift+ArrowDown Shift+ArrowUp"
           style={outlineStyle(chosen, page)}
           onKeyDown={(event) => {
+            if (toList(event)) return;
             if (!(MOVE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
             event.preventDefault();
             const next = keyMoved(chosenElement, event.key as MoveKey, event.shiftKey);
@@ -293,7 +298,10 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
             }
             setKeyed({ id: next.id, what: "move", end: 0 });
           }}
-          onBlur={() => setKeyed(null)}
+          onBlur={(event) => {
+            delete event.currentTarget.dataset.called;
+            setKeyed(null);
+          }}
         />
       )}
       {chosen && chosenElement && handle && (
@@ -318,6 +326,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
           onPointerUp={() => (resizing.current = null)}
           onPointerCancel={() => (resizing.current = null)}
           onKeyDown={(event) => {
+            if (toList(event)) return;
             if (!(RESIZE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
             event.preventDefault();
             const next = keyResized(chosenElement, chosen, event.key as ResizeKey, event.shiftKey, sizing[chosen.id]);
@@ -359,6 +368,29 @@ interface PanelProps {
   problems: string[];
   onEnvironment: (environment: string) => void;
   onChange: (page: DesignPage, selected: string | null) => void;
+  /** Whether the chosen element's outline is on the label (not in real size): "On the label" in the list goes to it. */
+  outlined: boolean;
+}
+
+/**
+ * From the chosen element's row in the list to its outline on the label (the keyboard's order, backlog 4.2): the outline
+ * and the handle come before the panel, so that Tab from the list would reach the export first. Marked so that its ring
+ * and hint show after a tap too, which :focus-visible alone leaves out.
+ */
+function toOutline() {
+  const outline = document.querySelector<HTMLElement>(".design-move");
+  if (!outline) return;
+  outline.dataset.called = "";
+  outline.focus();
+}
+
+/** Escape on the outline or the handle: back to the chosen element's row in the list, Tab then to "On the label". */
+function toList(event: React.KeyboardEvent): boolean {
+  const row = document.querySelector<HTMLElement>('.design-list button[aria-pressed="true"]');
+  if (event.key !== "Escape" || !row) return false;
+  event.preventDefault();
+  row.focus();
+  return true;
 }
 
 const millimetres = (value: string, fallback: number) => (Number.isFinite(Number(value)) && value !== "" ? Number(value) : fallback);
@@ -582,7 +614,7 @@ function FieldInsert({ elements, columns, months, onInsert }: {
 }
 
 /** The page's size, its elements and the selected one's properties, under the canvas. */
-export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange }: PanelProps) {
+export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange, outlined }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
   const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
@@ -628,6 +660,17 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                 <button type="button" aria-pressed={e.id === selected} onClick={() => onChange(page, e.id)}>
                   <span aria-hidden="true">{elementIcon(e)}</span> {elementName(e)}
                 </button>
+                {e.id === selected && outlined && (
+                  <button
+                    type="button"
+                    className="design-to-label"
+                    data-testid="to-label"
+                    aria-label={t("On the label — {name}: press the arrow keys to move or resize it", { name: elementName(e) })}
+                    onClick={toOutline}
+                  >
+                    {t("On the label")}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

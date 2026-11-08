@@ -402,8 +402,8 @@ footer.about .hint { margin-top: 12px; }
    reaches it, then a ring around the element and what the keys do under it */
 .design-move { position: absolute; min-width: 4px; min-height: 4px; padding: 0; border: 0; margin: 0; background: transparent; pointer-events: none; }
 .design-move:focus { outline: none; }
-.design-move:focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
-.design-move:focus-visible::after { content: attr(data-keys); position: absolute; top: calc(100% + 8px); left: -3px; padding: 4px 8px; border-radius: 4px; background: #202124; color: #fff; font: 12px/1.3 system-ui, sans-serif; white-space: pre; text-align: left; pointer-events: none; z-index: 2; }
+.design-move:focus-visible, .design-move[data-called]:focus { outline: 3px solid #1a73e8; outline-offset: 2px; }
+.design-move:focus-visible::after, .design-move[data-called]:focus::after { content: attr(data-keys); position: absolute; top: calc(100% + 8px); left: -3px; padding: 4px 8px; border-radius: 4px; background: #202124; color: #fff; font: 12px/1.3 system-ui, sans-serif; white-space: pre; text-align: left; pointer-events: none; z-index: 2; }
 /* The chosen element's handle at its bottom right corner (resize.ts): a few pixels whatever the zoom, larger to a finger */
 .design-handle { position: absolute; width: 12px; height: 12px; padding: 0; transform: translate(-50%, -50%); box-sizing: border-box; background: #fff; border: 2px solid #1a73e8; border-radius: 2px; cursor: nwse-resize; touch-action: none; }
 /* From the keyboard (Tab, then the arrow keys): a ring around the handle and what the keys do under it */
@@ -423,6 +423,10 @@ footer.about .hint { margin-top: 12px; }
 .design-list { list-style: none; margin: 0; padding: 0; }
 .design-list button { display: block; width: 100%; text-align: left; padding: 7px 10px; margin: 0 0 4px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .design-list button[aria-pressed="true"] { border-color: #1a73e8; background: rgba(26, 115, 232, 0.1); }
+/* "On the label" beside the chosen element (the keyboard's order): to its outline on the label, which Tab reaches before the panel */
+.design-list li:has(.design-to-label) { display: flex; gap: 4px; }
+.design-list li:has(.design-to-label) > button:first-child { flex: 1; min-width: 0; }
+.design-list button.design-to-label { width: auto; flex: none; color: var(--link); }
 .design-problems { margin: 8px 0 0; padding-left: 18px; }
 .designer .darkness .range { display: flex; align-items: center; gap: 8px; }
 .designer .darkness input[type="range"] { flex: 1; min-width: 0; accent-color: #1a73e8; }
