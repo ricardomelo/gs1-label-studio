@@ -239,3 +239,77 @@ of its own in three columns — and the first, which keeps the data, the export 
 layout, was built. The page is one Layout in units of its smallest module, so every export draws it; each barcode is
 laid out as a symbol alone is, and each text block can carry fields from the data, which in bulk take each row's own.
 The printer languages wait for a later step of the item.
+
+## Sessions 10 to 13 — 3 November 2026: the designer prints, shapes, dates and a saved work
+
+The designer's label went to ZPL and EPL2 next, each barcode written as the symbol alone where the page puts it and
+checked to the dot through Labelary and Labelize. Doing so showed that every print file had ignored the human readable
+text chosen (none, or the key alone) in ZPL, TSPL, EPL2 and DPL; that was fixed first, with a test that fails without
+it, as every defect found on the way has been since. Lines and boxes followed: two mock-ups (a button for each, or one
+**+ Shape**), the first taken under the owner's rule and then the second at the owner's choice. A date field in a
+format, `{17:DD/MM/YYYY}`, came with each date offered in five formats; the month's abbreviation in Portuguese and
+Spanish the same evening.
+
+The owner then asked for the work to be saved on one's own computer, perhaps through the ZPL, opening a ZPL as Labelary
+does (backlog 4.3). Every reload lost the work, so it came before the designer's images: **Save** writes a work file,
+and the studio's own ZPL carries the same work in `^FX` comments, which Labelary prints exactly as without them. A ZPL
+made elsewhere is refused: a printer's commands keep neither the fields nor the GS1 meaning of the data. A new element
+made over another had gone unnoticed, the owner found; each one now lands 5 mm right and down from one at its corner.
+
+## Sessions 14 to 18 — 4 November 2026: images, rotation, the last work kept, EPL2 and TSPL
+
+Images are one-bit pictures as label printers print them, drawn as rectangles in SVG, PNG, PDF and EPS, and as `^GFA` in
+ZPL, every dot compared with Labelary's print at 203 and 300 dpi. Rotation by quarter turns needed ZPL's field origins
+measured first (`^FO` is the corner of the field as turned); ten symbols were printed upright and turned, and every dot
+of each turned one is the upright one's. The last work is kept in the browser and offered again on the next visit, in
+a bar under the header rather than a dialog; nothing comes back unasked.
+
+EPL2 then took images (`GW`, raw bytes, so a print file may be bytes rather than text) and rotation, and TSPL the whole
+designer. Where Labelize and the manuals differ — EPL2's bit for black, where a turned field's origin goes, TSPL's dot
+fonts with capitals at three quarters of their cell — the manual was followed and the tests move or invert what Labelize
+draws, each difference in sight; what Labelize cannot show, such as a turned QR code in TSPL, is refused.
+
+## Sessions 19 to 24 — 6 November 2026: DPL, columns as fields, darkness and ZPL's compression
+
+The designer in DPL counts in tenths of a millimetre from the label's bottom left corner; turning ITF-14's frame showed
+that a size taken as the difference of two rounded edges prints a dot short, so sizes are rounded on their own again.
+GS1-128 of an SSCC alone went to TSPL as `EAN128` once Labelize's source showed both readings of the manual print the
+same symbol, which let the GS1 Logistic Label print in TSPL and DPL for an SSCC alone.
+
+Then the parts of 4.2 that come from the data: a column holding no AI as a field, `{Produto}`, on a label of one's own
+and in the bulk file names; an image's darkness from its grey levels; and ZPL's own ASCII compression for `^GF`, chosen
+over `:Z64:`, which needs newer firmware, every field expanded by the guide's rules in the tests and printed through
+Labelary.
+
+## Sessions 25 to 35 — 7 November 2026: resizing, times, dithering and the keyboard
+
+Eleven short sessions, each the handover's next step. Resizing by a handle at the element's corner, a barcode to the
+sizes its environment allows: the first try followed the barcode's whole box, so a QR code at 150 % barely grew, which
+the browser test caught. A date's time in a field (`hh:mm`, in lower case so that `MM` stays the month), times kept from
+bulk cells and from Excel's date-time cells, and dates of birth whose year is written in full. Greys as dots for a
+photo, each printer dithering the picture again at its own dots, since sampling a dithered picture printed a mid grey
+21 % dark. The handle of an element past the label's edge held at the edge, in red. A second language for the GS1
+Logistic Label's data titles, under each English title as 6.6.4.2 allows. Resizing and moving from the keyboard, with
+what an arrow key did said in the hint. The browser tests found a phone bug on the way: a long barcode in the live
+preview widened the page until the tab bar could not be tapped.
+
+## Sessions 36 to 44 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
+
+The handover had no unconditional step left, so each session took the recommended option under the owner's rule
+unless the owner asked for something. The keyboard's order (**On the label** beside the chosen element, Escape back),
+then times with AM or PM and harvest periods in bulk. The owner said there is no screen reader to test with and none is
+to be targeted; that went into ADR 0003, what was built kept. At the owner's request the interface gained French, German
+and Italian, everywhere a language enters, as Claude's drafts awaiting native speakers; then a grid and rulers in the
+designer, turned on and off.
+
+The owner asked whether CI could follow GS1's Barcode Syntax Engine. A weekly workflow now builds the dictionary and the
+engine's messages again from a newer release's sources — byte for byte what the repository held for 1.4.1 — runs
+`pnpm check` and opens a draft pull request, never merging by itself; the release that checked the data is named on the
+screen and in the files made (backlog 0.6).
+
+The last sessions closed points left open earlier: the GS1 Logistic Label's From and To wrapped within their columns,
+3 mm when 3.5 mm leaves the label too short; a patient list's headers guessed in bulk, which showed that every name with
+a space or an accent had been refused, since (7253) to (7259) and (4300) to (4320) take their characters
+percent-encoded, so bulk and then One code write them as `%XX` and show them as people write them; and moving held
+within the label, Left and Top typed still free. By then the inventory held 1,129 tests in 47 files, and a full browser run
+passed 251 tests across a desktop, a phone and a tablet.
