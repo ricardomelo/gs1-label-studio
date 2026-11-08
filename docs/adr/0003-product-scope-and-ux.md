@@ -42,7 +42,12 @@
    browser and reads it with ZXing (zxing-wasm, its WebAssembly served by the application), comparing the symbology
    identifier and the data of every symbol with what the label should carry (`expectedReads()`).*
 5. **Private.** Nothing leaves the browser; said on the page.
-6. **Accessible.** Keyboard and screen reader, light and dark, phone width.
+6. **Accessible.** Keyboard and screen reader, light and dark, phone width. *The owner, 8 November 2026: no work for
+   screen readers, since the owner has none to test with; the keyboard, light and dark and the phone's width stay.
+   What was already built stays as it is (the option recommended and taken under the owner's rule; the other was to
+   take it out): the live region of 7 November that says what an arrow key did reads the same text as the visible
+   hint, and the buttons' names (`aria-label`) also serve the keyboard and voice control. Nothing new is made for a
+   screen reader, and none is used in the test plans.*
 7. **In English, Brazilian Portuguese and Spanish.** The owner first fixed the tool in English (28 October 2026): one
    language to write, test and document, the texts kept apart from the code so that a translation remained possible.
    *On 31 October 2026 the owner asked for Brazilian Portuguese and Spanish besides English, the documentation staying
