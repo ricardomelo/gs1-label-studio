@@ -1,5 +1,6 @@
 import {
-  linearSizesFor, SIZES, sizesFor, specSizesFor, SYMBOLOGIES, type DesignedLabel, type DesignElement, type PlacedElement,
+  boxOf, layoutLabel, linearSizesFor, SIZES, sizesFor, specSizesFor, SYMBOLOGIES, type DesignedLabel, type DesignElement,
+  type HriFont, type PlacedElement,
 } from "@gs1-label-studio/core";
 
 // Resizing an element by dragging a corner on a label of one's own (backlog 4.2, mock-up A of two, 7 November 2026,
@@ -28,6 +29,13 @@ import {
 // barcode and a text block to their next size, or with Shift to the size nearest their longer side 5 mm longer or
 // shorter, at least the next one. Mock-up B gave the keyboard to the element's outline, the arrows moving it and Shift
 // and the arrows resizing it: moving from the keyboard was not asked for, and Left and Top already move it exactly.
+//
+// Resizing by dragging or by the arrow keys is held within the label, as moving is (session 46, an open point since
+// session 43, taken under the owner's rule; B was resizing freely as before, the page reporting the edge): the element
+// grows no further than the label's edge, a box or a line to the last half millimetre, an image to the last half
+// millimetre of its width that keeps its whole box on the label, a barcode or a text block to the largest of its sizes
+// that does. One already past the edge never grows further past it, but can always be made smaller. Width, height,
+// length, size and text height typed in the properties stay free, past the edge too, which the page reports.
 
 /** Dragging sizes boxes, lines and images by half millimetres, as it moves elements. */
 export const RESIZE_STEP_MM = 0.5;
@@ -43,10 +51,15 @@ export interface SymbolSizing {
   widthMm: number;
   heightMm: number;
   sizes: readonly number[];
+  /** Its whole box on the page at `size`, as turned, text and quiet zones included; undefined when it cannot be drawn. */
+  boxAt?: (size: number) => { widthMm: number; heightMm: number } | undefined;
 }
 
-/** A barcode's sizing from what the page writes it from (`DesignedLabel.printer.symbols`): its layout and options. */
-export function symbolSizing({ layout, options, rotation }: DesignedLabel["printer"]["symbols"][number]): SymbolSizing {
+/**
+ * A barcode's sizing from what the page writes it from (`DesignedLabel.printer.symbols`): its layout and options; with
+ * the HRI `font`, its whole box at each size, laid out as the page lays it out when it is first asked for.
+ */
+export function symbolSizing({ layout, options, rotation }: DesignedLabel["printer"]["symbols"][number], font?: HriFont): SymbolSizing {
   let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const [x, y, w, h] of layout.rects) {
     [left, top, right, bottom] = [Math.min(left, x), Math.min(top, y), Math.max(right, x + w), Math.max(bottom, y + h)];
@@ -55,7 +68,21 @@ export function symbolSizing({ layout, options, rotation }: DesignedLabel["print
   const environment = options.environment ?? "";
   const sizes = options.spec ? specSizesFor(options.spec, SIZES)
     : SYMBOLOGIES[options.symbology].kind === "matrix" ? sizesFor(environment) : linearSizesFor(environment);
-  return rotation === 90 || rotation === 270 ? { widthMm: h, heightMm: w, sizes } : { widthMm: w, heightMm: h, sizes };
+  const turned = rotation === 90 || rotation === 270;
+  const boxes = new Map<number, { widthMm: number; heightMm: number } | undefined>();
+  const boxAt = (size: number) => {
+    if (!boxes.has(size)) {
+      try {
+        const at = size === options.size ? layout : layoutLabel({ ...options, size }, font!);
+        const [bw, bh] = [at.width * at.xMm, at.height * at.xMm];
+        boxes.set(size, turned ? { widthMm: bh, heightMm: bw } : { widthMm: bw, heightMm: bh });
+      } catch {
+        boxes.set(size, undefined);
+      }
+    }
+    return boxes.get(size);
+  };
+  return { ...(turned ? { widthMm: h, heightMm: w } : { widthMm: w, heightMm: h }), sizes, ...(font ? { boxAt } : {}) };
 }
 
 /** Where the chosen element's handle is drawn: its box's bottom right corner, held within the label; `past` when held. */
@@ -133,4 +160,67 @@ export function keyResized(element: DesignElement, placed: PlacedElement, key: R
     return { ...element, size: nextOf(sizes, element.size, sign, big ? element.size * scale : undefined) };
   }
   return { ...element, heightMm: nextOf(TEXT_HEIGHTS, element.heightMm, sign, big ? element.heightMm * scale : undefined) };
+}
+
+/**
+ * The box `next` would have on the page, as turned, its top left corner kept: `element` is the element as it is, laid
+ * out in `placed`. A box and a line from their sizes; an image and a text block grow in proportion to their width and
+ * height; a barcode as `sizing` lays it out at its size, or, without it, in proportion to its size.
+ */
+export function boxAfter(element: DesignElement, next: DesignElement, placed: PlacedElement, sizing?: SymbolSizing): { widthMm: number; heightMm: number } | undefined {
+  if (next.kind === "box" || next.kind === "line") return boxOf(next);
+  const scale = (ratio: number) => ({ widthMm: placed.widthMm * ratio, heightMm: placed.heightMm * ratio });
+  if (element.kind === "image" && next.kind === "image") return scale(next.widthMm / element.widthMm);
+  if (element.kind === "text" && next.kind === "text") return scale(next.heightMm / element.heightMm);
+  if (element.kind === "symbol" && next.kind === "symbol") return sizing?.boxAt ? sizing.boxAt(next.size) : scale(next.size / element.size);
+  return undefined;
+}
+
+const halfDown = (mm: number) => Math.floor(mm / RESIZE_STEP_MM + 1e-6) * RESIZE_STEP_MM;
+
+/**
+ * `next`, what dragging the corner or an arrow key on the handle makes of `element` (laid out in `placed`), held within
+ * the label: as it is when its box stays on the label (or cannot be laid out, which the page reports), or no further past the edge than `element`'s is; else a box or
+ * a line on the last half millimetre, an image on the last half millimetre of its width that keeps its box there, a
+ * barcode or a text block at the largest of its sizes between the two that does, and the element as it is when none
+ * does. Making it smaller is never held.
+ */
+export function heldResize(element: DesignElement, next: DesignElement, placed: PlacedElement, page: { widthMm: number; heightMm: number }, sizing?: SymbolSizing): DesignElement {
+  // Each side may reach the label's edge, or stay as far past it as it is
+  const maxW = Math.max(page.widthMm - placed.xMm, placed.widthMm);
+  const maxH = Math.max(page.heightMm - placed.yMm, placed.heightMm);
+  const fits = (candidate: DesignElement) => {
+    const box = boxAfter(element, candidate, placed, sizing);
+    // A barcode that cannot be drawn at that size is left to the page, which says why
+    return !box || (box.widthMm <= maxW + 1e-6 && box.heightMm <= maxH + 1e-6);
+  };
+  if (fits(next)) return next;
+  if (element.kind === "box" && next.kind === "box") {
+    return {
+      ...next,
+      widthMm: next.widthMm <= maxW + 1e-6 ? next.widthMm : Math.max(halfDown(page.widthMm - placed.xMm), element.widthMm),
+      heightMm: next.heightMm <= maxH + 1e-6 ? next.heightMm : Math.max(halfDown(page.heightMm - placed.yMm), element.heightMm),
+    };
+  }
+  if (element.kind === "line" && next.kind === "line") {
+    const room = element.vertical ? page.heightMm - placed.yMm : page.widthMm - placed.xMm;
+    return { ...next, lengthMm: Math.max(halfDown(room), element.lengthMm) };
+  }
+  if (element.kind === "image" && next.kind === "image") {
+    // Its width at which its box reaches the first of the two edges
+    const limit = Math.min(maxW * (element.widthMm / placed.widthMm), maxH * (element.widthMm / placed.heightMm));
+    return { ...next, widthMm: Math.max(halfDown(limit), element.widthMm) };
+  }
+  if (element.kind === "symbol" && next.kind === "symbol") {
+    const sizes = sizing?.sizes.length ? sizing.sizes : SIZES;
+    const between = sizes.filter((size) => size > element.size && size < next.size).sort((a, b) => b - a);
+    const size = between.find((s) => fits({ ...next, size: s }));
+    return size === undefined ? element : { ...next, size };
+  }
+  if (element.kind === "text" && next.kind === "text") {
+    const between = TEXT_HEIGHTS.filter((h) => h > element.heightMm && h < next.heightMm).sort((a, b) => b - a);
+    const heightMm = between.find((h) => fits({ ...next, heightMm: h }));
+    return heightMm === undefined ? element : { ...next, heightMm };
+  }
+  return element;
 }

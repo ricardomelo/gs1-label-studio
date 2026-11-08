@@ -276,9 +276,12 @@ of my own (barcodes and text placed freely)*:
    make the element larger or smaller, its top left corner kept. A box takes the corner's width and height and a line
    its length (by half millimetres); an image keeps its proportions; a barcode takes the nearest **Size** its scanning
    environment allows (its bars or modules follow the corner, its text keeps its height), and a text block the nearest
-   **Text height**. The properties show the new size as it changes. When the element runs past the label's edge, its
-   square stays at the edge, where the element is cut, and turns red; drag it and the corner comes under the pointer,
-   so the element shrinks back onto the label. From the keyboard: choose the element in the list, **On the label** and
+   **Text height**. The properties show the new size as it changes. Dragging the square and the arrow keys stop the
+   element at the label's edge: a box or a line on the last half millimetre, an image at the width that keeps it on the
+   label, a barcode or a text block at the largest size that does (a barcode's text included); only the properties
+   (**Width**, **Size**, **Text height** and the others) make it larger than that. When the element runs past the
+   label's edge, its square stays at the edge, where the element is cut, and turns red; it grows no further, and when
+   you drag it the corner comes under the pointer, so the element shrinks back onto the label. From the keyboard: choose the element in the list, **On the label** and
    then **Tab** give the square a ring (just after the element's own ring) (a hint under it says what the keys do), and press the arrow keys: each press moves the
    corner half a millimetre, or 5 mm with **Shift**. A box takes **→** and **←** on its width and **↓** and **↑** on
    its height, a line the two along it; an image, a barcode and a text block keep their proportions, **→** and **↓**

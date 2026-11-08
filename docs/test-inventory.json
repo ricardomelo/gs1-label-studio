@@ -3416,6 +3416,10 @@
      "status": "passed"
     },
     {
+     "name": "a barcode's sizing › with the font, lays out its whole box at each size as the page does, turned with it; without it, none",
+     "status": "passed"
+    },
+    {
      "name": "a barcode's sizing › makes a barcode follow the corner by its modules: half its side again gives 150 %, and only a size allowed",
      "status": "passed"
     },
@@ -3449,6 +3453,42 @@
     },
     {
      "name": "resizing from the keyboard › gives a text block its next height, or with Shift the one nearest its longer side 5 mm longer, and stops at the ends",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › leaves a size that stays on the label as it is, its edges included",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › holds a box at the label's edge on the side that runs past it, across, down or both",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › holds it on the last half millimetre, never smaller than it is",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › never lets an element already past the edge grow further past it, but always smaller",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › holds a line's length, across or down, its thickness aside",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › holds an image on the last half millimetre of its width that keeps its whole box on the label, turned or not",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › gives a text block the largest of its heights that keeps it on the label, or leaves it as it is",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › gives a barcode the largest of its sizes whose whole box, text included, stays on the label",
+     "status": "passed"
+    },
+    {
+     "name": "resizing held within the label › predicts each kind's box at its new size, its top left corner kept",
      "status": "passed"
     }
    ],
@@ -3585,6 +3625,10 @@
     },
     {
      "name": "what an arrow key on the handle says › the end of its sizes, and the label's edge after it",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the handle says › the label's edge reached when the key resized the element less than its step, held within the label",
      "status": "passed"
     },
     {
@@ -5208,6 +5252,15 @@
     },
     {
      "name": "a label of one's own: an element dragged held within the label, never further past its edge",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an element resized held within the label, never further past its edge",
      "status": "listed",
      "projects": [
       "desktop",

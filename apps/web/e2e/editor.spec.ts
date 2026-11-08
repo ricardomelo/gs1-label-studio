@@ -2266,7 +2266,9 @@ test("a label of one's own: an element resized by dragging its corner, its top l
     return { handle: [h.x + h.width / 2 - o.x, h.y + h.height / 2 - o.y], corner: [box.x + box.width, box.y + box.height], box };
   };
   // The QR code in general distribution: its handle at its box's corner; dragged 10 mm, its modules about 10 mm larger,
-  // 150 %; dragged far back, never smaller than the 100 % that general distribution allows
+  // 150 %; dragged far back, never smaller than the 100 % that general distribution allows. The label 120 mm high, as
+  // resizing is held within it (session 46) and 150 % with its text runs past the foot of a 60 mm one
+  await page.fill("#page-height", "120");
   await page.selectOption("#page-env", "distribution");
   await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
   await expect(handle).toHaveAttribute("title", "Drag this corner, or press the arrow keys, to resize the element");
@@ -2658,6 +2660,122 @@ test("a label of one's own: an element dragged held within the label, never furt
   await page.keyboard.press("ArrowDown");
   await expect(page.getByTestId("design-said")).toHaveText(`Left ${qx} mm · top ${qy} mm · at the label's edge`);
   await expect(x).toHaveValue(String(qx));
+});
+
+// Item 4.2 (session 46, an open point since session 43, taken under the owner's rule): resizing by dragging the corner
+// or by the arrow keys on it held within the label, as moving is: a box to the label's edge, a barcode and a text block
+// to the largest of their sizes that stays on it; one already past never grows further past; the properties stay free.
+test("a label of one's own: an element resized held within the label, never further past its edge", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  const overlay = page.locator(".design-overlay");
+  const handle = page.getByTestId("resize-handle");
+  const said = page.getByTestId("design-said");
+  // The page's report of an element past the edge (there is no list when there is no problem)
+  const past = page.locator(".design-problems", { hasText: "goes past the label's edge" });
+  /** Drags the handle by (dx, dy) mm from where it is drawn, and lets go. */
+  const drag = async (dx: number, dy: number) => {
+    await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    const mm = (await overlay.boundingBox())!.width / 100;
+    const h = (await handle.boundingBox())!;
+    const [x, y] = [h.x + h.width / 2, h.y + h.height / 2];
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + (dx * mm) / 2, y + (dy * mm) / 2, { steps: 4 });
+    await page.mouse.move(x + dx * mm, y + dy * mm, { steps: 4 });
+    await page.mouse.up();
+  };
+  /** The chosen element's box as the overlay draws it, in the label's millimetres. */
+  const box = async () => {
+    const r = overlay.locator("rect.selected");
+    const [x, y, w, h] = await Promise.all(["x", "y", "width", "height"].map(async (name) => Number(await r.getAttribute(name))));
+    return { x: x!, y: y!, right: x! + w!, foot: y! + h! };
+  };
+  // A box 40 × 20 mm at 40, 20 on the 100 × 60 mm label: dragged far right and down, its corner stops on the label's
+  const width = page.locator("#el-width");
+  const height = page.locator("#el-height-mm");
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await page.fill("#el-x", "40");
+  await page.fill("#el-y", "20");
+  await drag(80, 70);
+  await expect(width).toHaveValue("60");
+  await expect(height).toHaveValue("40");
+  await expect(handle).not.toHaveClass(/past/);
+  await expect(past).toHaveCount(0);
+  // The arrow keys on its handle grow it no further, and say that the edge is reached; smaller is never held
+  await handle.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Width 60 mm · height 40 mm · at the label's edge");
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(said).toHaveText("Width 60 mm · height 40 mm · at the label's edge");
+  await expect(width).toHaveValue("60");
+  await page.keyboard.press("ArrowLeft");
+  await expect(said).toHaveText("Width 59.5 mm · height 40 mm");
+  await expect(width).toHaveValue("59.5");
+  // Width typed past the edge, as the page says; dragged on it grows no further, dragged back it shrinks
+  await width.fill("70");
+  await expect(handle).toHaveClass(/past/);
+  await expect(past).toHaveCount(1);
+  await drag(20, 0);
+  await expect(width).toHaveValue("70");
+  // From the handle held at the edge, 100 mm: the corner under the pointer, 85 mm
+  await drag(-15, 0);
+  await expect(width).toHaveValue("45");
+  await expect(handle).not.toHaveClass(/past/);
+  // The QR code dragged far on: the largest size whose box, its text included, stays on the label, and no larger
+  await page.getByRole("button", { name: "Delete" }).click();
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  const size = page.locator("#el-size");
+  await expect(size).toHaveValue("100");
+  await drag(150, 150);
+  // 150 %: its box about 46 × 53 mm; 200 % would run past the foot
+  const held = "150";
+  await expect(size).toHaveValue(held);
+  const qr = await box();
+  expect(qr.right).toBeLessThanOrEqual(100);
+  expect(qr.foot).toBeLessThanOrEqual(60);
+  await expect(page.locator("#el-x")).toHaveValue("2");
+  await handle.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText(`Size ${held} % · at the label's edge`);
+  await expect(size).toHaveValue(held);
+  // The next size chosen in its properties still runs past the edge, as the page says
+  await size.selectOption("200");
+  await expect(past).toHaveCount(1);
+  await expect(handle).toHaveClass(/past/);
+  // Dragged on from there, no larger; back, smaller
+  await drag(20, 20);
+  await expect(size).toHaveValue("200");
+  await drag(-60, -60);
+  await expect(size).toHaveValue("100");
+  // On a label 72 mm high, 200 %: its box as laid out at that size, about 61 × 69 mm, its text no larger than at 100 %
+  // (in proportion to its box at 100 % it would be some 75 mm high)
+  await page.fill("#page-height", "72");
+  await drag(150, 150);
+  await expect(size).toHaveValue("200");
+  await expect(past).toHaveCount(0);
+  await size.selectOption("100");
+  await page.fill("#page-height", "60");
+  // The text block at the foot: dragged far on, the largest of its heights that keeps it on the label, 8 mm (about
+  // 91 mm wide; 10 mm would be some 113 mm wide), and the arrow keys say so
+  await page.locator(".design-list button", { hasText: "“{01}”" }).press("Enter");
+  await page.fill("#el-x", "2");
+  await page.fill("#el-y", "50");
+  await drag(150, 150);
+  const text = await box();
+  expect(text.foot).toBeLessThanOrEqual(60);
+  expect(text.right).toBeLessThanOrEqual(100);
+  await expect(page.locator("#el-height")).toHaveValue("8");
+  await handle.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(said).toHaveText("Text height 8 mm · at the label's edge");
+  await expect(past).toHaveCount(0);
 });
 
 // What an arrow key did (backlog 4.2, mock-up B of two, 7 November 2026, taken under the owner's rule): the element's new

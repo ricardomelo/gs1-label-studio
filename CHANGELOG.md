@@ -324,6 +324,12 @@
   arrow keys used to carry it past the label's edge, where print files refuse it; it now stops at the edge, its corner
   on the last half millimetre that keeps it on the label, an element already past the edge is never moved further
   past it, and the arrow keys' hint says when the edge is reached. **Left** and **Top** typed still place it anywhere.
+- Resizing held within the label (8 November; an open point since session 43): dragging an element's corner or the
+  arrow keys on it used to make it as large as asked, past the label's edge, where print files refuse it; it now grows
+  no further than the edge, a box or a line on the last half millimetre, an image at the width that keeps it on the
+  label, a barcode (its text and quiet zones included) or a text block at its largest size that does; one already past
+  the edge grows no further past it, and the arrow keys' hint says when the edge is reached. The properties typed still
+  make it any size.
 - Names and addresses as written in One code (8 November; an open point since session 42): a name or address whose AI
   is percent-encoded ((4300)–(4320), (7253)–(7259)) used to be refused for its first space or accent unless typed as
   %XX by hand; it is now typed as people write it and goes in the code as %XX, as in bulk, the row's hint showing the

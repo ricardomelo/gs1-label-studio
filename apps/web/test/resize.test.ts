@@ -4,7 +4,7 @@ import {
 } from "@gs1-label-studio/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { handleAt, keyResized, nearest, resized, symbolSizing, TEXT_HEIGHTS } from "../src/resize.ts";
+import { boxAfter, handleAt, heldResize, keyResized, nearest, resized, symbolSizing, TEXT_HEIGHTS, type SymbolSizing } from "../src/resize.ts";
 
 // Resizing an element by dragging its bottom right corner on a label of one's own (backlog 4.2, mock-up A of two,
 // 7 November 2026): its top left corner kept, a box to the corner, a line to its length, an image, a barcode and a text
@@ -103,6 +103,26 @@ describe("a barcode's sizing", () => {
     expect(upright.widthMm).toBeGreaterThan(upright.heightMm);
     expect([turned.widthMm, turned.heightMm]).toEqual([upright.heightMm, upright.widthMm]);
     expect(upright.sizes).toEqual(specSizesFor(spec, SIZES));
+  });
+
+  it("with the font, lays out its whole box at each size as the page does, turned with it; without it, none", () => {
+    const options = qr("retail");
+    const sizing = symbolSizing(written(options), font);
+    for (const size of SIZES) {
+      const layout = layoutLabel({ ...options, size }, font);
+      expect(sizing.boxAt!(size)).toEqual({ widthMm: layout.width * layout.xMm, heightMm: layout.height * layout.xMm });
+    }
+    // Its text keeps its height and width: at 200 % it is less than twice as wide, so its size alone cannot say
+    expect(sizing.boxAt!(200)!.widthMm).toBeGreaterThan(sizing.boxAt!(100)!.widthMm);
+    expect(sizing.boxAt!(200)!.widthMm).toBeLessThan(sizing.boxAt!(100)!.widthMm * 1.5);
+    const spec = specificationFor(ENVIRONMENTS.logistics!.table, "gs1-128")!;
+    const gs1128: LabelOptions = { symbology: "gs1-128", data: "(01)09506000134376", showHri: true, hriLines: ["(01)09506000134376"], size: 100, spec, table: ENVIRONMENTS.logistics!.table };
+    const upright = symbolSizing(written(gs1128), font).boxAt!(specSizesFor(spec, SIZES).at(-1)!)!;
+    const turned = symbolSizing(written(gs1128, 270), font).boxAt!(specSizesFor(spec, SIZES).at(-1)!)!;
+    expect([turned.widthMm, turned.heightMm]).toEqual([upright.heightMm, upright.widthMm]);
+    // A size it cannot be laid out at
+    expect(symbolSizing(written(options), font).boxAt!(75)).toBeUndefined();
+    expect(symbolSizing(written(options)).boxAt).toBeUndefined();
   });
 
   it("makes a barcode follow the corner by its modules: half its side again gives 150 %, and only a size allowed", () => {
@@ -220,5 +240,124 @@ describe("resizing from the keyboard", () => {
     expect(keyResized({ ...text, heightMm: 4.2 }, placed, "ArrowUp", false)).toEqual({ ...text, heightMm: 4 });
     expect(keyResized({ ...text, heightMm: 12 }, placed, "ArrowDown", true)).toEqual({ ...text, heightMm: 12 });
     expect(keyResized({ ...text, heightMm: 2 }, placed, "ArrowUp", false)).toEqual({ ...text, heightMm: 2 });
+  });
+});
+
+// Resizing held within the label, as moving is (session 46, an open point since session 43): an element grows no
+// further than the label's edge, or no further past it than it is; making it smaller is never held.
+describe("resizing held within the label", () => {
+  const page = { widthMm: 100, heightMm: 60 };
+  const box: DesignBox = { id: "e1", kind: "box", widthMm: 20, heightMm: 10, thicknessMm: 0.5, filled: false, xMm: 60, yMm: 40 };
+  const placedBox = at(60, 40, 20, 10);
+
+  it("leaves a size that stays on the label as it is, its edges included", () => {
+    expect(heldResize(box, { ...box, widthMm: 40, heightMm: 20 }, placedBox, page)).toEqual({ ...box, widthMm: 40, heightMm: 20 });
+    expect(heldResize(box, { ...box, widthMm: 5 }, placedBox, page)).toEqual({ ...box, widthMm: 5 });
+  });
+
+  it("holds a box at the label's edge on the side that runs past it, across, down or both", () => {
+    expect(heldResize(box, { ...box, widthMm: 45 }, placedBox, page)).toEqual({ ...box, widthMm: 40 });
+    expect(heldResize(box, { ...box, heightMm: 25 }, placedBox, page)).toEqual({ ...box, heightMm: 20 });
+    expect(heldResize(box, { ...box, widthMm: 45, heightMm: 15 }, placedBox, page)).toEqual({ ...box, widthMm: 40, heightMm: 15 });
+    expect(heldResize(box, { ...box, widthMm: 41, heightMm: 30 }, placedBox, page)).toEqual({ ...box, widthMm: 40, heightMm: 20 });
+    // Dragged and from the keyboard, as the overlay calls it
+    expect(heldResize(box, resized(box, placedBox, 130, 55), placedBox, page)).toEqual({ ...box, widthMm: 40, heightMm: 15 });
+    const full = { ...box, widthMm: 40 };
+    expect(heldResize(full, keyResized(full, at(60, 40, 40, 10), "ArrowRight", false), at(60, 40, 40, 10), page)).toEqual(full);
+    expect(heldResize(box, keyResized(box, placedBox, "ArrowDown", true), placedBox, page)).toEqual({ ...box, heightMm: 15 });
+  });
+
+  it("holds it on the last half millimetre, never smaller than it is", () => {
+    // 39.7 mm of room: 39.5; a width of 39.7 typed stays 39.7
+    const off = { ...box, xMm: 60.3 };
+    expect(heldResize(off, { ...off, widthMm: 40 }, at(60.3, 40, 20, 10), page)).toEqual({ ...off, widthMm: 39.5 });
+    expect(heldResize({ ...off, widthMm: 39.7 }, { ...off, widthMm: 40 }, at(60.3, 40, 39.7, 10), page)).toEqual({ ...off, widthMm: 39.7 });
+    // A hair's rounding still leaves the last half millimetre
+    const hair = { ...box, xMm: 60 + 1e-9 };
+    expect(heldResize(hair, { ...hair, widthMm: 45 }, at(60 + 1e-9, 40, 20, 10), page)).toEqual({ ...hair, widthMm: 40 });
+    // Under half a millimetre of room
+    const tight = { ...box, xMm: 99.7, widthMm: 0.2 };
+    expect(heldResize(tight, { ...tight, widthMm: 0.5 }, at(99.7, 40, 0.2, 10), page)).toEqual(tight);
+  });
+
+  it("never lets an element already past the edge grow further past it, but always smaller", () => {
+    const past = { ...box, xMm: 80, widthMm: 40 };
+    const placed = at(80, 40, 40, 10);
+    expect(heldResize(past, { ...past, widthMm: 45 }, placed, page)).toEqual(past);
+    expect(heldResize(past, { ...past, widthMm: 35 }, placed, page)).toEqual({ ...past, widthMm: 35 });
+    // Down, where it is on the label, it still reaches the edge
+    expect(heldResize(past, { ...past, heightMm: 30 }, placed, page)).toEqual({ ...past, heightMm: 20 });
+    // Past the left edge, its corner further from the right one
+    const left = { ...box, xMm: -10, widthMm: 30 };
+    expect(heldResize(left, { ...left, widthMm: 200 }, at(-10, 40, 30, 10), page)).toEqual({ ...left, widthMm: 110 });
+  });
+
+  it("holds a line's length, across or down, its thickness aside", () => {
+    const across: DesignLine = { id: "e1", kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 59.5 };
+    expect(heldResize(across, { ...across, lengthMm: 120 }, at(4, 59.5, 40, 0.5), page)).toEqual({ ...across, lengthMm: 96 });
+    const down: DesignLine = { ...across, vertical: true, xMm: 99.5, yMm: 4.3 };
+    expect(heldResize(down, { ...down, lengthMm: 60 }, at(99.5, 4.3, 0.5, 40), page)).toEqual({ ...down, lengthMm: 55.5 });
+    expect(heldResize(down, { ...down, lengthMm: 55.5 }, at(99.5, 4.3, 0.5, 40), page)).toEqual({ ...down, lengthMm: 55.5 });
+    // Already past: no longer, but shorter
+    const long = { ...across, lengthMm: 100 };
+    expect(heldResize(long, { ...long, lengthMm: 105 }, at(4, 59.5, 100, 0.5), page)).toEqual(long);
+    expect(heldResize(long, { ...long, lengthMm: 99.5 }, at(4, 59.5, 100, 0.5), page)).toEqual({ ...long, lengthMm: 99.5 });
+  });
+
+  it("holds an image on the last half millimetre of its width that keeps its whole box on the label, turned or not", () => {
+    const picture = { width: 360, height: 150, bits: "" };
+    const image: DesignImage = { id: "e1", kind: "image", name: "logo", picture, widthMm: 20, xMm: 60, yMm: 6 };
+    const placed = at(60, 6, 20, 25 / 3);
+    // Across: 40 mm of room
+    expect(heldResize(image, { ...image, widthMm: 50 }, placed, page)).toEqual({ ...image, widthMm: 40 });
+    // Down: 14 mm of room is 33.6 mm wide, so 33.5
+    const low = { ...image, xMm: 0, yMm: 46 };
+    expect(heldResize(low, { ...low, widthMm: 50 }, at(0, 46, 20, 25 / 3), page)).toEqual({ ...low, widthMm: 33.5 });
+    // Turned, its width runs down: 54 mm of room
+    const turned = { ...image, rotation: 90 as const, xMm: 0 };
+    expect(heldResize(turned, { ...turned, widthMm: 80 }, at(0, 6, 25 / 3, 20), page)).toEqual({ ...turned, widthMm: 54 });
+    // Already past the foot: no wider, its width typed off the half millimetres kept
+    const deep = { ...image, xMm: 0, yMm: 55, widthMm: 20.3 };
+    expect(heldResize(deep, { ...deep, widthMm: 20.5 }, at(0, 55, 20.3, (20.3 * 150) / 360), page)).toEqual(deep);
+  });
+
+  it("gives a text block the largest of its heights that keeps it on the label, or leaves it as it is", () => {
+    const text: DesignText = { id: "e1", kind: "text", text: "BATCH {10}", heightMm: 3, xMm: 60, yMm: 4 };
+    // 20 mm wide at 3 mm: 40 mm of room takes 6 mm (40 mm wide), not 7 (46.7)
+    const placed = at(60, 4, 20, 3);
+    expect(heldResize(text, { ...text, heightMm: 10 }, placed, page)).toEqual({ ...text, heightMm: 6 });
+    expect(heldResize(text, { ...text, heightMm: 6 }, placed, page)).toEqual({ ...text, heightMm: 6 });
+    // Room for no larger height: as it is
+    expect(heldResize(text, { ...text, heightMm: 3.5 }, at(60, 4, 39, 3), page)).toEqual(text);
+    // Smaller, never held, even past the edge
+    expect(heldResize(text, { ...text, heightMm: 2 }, at(90, 4, 20, 3), page)).toEqual({ ...text, heightMm: 2 });
+  });
+
+  it("gives a barcode the largest of its sizes whose whole box, text included, stays on the label", () => {
+    const symbol: DesignSymbol = { id: "e1", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: true, xMm: 60, yMm: 2 };
+    const boxes: Record<number, number> = { 80: 16, 90: 18, 100: 20, 120: 24, 150: 30, 200: 40 };
+    const sizing: SymbolSizing = { widthMm: 15, heightMm: 15, sizes: SIZES, boxAt: (size) => ({ widthMm: boxes[size]!, heightMm: boxes[size]! + 5 }) };
+    const placed = at(60, 2, 20, 25);
+    // 40 mm across: 200 %; 35 mm down: 150 % is 35 high, 200 % 45
+    expect(heldResize(symbol, { ...symbol, size: 200 }, placed, page, sizing)).toEqual({ ...symbol, size: 200 });
+    expect(heldResize({ ...symbol, yMm: 25 }, { ...symbol, yMm: 25, size: 200 }, at(60, 25, 20, 25), page, sizing)).toEqual({ ...symbol, yMm: 25, size: 150 });
+    expect(heldResize({ ...symbol, xMm: 75 }, { ...symbol, xMm: 75, size: 200 }, at(75, 2, 20, 25), page, sizing)).toEqual({ ...symbol, xMm: 75, size: 120 });
+    // No larger size fits: as it is
+    expect(heldResize({ ...symbol, xMm: 79 }, { ...symbol, xMm: 79, size: 120 }, at(79, 2, 20, 25), page, sizing)).toEqual({ ...symbol, xMm: 79 });
+    // Without a box at each size, in proportion to its size
+    expect(heldResize({ ...symbol, xMm: 75 }, { ...symbol, xMm: 75, size: 200 }, at(75, 2, 20, 25), page, { ...sizing, boxAt: undefined }))
+      .toEqual({ ...symbol, xMm: 75, size: 120 });
+    // A size it cannot be drawn at is left to the page, which says why
+    expect(heldResize(symbol, { ...symbol, size: 150 }, placed, page, { ...sizing, boxAt: () => undefined })).toEqual({ ...symbol, size: 150 });
+  });
+
+  it("predicts each kind's box at its new size, its top left corner kept", () => {
+    expect(boxAfter(box, { ...box, widthMm: 30 }, placedBox)).toEqual({ widthMm: 30, heightMm: 10, thicknessMm: 0.5 });
+    const line: DesignLine = { id: "e1", kind: "line", vertical: true, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 };
+    expect(boxAfter(line, { ...line, lengthMm: 50 }, at(4, 4, 0.5, 40))).toMatchObject({ widthMm: 0.5, heightMm: 50 });
+    const text: DesignText = { id: "e1", kind: "text", text: "T", heightMm: 3, xMm: 4, yMm: 4 };
+    expect(boxAfter(text, { ...text, heightMm: 6 }, at(4, 4, 2, 3))).toEqual({ widthMm: 4, heightMm: 6 });
+    const image: DesignImage = { id: "e1", kind: "image", name: "logo", picture: { width: 360, height: 150, bits: "" }, widthMm: 20, xMm: 0, yMm: 0 };
+    expect(boxAfter(image, { ...image, widthMm: 30 }, at(0, 0, 25 / 3, 20))).toEqual({ widthMm: 12.5, heightMm: 30 });
   });
 });

@@ -212,7 +212,7 @@ Each module, in the order of the flow above.
 | `src/ScanCard.tsx` | Step 2: the tree's questions, the table, the recommended and allowed symbols, *Choose a symbol yourself* |
 | `src/LabelCard.tsx` | Step 3: canvas, caption, zoom, *Fit / Real size*, scan test, Export bar, options, GS1-128 symbols, the coloured URI |
 | `src/RealSize.tsx` | Rulers and the screen's calibration |
-| `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes), `handleAt` (the handle held within the label when the element runs past its edge), `keyResized` (an arrow key on the handle: the corner by a step, a barcode and a text block to their next size) |
+| `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes), `handleAt` (the handle held within the label when the element runs past its edge), `keyResized` (an arrow key on the handle: the corner by a step, a barcode and a text block to their next size), `boxAfter` (the box an element would have at its new size, a barcode's laid out by `symbolSizing`'s `boxAt`), `heldResize` (dragging and the arrow keys held within the label: the last half millimetre or the largest size that keeps the element's box on it, never further past the edge than it is) |
 | `src/place.ts` | A label of one's own: `freeCorner` (where a new element lands, never on another), `keyMoved` (an arrow key on the chosen element's outline: the element by a step, its corner on the half millimetres), `heldMove` (dragging and the arrow keys held within the label: the last half millimetre that keeps the element's box on it, never further past the edge than it is) |
 | `src/said.ts` | A label of one's own: what an arrow key did, said in the hint and in a live region: `placeSaid` (Left and Top), `sizeSaid` (the size as the properties give it, the end of the sizes), `keyEnd` (which end a key that changed nothing met); the label's edge after either |
 | `src/guides.ts` | A label of one's own: the grid and rulers, `gridLines` (every 1, 2, 5 or 10 mm as the label is drawn, stronger every 10 mm), `rulerTicks` (ticks and the millimetres numbered where they have room), `keptGuides` and `keepGuides` (on or off, in localStorage); drawn by `DesignerGuides` in `Designer.tsx` |
@@ -316,10 +316,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another; the arrow keys on its outline; moving held within the label (apps/web/test) | 9 |
 | `imagefile` | the size an image file is drawn at before it becomes a picture (apps/web/test) | 3 |
-| `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle (apps/web/test) | 17 |
-| `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached (apps/web/test) | 6 |
+| `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle, resizing held within the label (apps/web/test) | 27 |
+| `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 81 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 82 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

@@ -346,7 +346,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             widthMm: page.widthMm, heightMm: page.heightMm, expected: designed.expected,
             pngResolutions: PNG_RESOLUTIONS.map((dpi) => pngAt(layout, dpi)),
             caption: t("A label of my own {w} × {h} mm · {symbols}", { w: formatNumber(page.widthMm), h: formatNumber(page.heightMm), symbols: names }),
-            designer: { placed: designed.placed, sizing: Object.fromEntries(designed.printer.symbols.map((symbol) => [symbol.id, symbolSizing(symbol)])), problems },
+            designer: { placed: designed.placed, sizing: Object.fromEntries(designed.printer.symbols.map((symbol) => [symbol.id, symbolSizing(symbol, font)])), problems },
           },
           data, geometry, options, layout, designed,
         };

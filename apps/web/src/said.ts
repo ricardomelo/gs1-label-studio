@@ -21,9 +21,10 @@ export function placeSaid(element: DesignElement, placed: PlacedElement, page: D
 
 /**
  * The element's size after an arrow key on its handle, as its properties say it; `end` is the way the key went when it
- * changed nothing (`keyEnd`): a barcode or a text block, a box or an image at the end of its sizes.
+ * changed nothing (`keyEnd`): a barcode or a text block, a box or an image at the end of its sizes; `held` when the key
+ * resized it less than its step, as resizing is held within the label (resize.ts heldResize), said as the label's edge.
  */
-export function sizeSaid(element: DesignElement, placed: PlacedElement, page: DesignPage, end: number): string {
+export function sizeSaid(element: DesignElement, placed: PlacedElement, page: DesignPage, end: number, held = false): string {
   const mm = (value: number) => formatNumber(Math.round(value * 10) / 10);
   const size =
     element.kind === "box" ? t("Width {w} mm · height {h} mm", { w: mm(element.widthMm), h: mm(element.heightMm) })
@@ -31,7 +32,9 @@ export function sizeSaid(element: DesignElement, placed: PlacedElement, page: De
     : element.kind === "line" ? t("Length {mm} mm", { mm: mm(element.lengthMm) })
     : element.kind === "symbol" ? t("Size {size} %", { size: element.size })
     : t("Text height {mm} mm", { mm: mm(element.heightMm) });
-  return said(end < 0 ? [size, t("no smaller size")] : end > 0 ? [size, t("no larger size")] : [size], placed, page);
+  const parts = held && !past(placed, page) ? [size, t("at the label's edge")]
+    : end < 0 ? [size, t("no smaller size")] : end > 0 ? [size, t("no larger size")] : [size];
+  return said(parts, placed, page);
 }
 
 /**

@@ -127,8 +127,8 @@ each at its table's sizes and bar height, its human readable text placed and siz
 </p>
 
 **A label of my own** places barcodes, text blocks, lines, boxes and images on a label of any size: each dragged or
-moved from the keyboard, held within the label, turned by quarter turns and resized from its corner, a barcode only to
-the sizes its scanning environment allows. Text takes fields from the data — `{10}`, a date as `{17:DD/MM/YYYY}`, a
+moved from the keyboard, turned by quarter turns and resized from its corner, held within the label, a barcode only
+to the sizes its scanning environment allows. Text takes fields from the data — `{10}`, a date as `{17:DD/MM/YYYY}`, a
 spreadsheet's column such as `{Produto}` — so every row in bulk gets its own label; a grid and rulers help to line
 things up. The **GS1 Logistic Label** lays out an SSCC's label as section 6.6 asks, in A6, A5, 4 × 6 or 6 × 8 inches,
 its data titles also in a second language. **Save** keeps the work as a file to open again.
@@ -241,8 +241,8 @@ first release) and composite components (1.3, later). Phase 4 is done — the GS
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. No step is waiting unconditionally: what
-comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL, resizing held within
-the label, and a review of the French, German and Italian texts by native speakers.
+comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL, (7252) from words in
+each language, and a review of the French, German and Italian texts by native speakers.
 
 **How the order went.** On 29 October: the editor's corrections (1.10) first, being small and seen every day; the
 qualifiers and attributes in one block (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose
@@ -598,6 +598,11 @@ Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it ses
     the edge): dragging or the arrow keys stop an element at the label's edge, its corner on the last half millimetre
     that keeps it on the label; one already past the edge is never moved further past it but comes back as far as it
     is moved, and the hint says when the edge is reached; **Left** and **Top** typed still place it anywhere.*
+  - *Resizing held within the label, 8 November (an open point since the same day; B kept resizing free, the page
+    reporting the edge): dragging the corner or the arrow keys on it make an element no larger than the label's edge
+    allows, a box or a line on the last half millimetre, an image at the width that keeps it on the label, a barcode
+    (its text included) or a text block at its largest size that does; one already past the edge grows no further past
+    it but can always be made smaller; the properties typed still make it any size.*
   - *Saving the label is 4.3.*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November

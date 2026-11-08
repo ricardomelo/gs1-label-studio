@@ -293,7 +293,7 @@ Logistic Label's data titles, under each English title as 6.6.4.2 allows. Resizi
 what an arrow key did said in the hint. The browser tests found a phone bug on the way: a long barcode in the live
 preview widened the page until the tab bar could not be tapped.
 
-## Sessions 36 to 44 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
+## Sessions 36 to 46 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
 
 The handover had no unconditional step left, so each session took the recommended option under the owner's rule
 unless the owner asked for something. The keyboard's order (**On the label** beside the chosen element, Escape back),
@@ -311,5 +311,9 @@ The last sessions closed points left open earlier: the GS1 Logistic Label's From
 3 mm when 3.5 mm leaves the label too short; a patient list's headers guessed in bulk, which showed that every name with
 a space or an accent had been refused, since (7253) to (7259) and (4300) to (4320) take their characters
 percent-encoded, so bulk and then One code write them as `%XX` and show them as people write them; and moving held
-within the label, Left and Top typed still free. By then the inventory held 1,129 tests in 47 files, and a full browser run
-passed 251 tests across a desktop, a phone and a tablet.
+within the label, Left and Top typed still free. Session 45, at the owner's request, brought the README, this history
+and the documents' index up to date. Session 46 held resizing within the label as moving was: dragging the corner or
+the arrow keys make an element no larger than the label's edge allows, a barcode measured at each size with its text,
+which keeps its size, so that its box is not simply in proportion; the properties typed stay free. By then the
+inventory held 1,141 tests in 47 files, and a full browser run passed 254 tests across a desktop, a phone and a
+tablet.

@@ -74,6 +74,20 @@ describe("what an arrow key on the handle says", () => {
     expect(sizeSaid(symbol, at(2, 2, 20, 30), page, -1)).toBe("Tamanho 100 % · não há tamanho menor");
   });
 
+  it("the label's edge reached when the key resized the element less than its step, held within the label", () => {
+    expect(sizeSaid({ ...box, widthMm: 97.5 }, at(2.5, 7, 97.5, 20.5), page, 0, true)).toBe("Width 97.5 mm · height 20.5 mm · at the label's edge");
+    // Held where it is, not at the end of its sizes
+    const symbol: DesignSymbol = { id: "e1", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 120, hri: true, xMm: 2, yMm: 2 };
+    expect(sizeSaid(symbol, at(2, 2, 40, 50), page, 0, true)).toBe("Size 120 % · at the label's edge");
+    expect(sizeSaid({ ...box, widthMm: 97.5 }, at(2.5, 7, 97.5, 20.5), page, 0, false)).toBe("Width 97.5 mm · height 20.5 mm");
+    // An element already past the edge says that alone
+    expect(sizeSaid({ ...box, xMm: 70 }, at(70, 7, 40, 20.5), page, 0, true)).toBe("Width 40 mm · height 20.5 mm · past the label's edge");
+    setLocale("pt-BR", false);
+    expect(sizeSaid(symbol, at(2, 2, 40, 50), page, 0, true)).toBe("Tamanho 120 % · na borda da etiqueta");
+    setLocale("de", false);
+    expect(sizeSaid(symbol, at(2, 2, 40, 50), page, 0, true)).toBe("Größe 120 % · am Rand des Etiketts");
+  });
+
   it("an end only when the key changed nothing, and never for a line's keys across it", () => {
     expect(keyEnd(box, { ...box, widthMm: 40.5 }, "ArrowRight")).toBe(0);
     expect(keyEnd(box, box, "ArrowLeft")).toBe(-1);

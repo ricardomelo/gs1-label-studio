@@ -6,7 +6,7 @@ import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { gridLines, rulerTicks } from "./guides.ts";
 import { freeCorner, heldMove, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
-import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
+import { handleAt, heldResize, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 
@@ -227,7 +227,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
   const resizing = useRef<{ x: number; y: number; xMm: number; yMm: number; element: DesignElement; placed: PlacedElement; sizing?: SymbolSizing } | null>(null);
   // The last arrow key's work on the chosen element, until the focus leaves its outline or handle: said from the element
   // as it is now, so that a page redrawn later (the box past the edge, a barcode's size) is what it says
-  const [keyed, setKeyed] = useState<{ id: string; what: "move" | "size"; end: number } | null>(null);
+  const [keyed, setKeyed] = useState<{ id: string; what: "move" | "size"; end: number; held?: boolean } | null>(null);
   const mmPerPx = () => page.widthMm / svg.current!.getBoundingClientRect().width;
   const move = (event: React.PointerEvent) => {
     const d = drag.current;
@@ -247,7 +247,8 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
     if (!r || !svg.current) return;
     const scale = mmPerPx();
     const [xMm, yMm] = [r.xMm + (event.clientX - r.x) * scale, r.yMm + (event.clientY - r.y) * scale];
-    const next = resized(r.element, r.placed, xMm, yMm, r.sizing);
+    // Held within the label (resize.ts heldResize), never further past its edge than it was when the drag began
+    const next = heldResize(r.element, resized(r.element, r.placed, xMm, yMm, r.sizing), r.placed, page, r.sizing);
     const now = page.elements.find((e) => e.id === r.element.id);
     if (now && JSON.stringify(now) !== JSON.stringify(next)) {
       onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
@@ -257,7 +258,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
   const chosenElement = page.elements.find((e) => e.id === selected);
   const handle = chosen && handleAt(chosen, page);
   const said = !keyed || !chosen || !chosenElement || keyed.id !== chosen.id ? ""
-    : keyed.what === "move" ? placeSaid(chosenElement, chosen, page, keyed.end !== 0) : sizeSaid(chosenElement, chosen, page, keyed.end);
+    : keyed.what === "move" ? placeSaid(chosenElement, chosen, page, keyed.end !== 0) : sizeSaid(chosenElement, chosen, page, keyed.end, keyed.held);
   const keys = (what: "move" | "size", hint: string) => (said && keyed?.what === what ? `${said}\n${hint}` : hint);
   return (
     <>
@@ -354,11 +355,14 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
             if (toList(event)) return;
             if (!(RESIZE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
             event.preventDefault();
-            const next = keyResized(chosenElement, chosen, event.key as ResizeKey, event.shiftKey, sizing[chosen.id]);
+            const wanted = keyResized(chosenElement, chosen, event.key as ResizeKey, event.shiftKey, sizing[chosen.id]);
+            const next = heldResize(chosenElement, wanted, chosen, page, sizing[chosen.id]);
             if (JSON.stringify(next) !== JSON.stringify(chosenElement)) {
               onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
             }
-            setKeyed({ id: next.id, what: "size", end: keyEnd(chosenElement, next, event.key) });
+            // Held short of the step: at the label's edge, which the hint and the live region say, rather than its sizes' end
+            const held = JSON.stringify(next) !== JSON.stringify(wanted);
+            setKeyed({ id: next.id, what: "size", end: held ? 0 : keyEnd(chosenElement, next, event.key), held });
           }}
           onBlur={() => setKeyed(null)}
         />
