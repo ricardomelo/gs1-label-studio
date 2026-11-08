@@ -319,5 +319,6 @@ which keeps its size, so that its box is not simply in proportion; the propertie
 is male in English and female in Spanish. Session 48, taking up such names shown encoded under the symbols, read the
 General Specifications instead: the HRI is the data as the barcode carries it (4.14), so it stays encoded, while the
 GS1 Logistic Label's middle block, text with a data title and no AI, may show *Café Rio* (6.6.4.2, 4.14.1); and a space
-should be a plus sign, not %20 (3.8.29), which the studio now writes. By then the inventory held 1,147 tests in 47
-files, and a full browser run passed 260 tests across a desktop, a phone and a tablet.
+should be a plus sign, not %20 (3.8.29), which the studio now writes. Session 49 broke a word too long for From or To
+after its hyphen, slash or comma before its letters, never between two digits, so a postcode stays whole. By then the
+inventory held 1,148 tests in 47 files, and a full browser run passed 263 tests across a desktop, a phone and a tablet.

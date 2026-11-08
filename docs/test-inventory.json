@@ -2440,7 +2440,7 @@
      "status": "passed"
     },
     {
-     "name": "the GS1 Logistic Label › wraps From and To between words within their halves of the label, at 3.5 mm while the label has room",
+     "name": "the GS1 Logistic Label › wraps From and To between words, or after a hyphen, slash or comma, within their halves of the label, at 3.5 mm while the label has room",
      "status": "passed"
     },
     {
@@ -5061,6 +5061,15 @@
     },
     {
      "name": "the GS1 Logistic Label: From and To wrapped within their columns, smaller before refused, the refusal naming them",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the GS1 Logistic Label: a word too long for its column broken after a hyphen, slash or comma, a postcode kept whole",
      "status": "listed",
      "projects": [
       "desktop",

@@ -1347,6 +1347,22 @@ test("the GS1 Logistic Label: From and To wrapped within their columns, smaller 
   await expect(page.locator(".preview .error")).toContainText("textos mais curtos em De e Até, ou a etiqueta maior.");
 });
 
+// Item 4.1, From and To broken within a word (8 November 2026, an open point since session 41): a word too long for its
+// column was broken between its characters; now after a hyphen, slash or comma first, never inside a postcode.
+test("the GS1 Logistic Label: a word too long for its column broken after a hyphen, slash or comma, a postcode kept whole", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "4x6");
+  await page.fill("#opt-from", "Hortifrutigranjeira-Cooperativa\nRua Augusta,1500,Consolação\nCEP 01305-100");
+  await page.fill("#opt-to", "Armazém/Recebimento");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
+  await on(page, "export");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields.slice(0, 9)).toEqual(["FROM", "Hortifrutigranjeira-", "Cooperativa", "Rua Augusta,1500,", "Consolação", "CEP 01305-100", "TO", "Armazém/", "Recebimento"]);
+});
+
 // Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
 test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897");

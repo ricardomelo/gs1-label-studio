@@ -56,7 +56,7 @@ describe("the GS1 Logistic Label", () => {
   const freeText = (label: ReturnType<typeof logisticLabel>, x: number) =>
     label.printer.texts.filter((t) => Math.abs(t.x - x) < 1e-9 && t.heightMm >= 3 && t.heightMm <= 3.5); // the free text's sizes alone
 
-  it("wraps From and To between words within their halves of the label, at 3.5 mm while the label has room", () => {
+  it("wraps From and To between words, or after a hyphen, slash or comma, within their halves of the label, at 3.5 mm while the label has room", () => {
     const label = logisticLabel({ ...INPUT, from: SENDER, to: RECEIVER }, font);
     const { width, xMm } = label.layout;
     const from = freeText(label, 4 / xMm);
@@ -92,6 +92,21 @@ describe("the GS1 Logistic Label", () => {
     // Tabs and other spaces between words become one space
     const tabbed = logisticLabel({ ...INPUT, from: ["Dal\tGiardino \u00a0S.p.A."], to: [] }, font);
     expect(freeText(tabbed, 4 / xMm).map((t) => t.text)).toEqual(["Dal Giardino S.p.A."]);
+    // A word wider than its room is broken after a hyphen, slash, comma or semicolon before its characters: the mark
+    // ends the line; never between two digits (a postcode, a decimal comma, a date) nor after a word's first character
+    const marks = (from: string[]) => freeText(logisticLabel({ ...INPUT, from, to: [] }, font), 4 / xMm).map((t) => t.text);
+    expect(marks(["Rua Augusta,1500,Consolação,São Paulo-SP,Brasil"])).toEqual(["Rua Augusta,1500,", "Consolação,São Paulo-SP,", "Brasil"]);
+    expect(marks(["Distribuidora Hortifrutigranjeira-Cooperativa-Agroindustrial"])).toEqual(["Distribuidora", "Hortifrutigranjeira-", "Cooperativa-Agroindustrial"]);
+    expect(marks(["Armazém/Depósito/Expedição/Recebimento"])).toEqual(["Armazém/Depósito/", "Expedição/Recebimento"]);
+    expect(marks(["Recebimento;Expedição;Armazenagem", "Hortifrutigranjeira\u2013Cooperativa"])).toEqual(["Recebimento;Expedição;", "Armazenagem", "Hortifrutigranjeira\u2013", "Cooperativa"]);
+    expect(marks(["Lote 1,5;2,5;3,5 kg; Paulo-SP;Rio-RJ;Belo Horizonte-MG"])).toEqual(["Lote 1,5;2,5;3,5 kg; Paulo-", "SP;Rio-RJ;Belo Horizonte-", "MG"]);
+    expect(marks(["Ref 1234567890-1234567890-1234567890-12345"])).toEqual(["Ref", "1234567890-1234567890-12", "34567890-12345"]);
+    const leading = marks(["/" + "X".repeat(40), "a-b"]);
+    expect(leading[0]).toMatch(/^\/XX/);
+    expect(leading.join("")).toBe("/" + "X".repeat(40) + "a-b");
+    for (const t of freeText(logisticLabel({ ...INPUT, from: ["Hortifrutigranjeira-Cooperativa-Agroindustrial-Brasileira"], to: [] }, font), 4 / xMm)) {
+      expect(t.x + t.width).toBeLessThanOrEqual(width / 2 - 3 / xMm + 1e-9);
+    }
     // In ZPL each wrapped line is a field of its own
     const zpl = zplLogisticLabel(label, 300, 3);
     expect(zpl).toContain("^FDDistribuidora de Alimentos^FS");

@@ -71,7 +71,7 @@ export interface LogisticInput {
   spec: SymbolSpecification;
   table?: number;
   percent: number;
-  /** The top block's free text: who sends it, who receives it; a line an entry, wrapped between words within its half of the label. */
+  /** The top block's free text: who sends it, who receives it; a line an entry, wrapped between words (or after a hyphen, slash or comma) within its half of the label. */
   from?: readonly string[];
   to?: readonly string[];
   /**
@@ -127,28 +127,55 @@ function symbols(elements: Element[], fits: (part: string) => boolean): string[]
   return [...(others.length ? splitGs1128(text(others), undefined, fits) : []), text(sscc)];
 }
 
+/** The characters a word may be broken after: hyphens and dashes, a slash, a comma, a semicolon. */
+const BREAK_AFTER = /[-\u2010\u2011\u2013\u2014/,;]/u;
+
+/**
+ * A word in the pieces it may be broken into: after a hyphen, dash, slash, comma or semicolon followed by more of the
+ * word, but not between two digits (a postcode 04571-000, a decimal 1,5, a date 12/34 stay whole) and not after a
+ * word's first character.
+ */
+function pieces(word: string): string[] {
+  const chars = [...word];
+  const out: string[] = [];
+  let current = "";
+  chars.forEach((char, i) => {
+    current += char;
+    const next = chars[i + 1];
+    if (!next || !BREAK_AFTER.test(char) || i === 0) return;
+    if (/\d/u.test(chars[i - 1]!) && /\d/u.test(next)) return;
+    out.push(current);
+    current = "";
+  });
+  if (current) out.push(current);
+  return out;
+}
+
 /**
  * A line of free text in lines no wider than `room` as `measure` gives widths: broken between words (runs of spaces
- * become one), and a word wider than the room on its own broken between its characters.
+ * become one), then within a word after a hyphen, slash, comma or semicolon (`pieces`), and a piece wider than the
+ * room on its own broken between its characters.
  */
 function wrapped(line: string, room: number, measure: (text: string) => number): string[] {
   const lines: string[] = [];
   let current = "";
   for (const word of line.split(/\s+/).filter(Boolean)) {
-    const joined = current ? current + " " + word : word;
-    if (measure(joined) <= room) {
-      current = joined;
-      continue;
-    }
-    if (current) lines.push(current);
-    current = "";
-    for (const char of word) {
-      if (current && measure(current + char) > room) {
-        lines.push(current);
-        current = "";
+    pieces(word).forEach((piece, i) => {
+      const joined = current ? current + (i === 0 ? " " : "") + piece : piece;
+      if (measure(joined) <= room) {
+        current = joined;
+        return;
       }
-      current += char;
-    }
+      if (current) lines.push(current);
+      current = "";
+      for (const char of piece) {
+        if (current && measure(current + char) > room) {
+          lines.push(current);
+          current = "";
+        }
+        current += char;
+      }
+    });
   }
   if (current) lines.push(current);
   return lines;
