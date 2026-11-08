@@ -101,6 +101,17 @@ describe("the GS1 Logistic Label", () => {
     expect(marks(["Recebimento;Expedição;Armazenagem", "Hortifrutigranjeira\u2013Cooperativa"])).toEqual(["Recebimento;Expedição;", "Armazenagem", "Hortifrutigranjeira\u2013", "Cooperativa"]);
     expect(marks(["Lote 1,5;2,5;3,5 kg; Paulo-SP;Rio-RJ;Belo Horizonte-MG"])).toEqual(["Lote 1,5;2,5;3,5 kg; Paulo-", "SP;Rio-RJ;Belo Horizonte-", "MG"]);
     expect(marks(["Ref 1234567890-1234567890-1234567890-12345"])).toEqual(["Ref", "1234567890-1234567890-12", "34567890-12345"]);
+    // Two marks in a row stay together, the line broken after the last, so that no line starts with a mark
+    expect(marks(["Distribuidora Hortifrutigranjeira--Cooperativa", "Cooperativa Agroindustrial,-Belo Horizonte"])).toEqual(["Distribuidora", "Hortifrutigranjeira--", "Cooperativa", "Cooperativa Agroindustrial,-", "Belo Horizonte"]);
+    expect(marks(["Armazenagem/Expedição/\u2013Recebimento"])).toEqual(["Armazenagem/Expedição/\u2013", "Recebimento"]);
+    // whichever character the column's edge falls on (a word of 1 to 16 letters before the marks moves it)
+    for (const run of ["--", ",-", "/\u2013", ";/"]) {
+      for (let k = 1; k <= 16; k++) {
+        const lines = marks([`Rua ${"X".repeat(k)}${run}Cooperativa`]);
+        for (const line of lines) expect(line).not.toMatch(/^[-\u2010\u2011\u2013\u2014/,;]/u);
+        expect(lines.join(" ").replace(`X${run} `, `X${run}`)).toBe(`Rua ${"X".repeat(k)}${run}Cooperativa`);
+      }
+    }
     const leading = marks(["/" + "X".repeat(40), "a-b"]);
     expect(leading[0]).toMatch(/^\/XX/);
     expect(leading.join("")).toBe("/" + "X".repeat(40) + "a-b");

@@ -349,6 +349,9 @@
   long for its column, such as *Hortifrutigranjeira-Cooperativa* or *Rua Augusta,1500,Consolação*, is broken after a
   hyphen, dash, slash, comma or semicolon, the mark ending the line, before it is broken between its letters; never
   between two digits, so a postcode (*01305-100*), a decimal comma or a date stays whole.
+- From and To: two marks in a row kept together (8 November; an open point since session 49): a word such as
+  *Agroindustrial,-Belo* or *Hortifrutigranjeira--Cooperativa* is broken after the last of the marks, so that no line
+  starts with a hyphen, slash or comma.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

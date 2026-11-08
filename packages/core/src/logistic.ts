@@ -132,8 +132,8 @@ const BREAK_AFTER = /[-\u2010\u2011\u2013\u2014/,;]/u;
 
 /**
  * A word in the pieces it may be broken into: after a hyphen, dash, slash, comma or semicolon followed by more of the
- * word, but not between two digits (a postcode 04571-000, a decimal 1,5, a date 12/34 stay whole) and not after a
- * word's first character.
+ * word, but not between two digits (a postcode 04571-000, a decimal 1,5, a date 12/34 stay whole), not after a word's
+ * first character, and not between two marks (a--b and Paulo,-SP are broken after the last, so no line starts with one).
  */
 function pieces(word: string): string[] {
   const chars = [...word];
@@ -142,7 +142,7 @@ function pieces(word: string): string[] {
   chars.forEach((char, i) => {
     current += char;
     const next = chars[i + 1];
-    if (!next || !BREAK_AFTER.test(char) || i === 0) return;
+    if (!next || !BREAK_AFTER.test(char) || BREAK_AFTER.test(next) || i === 0) return;
     if (/\d/u.test(chars[i - 1]!) && /\d/u.test(next)) return;
     out.push(current);
     current = "";
