@@ -12,11 +12,13 @@ import {
   identify,
   InputError,
   isKey,
+  isSexCode,
   OTHER_KEYS,
   parametersProblem,
   qualifiersOf,
   resolveAttribute,
   rowsOf,
+  sexCode,
   splitRows,
   syntaxEngine,
   uriParameters,
@@ -106,6 +108,46 @@ describe("the editor's identification", () => {
     expect(offered).toContain("310n");
     expect(attributeHint(attributeByCode("17")!)).toBe("6 digits · date YYMMDD");
     expect(attributeHint(attributeByCode("3103")!)).toBe("3 decimal places: type with a comma or point (e.g. 1.5) or the digits only");
+  });
+});
+
+describe("a person's sex typed as a word (backlog 2.1)", () => {
+  const PATIENT: Identification = { key: "8018", value: "950600013435200008", qualifiers: {}, attributes: [] };
+
+  it("reads ISO/IEC 5218's code from a word in each of the six languages, whatever its case, accents or full stop", () => {
+    const words: [string, string][] = [
+      ["Male", "1"], ["man", "1"], ["Masculino", "1"], ["Homem", "1"], ["Hombre", "1"], ["Varón", "1"], ["Masculin", "1"],
+      ["Homme", "1"], ["Männlich", "1"], ["MANN", "1"], ["Maschile", "1"], ["Maschio", "1"], ["Uomo", "1"], ["Masc.", "1"],
+      ["Female", "2"], ["Woman", "2"], ["Feminino", "2"], ["Mulher", "2"], ["Femenino", "2"], ["Mujer", "2"],
+      ["Féminin", "2"], ["Femme", "2"], ["weiblich", "2"], ["Frau", "2"], ["Femminile", "2"], ["Femmina", "2"],
+      ["Donna", "2"], ["fem.", "2"],
+      ["Unknown", "0"], ["Not known", "0"], ["Desconhecido", "0"], ["Ignorado", "0"], ["Não informado", "0"],
+      ["Desconocido", "0"], ["Inconnu", "0"], ["Non renseigné", "0"], ["Unbekannt", "0"], ["Keine Angabe", "0"],
+      ["Sconosciuto", "0"],
+      ["Not applicable", "9"], ["Não aplicável", "9"], ["Não se aplica", "9"], ["No aplicable", "9"], ["Sans objet", "9"],
+      ["Non applicable", "9"], ["Nicht zutreffend", "9"], ["Entfällt", "9"], ["Non applicabile", "9"],
+    ];
+    for (const [word, code] of words) expect([word, sexCode(word)]).toEqual([word, code]);
+    // A digit is kept; a letter is not guessed (M is male in English, female in Spanish); other words are left alone
+    for (const text of ["0", "1", "2", "9", "3", "M", "F", "H", "Divers", "Masculino Feminino", "", "femaleish"]) {
+      expect(sexCode(text)).toBe(text);
+    }
+    expect(isSexCode("7252")).toBe(true);
+    for (const ai of ["7250", "7253", "10", "422"]) expect(isSexCode(ai)).toBe(false);
+  });
+
+  it("writes a word typed for (7252) as its code, says so in the hint, and leaves a letter for the engine to refuse", () => {
+    expect(resolveAttribute("7252", "Feminino")).toEqual(["7252", "2"]);
+    expect(resolveAttribute("7252", "Männlich")).toEqual(["7252", "1"]);
+    expect(resolveAttribute("7252", "2")).toEqual(["7252", "2"]);
+    expect(resolveAttribute("7252", "F")).toEqual(["7252", "F"]);
+    expect(resolveAttribute("7253", "Feminino")).toEqual(["7253", "Feminino"]); // a surname is not a sex
+    expect(attributeHint(attributeByCode("7252")!)).toBe("one digit · sex: 0 not known, 1 male, 2 female, 9 not applicable (ISO 5218), or the word");
+    const result = identify(engine, { ...PATIENT, attributes: [["7252", " Mujer "]] });
+    expect(result.elementString).toBe("(8018)950600013435200008(7252)2");
+    expect(result.digitalLinkUri).toBe("https://id.gs1.org/8018/950600013435200008?7252=2");
+    expect(() => identify(engine, { ...PATIENT, attributes: [["7252", "F"]] })).toThrow(/\(7252\): A non-digit/);
+    expect(() => identify(engine, { ...PATIENT, attributes: [["7252", "3"]] })).toThrow(/ISO\/IEC 5218/);
   });
 });
 

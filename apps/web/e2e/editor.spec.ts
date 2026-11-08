@@ -1906,6 +1906,40 @@ test("one code: a name typed with spaces and accents written as %XX in the code,
   expect(text).toContain("_17254Maria%20Jos%C3%A9_17253Concei%C3%A7%C3%A3o");
 });
 
+// A person's sex typed as a word (backlog 2.1, an open point since session 42): (7252) takes ISO/IEC 5218's digit, which
+// the tool writes from a word in any of the six languages, in one code and in bulk; a letter is still refused.
+test("a person's sex typed as a word, in one code and in bulk, written as ISO/IEC 5218's digit", async ({ page }) => {
+  await page.fill("#paste", "(8018)950600013435200008(7252)2");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  const sex = page.locator(".attr").first();
+  await expect(sex.getByLabel("Attribute value")).toHaveValue("2");
+  await expect(sex.locator(".hint")).toHaveText("one digit · sex: 0 not known, 1 male, 2 female, 9 not applicable (ISO 5218), or the word");
+  await sex.getByLabel("Attribute value").fill("Masculino");
+  await expect(sex.locator(".hint")).toContainText("→ In the code: (7252) 1");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/8018/950600013435200008?7252=1");
+  await expect(page.locator(".status")).toContainText("✓");
+  await sex.getByLabel("Attribute value").fill("M");
+  await expect(sex.locator(".hint")).not.toContainText("In the code");
+  await expect(page.locator(".status")).toContainText("(7252)");
+  // In bulk: a column of words in Portuguese, German and French, one letter left for the report
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GSRN\tSexo\n795260646688514634\tFeminino\n795260646688514634\tMännlich\n" +
+    "795260646688514634\tF\n795260646688514634\tInconnu\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator("#map-1")).toHaveValue("7252");
+  await expect(page.locator("table.mapping tbody td.mono").nth(1)).toHaveText("Feminino → 2");
+  await expect(page.locator(".summary")).toContainText("3 rows ready · 1 with errors");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("(8018)795260646688514634(7252)2", { timeout: 30_000 });
+  // In Portuguese, the hint says so too
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "data");
+  await page.getByRole("button", { name: "Um código" }).click();
+  await expect(page.locator(".attr").first().locator(".hint")).toHaveText("um dígito · sexo: 0 não conhecido, 1 masculino, 2 feminino, 9 não aplicável (ISO 5218), ou a palavra");
+});
+
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {

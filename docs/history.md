@@ -293,7 +293,7 @@ Logistic Label's data titles, under each English title as 6.6.4.2 allows. Resizi
 what an arrow key did said in the hint. The browser tests found a phone bug on the way: a long barcode in the live
 preview widened the page until the tab bar could not be tapped.
 
-## Sessions 36 to 46 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
+## Sessions 36 to 47 — 8 November 2026: six languages, the Syntax Engine's releases, the last open points
 
 The handover had no unconditional step left, so each session took the recommended option under the owner's rule
 unless the owner asked for something. The keyboard's order (**On the label** beside the chosen element, Escape back),
@@ -314,6 +314,7 @@ percent-encoded, so bulk and then One code write them as `%XX` and show them as 
 within the label, Left and Top typed still free. Session 45, at the owner's request, brought the README, this history
 and the documents' index up to date. Session 46 held resizing within the label as moving was: dragging the corner or
 the arrow keys make an element no larger than the label's edge allows, a barcode measured at each size with its text,
-which keeps its size, so that its box is not simply in proportion; the properties typed stay free. By then the
-inventory held 1,141 tests in 47 files, and a full browser run passed 254 tests across a desktop, a phone and a
-tablet.
+which keeps its size, so that its box is not simply in proportion; the properties typed stay free. Session 47 let
+(7252)'s sex be typed as a word in any of the six languages, in One code and in bulk, a letter still refused since M
+is male in English and female in Spanish. By then the inventory held 1,145 tests in 47 files, and a full browser run
+passed 257 tests across a desktop, a phone and a tablet.

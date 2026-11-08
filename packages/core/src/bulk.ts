@@ -6,8 +6,10 @@ import {
   isDateAi,
   isFullYearDate,
   isPercentEncoded,
+  isSexCode,
   percentEncode,
   qualifiersOf,
+  sexCode,
 } from "./dictionary.ts";
 import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
@@ -157,12 +159,14 @@ export function guessMapping(headers: string[]): ColumnMapping {
  * A date whose year has four digits, YYYYMMDD as (7250)'s (`isFullYearDate`), is read from YYYY-MM-DD and DD/MM/YYYY
  * alone, since a date of birth's century cannot be guessed. A name or an address whose AI is percent-encoded
  * (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, has its spaces and other characters outside CSET 82
- * written as %XX (`percentEncode`: `Conceição` → `Concei%C3%A7%C3%A3o`). Anything else is left as it is, for the Syntax
- * Engine to judge.
+ * written as %XX (`percentEncode`: `Conceição` → `Concei%C3%A7%C3%A3o`). A person's sex, (7252) BIO SEX (`isSexCode`),
+ * is also read from a word in any of the six languages (`sexCode`: `Feminino` → 2), not from a letter. Anything else is
+ * left as it is, for the Syntax Engine to judge.
  */
 export function normaliseCell(ai: string, raw: string): string {
   const value = raw.trim();
   if (isPercentEncoded(ai)) return percentEncode(value);
+  if (isSexCode(ai)) return sexCode(value);
   if (!isDateAi(ai)) return value;
   if (/^\d{6}$/.test(value)) return value;
   const date = dateCell(ai, value);

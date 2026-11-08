@@ -3,8 +3,10 @@ import {
   elementStringAttributes,
   formatHint,
   isPercentEncoded,
+  isSexCode,
   pathAis,
   percentEncode,
+  sexCode,
   type Attribute,
   type Component,
 } from "./dictionary.ts";
@@ -178,10 +180,13 @@ export function resolveDecimal(ai: string, value: string): [string, string] {
  * An attribute as typed, as the code carries it: a decimal family's number as its digits (`resolveDecimal`), and a
  * percent-encoded AI's text (`isPercentEncoded`), as (7254) GIVEN NAME or (4302) SHIP TO ADD1, with its spaces and
  * other characters outside CSET 82 written as %XX (`percentEncode`: "Maria José" → "Maria%20Jos%C3%A9"; %XX already
- * written is kept). Anything else is left unchanged, for the Syntax Engine to check.
+ * written is kept); and a person's sex, (7252) BIO SEX (`isSexCode`), as ISO/IEC 5218's code from a word in any of the
+ * six languages (`sexCode`: "Feminino" → "2"; a letter is not guessed). Anything else is left unchanged, for the Syntax
+ * Engine to check.
  */
 export function resolveAttribute(ai: string, value: string): [string, string] {
   const [code, digits] = resolveDecimal(ai, value);
+  if (isSexCode(code)) return [code, sexCode(digits)];
   return isPercentEncoded(code) ? [code, percentEncode(digits)] : [code, digits];
 }
 

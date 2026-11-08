@@ -166,6 +166,17 @@ describe("cells as the AI takes them", () => {
     expect(normaliseCell("10", "Lote A 1")).toBe("Lote A 1"); // not percent-encoded: for the Syntax Engine to judge
     expect(normaliseCell("7252", "F")).toBe("F"); // ISO/IEC 5218's digit is not guessed from a letter
   });
+
+  it("reads a person's sex from a word in each of the six languages as ISO/IEC 5218's digit, not from a letter", () => {
+    expect(normaliseCell("7252", " Feminino ")).toBe("2");
+    expect(normaliseCell("7252", "MASCULINO")).toBe("1");
+    expect(normaliseCell("7252", "Weiblich")).toBe("2");
+    expect(normaliseCell("7252", "Desconocido")).toBe("0");
+    expect(normaliseCell("7252", "Non applicable")).toBe("9");
+    expect(normaliseCell("7252", "1")).toBe("1");
+    expect(normaliseCell("7252", "M")).toBe("M");
+    expect(normaliseCell("7254", "Homem")).toBe("Homem"); // a given name is not a sex
+  });
 });
 
 describe("a row's cells by their column's header", () => {
@@ -223,13 +234,16 @@ describe("rows as identifications", () => {
     const table = parseDelimited(
       "GSRN\tData de nascimento\tPrimeiro nome\tSobrenome\tSexo\tObservações\n" +
         "795260646688514634\t15/01/1960\tJoão\tConceição\t1\tAlergia\n" +
-        "795260646688514634\t1960-01-15\tMaria José\tSilva\tF\t\n",
+        "795260646688514634\t1960-01-15\tMaria José\tSilva\tF\t\n" +
+        "795260646688514634\t1960-01-15\tMaria José\tSilva\tFeminino\t\n",
     );
     const mapping = guessMapping(table.headers);
     expect(mapping).toEqual(["8018", "7250", "7254", "7253", "7252", null]);
     const rows = checkRows(engine, table, mapping);
     expect(rows[0]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Jo%C3%A3o(7253)Concei%C3%A7%C3%A3o(7252)1");
     expect(rows[1]!.error).toMatch(/7252/); // F is not ISO/IEC 5218's digit
+    expect(rows[1]!.columns).toEqual([4]);
+    expect(rows[2]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Maria%20Jos%C3%A9(7253)Silva(7252)2");
   });
 
   it("checks pasted rows the same way, a date the engine refuses reported for its row", () => {

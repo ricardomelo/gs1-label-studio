@@ -125,6 +125,45 @@ export function percentDecode(value: string): string {
   });
 }
 
+/** Whether an AI's value is ISO/IEC 5218's code of a person's sex (the iso5218 linter), as (7252) BIO SEX. */
+export function isSexCode(ai: string): boolean {
+  return startsWith(ai, ISO5218_LINTERS);
+}
+
+const ISO5218_LINTERS = new Set(["iso5218"]);
+
+// ISO/IEC 5218's codes from words people write, in English, Portuguese, Spanish, French, German and Italian, without
+// their accents (data, not the interface's language: ADR 0003). Whole words only: a letter is not guessed, as M is
+// male in English and Portuguese but female ('mujer') in Spanish, where H ('hombre') is male. Each list starts with a
+// single word, as the web's catalogue test would take a first text with a space for a message to translate.
+const SEX_WORDS: Record<string, string[]> = {
+  "0": ["unknown", "not known", "desconhecido", "ignorado", "nao informado", "desconocido", "no informado", "inconnu",
+    "non renseigne", "unbekannt", "keine angabe", "sconosciuto", "non noto"],
+  "1": ["male", "man", "masculine", "masc", "masculino", "homem", "hombre", "varon", "masculin", "homme", "mannlich",
+    "mann", "maschile", "maschio", "uomo"],
+  "2": ["female", "woman", "feminine", "fem", "feminino", "mulher", "femenino", "mujer", "feminin", "femme", "weiblich",
+    "frau", "femminile", "femmina", "donna"],
+  "9": ["entfallt", "not applicable", "nao aplicavel", "nao se aplica", "no aplicable", "no aplica", "non applicable",
+    "sans objet", "nicht zutreffend", "non applicabile"],
+};
+
+const SEX_BY_WORD = new Map(Object.entries(SEX_WORDS).flatMap(([code, words]) => words.map((w) => [w, code])));
+
+/**
+ * ISO/IEC 5218's code for a word that names a sex, in any of the six languages, whatever its case, accents or full stop
+ * (`Masculino`, `männlich`, `masc.` → 1; `Feminino`, `FEMALE` → 2; `Desconhecido` → 0; `Não aplicável` → 9); anything
+ * else, a digit or a letter such as F, is returned as it is, for the Syntax Engine to judge.
+ */
+export function sexCode(text: string): string {
+  const words = text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return SEX_BY_WORD.get(words) ?? text;
+}
+
 export interface Attribute {
   ai: string;
   title: string;
@@ -220,6 +259,9 @@ const SIZE: Record<ComponentType, [string, string]> = {
   Z: ["{n} base64url characters", "up to {n} base64url characters"],
 };
 
+/** A value of one digit or character, as (7252) BIO SEX: "one digit", not "1 digits". */
+const ONE: Partial<Record<ComponentType, string>> = { N: "one digit", X: "one character" };
+
 const LINTS: Record<string, string> = {
   yymmd0: "date YYMMDD",
   yymmdd: "date YYMMDD",
@@ -234,7 +276,7 @@ const LINTS: Record<string, string> = {
   iso3166999: "country, ISO 3166 numeric code or 999",
   iso3166alpha2: "country, ISO 3166 two-letter code (e.g. GB)",
   iso4217: "currency, ISO 4217 numeric code (e.g. 826)",
-  iso5218: "sex: 0, 1, 2 or 9 (ISO 5218)",
+  iso5218: "sex: 0 not known, 1 male, 2 female, 9 not applicable (ISO 5218), or the word",
   yesno: "0 = no, 1 = yes",
   hyphen: "“-” for a negative value",
   nonzero: "not zero",
@@ -254,7 +296,8 @@ const LINTS: Record<string, string> = {
 export function formatHint(components: Component[]): string {
   return components
     .map((c) => {
-      const size = SIZE[c.type][c.min === c.max ? 0 : 1]!.replace("{n}", String(c.max));
+      const one = c.min === 1 && c.max === 1 && ONE[c.type];
+      const size = one || SIZE[c.type][c.min === c.max ? 0 : 1]!.replace("{n}", String(c.max));
       const text = [size, ...c.linters.filter((l) => l in LINTS).map((l) => LINTS[l])].join(" · ");
       return c.optional ? `optional: ${text}` : text;
     })

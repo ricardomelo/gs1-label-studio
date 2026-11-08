@@ -241,8 +241,8 @@ first release) and composite components (1.3, later). Phase 4 is done — the GS
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. No step is waiting unconditionally: what
-comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL, (7252) from words in
-each language, and a review of the French, German and Italian texts by native speakers.
+comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
+German and Italian texts by native speakers.
 
 **How the order went.** On 29 October: the editor's corrections (1.10) first, being small and seen every day; the
 qualifiers and attributes in one block (1.15) and the URI's own parameters (1.17) before several keys (1.12), whose
@@ -442,7 +442,7 @@ Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it ses
   code" (mock-up A): CSV (comma, semicolon or tab), pasted rows and Excel workbooks read without a library; each
   column's AI guessed from its header and remembered for the same headers; values for every row; each row checked by
   the Syntax Engine, its label in the preview; since 8 November a patient list's headers too (GSRN, date of birth,
-  names), its names' spaces and accents as %XX*
+  names), its names' spaces and accents as %XX, a person's sex from words in the six languages*
 - 2.2 Validation report; fix or skip rows — *done (mock-up A of three): in the rows card, the rows with errors, fixed,
   skipped or all; each with its reason and its cells, the one at fault outlined and fixed in place (the file is not
   changed); a hint when Excel kept 15 digits of a code or a CSV wrote it in scientific notation; one row or every row

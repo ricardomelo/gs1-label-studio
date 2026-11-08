@@ -173,6 +173,9 @@ One list holds the key's qualifiers (batch, serial number, variant…) and its d
   address (4300)–(4320) take their spaces and accents as %XX in the code, and the tool writes them so — *Maria José*
   becomes *(7254) Maria%20Jos%C3%A9*, which the hint shows; %XX already written is kept. A pasted name is shown as
   people read it (*Jo%C3%A3o* → *João*), and a `{7254}` field on a label of one's own shows it as written.
+- A patient's sex, (7252), is ISO/IEC 5218's digit — 0 not known, 1 male, 2 female, 9 not applicable — and may be
+  typed as a word in any of the six languages: *Feminino*, *female*, *weiblich* become *(7252) 2*, which the hint shows.
+  A letter such as *M* or *F* is refused, as M is male in English and Portuguese but female (*mujer*) in Spanish.
 - Two qualifiers the key does not take together are said on the row (*Not with (22), (10) and (21): the key takes one
   or the other.*).
 - Attributes that only element strings carry — (8014), (8040) to (8043), (8200)… — are offered and marked so.
@@ -594,7 +597,8 @@ its preview steps through the rows.
    characters as %XX — (7253), (7254), (7256), (7257), (7259) and the ship-to and return-to AIs (4300)–(4320) — has its
    spaces and accents written so for the barcode (`Maria José → Maria%20Jos%C3%A9`); %XX already written is kept. A
    field such as `{7254}` on a label of one's own shows the name as written, *Maria José*. (7252)'s sex is ISO/IEC
-   5218's digit (0, 1, 2 or 9): a letter such as *F* is refused.
+   5218's digit (0, 1, 2 or 9) or a word in any of the six languages (`Feminino → 2`, `Männlich → 1`, `Inconnu → 0`);
+   a letter such as *F* is refused.
 3. **Same value on every row** → **+ Add**: an AI with the same value on every row, such as a country of origin (422).
 4. The rows are checked at once: *2 rows ready · 2 with errors*.
 

@@ -334,6 +334,10 @@
   is percent-encoded ((4300)–(4320), (7253)–(7259)) used to be refused for its first space or accent unless typed as
   %XX by hand; it is now typed as people write it and goes in the code as %XX, as in bulk, the row's hint showing the
   code's form; a pasted name is shown as people read it.
+- A person's sex as a word (8 November; an open point since session 42): (7252) BIO SEX, ISO/IEC 5218's digit, is
+  now also taken as a word in any of the six languages (*Feminino*, *male*, *männlich*, *Inconnu*, *Não aplicável*),
+  in One code and in bulk, the hint showing the digit; a letter is still refused, as M is male in English and female
+  in Spanish. The hint names the four codes and says *one digit*, not *1 digits*.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

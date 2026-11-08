@@ -720,6 +720,10 @@
      "status": "passed"
     },
     {
+     "name": "cells as the AI takes them › reads a person's sex from a word in each of the six languages as ISO/IEC 5218's digit, not from a letter",
+     "status": "passed"
+    },
+    {
      "name": "a row's cells by their column's header › keeps each cell trimmed under its header, leaves out a column without one and keeps the first of two",
      "status": "passed"
     },
@@ -1821,6 +1825,14 @@
     },
     {
      "name": "the editor's identification › offers a key's attributes without its own path AIs, with the resolver's hints",
+     "status": "passed"
+    },
+    {
+     "name": "a person's sex typed as a word (backlog 2.1) › reads ISO/IEC 5218's code from a word in each of the six languages, whatever its case, accents or full stop",
+     "status": "passed"
+    },
+    {
+     "name": "a person's sex typed as a word (backlog 2.1) › writes a word typed for (7252) as its code, says so in the hint, and leaves a letter for the engine to refuse",
      "status": "passed"
     },
     {
@@ -5171,6 +5183,15 @@
     },
     {
      "name": "one code: a name typed with spaces and accents written as %XX in the code, a pasted one shown as written",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a person's sex typed as a word, in one code and in bulk, written as ISO/IEC 5218's digit",
      "status": "listed",
      "projects": [
       "desktop",
