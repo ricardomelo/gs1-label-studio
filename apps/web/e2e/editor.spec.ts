@@ -1820,7 +1820,7 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDDOB 15/01/1960 08:30^FS");
 });
 
-// A patient list in bulk (backlog 2.1, an open point since session 31): GSRN, the date of birth and the names guessed
+// A patient list in bulk (backlog 2.1, an open point since session 30): GSRN, the date of birth and the names guessed
 // from their headers; a name's spaces and accents written as %XX for the Syntax Engine, and shown as written on the label.
 test("in bulk: a patient list's columns guessed, names with accents encoded for the barcode and shown as written", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();
@@ -2521,6 +2521,101 @@ test("a label of one's own: an element moved from the keyboard, by the arrow key
   expect(await outline.evaluate((element) => getComputedStyle(element, "::after").content)).toBe('"Esquerda 50 mm · topo 30,5 mm\\a Setas: movem · Shift: passos maiores"');
 });
 
+// Moving held within the label (session 43, an open point since session 30, taken under the owner's rule): dragging an
+// element stops it at the label's edge, its corner on the last half millimetre that keeps it on the label; one past the
+// edge (a Left typed) is never dragged further past it but comes back as far as it is dragged; Left typed still places
+// it anywhere.
+test("a label of one's own: an element dragged held within the label, never further past its edge", async ({ page }) => {
+  await page.fill("#paste", "(01)09506000134376(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  await page.selectOption("#page-env", "distribution");
+  const overlay = page.locator(".design-overlay");
+  const handle = page.getByTestId("resize-handle");
+  const x = page.locator("#el-x");
+  const y = page.locator("#el-y");
+  /** Drags the chosen element by (dx, dy) mm from its middle, held within the label as seen, and lets go. */
+  const drag = async (dx: number, dy: number) => {
+    await overlay.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    const label = (await overlay.boundingBox())!;
+    const box = (await overlay.locator("rect.selected").boundingBox())!;
+    // The part of its box on the label, so that the pointer lands on the element even when it runs past the edge
+    const [left, right] = [Math.max(box.x, label.x), Math.min(box.x + box.width, label.x + label.width)];
+    const [top, bottom] = [Math.max(box.y, label.y), Math.min(box.y + box.height, label.y + label.height)];
+    const [px, py] = [(left + right) / 2, (top + bottom) / 2];
+    const mm = label.width / 100;
+    await page.mouse.move(px, py);
+    await page.mouse.down();
+    await page.mouse.move(px + (dx * mm) / 2, py + (dy * mm) / 2, { steps: 4 });
+    await page.mouse.move(px + dx * mm, py + dy * mm, { steps: 4 });
+    await page.mouse.up();
+  };
+  // A box 40 × 20 mm on the 100 × 60 mm label: dragged far right and down, it stops with its right edge and foot on the
+  // label's, at 60 mm and 40 mm; far left and up, at 0 and 0; never past the edge, its handle never red
+  await page.getByRole("button", { name: "+ Shape" }).click();
+  await page.selectOption("#el-shape", "box");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("◇ Box 40 × 20 mm");
+  await x.fill("40"); // clear of the QR code, so that the pointer takes the box
+  await y.fill("20");
+  await drag(10, 5);
+  await expect(x).toHaveValue("50");
+  await expect(y).toHaveValue("25");
+  await drag(80, 0);
+  await expect(x).toHaveValue("60");
+  await expect(handle).not.toHaveClass(/past/);
+  await drag(0, 70);
+  await expect(y).toHaveValue("40");
+  await expect(handle).not.toHaveClass(/past/);
+  await drag(-120, -90);
+  await expect(x).toHaveValue("0");
+  await expect(y).toHaveValue("0");
+  await expect(page.locator(".design-problems")).not.toContainText("past the label's edge");
+  // Left typed still puts it past the edge, as the page says; dragged right it moves no further, dragged left it comes
+  // back as far as it is dragged, then stops at the edge again
+  await x.fill("70");
+  await y.fill("30");
+  await expect(handle).toHaveClass(/past/);
+  await expect(page.locator(".design-problems")).toContainText("past the label's edge");
+  await drag(10, 0);
+  await expect(x).toHaveValue("70");
+  await drag(-5, 0);
+  await expect(x).toHaveValue("65");
+  await expect(handle).toHaveClass(/past/);
+  await drag(-10, 0);
+  await expect(x).toHaveValue("55");
+  await expect(handle).not.toHaveClass(/past/);
+  await drag(30, 0);
+  await expect(x).toHaveValue("60");
+  // The QR code, whose box is not a whole number of half millimetres wide: dragged far right and down, its corner on
+  // the last half millimetre that keeps it on the label, nothing past the edge
+  await page.locator(".design-list button", { hasText: "QR code" }).click();
+  await drag(150, 150);
+  await expect(handle).not.toHaveClass(/past/);
+  const [qx, qy] = [Number(await x.inputValue()), Number(await y.inputValue())];
+  expect(qx * 2).toBe(Math.round(qx * 2));
+  expect(qy * 2).toBe(Math.round(qy * 2));
+  // Its box as the overlay draws it, in the label's millimetres: within the label, and half a millimetre more would not be
+  const qr = overlay.locator("rect.selected");
+  const [qw, qh] = [Number(await qr.getAttribute("width")), Number(await qr.getAttribute("height"))];
+  expect(qw * 2).not.toBe(Math.round(qw * 2));
+  expect(qx + qw).toBeLessThanOrEqual(100);
+  expect(qx + 0.5 + qw).toBeGreaterThan(100);
+  expect(qy + qh).toBeLessThanOrEqual(60);
+  expect(qy + 0.5 + qh).toBeGreaterThan(60);
+  await expect(page.locator(".design-problems")).not.toContainText("past the label's edge");
+  // Half a millimetre further would run past: the arrow keys say the edge is reached
+  const outline = page.getByTestId("move-outline");
+  await outline.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByTestId("design-said")).toHaveText(`Left ${qx} mm · top ${qy} mm · at the label's edge`);
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByTestId("design-said")).toHaveText(`Left ${qx} mm · top ${qy} mm · at the label's edge`);
+  await expect(x).toHaveValue(String(qx));
+});
+
 // What an arrow key did (backlog 4.2, mock-up B of two, 7 November 2026, taken under the owner's rule): the element's new
 // place or size at the head of the hint under the outline or the handle, and the same in a live region for a screen
 // reader; the end of a barcode's sizes and the label's edge said too; nothing said once the focus has left them.
@@ -2574,10 +2669,19 @@ test("a label of one's own: what an arrow key did, in the hint and to a screen r
   await page.fill("#el-x", "70");
   await page.fill("#el-y", "30");
   await outline.focus();
+  // Held within the label (place.ts heldMove): Right moves it no further past the edge, which is said
   await page.keyboard.press("ArrowRight");
-  await expect(said).toHaveText("Left 70.5 mm · top 30 mm · past the label's edge");
+  await expect(said).toHaveText("Left 70 mm · top 30 mm · past the label's edge");
   for (let n = 0; n < 3; n++) await page.keyboard.press("Shift+ArrowLeft");
-  await expect(said).toHaveText("Left 55.5 mm · top 30 mm");
+  await expect(said).toHaveText("Left 55 mm · top 30 mm");
+  // Shift and Right a full step to the edge, then Right held there: the edge reached, said
+  await page.keyboard.press("Shift+ArrowRight");
+  await expect(said).toHaveText("Left 60 mm · top 30 mm");
+  await page.keyboard.press("ArrowRight");
+  await expect(said).toHaveText("Left 60 mm · top 30 mm · at the label's edge");
+  await expect(page.locator("#el-x")).toHaveValue("60");
+  await page.keyboard.press("Shift+ArrowLeft");
+  await expect(said).toHaveText("Left 55 mm · top 30 mm");
   await handle.focus();
   await page.keyboard.press("Shift+ArrowDown");
   await expect(said).toHaveText("Width 40 mm · height 25 mm");
@@ -2593,8 +2697,10 @@ test("a label of one's own: what an arrow key did, in the hint and to a screen r
   await on(page, "label");
   await outline.focus();
   await page.keyboard.press("ArrowUp");
-  await expect(said).toHaveText("Esquerda 55,5 mm · topo 29,5 mm");
-  await expect(outline).toHaveAttribute("data-keys", "Esquerda 55,5 mm · topo 29,5 mm\nSetas: movem · Shift: passos maiores");
+  await expect(said).toHaveText("Esquerda 55 mm · topo 29,5 mm");
+  await expect(outline).toHaveAttribute("data-keys", "Esquerda 55 mm · topo 29,5 mm\nSetas: movem · Shift: passos maiores");
+  for (let n = 0; n < 2; n++) await page.keyboard.press("Shift+ArrowRight");
+  await expect(said).toHaveText("Esquerda 59,5 mm · topo 29,5 mm · na borda da etiqueta"); // 40.5 mm wide by now
   await handle.focus();
   await page.keyboard.press("ArrowLeft");
   await expect(said).toHaveText("Largura 40 mm · altura 25 mm");

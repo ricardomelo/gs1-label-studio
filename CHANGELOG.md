@@ -320,4 +320,8 @@
   their data titles; a name or address whose AI is percent-encoded ((4300)–(4320), (7253)–(7259)) has its spaces and
   accents written as %XX for the barcode, where every accented name used to be refused, and a `{7254}` field shows the
   name as written.
+- Moving held within the label (8 November; an open point since 7 November): dragging an element or moving it by the
+  arrow keys used to carry it past the label's edge, where print files refuse it; it now stops at the edge, its corner
+  on the last half millimetre that keeps it on the label, an element already past the edge is never moved further
+  past it, and the arrow keys' hint says when the edge is reached. **Left** and **Top** typed still place it anywhere.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

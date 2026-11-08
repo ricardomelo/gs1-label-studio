@@ -32,6 +32,18 @@ describe("what an arrow key on the outline says", () => {
     setLocale("pt-BR", false);
     expect(placeSaid({ ...box, xMm: 70 }, at(70, 7, 40, 20.5), page)).toBe("Esquerda 70 mm · topo 7 mm · passa da borda da etiqueta");
   });
+
+  it("the label's edge reached when the key moved the element less than its step, held within the label", () => {
+    expect(placeSaid({ ...box, xMm: 60 }, at(60, 7, 40, 20.5), page, true)).toBe("Left 60 mm · top 7 mm · at the label's edge");
+    expect(placeSaid({ ...box, xMm: 0 }, at(0, 7, 40, 20.5), page, true)).toBe("Left 0 mm · top 7 mm · at the label's edge");
+    expect(placeSaid({ ...box, xMm: 60 }, at(60, 7, 40, 20.5), page, false)).toBe("Left 60 mm · top 7 mm"); // a full step to the edge
+    // Already past the edge, held from going further: past the edge alone
+    expect(placeSaid({ ...box, xMm: 70 }, at(70, 7, 40, 20.5), page, true)).toBe("Left 70 mm · top 7 mm · past the label's edge");
+    setLocale("pt-BR", false);
+    expect(placeSaid({ ...box, xMm: 60 }, at(60, 7, 40, 20.5), page, true)).toBe("Esquerda 60 mm · topo 7 mm · na borda da etiqueta");
+    setLocale("es", false);
+    expect(placeSaid({ ...box, xMm: 60 }, at(60, 7, 40, 20.5), page, true)).toBe("Izquierda 60 mm · arriba 7 mm · en el borde de la etiqueta");
+  });
 });
 
 describe("what an arrow key on the handle says", () => {

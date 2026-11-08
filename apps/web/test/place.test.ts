@@ -1,6 +1,6 @@
-import type { DesignElement, DesignPage } from "@gs1-label-studio/core";
+import type { DesignElement, DesignPage, PlacedElement } from "@gs1-label-studio/core";
 import { describe, expect, it } from "vitest";
-import { freeCorner, keyMoved } from "../src/place.ts";
+import { freeCorner, heldMove, keyMoved } from "../src/place.ts";
 
 // A new element on a label of one's own never lands exactly on another (the owner, 3 November 2026): a step of 5 mm
 // right and down from one at its corner, along the page.
@@ -53,5 +53,68 @@ describe("moving the chosen element by the arrow keys", () => {
     expect(keyMoved({ ...box, xMm: 0 }, "ArrowLeft", false).xMm).toBe(-0.5);
     expect(keyMoved({ ...box, yMm: 2 }, "ArrowUp", true).yMm).toBe(-3);
     expect(Object.is(keyMoved({ ...box, xMm: 0.4 }, "ArrowLeft", false).xMm, 0)).toBe(true);
+  });
+});
+
+// Moving by dragging or by the arrow keys held within the label (session 43): the element stops at the edge, its corner
+// on the last half millimetre that keeps it on the label; one past the edge is never moved further past it.
+
+describe("moving held within the label", () => {
+  const label = { widthMm: 100, heightMm: 60 };
+  const box: DesignElement = { id: "e1", kind: "box", widthMm: 40, heightMm: 20, thicknessMm: 0.5, filled: false, xMm: 10, yMm: 20 };
+  const placedAt = (xMm: number, yMm: number, widthMm = 40, heightMm = 20): PlacedElement => ({ id: "e1", xMm, yMm, widthMm, heightMm });
+  const moved = (element: DesignElement, xMm: number, yMm: number, placed = placedAt(element.xMm, element.yMm)) => {
+    const { xMm: x, yMm: y } = heldMove(element, xMm, yMm, placed, label);
+    return [x, y];
+  };
+
+  it("anywhere on the label as asked, the rest of the element as it was", () => {
+    expect(heldMove(box, 30, 25.5, placedAt(10, 20), label)).toEqual({ ...box, xMm: 30, yMm: 25.5 });
+    expect(moved(box, 0, 0)).toEqual([0, 0]);
+    expect(moved(box, 60, 40)).toEqual([60, 40]); // its right edge and foot on the label's
+  });
+
+  it("stopped at each of the four edges", () => {
+    expect(moved(box, -7, 20)).toEqual([0, 20]);
+    expect(moved(box, 75, 20)).toEqual([60, 20]);
+    expect(moved(box, 10, -0.5)).toEqual([10, 0]);
+    expect(moved(box, 10, 41)).toEqual([10, 40]);
+    expect(moved(box, 200, -200)).toEqual([60, 0]); // both sides at once
+    expect(Object.is(moved(box, -0.5, 20)[0], 0)).toBe(true); // no minus zero
+  });
+
+  it("on the last half millimetre that keeps its box on the label, a hair's rounding allowed", () => {
+    // A barcode 37.3 mm wide and 25.2 mm tall: 62.5 and 34.5 at most, not 62.7 and 34.8
+    const symbol = placedAt(10, 20, 37.3, 25.2);
+    expect(moved(box, 70, 50, symbol)).toEqual([62.5, 34.5]);
+    // A box whose width is computed as a hair under 40 mm still reaches 60
+    expect(moved(box, 70, 20, placedAt(10, 20, 39.9999999, 20))).toEqual([60, 20]);
+    expect(moved(box, 70, 20, placedAt(10, 20, 40.0000001, 20))).toEqual([60, 20]);
+    // Under a millimetre of room: 99.3 mm on 100 mm moves between 0 and 0.5
+    expect(moved({ ...box, xMm: 0 }, 3, 20, placedAt(0, 20, 99.3, 20))).toEqual([0.5, 20]);
+    expect(moved({ ...box, xMm: 0.5 }, -3, 20, placedAt(0.5, 20, 99.3, 20))).toEqual([0, 20]);
+  });
+
+  it("past the edge already: brought back as far as it is moved, never further past", () => {
+    const past = { ...box, xMm: 70, yMm: 45 }; // 10 mm past the right edge, 5 mm past the foot
+    expect(moved(past, 72, 47)).toEqual([70, 45]);
+    expect(moved(past, 70.5, 45)).toEqual([70, 45]);
+    expect(moved(past, 65, 45)).toEqual([65, 45]); // back by as much as it is moved
+    expect(moved(past, 65, 42.5)).toEqual([65, 42.5]);
+    expect(moved(past, 20, 10)).toEqual([20, 10]); // wholly back on the label
+    const before = { ...box, xMm: -4, yMm: -3 }; // past the left edge and the top
+    expect(moved(before, -6, -5)).toEqual([-4, -3]);
+    expect(moved(before, -2, 50)).toEqual([-2, 40]);
+  });
+
+  it("larger than the label: only where it still covers the label", () => {
+    // 120 × 70 mm on 100 × 60: its corner from -20 to 0 across, -10 to 0 down
+    const big = { ...box, widthMm: 120, heightMm: 70, xMm: -5, yMm: 0 };
+    const placed = placedAt(-5, 0, 120, 70);
+    expect(moved(big, 3, 4, placed)).toEqual([0, 0]);
+    expect(moved(big, -30, -30, placed)).toEqual([-20, -10]);
+    expect(moved(big, -12.5, -2, placed)).toEqual([-12.5, -2]);
+    // 0.3 mm longer than the label: the half millimetres keep it at 0, past the edge by the 0.3 mm it cannot help
+    expect(moved({ ...big, xMm: 0 }, -0.5, 0, placedAt(0, 0, 100.3, 20))).toEqual([0, 0]);
   });
 });

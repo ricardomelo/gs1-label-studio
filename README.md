@@ -550,7 +550,11 @@ complete.
   (`01/09/2027 - 15/09/2027`). A grid and rulers since 8 November (mock-up A of two, taken under the owner's rule; B
   had the grid alone, from a button beside the zoom): **Grid and rulers** over the canvas turns on lines every 1, 2, 5
   or 10 mm as the label is drawn, stronger every 10 mm, and rulers in millimetres along its top and left, the chosen
-  element's span marked on them; kept on or off in this browser. Saving the label is 4.3*
+  element's span marked on them; kept on or off in this browser. Moving held within the label since 8 November (an
+  open point since 7 November, taken under the owner's rule; B kept moving free, the page reporting the edge):
+  dragging or the arrow keys stop an element at the label's edge, its corner on the last half millimetre that keeps it
+  on the label; one already past the edge is never moved further past it but comes back as far as it is moved, and the
+  hint says when the edge is reached; **Left** and **Top** typed still place it anywhere. Saving the label is 4.3*
 - 4.3 The work saved on one's own computer and opened again, templates shared as files (the owner, 3 November 2026:
   save the work locally, perhaps by exporting ZPL and opening a ZPL as Labelary does) — *(a) and (b) done 3 November
   (mock-up A of two, taken under the owner's rule; B put a work file among the exports and Open in step 1): **Save**

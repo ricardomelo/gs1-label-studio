@@ -260,7 +260,9 @@ of my own (barcodes and text placed freely)*:
    **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
    down, and again, so that it is never hidden under another.
 3. Choose an element in the list or click it on the label; drag it on the label to move it (by half millimetres), or
-   type **Left (mm)** and **Top (mm)**. From the keyboard: choose it in the list, press **Tab** to **On the label**
+   type **Left (mm)** and **Top (mm)**. Dragging and the arrow keys stop the element at the label's edge; one already
+   past it (a **Left** typed, the label made smaller) moves back onto the label but never further out; only **Left**
+   and **Top** typed place it past the edge. From the keyboard: choose it in the list, press **Tab** to **On the label**
    beside it and **Enter**: a ring goes round the element on the label (a hint under it says what the keys do); press
    the arrow keys: each press moves it half a millimetre, or 5 mm with **Shift**. The next **Tab** goes on to its
    corner's square; **Esc** on either brings you back to the element in the list. The chosen element shows a small square at its bottom right corner: drag it to
@@ -275,8 +277,8 @@ of my own (barcodes and text placed freely)*:
    its height, a line the two along it; an image, a barcode and a text block keep their proportions, **→** and **↓**
    making them larger, **←** and **↑** smaller, a barcode and a text block a size at a time (with **Shift**, about
    5 mm at a time). After each press the hint starts with the new place (**Left** and **Top**) or the new size, and
-   says when a barcode or a text block has no larger or smaller size or the element runs past the label's edge; a
-   screen reader is told the same.
+   says when a barcode or a text block has no larger or smaller size, the element has reached the label's edge or runs
+   past it; a screen reader is told the same.
    **Grid and rulers**, over the label beside **Delete**, draws lines over the label every few millimetres (finer as
    you zoom in: every 2 mm at 100 % on a computer, every millimetre at 200 %), a stronger one every 10 mm, and rulers
    in millimetres above and to the left of the label; the chosen element's width and height are marked in blue on the

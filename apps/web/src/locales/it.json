@@ -601,6 +601,7 @@
  "no smaller size": "nessuna dimensione più piccola",
  "no larger size": "nessuna dimensione più grande",
  "past the label's edge": "oltre il bordo dell’etichetta",
+ "at the label's edge": "al bordo dell’etichetta",
  "{name}: press the arrow keys to move it": "{name}: premi i tasti freccia per spostarlo",
  "{size} %": "{size} %",
  "Element strings it carries": "Stringhe di elementi che porta",

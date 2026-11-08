@@ -2558,6 +2558,26 @@
     {
      "name": "moving the chosen element by the arrow keys › a corner typed off the half millimetres back on them; past the label's edge as dragging goes, no minus zero",
      "status": "passed"
+    },
+    {
+     "name": "moving held within the label › anywhere on the label as asked, the rest of the element as it was",
+     "status": "passed"
+    },
+    {
+     "name": "moving held within the label › stopped at each of the four edges",
+     "status": "passed"
+    },
+    {
+     "name": "moving held within the label › on the last half millimetre that keeps its box on the label, a hair's rounding allowed",
+     "status": "passed"
+    },
+    {
+     "name": "moving held within the label › past the edge already: brought back as far as it is moved, never further past",
+     "status": "passed"
+    },
+    {
+     "name": "moving held within the label › larger than the label: only where it still covers the label",
+     "status": "passed"
     }
    ],
    "area": "Symbols and the label's layout"
@@ -3537,6 +3557,10 @@
     },
     {
      "name": "what an arrow key on the outline says › the label's edge when the element's box runs past any of its four sides",
+     "status": "passed"
+    },
+    {
+     "name": "what an arrow key on the outline says › the label's edge reached when the key moved the element less than its step, held within the label",
      "status": "passed"
     },
     {
@@ -5150,6 +5174,15 @@
     },
     {
      "name": "a label of one's own: an element moved from the keyboard, by the arrow keys on its outline",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a label of one's own: an element dragged held within the label, never further past its edge",
      "status": "listed",
      "projects": [
       "desktop",

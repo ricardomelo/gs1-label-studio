@@ -5,7 +5,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { gridLines, rulerTicks } from "./guides.ts";
-import { freeCorner, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
+import { freeCorner, heldMove, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
 import { handleAt, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
@@ -233,10 +233,12 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
     const d = drag.current;
     if (!d || !svg.current) return;
     const scale = mmPerPx();
-    const xMm = round(d.xMm + (event.clientX - d.x) * scale);
-    const yMm = round(d.yMm + (event.clientY - d.y) * scale);
     const element = page.elements.find((e) => e.id === d.id);
-    if (element && (element.xMm !== xMm || element.yMm !== yMm)) {
+    const box = placed.find((p) => p.id === d.id);
+    if (!element || !box) return;
+    // Held within the label (place.ts heldMove), never further past its edge than it is
+    const { xMm, yMm } = heldMove(element, round(d.xMm + (event.clientX - d.x) * scale), round(d.yMm + (event.clientY - d.y) * scale), box, page);
+    if (element.xMm !== xMm || element.yMm !== yMm) {
       onChange({ ...page, elements: page.elements.map((e) => (e.id === d.id ? { ...e, xMm, yMm } : e)) }, d.id);
     }
   };
@@ -255,7 +257,7 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
   const chosenElement = page.elements.find((e) => e.id === selected);
   const handle = chosen && handleAt(chosen, page);
   const said = !keyed || !chosen || !chosenElement || keyed.id !== chosen.id ? ""
-    : keyed.what === "move" ? placeSaid(chosenElement, chosen, page) : sizeSaid(chosenElement, chosen, page, keyed.end);
+    : keyed.what === "move" ? placeSaid(chosenElement, chosen, page, keyed.end !== 0) : sizeSaid(chosenElement, chosen, page, keyed.end);
   const keys = (what: "move" | "size", hint: string) => (said && keyed?.what === what ? `${said}\n${hint}` : hint);
   return (
     <>
@@ -313,11 +315,13 @@ export function DesignerOverlay({ page, placed, sizing, selected, onChange }: Ov
             if (toList(event)) return;
             if (!(MOVE_KEYS as readonly string[]).includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
             event.preventDefault();
-            const next = keyMoved(chosenElement, event.key as MoveKey, event.shiftKey);
+            const wanted = keyMoved(chosenElement, event.key as MoveKey, event.shiftKey);
+            const next = heldMove(chosenElement, wanted.xMm, wanted.yMm, chosen, page);
             if (next.xMm !== chosenElement.xMm || next.yMm !== chosenElement.yMm) {
               onChange({ ...page, elements: page.elements.map((e) => (e.id === next.id ? next : e)) }, next.id);
             }
-            setKeyed({ id: next.id, what: "move", end: 0 });
+            // Held short of the step: at the label's edge, which the hint and the live region say
+            setKeyed({ id: next.id, what: "move", end: Number(next.xMm !== wanted.xMm || next.yMm !== wanted.yMm) });
           }}
           onBlur={(event) => {
             delete event.currentTarget.dataset.called;

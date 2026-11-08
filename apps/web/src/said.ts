@@ -9,9 +9,14 @@ import { formatNumber, t } from "./i18n.ts";
 // unasked. A barcode or a text block at the end of its sizes says that it can go no further, and an element past the
 // label's edge says so, as the page reports. Mock-up A said it to a screen reader alone, the hint unchanged.
 
-/** The element's place after an arrow key on its outline: its top left corner, as Left and Top say. */
-export function placeSaid(element: DesignElement, placed: PlacedElement, page: DesignPage): string {
-  return said([t("Left {x} mm · top {y} mm", { x: formatNumber(element.xMm), y: formatNumber(element.yMm) })], placed, page);
+/**
+ * The element's place after an arrow key on its outline: its top left corner, as Left and Top say; `held` when the key
+ * moved it less than its step, as moving is held within the label (place.ts heldMove), said as the label's edge reached.
+ */
+export function placeSaid(element: DesignElement, placed: PlacedElement, page: DesignPage, held = false): string {
+  const place = t("Left {x} mm · top {y} mm", { x: formatNumber(element.xMm), y: formatNumber(element.yMm) });
+  // An element already past the edge says that alone
+  return said(held && !past(placed, page) ? [place, t("at the label's edge")] : [place], placed, page);
 }
 
 /**
@@ -42,7 +47,11 @@ export function keyEnd(before: DesignElement, after: DesignElement, key: string)
 
 /** The parts joined as the hints join theirs, with the label's edge when the element's box runs past it, as the page says. */
 function said(parts: string[], placed: PlacedElement, page: DesignPage): string {
-  const past = placed.xMm < -1e-9 || placed.yMm < -1e-9
+  return [...parts, ...(past(placed, page) ? [t("past the label's edge")] : [])].join(" · ");
+}
+
+/** Whether the element's box runs past the label's edge, as the page reports it. */
+function past(placed: PlacedElement, page: DesignPage): boolean {
+  return placed.xMm < -1e-9 || placed.yMm < -1e-9
     || placed.xMm + placed.widthMm > page.widthMm + 1e-9 || placed.yMm + placed.heightMm > page.heightMm + 1e-9;
-  return [...parts, ...(past ? [t("past the label's edge")] : [])].join(" · ");
 }
