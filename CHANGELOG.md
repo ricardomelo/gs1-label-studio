@@ -382,6 +382,9 @@
 - The AI list closes on Escape or a press outside when it was opened from its arrow alone (9 November; the owner's
   report): the arrow opens it without focusing the field, so as not to raise a phone's keyboard, and only the field
   closed it on those; while the list is open the page now listens for them.
+- A chosen AI's name can be edited anywhere (9 November; the owner's report): Backspace or Delete in its name, such as
+  *Product variant* after (22), put the character back while the text still began with the AI, since the field showed
+  the AI's whole name in the page's language. The name is now shown in the page's language only while it is whole.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

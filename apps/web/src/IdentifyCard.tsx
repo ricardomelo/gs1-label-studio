@@ -51,6 +51,12 @@ interface Row {
   value: string;
   /** The AI field as typed. */
   typed: string;
+  /**
+   * The field holds a whole AI's name, picked or typed: it then reads in the language shown, even when it was chosen in
+   * another. Once a character of it is deleted, the field shows what is typed (the owner's report of 9 November 2026:
+   * a name's last characters came back as they were deleted).
+   */
+  chosen?: boolean;
 }
 
 function Markup({ text }: { text: string }) {
@@ -84,7 +90,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
   }
 
   function rowsFor(identification: Identification): Row[] {
-    return rowsOf(identification).map(([ai, value]) => ({ ai, value, typed: label(ai) }));
+    return rowsOf(identification).map(([ai, value]) => ({ ai, value, typed: label(ai), chosen: true }));
   }
 
   const setAll = (next: Row[]) => {
@@ -178,7 +184,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
       <h3>
         {t("Qualifiers and data attributes")} <span className="opt">{t("— batch, serial, expiry, weight, price…")}</span>
       </h3>
-      {rows.map(({ ai, value, typed }, index) => {
+      {rows.map(({ ai, value, typed, chosen }, index) => {
         const qualifier = ownQualifiers.includes(ai) && rows.findIndex((row) => row.ai === ai) === index;
         const attribute = ai && !qualifier ? attributeByCode(ai) : undefined;
         let converted: string | null = null;
@@ -211,11 +217,12 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
                 label={qualifier ? t("Qualifier (AI)") : t("Attribute (AI)")}
                 placeholder={t("Pick from the list or type, e.g. 17")}
                 // An AI chosen reads in the language shown, even when it was chosen in another
-                value={ai && typed.startsWith(`(${ai})`) ? label(ai) : typed}
+                value={ai && chosen ? label(ai) : typed}
                 options={choices}
                 onChange={(text) => {
                   const next = [...rows];
-                  next[index] = { ai: attributeCode(text), value, typed: text };
+                  const code = attributeCode(text);
+                  next[index] = { ai: code, value, typed: text, chosen: Boolean(code) && text === label(code) };
                   setAll(next);
                 }}
               />
@@ -251,7 +258,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               value={value}
               onChange={(event) => {
                 const next = [...rows];
-                next[index] = { ai, value: event.target.value, typed };
+                next[index] = { ...rows[index]!, value: event.target.value };
                 setAll(next);
               }}
               spellCheck={false}
@@ -269,7 +276,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           <span className="hint">
             {t("or a qualifier of the {key}:", { key: keyText?.short ?? `(${id.key})` })}{" "}
             {ownQualifiers.filter((ai) => !used.has(ai)).map((ai) => (
-              <button key={ai} type="button" className="link" onClick={() => setAll([...rows, { ai, value: "", typed: label(ai) }])}>
+              <button key={ai} type="button" className="link" onClick={() => setAll([...rows, { ai, value: "", typed: label(ai), chosen: true }])}>
                 + {label(ai)}
               </button>
             ))}
@@ -285,7 +292,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               type="button"
               className="link"
               title={tm(what)}
-              onClick={() => setAll([...rows, ...ais.filter((ai) => !used.has(ai)).map((ai) => ({ ai, value: "", typed: label(ai) }))])}
+              onClick={() => setAll([...rows, ...ais.filter((ai) => !used.has(ai)).map((ai) => ({ ai, value: "", typed: label(ai), chosen: true }))])}
             >
               + {ais.map((ai) => `(${ai})`).join(t(" and "))} {tm(what)}
             </button>

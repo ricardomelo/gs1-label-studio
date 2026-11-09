@@ -902,6 +902,17 @@ test("an attribute's AI: the arrow lists every AI even after one is chosen; typi
   await expect(page.locator(".combo-list li")).toHaveText(["(8040) IMEI · element strings only", "(8041) IMEI2 · element strings only"]);
   await page.keyboard.press("Enter");
   await expect(row.getByRole("combobox")).toHaveValue("(8040) IMEI");
+  // A chosen AI's name edited at its end: Backspace and Delete take its characters away, the AI left as it is (the
+  // owner's report of 9 November 2026: the name came back whole until a character of the AI was deleted)
+  const field = row.getByRole("combobox");
+  await field.click();
+  await field.press("End");
+  await field.press("Backspace");
+  await expect(field).toHaveValue("(8040) IME");
+  await field.press("ArrowLeft");
+  await field.press("Delete");
+  await expect(field).toHaveValue("(8040) IM");
+  await page.keyboard.press("Escape");
 });
 
 // "Start over" (the owner, 30 October 2026): every field and choice as on a first visit.
