@@ -161,7 +161,7 @@ checked as you type: *The check digit does not match: it should be 6.*
 One list holds the key's qualifiers (batch, serial number, variant…) and its data attributes (expiry, weight, price…):
 
 - **+ Add attributes** adds a row; its AI field lists the key's qualifiers not yet given first, then every attribute.
-  Its arrow always lists every AI; typing filters the list.
+  Its arrow always lists every AI; typing filters the list; Esc or a click outside closes it.
 - The links beside it add a qualifier of the key at once: *+ (22) Product variant*, *+ (21) Serial number*…
 - Each row says where it goes: *qualifier · in the URI's path* (marked on its left edge) or *data attribute · in the
   query string*. ↑ and ↓ move a row, × removes it.

@@ -890,7 +890,14 @@ test("an attribute's AI: the arrow lists every AI even after one is chosen; typi
   await row.locator(".combo-arrow").dispatchEvent("click");
   expect(await page.locator(".combo-list li").count()).toBeGreaterThan(200);
   await expect(page.locator(".combo-list li[aria-selected='true']")).toHaveText("(17) USE BY or EXPIRY");
+  // Opened from the arrow alone, the field never had the focus: Escape and a press outside close the list all the same
+  // (the owner's report of 9 November 2026)
   await page.keyboard.press("Escape");
+  await expect(page.locator(".combo-list")).toHaveCount(0);
+  await row.locator(".combo-arrow").dispatchEvent("click");
+  await expect(page.locator(".combo-list")).toHaveCount(1);
+  await page.locator("#identify-title").click();
+  await expect(page.locator(".combo-list")).toHaveCount(0);
   await row.getByRole("combobox").fill("imei");
   await expect(page.locator(".combo-list li")).toHaveText(["(8040) IMEI · element strings only", "(8041) IMEI2 · element strings only"]);
   await page.keyboard.press("Enter");

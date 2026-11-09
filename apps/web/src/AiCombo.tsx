@@ -25,6 +25,7 @@ export function AiCombo({ value, options, onChange, label, placeholder }: Props)
   const [all, setAll] = useState(false);
   const [active, setActive] = useState(0);
   const list = useRef<HTMLUListElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const typed = value.trim().toLowerCase();
   const whole = options.some((option) => option.value.toLowerCase() === typed);
   const shown = all || !typed || whole ? options : options.filter((option) => option.value.toLowerCase().includes(typed));
@@ -32,6 +33,25 @@ export function AiCombo({ value, options, onChange, label, placeholder }: Props)
   useEffect(() => {
     list.current?.children[active]?.scrollIntoView({ block: "nearest" });
   }, [active, open]);
+
+  // The arrow opens the list without focusing the field (on a phone that would raise the keyboard), so the field's
+  // own Escape and blur never come: while the list is open, Escape or a press outside the field closes it (the owner's
+  // report of 9 November 2026)
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
 
   const show = (everything: boolean) => {
     setAll(everything);
@@ -45,7 +65,7 @@ export function AiCombo({ value, options, onChange, label, placeholder }: Props)
   };
 
   return (
-    <div className="combo">
+    <div className="combo" ref={box}>
       <input
         role="combobox"
         aria-label={label}

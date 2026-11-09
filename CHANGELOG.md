@@ -379,6 +379,9 @@
   print languages, so a variable-length (10) can go last with no FNC1 after it (and EPL2, which takes it last only, can
   print it). A GS1 Digital Link URI keeps its own order, and so does the text under its symbol. A pasted element string
   keeps its order; in bulk, the columns' order is the element string's; the work file keeps it.
+- The AI list closes on Escape or a press outside when it was opened from its arrow alone (9 November; the owner's
+  report): the arrow opens it without focusing the field, so as not to raise a phone's keyboard, and only the field
+  closed it on those; while the list is open the page now listens for them.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,
