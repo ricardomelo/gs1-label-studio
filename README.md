@@ -252,7 +252,7 @@ symbols each carry it, opening the logistic label of phase 4; signatures and ver
 NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
 EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
 designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
-Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen and From and To's postcodes with a space (9 November). The [history](docs/history.md) tells it session by session.
+Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen, From and To's postcodes with a space and the URI's own parameters in bulk (9 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -394,7 +394,8 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   in element strings, which have no place for them — *done 30 October: "Parameters of the URI" under the qualifiers
   and attributes, name = value rows with "+ Add parameter", appended to the URI after the data attributes; a name of
   digits only, a missing name or a name given twice is refused; pasting a URI keeps its parameters, which the Syntax
-  Engine leaves out. Not yet in bulk (a column for them could come with 2.3)*
+  Engine leaves out. In bulk since 9 November: a column goes to **URI parameter**, named by its header (`?name` or
+  `name=` taken for one at once), each row's value on its URI*
 - 1.18 Verifiable credentials and digital signatures as GS1 defines them: the GS1 Digital Signatures Technical
   Implementation Guideline 1.1.0 (January 2026: the digital signature AI (8030) over the symbol's data) and the GS1
   Verifiable Credentials data model (ref.gs1.org/gs1/vc: the credentials and their JSON-LD contexts); the keys stay in

@@ -341,6 +341,16 @@ the PNG button and bulk followed the choice. The zip now holds the same PNG as t
 resolution, the whole pixels a module and the X-dimension and size the PNG then prints at, as the option's list says
 them; with no choice the zip is byte for byte what it was.
 
+## Session 54 — 9 November 2026: the URI's own parameters in bulk
+
+Asked to read the handover and continue, the session found no comment, pull request or issue waiting and took up a
+gap item 1.17 had left on 30 October: the GS1 Digital Link URI's own parameters (a campaign, a language) could be
+typed in One code but not given by the rows in bulk. Of two mock-ups — the parameter as a choice in a column's
+**Goes to** list, or a separate block of names and columns — the first was built: a column goes to **URI parameter**,
+named by its header, and a header written `?name` or `name=` goes there by itself. Each row's URI carries its own
+value after the data attributes; a header of digits only, an empty one or a name given twice is refused at the
+columns that hold them. Ten unit mutations and one browser mutation were caught.
+
 ## Session 53 — 9 November 2026: From and To's postcodes with a space and long numbers
 
 Asked to read the handover and apply its corrections, the session found no correction written by the owner and took

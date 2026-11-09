@@ -196,7 +196,7 @@ Syntax Engine with its reason.
 **Parameters of the URI** — your own, not GS1's: a campaign, a language, a version. **+ Add parameter** adds a
 `name = value` row; they are appended to the GS1 Digital Link URI's query string after the data attributes, percent
 encoded. A name of digits only is an AI and is refused, as are a missing name and a name given twice. Element strings
-have no place for them, so they appear only in URI symbols.
+have no place for them, so they appear only in URI symbols. In bulk, a column of the rows can hold one (section 13).
 
 At the bottom of the step: *✓ Checked by the GS1 Barcode Syntax Engine 1.4.1: 5 element strings*, or the engine's
 message. The engine's name, with the release that checked the data, links to that release's notes on GitHub; the files
@@ -584,7 +584,11 @@ its preview steps through the rows.
 2. Each column's AI is guessed from its header — an AI (`(01)`, `(17) Expiry` always go to that AI), a GS1 data title,
    or a common word in English, Portuguese, Spanish, French, German or Italian (*Lote*, *Validade*, *Código de barras*,
    *Numéro de lot*, *Verfallsdatum*, *Scadenza*). Change it under **Goes
-   to**. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
+   to**. A column may also go to **URI parameter: …**, one of the GS1 Digital Link URI's own parameters (section 3),
+   named by its header: a column *Campanha* gives `…?Campanha=Natal%202026` on each row's URI, after the data
+   attributes, and an empty cell leaves it out. A header written `?utm_source` or `lang=` goes there at once, named
+   `utm_source` or `lang`. A header of digits only, an empty one or two columns naming the same parameter are refused
+   on the rows that fill them; element strings have no place for parameters. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
    (7003), (4324) or (8008), keeps a time after the date (`31/12/2027 15:30 → 2712311530`), (8008) its seconds too;
    (7011), whose time is optional, leaves out a midnight written with its seconds (`00:00:00`, how a date alone is
    exported); other dates drop it. A time may be on a 12-hour clock, with AM or PM (`31/12/2027 8:05 PM →

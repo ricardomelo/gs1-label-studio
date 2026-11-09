@@ -255,7 +255,8 @@ export const BY_KEY: Record<string, string> = {
 export const BULK_TEXTS = {
   drop:
     "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header " +
-    "that starts with an AI, such as (01) or (17) Expiry, always goes to that AI.",
+    "that starts with an AI, such as (01) or (17) Expiry, always goes to that AI; one written ?name or name= is a " +
+    "parameter of the GS1 Digital Link URI.",
   pastePlaceholder: "(01) GTIN\t(10) Batch\t(17) Expiry\n09506000134376\tB42\t31/12/2027",
   fixedHint: "For an AI with the same value on every row, such as a country of origin (422).",
   remembered: "The columns are remembered for files with the same headers, in this browser.",

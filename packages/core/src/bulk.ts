@@ -11,7 +11,7 @@ import {
   qualifiersOf,
   sexCode,
 } from "./dictionary.ts";
-import { checkKeyValue, identify, normaliseKeyValue, type Identification, type Identified } from "./identify.ts";
+import { checkKeyValue, identify, normaliseKeyValue, parametersProblem, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
 
@@ -19,8 +19,22 @@ import type { Table } from "./table.ts";
 // person —, values the same on every row, and each row as the editor's identification, checked by the GS1 Barcode
 // Syntax Engine as a single code is.
 
-/** Each column's AI (or a decimal family such as "310n"), or null for a column left out. */
+/**
+ * Each column's AI (or a decimal family such as "310n"), `URI_PARAMETER` for one of the GS1 Digital Link URI's own
+ * parameters, or null for a column left out.
+ */
 export type ColumnMapping = (string | null)[];
+
+/**
+ * A column holding one of the GS1 Digital Link URI's own parameters (backlog 1.17 in bulk), named by its header
+ * (`parameterName`): `utm_source` with folheto on a row gives `…?utm_source=folheto` after the data attributes.
+ */
+export const URI_PARAMETER = "?";
+
+/** The parameter a header names: the header trimmed, without a `?` before it or an `=` after it (`?lang`, `lang=`). */
+export function parameterName(header: string): string {
+  return header.trim().replace(/^\?\s*/, "").replace(/\s*=$/, "");
+}
 
 /** An AI and a value that every row carries, e.g. ["422", "076"]. */
 export type FixedValue = [ai: string, value: string];
@@ -136,10 +150,15 @@ function dataTitles(): Map<string, string> {
   return titles;
 }
 
-/** The guessed mapping of every header; a column whose AI an earlier column already took is left out. */
+/**
+ * The guessed mapping of every header; a column whose AI an earlier column already took is left out. A header written
+ * as a parameter of the URI, `?name` or `name=` with a letter in the name, goes to `URI_PARAMETER`.
+ */
 export function guessMapping(headers: string[]): ColumnMapping {
   const taken = new Set<string>();
   return headers.map((header) => {
+    const text = header.trim();
+    if (/^\?|=$/.test(text) && /\D/.test(parameterName(text))) return URI_PARAMETER;
     const ai = guessColumn(header);
     if (!ai || taken.has(ai)) return null;
     taken.add(ai);
@@ -218,13 +237,17 @@ function dateCell(ai: string, value: string, timed = true): string | undefined {
 /**
  * A row as the editor's identification: the first column holding a primary key gives the key (a key among the fixed
  * values too), its qualifiers go to the qualifiers, the rest are attributes in the columns' order, the fixed values
- * last. Empty cells are left out.
+ * last; a column of a parameter of the URI gives a parameter named by its header (`headers`). Empty cells are left out.
  */
-export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: FixedValue[] = []): Identification {
+export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: FixedValue[] = [],
+  headers: readonly string[] = []): Identification {
   const pairs: [string, string][] = [];
+  const parameters: [string, string][] = [];
   mapping.forEach((ai, column) => {
     const value = row[column]?.trim() ?? "";
-    if (ai && value) pairs.push([ai, normaliseCell(ai, value)]);
+    if (ai === URI_PARAMETER) {
+      if (value) parameters.push([parameterName(headers[column] ?? ""), value]);
+    } else if (ai && value) pairs.push([ai, normaliseCell(ai, value)]);
   });
   for (const [ai, value] of fixed) if (ai && value.trim()) pairs.push([ai, normaliseCell(ai, value)]);
   const keys = new Set(identifierKeys());
@@ -237,7 +260,7 @@ export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: 
   }
   const [key, value] = keyPair;
   const qualifiers = new Set(qualifiersOf(key));
-  const id: Identification = { key, value, qualifiers: {}, attributes: [] };
+  const id: Identification = { key, value, qualifiers: {}, attributes: [], ...(parameters.length ? { parameters } : {}) };
   for (const pair of pairs) {
     if (pair === keyPair) continue;
     const [ai, v] = pair;
@@ -298,13 +321,17 @@ export function checkRows(engine: SyntaxEngine, table: Table, mapping: ColumnMap
     const row = index + 2;
     let id: Identification | undefined;
     try {
-      id = rowIdentification(cells, mapping, fixed);
+      id = rowIdentification(cells, mapping, fixed, table.headers);
       return { row, id, identified: identify(engine, id, stem) };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const keyProblem = !id || checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) !== null;
       const ais = keyProblem ? [id?.key ?? ""] : faultyAis(error);
-      const columns = keyProblem && !id ? keyColumns : columnsOf(ais, mapping, cells);
+      // A parameter's name comes from its header: a refusal of it is about the parameters' columns filled on the row.
+      const parameterProblem = !keyProblem && id?.parameters && message === parametersProblem(id.parameters);
+      const columns = parameterProblem
+        ? mapping.flatMap((m, column) => (m === URI_PARAMETER && cells[column]?.trim() ? [column] : []))
+        : keyProblem && !id ? keyColumns : columnsOf(ais, mapping, cells);
       const fixedAt = fixed.flatMap(([ai], at) => (ai && ais.some((a) => sameAi(a, ai)) ? [at] : []));
       const hint = columns.map((column) => cellHint(cells[column] ?? "", Boolean(table.sheet))).find((h) => h);
       return {

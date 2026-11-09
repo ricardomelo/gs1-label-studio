@@ -6,11 +6,14 @@ import {
   guessColumn,
   guessMapping,
   normaliseCell,
+  parameterName,
   parseDelimited,
   parseXlsx,
   rowCells,
+  reportCsv,
   rowIdentification,
   syntaxEngine,
+  URI_PARAMETER,
   type SyntaxEngine,
 } from "../src/index.ts";
 
@@ -246,6 +249,47 @@ describe("rows as identifications", () => {
     expect(rows[1]!.error).toMatch(/7252/); // F is not ISO/IEC 5218's digit
     expect(rows[1]!.columns).toEqual([4]);
     expect(rows[2]!.identified!.elementString).toBe("(8018)795260646688514634(7250)19600115(7254)Maria+Jos%C3%A9(7253)Silva(7252)2");
+  });
+
+  // Backlog 1.17 in bulk (mock-up A of two, 9 November 2026): a column may be one of the GS1 Digital Link URI's own
+  // parameters, named by its header, appended after the data attributes; never in the element string.
+  it("takes the URI's own parameters from the columns that hold them, each named by its header", () => {
+    expect(guessMapping(["GTIN", "Lote", "?utm_source", "lang =", "utm_medium", "?123", "Validade"]))
+      .toEqual(["01", "10", URI_PARAMETER, URI_PARAMETER, null, null, "17"]);
+    expect([" ?utm_source ", "lang=", "? lang =", "campanha"].map(parameterName)).toEqual(["utm_source", "lang", "lang", "campanha"]);
+    const table = parseDelimited(
+      "GTIN\tLote\t?utm_source\tlang=\tCampanha\tValidade\n" +
+        "09506000134376\tB42\tfolheto\tpt\tNatal 2026\t31/12/2027\n" +
+        "09506000134352\tB43\t\ten\t\t\n",
+    );
+    const mapping = guessMapping(table.headers);
+    expect(mapping).toEqual(["01", "10", URI_PARAMETER, URI_PARAMETER, null, "17"]);
+    mapping[4] = URI_PARAMETER; // chosen in the column's list: named by its header as it is
+    expect(rowIdentification(table.rows[0]!, mapping, [], table.headers).parameters)
+      .toEqual([["utm_source", "folheto"], ["lang", "pt"], ["Campanha", "Natal 2026"]]);
+    const rows = checkRows(engine, table, mapping, [], "https://id.gs1.org");
+    expect(rows[0]!.identified!.elementString).toBe("(01)09506000134376(10)B42(17)271231");
+    expect(rows[0]!.identified!.digitalLinkUri)
+      .toBe("https://id.gs1.org/01/09506000134376/10/B42?17=271231&utm_source=folheto&lang=pt&Campanha=Natal%202026");
+    // An empty cell leaves its parameter out; a row with none has no parameters at all.
+    expect(rows[1]!.identified!.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134352/10/B43?lang=en");
+    expect(rowIdentification(["09506000134376", "", ""], ["01", URI_PARAMETER, URI_PARAMETER], [], ["GTIN", "?a", "?b"]))
+      .toEqual({ key: "01", value: "09506000134376", qualifiers: {}, attributes: [] });
+    // The report says which columns are parameters.
+    expect(reportCsv(table, mapping, rows, {}, new Set()).split("\r\n")[0])
+      .toBe("Row,Status,Reason,Columns at fault,Fixed in the studio,GTIN (01),Lote (10),?utm_source (URI parameter),lang= (URI parameter),Campanha (URI parameter),Validade (17)");
+  });
+
+  it("refuses a parameter whose header is made of digits, has no name or is given twice, at the parameters' columns", () => {
+    const table = parseDelimited("GTIN\t?\t?123\t?lang\tlang=\n09506000134376\t\tx\t\t\n09506000134376\t\t\tpt\ten\n09506000134376\ty\t\t\t\n");
+    const mapping = ["01", URI_PARAMETER, URI_PARAMETER, URI_PARAMETER, URI_PARAMETER];
+    const rows = checkRows(engine, table, mapping);
+    expect(rows[0]!.error).toMatch(/"123" is made of digits only/);
+    expect(rows[0]!.columns).toEqual([2]);
+    expect(rows[1]!.error).toBe('The parameter "lang" is given twice.');
+    expect(rows[1]!.columns).toEqual([3, 4]);
+    expect(rows[2]!.error).toBe("A parameter of the URI needs a name.");
+    expect(rows[2]!.columns).toEqual([1]);
   });
 
   it("checks pasted rows the same way, a date the engine refuses reported for its row", () => {

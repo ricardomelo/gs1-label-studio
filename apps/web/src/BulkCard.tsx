@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   aiEntry,
   normaliseCell,
+  parameterName,
   reportCounts,
   rowStatus,
   type CellEdits,
@@ -14,6 +15,7 @@ import {
   type RowStatus,
   type Sequence,
   type Table,
+  URI_PARAMETER,
 } from "@gs1-label-studio/core";
 import { SequenceForm } from "./SequenceForm.tsx";
 import { aiText, byAi, BULK_TEXTS, ROW_STATUS_NAMES } from "./texts.ts";
@@ -62,10 +64,22 @@ const choices = (): { group: string; options: [string, string][] }[] => {
   ];
 };
 
-function AiSelect({ id, value, onChange, label }: { id: string; value: string | null; onChange: (ai: string | null) => void; label: string }) {
+/**
+ * A column's or a fixed value's AI; a column (`header` given) may also be one of the GS1 Digital Link URI's own
+ * parameters, named by its header (backlog 1.17 in bulk, mock-up A of two, 9 November 2026).
+ */
+function AiSelect({ id, value, onChange, label, header }: {
+  id: string; value: string | null; onChange: (ai: string | null) => void; label: string; header?: string;
+}) {
+  const name = header === undefined ? "" : parameterName(header);
   return (
     <select id={id} aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
       <option value="">{t("Not used")}</option>
+      {header !== undefined && (
+        <optgroup label="GS1 Digital Link">
+          <option value={URI_PARAMETER}>{name ? t("URI parameter: {name}", { name }) : t("URI parameter (the header names it)")}</option>
+        </optgroup>
+      )}
       {choices().map(({ group, options }) => (
         <optgroup key={group} label={group}>
           {options.map(([ai, text]) => (
@@ -156,7 +170,7 @@ export function BulkCard(props: Props) {
               {table.headers.map((header, column) => {
                 const first = table.rows.find((r) => r[column]?.trim())?.[column] ?? "";
                 const ai = mapping[column] ?? null;
-                const normalised = ai && first ? normaliseCell(ai, first) : first;
+                const normalised = ai && ai !== URI_PARAMETER && first ? normaliseCell(ai, first) : first;
                 return (
                   <tr key={column}>
                     <td>{header}</td>
@@ -165,6 +179,7 @@ export function BulkCard(props: Props) {
                       <AiSelect
                         id={`map-${column}`}
                         label={t("Column {header} goes to", { header })}
+                        header={header}
                         value={ai}
                         onChange={(next) => onMapping(mapping.map((m, i) => (i === column ? next : m)))}
                       />
@@ -315,7 +330,7 @@ function Report({ table, mapping, fixed, rows, edits, skipped, onShow, onEdit, o
               const edited = edits[index]?.[column] !== undefined;
               const id = `cell-${index}-${column}`;
               return [
-                <label key={`l${column}`} htmlFor={id} title={`(${ai})`}>
+                <label key={`l${column}`} htmlFor={id} title={ai === URI_PARAMETER ? t("URI parameter: {name}", { name: parameterName(table.headers[column] ?? "") }) : `(${ai})`}>
                   {table.headers[column]}
                 </label>,
                 <input

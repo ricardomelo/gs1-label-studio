@@ -756,6 +756,14 @@
      "status": "passed"
     },
     {
+     "name": "rows as identifications › takes the URI's own parameters from the columns that hold them, each named by its header",
+     "status": "passed"
+    },
+    {
+     "name": "rows as identifications › refuses a parameter whose header is made of digits, has no name or is given twice, at the parameters' columns",
+     "status": "passed"
+    },
+    {
      "name": "rows as identifications › checks pasted rows the same way, a date the engine refuses reported for its row",
      "status": "passed"
     }
@@ -4968,6 +4976,15 @@
     },
     {
      "name": "the GS1 Digital Link URI's own parameters: after the attributes, a name of digits refused, taken from a pasted URI",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk: a column as one of the URI's own parameters, named by its header, on each row's URI and in the report",
      "status": "listed",
      "projects": [
       "desktop",

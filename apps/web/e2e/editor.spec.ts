@@ -962,6 +962,40 @@ test("the GS1 Digital Link URI's own parameters: after the attributes, a name of
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231(20)12", { timeout: 30_000 });
 });
 
+// Item 1.17 in bulk (mock-up A of two, 9 November 2026): a column goes to one of the URI's own parameters, named by its
+// header; a header written ?name is taken for one at once.
+test("in bulk: a column as one of the URI's own parameters, named by its header, on each row's URI and in the report", async ({ page }) => {
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\t?utm_source\tCampanha\n09506000134376\tB42\tfolheto\tNatal 2026\n09506000134352\tB43\t\tPáscoa\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await expect(page.locator(".summary")).toContainText("2 rows ready");
+  await expect(page.locator("#map-2")).toHaveValue("?");
+  await expect(page.locator("#map-2 option:checked")).toHaveText("URI parameter: utm_source");
+  await expect(page.locator("#map-3")).toHaveValue("");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?utm_source=folheto");
+  await page.selectOption("#map-3", "?");
+  await expect(page.locator("#map-3 option:checked")).toHaveText("URI parameter: Campanha");
+  await expect(page.locator("#fixed-ai-0")).toHaveCount(0);
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?utm_source=folheto&Campanha=Natal%202026");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?utm_source=folheto&Campanha=Natal%202026", { timeout: 30_000 });
+  await page.getByRole("button", { name: "Next row" }).click();
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134352/10/B43?Campanha=P%C3%A1scoa");
+  // The report names the parameters' columns.
+  await on(page, "data");
+  await page.getByRole("button", { name: "All (2)" }).click();
+  const [reportFile] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Report (CSV)" }).click()]);
+  expect(readFileSync((await reportFile.path())!, "utf8")).toContain(
+    "GTIN (01),Lote (10),?utm_source (URI parameter),Campanha (URI parameter)\r\n");
+  // In Portuguese
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "data");
+  await expect(page.locator("#map-2 option:checked")).toHaveText("Parâmetro do URI: utm_source");
+  await expect(page.locator(".drop")).toContainText("um escrito ?nome ou nome= é um parâmetro do URI GS1 Digital Link");
+});
+
 // Item 1.12: several keys in one symbol, as the General Specifications pair them (4.13).
 test("several keys: an SSCC with the GTIN it contains and their count, each check digit checked, the others in the query string", async ({ page }) => {
   await page.selectOption("#key", "00");

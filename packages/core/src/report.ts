@@ -1,4 +1,4 @@
-import type { CheckedRow, ColumnMapping } from "./bulk.ts";
+import { URI_PARAMETER, type CheckedRow, type ColumnMapping } from "./bulk.ts";
 import type { Table } from "./table.ts";
 
 // The validation report of bulk generation (backlog 2.2, mock-up A of 29 October 2026): each row ready, fixed, in
@@ -64,14 +64,19 @@ export function toDelimited(lines: string[][], delimiter = ","): string {
   return lines.map((cells) => cells.map(field).join(delimiter)).join("\r\n") + "\r\n";
 }
 
+/** What a column of one of the URI's own parameters goes to, in the report's headers (the file stays in English). */
+const PARAMETER_HEADING = "URI parameter";
+
 /**
  * The report as CSV: each row's number in the file, its status, the reason and the columns at fault, then its values
- * as the studio checked them (fixed values included), each column headed by its header and the AI it goes to.
+ * as the studio checked them (fixed values included), each column headed by its header and the AI it goes to (or
+ * "URI parameter").
  */
 export function reportCsv(table: Table, mapping: ColumnMapping, rows: CheckedRow[], edits: CellEdits,
   skipped: ReadonlySet<number>): string {
   const edited = applyEdits(table, edits);
-  const headers = table.headers.map((header, column) => (mapping[column] ? `${header} (${mapping[column]})` : header));
+  const goesTo = mapping.map((ai) => (ai === URI_PARAMETER ? PARAMETER_HEADING : ai));
+  const headers = table.headers.map((header, column) => (goesTo[column] ? `${header} (${goesTo[column]})` : header));
   const lines = rows.map((row, index) => [
     String(row.row),
     rowStatus(row, index, edits, skipped),

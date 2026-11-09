@@ -499,7 +499,7 @@
  "not a logistic unit": "no es una unidad logística",
  "not sold at a retail till": "no se vende en una caja minorista",
  "not sold in a pharmacy": "no se vende en una farmacia",
- "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI.": "Suelte aquí un archivo CSV o Excel, o pegue abajo filas copiadas de una hoja de cálculo, con la fila de encabezados primero. Un encabezado que empieza con un AI, como (01) o (17) Caducidad, va siempre a ese AI.",
+ "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI; one written ?name or name= is a parameter of the GS1 Digital Link URI.": "Suelte aquí un archivo CSV o Excel, o pegue abajo filas copiadas de una hoja de cálculo, con la fila de encabezados primero. Un encabezado que empieza con un AI, como (01) o (17) Caducidad, va siempre a ese AI; uno escrito ?nombre o nombre= es un parámetro del URI GS1 Digital Link.",
  "(01) GTIN\t(10) Batch\t(17) Expiry\n09506000134376\tB42\t31/12/2027": "(01) GTIN\t(10) Lote\t(17) Caducidad\n09506000134376\tB42\t31/12/2027",
  "For an AI with the same value on every row, such as a country of origin (422).": "Para un AI con el mismo valor en todas las filas, como un país de origen (422).",
  "The columns are remembered for files with the same headers, in this browser.": "Las columnas se recuerdan para archivos con los mismos encabezados, en este navegador.",
@@ -678,5 +678,7 @@
  "On the label": "En la etiqueta",
  "On the label — {name}: press the arrow keys to move or resize it": "En la etiqueta — {name}: pulse las flechas para mover el elemento o cambiar su tamaño",
  "Grid and rulers": "Cuadrícula y reglas",
- "Lines every few millimetres over the label, and rulers along its top and left": "Líneas cada pocos milímetros sobre la etiqueta, y reglas arriba y a la izquierda"
+ "Lines every few millimetres over the label, and rulers along its top and left": "Líneas cada pocos milímetros sobre la etiqueta, y reglas arriba y a la izquierda",
+ "URI parameter: {name}": "Parámetro del URI: {name}",
+ "URI parameter (the header names it)": "Parámetro del URI (el encabezado le da nombre)"
 }

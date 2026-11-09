@@ -499,7 +499,7 @@
  "not a logistic unit": "pas une unité logistique",
  "not sold at a retail till": "pas vendu à une caisse de magasin",
  "not sold in a pharmacy": "pas vendu en pharmacie",
- "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI.": "Déposez ici un fichier CSV ou Excel, ou collez ci-dessous des lignes copiées d’un tableur, la ligne d’en-tête en premier. Un en-tête qui commence par un AI, comme (01) ou (17) Péremption, va toujours vers cet AI.",
+ "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI; one written ?name or name= is a parameter of the GS1 Digital Link URI.": "Déposez ici un fichier CSV ou Excel, ou collez ci-dessous des lignes copiées d’un tableur, la ligne d’en-tête en premier. Un en-tête qui commence par un AI, comme (01) ou (17) Péremption, va toujours vers cet AI; un en-tête écrit ?nom ou nom= est un paramètre de l’URI GS1 Digital Link.",
  "(01) GTIN\t(10) Batch\t(17) Expiry\n09506000134376\tB42\t31/12/2027": "(01) GTIN\t(10) Lot\t(17) Péremption\n09506000134376\tB42\t31/12/2027",
  "For an AI with the same value on every row, such as a country of origin (422).": "Pour un AI qui a la même valeur sur chaque ligne, comme un pays d’origine (422).",
  "The columns are remembered for files with the same headers, in this browser.": "Les colonnes sont mémorisées pour les fichiers ayant les mêmes en-têtes, dans ce navigateur.",
@@ -678,5 +678,7 @@
  "On the label": "Sur l’étiquette",
  "On the label — {name}: press the arrow keys to move or resize it": "Sur l’étiquette — {name} : appuyez sur les flèches pour le déplacer ou le redimensionner",
  "Grid and rulers": "Grille et règles",
- "Lines every few millimetres over the label, and rulers along its top and left": "Des lignes à quelques millimètres d’intervalle sur l’étiquette, et des règles en haut et à gauche"
+ "Lines every few millimetres over the label, and rulers along its top and left": "Des lignes à quelques millimètres d’intervalle sur l’étiquette, et des règles en haut et à gauche",
+ "URI parameter: {name}": "Paramètre de l’URI : {name}",
+ "URI parameter (the header names it)": "Paramètre de l’URI (l’en-tête le nomme)"
 }

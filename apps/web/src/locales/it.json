@@ -499,7 +499,7 @@
  "not a logistic unit": "non un’unità logistica",
  "not sold at a retail till": "non venduto alla cassa di un negozio",
  "not sold in a pharmacy": "non venduto in farmacia",
- "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI.": "Trascina qui un file CSV o Excel, oppure incolla qui sotto righe copiate da un foglio di calcolo, prima la riga di intestazione. Un’intestazione che inizia con un AI, come (01) o (17) Scadenza, va sempre a quell’AI.",
+ "Drop a CSV or Excel file here, or paste rows copied from a spreadsheet below, the header row first. A header that starts with an AI, such as (01) or (17) Expiry, always goes to that AI; one written ?name or name= is a parameter of the GS1 Digital Link URI.": "Trascina qui un file CSV o Excel, oppure incolla qui sotto righe copiate da un foglio di calcolo, prima la riga di intestazione. Un’intestazione che inizia con un AI, come (01) o (17) Scadenza, va sempre a quell’AI; una scritta ?nome o nome= è un parametro dell’URI GS1 Digital Link.",
  "(01) GTIN\t(10) Batch\t(17) Expiry\n09506000134376\tB42\t31/12/2027": "(01) GTIN\t(10) Lotto\t(17) Scadenza\n09506000134376\tB42\t31/12/2027",
  "For an AI with the same value on every row, such as a country of origin (422).": "Per un AI con lo stesso valore su ogni riga, come un paese di origine (422).",
  "The columns are remembered for files with the same headers, in this browser.": "Le colonne vengono ricordate per i file con le stesse intestazioni, in questo browser.",
@@ -678,5 +678,7 @@
  "On the label": "Sull’etichetta",
  "On the label — {name}: press the arrow keys to move or resize it": "Sull’etichetta — {name}: premi i tasti freccia per spostarlo o ridimensionarlo",
  "Grid and rulers": "Griglia e righelli",
- "Lines every few millimetres over the label, and rulers along its top and left": "Linee a pochi millimetri l’una dall’altra sull’etichetta, e righelli in alto e a sinistra"
+ "Lines every few millimetres over the label, and rulers along its top and left": "Linee a pochi millimetri l’una dall’altra sull’etichetta, e righelli in alto e a sinistra",
+ "URI parameter: {name}": "Parametro dell’URI: {name}",
+ "URI parameter (the header names it)": "Parametro dell’URI (l’intestazione gli dà il nome)"
 }

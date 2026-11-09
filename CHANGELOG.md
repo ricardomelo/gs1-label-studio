@@ -365,6 +365,10 @@
   by a space (*CEP 01310 200*, a telephone *11 3456 7890*) stay on one line while they fit it together, as a postcode
   with a hyphen already did; and a number too long for its column, broken between its digits, no longer starts a line
   with its hyphen or comma (*450001234567891* / *-0000012345* is now *45000123456789* / *1-0000012345*).
+- The URI's own parameters in bulk (9 November; backlog 1.17, mock-up A of two): a column goes to **URI parameter**
+  under **Goes to**, named by its header (a header written `?name` or `name=` is taken for one at once); each row's
+  value goes after the data attributes in its GS1 Digital Link URI, an empty cell leaving it out; a header of digits
+  only, an empty one or a name given twice is refused at those columns; the report heads them *(URI parameter)*.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,
