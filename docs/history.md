@@ -341,6 +341,15 @@ the PNG button and bulk followed the choice. The zip now holds the same PNG as t
 resolution, the whole pixels a module and the X-dimension and size the PNG then prints at, as the option's list says
 them; with no choice the zip is byte for byte what it was.
 
+## Session 53 — 9 November 2026: From and To's postcodes with a space and long numbers
+
+Asked to read the handover and apply its corrections, the session found no correction written by the owner and took
+up the defects session 50 had left in From and To. A postcode written with a space (*CEP 01310 200*) could be broken at
+the space, leaving *200* alone on a line: numbers separated by a space now stay together while they fit a line, as a
+postcode with a hyphen already did. And a number too long for its column, broken between its digits, could start a
+line with its hyphen: the character before the mark now goes with it. A house number written just before the postcode,
+with no comma, now goes to the postcode's line with it.
+
 ## Session 54 — 9 November 2026: the URI's own parameters in bulk
 
 Asked to read the handover and continue, the session found no comment, pull request or issue waiting and took up a
@@ -351,11 +360,10 @@ named by its header, and a header written `?name` or `name=` goes there by itsel
 value after the data attributes; a header of digits only, an empty one or a name given twice is refused at the
 columns that hold them. Ten unit mutations and one browser mutation were caught.
 
-## Session 53 — 9 November 2026: From and To's postcodes with a space and long numbers
+## Session 55 — 9 November 2026: the marks a word starts with in From and To
 
-Asked to read the handover and apply its corrections, the session found no correction written by the owner and took
-up the defects session 50 had left in From and To. A postcode written with a space (*CEP 01310 200*) could be broken at
-the space, leaving *200* alone on a line: numbers separated by a space now stay together while they fit a line, as a
-postcode with a hyphen already did. And a number too long for its column, broken between its digits, could start a
-line with its hyphen: the character before the mark now goes with it. A house number written just before the postcode,
-with no comma, now goes to the postcode's line with it.
+The last open point of From and To: a word written with marks before it (*--Hortifrutigranjeira*, *,-Agroindustrial*)
+was broken after them, so the marks ended the line before (*Doca 3 --*) or stood alone on one. They now stay with the
+word. A first try kept them with it always, and on 4 × 6 in that broke *--Hortifrutigranjeira-* between its letters,
+worse than before; so when the marks alone keep the word from fitting a line, it is broken after them as it was.
+Nine unit mutations and one browser mutation were caught.

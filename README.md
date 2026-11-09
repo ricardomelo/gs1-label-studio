@@ -252,7 +252,7 @@ symbols each carry it, opening the logistic label of phase 4; signatures and ver
 NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
 EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
 designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
-Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen, From and To's postcodes with a space and the URI's own parameters in bulk (9 November). The [history](docs/history.md) tells it session by session.
+Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen, From and To's postcodes with a space, the URI's own parameters in bulk and the marks a word starts with in From and To (9 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -512,7 +512,7 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix, at table 5's X-dimension; in ZPL too). Data titles in a
   second language since 7 November (mock-up A of two, taken under the owner's rule; B put the translation on the English
   title's line): **Data titles also in** Portuguese or Spanish, each under its English title (6.6.4.2); French, German and Italian since 8 November. From and To wrapped between words within their halves since 8
-  November, a long word after its hyphen, slash or comma first, two marks in a row kept together, a postcode with a space kept whole and no line starting with a mark (9 November) (3 mm when 3.5 mm leaves the page too short). No product or healthcare templates (the owner, 3 November 2026: every place has its
+  November, a long word after its hyphen, slash or comma first, two marks in a row kept together, a postcode with a space kept whole, no line starting with a mark and the marks a word starts with kept with it (9 November) (3 mm when 3.5 mm leaves the page too short). No product or healthcare templates (the owner, 3 November 2026: every place has its
   own label, so the designer of 4.2 is what matters)*
 - 4.2 Designer: one or several barcodes and text blocks placed on a label of one's own, then images, lines, fields bound
   to spreadsheet columns — *done, step by step (each mock-up choice taken under the owner's rule unless said):*

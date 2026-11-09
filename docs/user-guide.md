@@ -475,7 +475,7 @@ English unless the trading partners agree on another language, and a second one 
 - The top block: the free text, 3.5 mm high, FROM on the left half and TO on the right. A line too long for its half
   goes on to the next line, broken between words; a word too long on its own is broken after a hyphen, slash, comma or
   semicolon (*Hortifrutigranjeira-* / *Cooperativa*), after the last of two such marks in a row (*Agroindustrial,-* /
-  *Belo*), never between two digits such as a postcode's (*01305-100*, or *01305 100* written with a space, while it fits
+  *Belo*), keeping the marks a word starts with on its line (*--Hortifrutigranjeira*, not *--* at the end of the line before), never between two digits such as a postcode's (*01305-100*, or *01305 100* written with a space, while it fits
   a line), and only then between its letters, a hyphen or comma never starting a line; type a new line where you want one. When the wrapped lines leave the label too short, the free text is made 3 mm high, the least
   6.6.4.4 allows; if even that does not fit, the label is refused, with shorter text in From and To among the cures.
 - The middle block: each element string's data title (SSCC, CONTENT, COUNT, BATCH/LOT…) above its content, 7 mm high. A content wider than the label (an 18-digit SSCC is 102 mm at 7 mm, wider

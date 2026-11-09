@@ -369,6 +369,10 @@
   under **Goes to**, named by its header (a header written `?name` or `name=` is taken for one at once); each row's
   value goes after the data attributes in its GS1 Digital Link URI, an empty cell leaving it out; a header of digits
   only, an empty one or a name given twice is refused at those columns; the report heads them *(URI parameter)*.
+- From and To: the marks a word starts with (9 November; the last open point of session 53): a word written with marks
+  before it (*--Hortifrutigranjeira*, *,-Agroindustrial*) keeps them on its line, where the marks used to end the line
+  before it (*Doca 3 --* / *Hortifrutigranjeira*) or stand alone on one; only when the marks alone keep the word from
+  fitting a line is it broken after them, rather than between its letters.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

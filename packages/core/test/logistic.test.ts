@@ -132,6 +132,23 @@ describe("the GS1 Logistic Label", () => {
     }
     expect(marks(["Tel. 11 3456 7890 11 3456 7890 11 3456 7890"]).join(" ")).toBe("Tel. 11 3456 7890 11 3456 7890 11 3456 7890");
     for (const line of marks(["Tel. 11 3456 7890 11 3456 7890 11 3456 7890"])) expect(line).not.toMatch(/^ | $/);
+    // The marks a word starts with stay with it (session 55): --Hortifrutigranjeira was broken after its --, which then
+    // ended the line before it or stood alone on one; the word's own later marks are still places to break
+    expect(marks(["Armazém Central --Hortifrutigranjeira-Cooperativa", ",-" + "Y".repeat(40)])).toEqual(["Armazém Central", "--Hortifrutigranjeira-", "Cooperativa", ",-YYYYYYYYYYYYYYYYYY", "YYYYYYYYYYYYYYYYYYY", "YYY"]);
+    for (const run of ["-", "--", ",-", "/\u2013", "\u2014", ";/"]) {
+      for (let k = 1; k <= 16; k++) {
+        for (const length of [8, 15, 22, 30]) {
+          const text = `Rua ${"X".repeat(k)} ${run}${"Y".repeat(length)}-Cooperativa`;
+          const lines = marks([text]);
+          for (const line of lines) expect(line === run || line.endsWith(` ${run}`)).toBe(false);
+          expect(lines.some((line) => line.includes(`${run}Y`))).toBe(true);
+          expect(lines.join("").replaceAll(" ", "")).toBe(text.replaceAll(" ", ""));
+        }
+      }
+    }
+    // unless the marks alone keep the word from fitting a line: then it is broken after them, not between its letters
+    expect(marks(["Rua --" + "Y".repeat(19)])).toEqual(["Rua --", "Y".repeat(19)]);
+    expect(marks(["--" + "Y".repeat(17)])).toEqual(["--" + "Y".repeat(17)]);
     const leading = marks(["/" + "X".repeat(40), "a-b"]);
     expect(leading[0]).toMatch(/^\/XX/);
     expect(leading.join("")).toBe("/" + "X".repeat(40) + "a-b");

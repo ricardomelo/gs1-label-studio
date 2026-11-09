@@ -5146,6 +5146,15 @@
      ]
     },
     {
+     "name": "the GS1 Logistic Label: the marks a word starts with kept with it",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "the GS1 Logistic Label of an SSCC alone in TSPL and DPL",
      "status": "listed",
      "projects": [
