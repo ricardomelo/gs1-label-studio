@@ -63,6 +63,8 @@ export interface LabelSettings {
   bearer: Bearer;
   /** Bar width reduction in mm (0: none). */
   reduction: number;
+  /** Crop marks around the label in the PDF and EPS, on a page 10 mm larger on every side (backlog 1.5). */
+  cropMarks: boolean;
   /** Where the human readable text goes, and its height in mm (null: 2.2 mm) (backlog 1.16). */
   hriPosition: HriPosition;
   hriHeightMm: number | null;
@@ -661,6 +663,13 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                   </select>
                 </div>
               )}
+              <div>
+                <label htmlFor="opt-crop">{t("Crop marks")}</label>
+                <select id="opt-crop" value={s.cropMarks ? "marks" : "none"} onChange={(e) => set("cropMarks", e.target.value === "marks")}>
+                  <option value="none">{t("None")}</option>
+                  <option value="marks">{t("In the PDF and EPS, on a 10 mm margin")}</option>
+                </select>
+              </div>
               <div>
                 <label htmlFor="opt-png">{t("PNG resolution")}</label>
                 <select

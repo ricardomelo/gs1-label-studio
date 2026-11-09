@@ -356,6 +356,8 @@ export interface BatchRequest {
   pngResolution?: number | null;
   /** The SVG's text as text rather than outlines. */
   hriAsText?: boolean;
+  /** Crop marks around each label in its PDF and EPS and in the PDF of a label a page; never on label sheets. */
+  cropMarks?: boolean;
 }
 
 export interface BatchResult {
@@ -496,8 +498,8 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
       else if (kind === "png") {
         const at = request.pngResolution ? pngAt(layout, request.pngResolution) : null;
         bytes = at ? await labelPng(layout, font, at.pixelsPerModule, at.dpi) : await labelPng(layout, font);
-      } else if (kind === "pdf") bytes = await labelPdf(options, layout, font);
-      else bytes = utf8(labelEps(options, layout, font));
+      } else if (kind === "pdf") bytes = await labelPdf(options, layout, font, request.cropMarks);
+      else bytes = utf8(labelEps(options, layout, font, request.cropMarks));
       files.push({ name, bytes });
       own.push(name);
     }
@@ -515,7 +517,7 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
   const layouts = ready.map((d) => d.label!.layout);
   if (request.pdf && ready.length) {
     const name = `${stem}.pdf`;
-    files.push({ name, bytes: await pdfDocument(layouts.map((layout) => pdfContent(layout, font)), `${ready.length} labels`) });
+    files.push({ name, bytes: await pdfDocument(layouts.map((layout) => pdfContent(layout, font, request.cropMarks)), `${ready.length} labels`) });
     for (const d of ready) made.get(d.row)!.push(name);
   }
   if (request.sheet && ready.length) {

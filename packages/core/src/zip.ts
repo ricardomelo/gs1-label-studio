@@ -5,7 +5,7 @@ import { labelEps } from "./eps.ts";
 import { labelSvg, QUIET_ZONE, reductionNote, specDescription, type LabelOptions, type Layout } from "./layout.ts";
 import { BAR_HEIGHT, LINEAR_NAMES, type LinearKind } from "./linear.ts";
 import { SYNTAX_ENGINE, SYNTAX_ENGINE_NAME } from "./dictionary.ts";
-import { labelPdf } from "./pdf.ts";
+import { CROP_MARKS, labelPdf } from "./pdf.ts";
 import { labelPng } from "./png.ts";
 import { pyFixed } from "./pyformat.ts";
 import { SYMBOLOGIES } from "./symbologies.ts";
@@ -28,7 +28,7 @@ function linearLine(kind: LinearKind, digits: string, environment: string, perce
 }
 
 /** The README.txt: what the symbol holds, its size and its X-dimension, the label's size, and how to print it. */
-export function labelReadme(options: LabelOptions, layout: Layout): string {
+export function labelReadme(options: LabelOptions, layout: Layout, cropMarks = false): string {
   const symbology = SYMBOLOGIES[options.symbology];
   const environment = options.environment ?? "retail";
   const size = options.size ?? 100;
@@ -50,6 +50,10 @@ export function labelReadme(options: LabelOptions, layout: Layout): string {
     if (options.linear) lines.push(linearLine(options.linear[0], options.linear[1], environment, options.linearSize ?? size));
   }
   if (options.barWidthReduction) lines.push(`Prepress: ${reductionNote(options).slice(2)}; black is 100 % K in the PDF and EPS`);
+  if (cropMarks) {
+    lines.push(`Crop marks: in the PDF and EPS, ${CROP_MARKS.offsetMm} mm outside the label's edges, on a page ` +
+      `${CROP_MARKS.marginMm} mm larger on every side; the PDF's TrimBox is the label`);
+  }
   const texts = layout.texts.length && symbology.kind === "linear" && !options.spec
     ? `${layout.texts.map((t) => t.text).join(" ")} (under the bars)`
     : options.showHri && layout.texts.length ? (options.spec ? layout.texts.map((t) => t.text) : options.hriLines).join(" ") : "none";
@@ -122,20 +126,21 @@ export async function zipArchive(files: { name: string; bytes: Uint8Array }[], d
   return out;
 }
 
-/** The label as SVG, PNG, PDF and EPS, and its README.txt, in one zip; the files named `name`. */
+/** The label as SVG, PNG, PDF and EPS, and its README.txt, in one zip; the files named `name`; the PDF and EPS with crop marks if asked. */
 export async function labelZip(
   options: LabelOptions,
   layout: Layout,
   font: HriFont,
   name: string,
   svg = labelSvg(options, layout, font),
+  cropMarks = false,
 ): Promise<Uint8Array<ArrayBuffer>> {
   const base = fileName(name);
   return zipArchive([
     { name: `${base}.svg`, bytes: utf8(svg) },
     { name: `${base}.png`, bytes: await labelPng(layout, font) },
-    { name: `${base}.pdf`, bytes: await labelPdf(options, layout, font) },
-    { name: `${base}.eps`, bytes: utf8(labelEps(options, layout, font)) },
-    { name: "README.txt", bytes: utf8(labelReadme(options, layout)) },
+    { name: `${base}.pdf`, bytes: await labelPdf(options, layout, font, cropMarks) },
+    { name: `${base}.eps`, bytes: utf8(labelEps(options, layout, font, cropMarks)) },
+    { name: "README.txt", bytes: utf8(labelReadme(options, layout, cropMarks)) },
   ]);
 }

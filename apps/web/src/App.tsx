@@ -507,9 +507,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         const png = chosen ? await labelPng(layout, font, chosen.pixelsPerModule, chosen.dpi) : await labelPng(layout, font);
         download(`${name}.png`, png, "image/png");
       }
-      if (kind === "pdf") download(`${name}.pdf`, await labelPdf(options, layout, font), "application/pdf");
-      if (kind === "eps") download(`${name}.eps`, labelEps(options, layout, font), "application/postscript");
-      if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg), "application/zip");
+      if (kind === "pdf") download(`${name}.pdf`, await labelPdf(options, layout, font, settings.cropMarks), "application/pdf");
+      if (kind === "eps") download(`${name}.eps`, labelEps(options, layout, font, settings.cropMarks), "application/postscript");
+      if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg, settings.cropMarks), "application/zip");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
@@ -557,7 +557,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     };
     running.postMessage({
       rows: batchRows,
-      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, ...(choice.zplDpi ? { printLanguage: language.id } : {}), ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
+      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, cropMarks: settings.cropMarks, ...(choice.zplDpi ? { printLanguage: language.id } : {}), ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
     });
   }
   // The destination shown on a phone or a tablet (backlog 1.21, layout.ts); a computer shows them all. Each keeps

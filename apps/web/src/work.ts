@@ -30,7 +30,7 @@ export const DEFAULT_STEM = "https://id.gs1.org";
 /** The label's settings on a first visit, and what a work opened starts from. */
 export const START_SETTINGS: LabelSettings = {
   symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
-  linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, pngResolution: null,
+  linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, cropMarks: false, pngResolution: null,
   hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
   logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", logisticSecond: "none", designer: false, page: null, selected: null,
   expert: false,

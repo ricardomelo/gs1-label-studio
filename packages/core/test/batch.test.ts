@@ -365,6 +365,27 @@ describe("generating every row", () => {
     expect([...unzip(sheet.zip).keys()]).toEqual(["generated.csv"]);
   });
 
+  // Crop marks (item 1.5): around each label's PDF and EPS and each page of the PDF of a label a page; never on a sheet.
+  it("puts crop marks around each label's PDF and EPS and every page of the PDF of a label a page, not on label sheets", async () => {
+    const rows = batchRows([1, 2, 3, 4]); // the first row alone
+    const l7163 = LABEL_SHEETS.find((s) => s.id === "avery-l7163")!;
+    const request = { design: QR, files: ["pdf", "eps"] as const, pattern: "{row}", pdf: true, sheet: { sheet: l7163, start: 1 } };
+    const marked = unzip((await generateBatch(rows, { ...request, cropMarks: true }, font)).zip);
+    const plain = unzip((await generateBatch(rows, request, font)).zip);
+    const latin1 = (bytes: Uint8Array | undefined) => Buffer.from(bytes!).toString("latin1");
+    const label = labelFor(rows[0]!.identified!, QR, font);
+    const { width, height } = pdfContent(label.layout, font, true);
+    for (const name of ["2.pdf", "labels_dl-qrcode.pdf"]) {
+      expect(latin1(marked.get(name)), name).toContain(`/MediaBox [0 0 ${width.toFixed(3)} ${height.toFixed(3)}] /TrimBox `);
+      expect(latin1(plain.get(name)), name).not.toContain("/TrimBox");
+      expect(await read(drawPdf(marked.get(name)!, 600)), name).toEqual([`]Q1 ${rows[0]!.identified!.digitalLinkUri}`]);
+    }
+    expect(latin1(marked.get("2.eps"))).toContain(`%%HiResBoundingBox: 0 0 ${width.toFixed(3)} ${height.toFixed(3)}`);
+    expect(latin1(plain.get("2.eps"))).not.toContain(`%%HiResBoundingBox: 0 0 ${width.toFixed(3)}`);
+    // The sheet's PDF is the same with or without: its labels are die-cut.
+    expect(marked.get("labels_dl-qrcode_avery-l7163.pdf")).toEqual(plain.get("labels_dl-qrcode_avery-l7163.pdf"));
+  }, SLOW);
+
   it("puts every label on the sheet chosen, read back", async () => {
     const rows = batchRows();
     const l7160 = LABEL_SHEETS.find((s) => s.id === "avery-l7160")!;

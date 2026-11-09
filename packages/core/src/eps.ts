@@ -13,6 +13,12 @@ const PROLOG = [
   "/h { closepath } bind def",
   "/f { fill } bind def",
   "/k { setcmykcolor } bind def",
+  "/K { setcmykcolor } bind def",
+  "/w { setlinewidth } bind def",
+  "/S { stroke } bind def",
+  "/q { gsave } bind def",
+  "/Q { grestore } bind def",
+  "/cm { 6 array astore concat } bind def",
   "/re { 4 2 roll moveto 1 index 0 rlineto 0 exch rlineto neg 0 rlineto closepath } bind def",
 ];
 const RECTANGLES_A_FILL = 400;
@@ -22,9 +28,12 @@ function comment(text: string): string {
   return text.replace(/[^\x20-\x7e]/g, "?");
 }
 
-/** The label as an Encapsulated PostScript file (EPSF 3.0) the size of the label. */
-export function labelEps(options: LabelOptions, layout: Layout, font: HriFont): string {
-  const { content, width, height } = pdfContent(layout, font);
+/**
+ * The label as an Encapsulated PostScript file (EPSF 3.0) the size of the label; with crop marks, `CROP_MARKS.marginMm`
+ * larger on every side, as the PDF.
+ */
+export function labelEps(options: LabelOptions, layout: Layout, font: HriFont, cropMarks = false): string {
+  const { content, width, height } = pdfContent(layout, font, cropMarks);
   const body: string[] = [];
   let open = 0;
   for (const line of content.split("\n")) {

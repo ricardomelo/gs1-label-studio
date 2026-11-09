@@ -17,7 +17,7 @@ import { formatNumber, t, tm } from "./i18n.ts";
 // every row ready or fixed, in the files chosen, in one zip with the CSV of what was generated.
 
 /** What the panel asks of the studio; the design is the label's. */
-export type GenerateChoice = Omit<BatchRequest, "design" | "pngResolution" | "hriAsText">;
+export type GenerateChoice = Omit<BatchRequest, "design" | "pngResolution" | "hriAsText" | "cropMarks">;
 
 interface Props {
   /** Rows ready or fixed, and rows left out (in error or skipped). */

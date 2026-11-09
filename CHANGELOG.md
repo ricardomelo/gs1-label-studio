@@ -352,6 +352,10 @@
 - From and To: two marks in a row kept together (8 November; an open point since session 49): a word such as
   *Agroindustrial,-Belo* or *Hortifrutigranjeira--Cooperativa* is broken after the last of the marks, so that no line
   starts with a hyphen, slash or comma.
+- Crop marks (9 November; left from item 1.5 until the labels of phase 4): the option *Crop marks* puts the PDF and
+  the EPS on a page 10 mm larger on every side, with two 0.25 pt hairlines at each corner of the label, 3 mm outside
+  its edges and 5 mm long, in process black; the PDF's TrimBox and BleedBox are the label. In the zip (its README says
+  so) and in bulk, around each label's PDF and EPS and every page of the PDF of a label a page; never on label sheets.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

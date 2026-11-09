@@ -29,8 +29,43 @@ function latin1(text: string): Uint8Array {
   });
 }
 
-/** The page's operators: white page, black rectangles, then each line of text as outlines (quadratic curves as cubic). */
-export function pdfContent(layout: Layout, font: HriFont): { content: string; width: number; height: number } {
+/**
+ * Crop marks (backlog 1.5, for labels cut from a larger sheet): the page grows by `marginMm` on every side, and at each
+ * corner of the label two hairlines, `lengthMm` long, start `offsetMm` outside its edges, on the lines of those edges —
+ * clear of a 3 mm bleed, as printers expect. In process black, the one ink the file uses, so they print on the black
+ * plate (registration colour would put them on four). The PDF's TrimBox and BleedBox are the label, as nothing bleeds.
+ */
+export const CROP_MARKS = { marginMm: 10, offsetMm: 3, lengthMm: 5, linePt: 0.25 } as const;
+
+/** The CMYK stroke colour of the crop marks: process black alone. */
+export const CMYK_BLACK_STROKE = "0 0 0 1 K";
+
+/** The page's operators, with crop marks around the label on a larger page when `cropMarks` is true. */
+export function pdfContent(layout: Layout, font: HriFont, cropMarks = false): PdfPage {
+  const label = labelContent(layout, font);
+  if (!cropMarks) return label;
+  const f = (value: number) => pyFixed(value, 3);
+  const pt = (mm: number) => (mm * 72) / MM_PER_INCH;
+  const [margin, offset, length] = [pt(CROP_MARKS.marginMm), pt(CROP_MARKS.offsetMm), pt(CROP_MARKS.lengthMm)];
+  const marks: string[] = [];
+  for (const x of [margin, margin + label.width]) {
+    for (const y of [margin, margin + label.height]) {
+      const sx = x === margin ? -1 : 1; // outwards
+      const sy = y === margin ? -1 : 1;
+      marks.push(`${f(x + sx * offset)} ${f(y)} m ${f(x + sx * (offset + length))} ${f(y)} l`);
+      marks.push(`${f(x)} ${f(y + sy * offset)} m ${f(x)} ${f(y + sy * (offset + length))} l`);
+    }
+  }
+  return {
+    content: [`q 1 0 0 1 ${f(margin)} ${f(margin)} cm`, label.content, "Q", CMYK_BLACK_STROKE, `${f(CROP_MARKS.linePt)} w`, ...marks, "S"].join("\n"),
+    width: label.width + 2 * margin,
+    height: label.height + 2 * margin,
+    trim: [margin, margin, label.width, label.height],
+  };
+}
+
+/** The label's operators: white page, black rectangles, then each line of text as outlines (quadratic curves as cubic). */
+function labelContent(layout: Layout, font: HriFont): PdfPage {
   const scale = (layout.xMm * 72) / MM_PER_INCH; // points per unit
   const pageW = layout.width * scale;
   const pageH = layout.height * scale;
@@ -63,9 +98,12 @@ export function pdfContent(layout: Layout, font: HriFont): { content: string; wi
   return { content: ops.join("\n"), width: pageW, height: pageH };
 }
 
-/** The label as a one-page PDF the size of the label: vector modules, bars and glyph outlines, no fonts. */
-export async function labelPdf(options: LabelOptions, layout: Layout, font: HriFont): Promise<Uint8Array<ArrayBuffer>> {
-  return pdfDocument([pdfContent(layout, font)], options.data);
+/**
+ * The label as a one-page PDF the size of the label: vector modules, bars and glyph outlines, no fonts; with crop marks,
+ * on a page `CROP_MARKS.marginMm` larger on every side.
+ */
+export async function labelPdf(options: LabelOptions, layout: Layout, font: HriFont, cropMarks = false): Promise<Uint8Array<ArrayBuffer>> {
+  return pdfDocument([pdfContent(layout, font, cropMarks)], options.data);
 }
 
 /** A page of a PDF: its size in points and its content stream. */
@@ -73,6 +111,8 @@ export interface PdfPage {
   content: string;
   width: number;
   height: number;
+  /** The label's place on a page with crop marks, in points from the bottom left: x, y, width, height (its TrimBox). */
+  trim?: readonly [number, number, number, number];
 }
 
 /**
@@ -89,8 +129,12 @@ export async function pdfDocument(pages: readonly PdfPage[], title: string): Pro
   ];
   for (const [i, page] of pages.entries()) {
     const stream = await deflate(new TextEncoder().encode(page.content), "deflate");
+    const box = page.trim
+      ? `[${[page.trim[0], page.trim[1], page.trim[0] + page.trim[2], page.trim[1] + page.trim[3]].map((v) => pyFixed(v, 3)).join(" ")}]`
+      : "";
+    const boxes = box ? ` /TrimBox ${box} /BleedBox ${box}` : "";
     objects.push(
-      [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(page.width, 3)} ${pyFixed(page.height, 3)}] /Contents ${4 + 2 * i} 0 R /Resources << >> >>`)],
+      [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(page.width, 3)} ${pyFixed(page.height, 3)}]${boxes} /Contents ${4 + 2 * i} 0 R /Resources << >> >>`)],
       [ascii(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, ascii("\nendstream")],
     );
   }

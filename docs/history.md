@@ -323,3 +323,13 @@ should be a plus sign, not %20 (3.8.29), which the studio now writes. Session 49
 after its hyphen, slash or comma before its letters, never between two digits, so a postcode stays whole; session 50
 kept two such marks in a row together, so that no line starts with one. By then the inventory held 1,149 tests in 47
 files, and a full browser run passed 266 tests across a desktop, a phone and a tablet.
+
+## Session 51 — 9 November 2026: crop marks
+
+With no step waiting, the session took up what item 1.5 had left "for later, with the labels of phase 4", phase 4
+being done: crop marks. The option puts the PDF and the EPS on a page 10 mm larger on every side, with two hairlines at
+each corner of the label, 3 mm outside its edges so that they clear a 3 mm bleed, in process black like the rest of the
+file rather than in registration colour; the PDF's TrimBox and BleedBox say where the label is. Bulk puts them around
+each label's files and every page of the PDF of a label a page, but not on label sheets, whose labels are die-cut.
+Poppler and Ghostscript draw each file in the tests, the symbol is read back, each mark is found where it belongs, and
+nothing else is printed outside the label.

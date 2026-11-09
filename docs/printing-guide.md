@@ -38,6 +38,11 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
   its press and substrate and asks for a reduction (for example 0.03 mm). The studio takes it off every bar of a linear
   symbol, half on each side, and says it in the SVG and the README; ITF-14's bearer bars are left as they are. It is not
   applied to 2D symbols.
+- **Crop marks.** For a label printed on a larger sheet and cut out, choose *Crop marks*: the PDF and the EPS then have
+  a page 10 mm larger on every side, and at each corner of the label two hairlines (0.25 pt) start 3 mm outside its
+  edges, on the lines of those edges, 5 mm long — clear of a 3 mm bleed. They are in process black, the one ink the
+  file uses, not in registration colour. The PDF's TrimBox and BleedBox are the label, nothing bleeding past it, so
+  imposition software places it by them. Leave them off for a file placed in packaging artwork, which has its own.
 - **Text.** In the SVG the human readable text is glyph outlines by default (no font needed). *Text, editable* writes
   real text, which needs Liberation Sans (and OCR-B for EAN/UPC digits) where it is printed.
 - **Quiet zones.** Keep the margins the label includes free of print; the label is laid out with them.

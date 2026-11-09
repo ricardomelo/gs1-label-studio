@@ -212,7 +212,7 @@ export {
 } from "./epc.ts";
 export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";
 export { crc32, deflate } from "./deflate.ts";
-export { CMYK_BLACK, CMYK_WHITE, labelPdf, pdfContent, pdfDocument, type PdfPage } from "./pdf.ts";
+export { CMYK_BLACK, CMYK_BLACK_STROKE, CMYK_WHITE, CROP_MARKS, labelPdf, pdfContent, pdfDocument, type PdfPage } from "./pdf.ts";
 export { labelEps } from "./eps.ts";
 export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";

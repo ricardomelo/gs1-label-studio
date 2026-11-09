@@ -6,8 +6,11 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
+  CROP_MARKS,
   expectedReads,
   labelEps,
+  labelPdf,
+  labelZip,
   labelPng,
   labelReadme,
   SYNTAX_ENGINE,
@@ -19,7 +22,8 @@ import {
   type LabelOptions,
 } from "../src/index.ts";
 import { hriFont } from "./font.ts";
-import { decodePng } from "./png.ts";
+import { decodePng, type DecodedPng } from "./png.ts";
+import { drawPdf, unzip } from "./files.ts";
 
 // The rest of item 1.5: EPS, process black alone (100 % K), bar width reduction and a PNG at a chosen resolution. The
 // EPS is drawn by Ghostscript (in CI: the ghostscript package) and read back by ZXing, as the PDF is by poppler.
@@ -164,4 +168,110 @@ describe("a PNG at a chosen resolution", () => {
     expect(pngAt(layout, 72).pixelsPerModule).toBe(1); // never less than a pixel
     expect(await read(await labelPng(layout, font, at300.pixelsPerModule, at300.dpi))).toEqual(expectedReads(CASES[1]![1]));
   }, SLOW);
+});
+
+// Crop marks (the rest of item 1.5): a page 10 mm larger on every side, two hairlines at each corner of the label, 3 mm
+// outside its edges and 5 mm long, in process black; the PDF's TrimBox and BleedBox are the label. Drawn by poppler and
+// Ghostscript: the symbol read back, each mark where it belongs, and nothing else outside the label.
+
+const PT = 72 / 25.4; // points a millimetre
+
+/** The eight marks as segments, in points from the bottom left of a page with crop marks around a label w × h points. */
+function markSegments(w: number, h: number): [number, number, number, number][] {
+  const [m, o, l] = [CROP_MARKS.marginMm * PT, CROP_MARKS.offsetMm * PT, CROP_MARKS.lengthMm * PT];
+  const segments: [number, number, number, number][] = [];
+  for (const x of [m, m + w]) {
+    for (const y of [m, m + h]) {
+      const sx = x === m ? -1 : 1;
+      const sy = y === m ? -1 : 1;
+      segments.push([x + sx * o, y, x + sx * (o + l), y], [x, y + sy * o, x, y + sy * (o + l)]);
+    }
+  }
+  return segments;
+}
+
+/** Each mark drawn along its length, and every dark pixel outside the label on one of them. */
+function checkMarks(image: DecodedPng, dpi: number, w: number, h: number) {
+  const scale = dpi / 72;
+  const pageH = h + 2 * CROP_MARKS.marginMm * PT;
+  const px = (x: number, y: number) => [x * scale, (pageH - y) * scale] as const; // image pixels, from the top left
+  const dark = (x: number, y: number) => image.grey[y * image.width + x]! < 128;
+  const segments = markSegments(w, h).map(([x1, y1, x2, y2]) => [...px(x1, y1), ...px(x2, y2)] as const);
+  for (const [x1, y1, x2, y2] of segments) {
+    for (const t of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+      const [x, y] = [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+      const near = [-2, -1, 0, 1, 2].some((d) => (x1 === x2 ? dark(Math.round(x) + d, Math.round(y)) : dark(Math.round(x), Math.round(y) + d)));
+      expect(near, `a mark at ${x.toFixed(0)}, ${y.toFixed(0)}`).toBe(true);
+    }
+  }
+  const [left, top] = px(CROP_MARKS.marginMm * PT, CROP_MARKS.marginMm * PT + h);
+  const [right, bottom] = px(CROP_MARKS.marginMm * PT + w, CROP_MARKS.marginMm * PT);
+  const onMark = (x: number, y: number) => segments.some(([x1, y1, x2, y2]) =>
+    x1 === x2
+      ? Math.abs(x - x1) <= 3 && y >= Math.min(y1, y2) - 3 && y <= Math.max(y1, y2) + 3
+      : Math.abs(y - y1) <= 3 && x >= Math.min(x1, x2) - 3 && x <= Math.max(x1, x2) + 3);
+  let outside = 0;
+  for (let y = 0; y < image.height; y++) {
+    for (let x = 0; x < image.width; x++) {
+      if (x >= left - 2 && x <= right + 2 && y >= top - 2 && y <= bottom + 2) continue;
+      if (!dark(x, y)) continue;
+      outside++;
+      expect(onMark(x, y), `a dark pixel at ${x}, ${y}, outside the label and off the marks`).toBe(true);
+    }
+  }
+  expect(outside).toBeGreaterThan(8 * CROP_MARKS.lengthMm * (dpi / 25.4)); // eight marks, at least a pixel wide
+}
+
+describe("crop marks", () => {
+  const options = CASES[1]![1]; // ITF-14: its bearer frame on the label's edges
+  const layout = layoutLabel(options, font);
+  const plain = pdfContent(layout, font);
+  const margin = CROP_MARKS.marginMm * PT;
+
+  it("puts the label on a page 10 mm larger on every side, its TrimBox and BleedBox the label, the marks in K alone", async () => {
+    const page = pdfContent(layout, font, true);
+    expect(page.width).toBeCloseTo(plain.width + 2 * margin, 9);
+    expect(page.height).toBeCloseTo(plain.height + 2 * margin, 9);
+    expect(page.trim).toEqual([margin, margin, plain.width, plain.height]);
+    const ops = page.content.split("\n");
+    expect(ops[0]).toBe("q 1 0 0 1 28.346 28.346 cm");
+    expect(ops.slice(1, 1 + plain.content.split("\n").length).join("\n")).toBe(plain.content); // the label as it was
+    expect(ops.filter((op) => / (g|G|rg|RG|k|K)$/.test(op))).toEqual(["0 0 0 0 k", "0 0 0 1 k", "0 0 0 1 K"]);
+    expect(ops.slice(-11)).toEqual(["0 0 0 1 K", "0.250 w", ...markSegments(plain.width, plain.height).map(([x1, y1, x2, y2]) =>
+      `${x1.toFixed(3)} ${y1.toFixed(3)} m ${x2.toFixed(3)} ${y2.toFixed(3)} l`), "S"]);
+    const pdf = Buffer.from(await labelPdf(options, layout, font, true)).toString("latin1");
+    const box = [margin, margin, margin + plain.width, margin + plain.height].map((v) => v.toFixed(3)).join(" ");
+    expect(pdf).toContain(`/MediaBox [0 0 ${page.width.toFixed(3)} ${page.height.toFixed(3)}] /TrimBox [${box}] /BleedBox [${box}] `);
+    // Without crop marks, the page is the label, as the resolver's: no TrimBox.
+    expect(Buffer.from(await labelPdf(options, layout, font)).toString("latin1")).not.toContain("/TrimBox");
+    expect(pdfContent(layout, font, false)).toEqual(plain);
+  });
+
+  it("is drawn by poppler: the symbol read back, each mark in place, nothing else outside the label", async () => {
+    const image = drawPdf(await labelPdf(options, layout, font, true), 600);
+    expect(await read(image)).toEqual(expectedReads(options));
+    checkMarks(decodePng(image), 600, plain.width, plain.height);
+  }, SLOW);
+
+  it("is drawn by Ghostscript from the EPS, its bounding box the page: the same", async () => {
+    const page = pdfContent(layout, font, true);
+    const eps = labelEps(options, layout, font, true);
+    expect(eps.split("\n")).toContain(`%%HiResBoundingBox: 0 0 ${page.width.toFixed(3)} ${page.height.toFixed(3)}`);
+    expect(eps.split("\n")).toContain("%%DocumentProcessColors: Black");
+    const image = drawEps(eps, 600);
+    expect(await read(image)).toEqual(expectedReads(options));
+    checkMarks(decodePng(image), 600, plain.width, plain.height);
+  }, SLOW);
+
+  it("goes in the zip's PDF and EPS, and the README says so", async () => {
+    const files = unzip(await labelZip(options, layout, font, "itf", undefined, true));
+    expect(Buffer.from(files.get("itf.pdf")!).toString("latin1")).toContain("/TrimBox");
+    expect(new TextDecoder().decode(files.get("itf.eps")).split("\n")).toContain(
+      `%%HiResBoundingBox: 0 0 ${(plain.width + 2 * margin).toFixed(3)} ${(plain.height + 2 * margin).toFixed(3)}`);
+    expect(new TextDecoder().decode(files.get("README.txt")).split("\r\n")).toContain(
+      "Crop marks: in the PDF and EPS, 3 mm outside the label's edges, on a page 10 mm larger on every side; the PDF's TrimBox is the label");
+    const without = unzip(await labelZip(options, layout, font, "itf"));
+    expect(new TextDecoder().decode(without.get("README.txt"))).not.toContain("Crop marks");
+    expect(Buffer.from(without.get("itf.pdf")!).toString("latin1")).not.toContain("/TrimBox");
+  });
 });

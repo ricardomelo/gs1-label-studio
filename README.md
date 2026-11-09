@@ -141,7 +141,7 @@ its data titles also in a second language. **Save** keeps the work as a file to 
   <img src="docs/images/guide/printer.png" alt="Printer (ZPL, TSPL, EPL2, DPL): a printer profile, the module in whole dots within the table's range, a test print" width="560">
 </p>
 
-**SVG, PNG, PDF and EPS** at real size for artwork, in process black, with a bar width reduction for the press;
+**SVG, PNG, PDF and EPS** at real size for artwork, in process black, with a bar width reduction for the press and crop marks if asked;
 **ZPL II** for thermal printers with the printer's own barcode commands, every one checked by printing it through
 Labelary and reading it back; **TSPL**, **EPL2** and **DPL** the same way through the Labelize emulator; ZPL templates
 with placeholders for an ERP or a WMS; printer profiles that put each module on whole dots.
@@ -236,7 +236,7 @@ says more.
 
 ## Backlog
 
-**Where it stands** (8 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
+**Where it stands** (9 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
 first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
@@ -252,7 +252,7 @@ symbols each carry it, opening the logistic label of phase 4; signatures and ver
 NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
 EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
 designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
-Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it session by session.
+Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later (9 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -295,8 +295,8 @@ Engine's releases (0.6, 8 November). The [history](docs/history.md) tells it ses
   prepress options (bar width reduction, 100 % K) — *done: SVG, PNG (12 pixels per module, its dpi recorded), PDF and
   zip with README ported from the resolver and checked against it, for every symbol from its layout (1.3); EPS (the
   PDF's drawing in PostScript, read back through Ghostscript); PDF and EPS in process black alone; a bar width
-  reduction for linear symbols; the PNG at 300, 600 or 1200 dpi. Margins and crop marks later, with the labels of
-  phase 4*
+  reduction for linear symbols; the PNG at 300, 600 or 1200 dpi; crop marks on a 10 mm margin in the PDF and EPS,
+  the PDF's TrimBox the label, in bulk too but never on label sheets (9 November)*
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width — *done:
   the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
   between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with

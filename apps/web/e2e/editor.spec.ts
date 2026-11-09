@@ -410,6 +410,53 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   expect(png.readUInt32BE(at + 4)).toBe(11811);
 });
 
+// The rest of item 1.5: crop marks, on a page 10 mm (28.346 pt) larger on every side, the PDF's TrimBox the label.
+test("crop marks around the label in the PDF, the EPS and the zip, and around every label in bulk", async ({ page }) => {
+  const box = (text: string, key: string) => /\[([\d. ]+)\]/.exec(text.slice(text.indexOf(key)))![1]!.split(" ").map(Number);
+  const download = async (button: RegExp) => {
+    const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: button }).click()]);
+    return (await file.path())!;
+  };
+  await on(page, "export");
+  const plain = readFileSync(await download(/^PDF$/)).toString("latin1");
+  expect(plain).not.toContain("/TrimBox");
+  const [, , w, h] = box(plain, "/MediaBox");
+  await on(page, "label");
+  await expect(page.locator("#opt-crop")).toHaveValue("none");
+  await page.selectOption("#opt-crop", "marks");
+  await on(page, "export");
+  const marked = readFileSync(await download(/^PDF$/)).toString("latin1");
+  const media = box(marked, "/MediaBox");
+  expect(media[2]).toBeCloseTo(w! + 56.693, 2);
+  expect(media[3]).toBeCloseTo(h! + 56.693, 2);
+  const trim = box(marked, "/TrimBox");
+  expect(trim[0]).toBeCloseTo(28.346, 3);
+  expect(trim[2]! - trim[0]!).toBeCloseTo(w!, 2);
+  expect(trim[3]! - trim[1]!).toBeCloseTo(h!, 2);
+  expect(box(marked, "/BleedBox")).toEqual(trim);
+  const eps = readFileSync(await download(/^EPS$/)).toString("latin1");
+  expect(eps).toContain(`%%HiResBoundingBox: 0 0 ${media[2]!.toFixed(3)} ${media[3]!.toFixed(3)}\n`);
+  const zip = await download(/^Zip of all$/);
+  expect(execFileSync("unzip", ["-p", zip, "README.txt"], { encoding: "utf8" })).toContain(
+    "Crop marks: in the PDF and EPS, 3 mm outside the label's edges, on a page 10 mm larger on every side");
+  expect(execFileSync("unzip", ["-p", zip, "dl-qrcode_01_09506000134376_10_B42.pdf"], { encoding: "latin1" })).toContain("/TrimBox [28.346 28.346 ");
+  // In Portuguese.
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await on(page, "label");
+  await expect(page.locator("label[for=opt-crop]")).toHaveText("Marcas de corte");
+  await expect(page.locator("#opt-crop option:checked")).toHaveText("No PDF e no EPS, numa margem de 10 mm");
+  // In bulk: every page of the PDF of a label a page.
+  await on(page, "data");
+  await page.getByRole("button", { name: "Em lote" }).click();
+  await page.fill("#rows-paste", "GTIN\tLote\n09506000134376\tB42\n09506000134352\tB43\n");
+  await page.getByRole("button", { name: "Usar as linhas coladas" }).click();
+  await on(page, "export");
+  const bulk = await download(/^Gerar 2 etiquetas$/);
+  const pdf = execFileSync("unzip", ["-p", bulk, "labels_dl-qrcode.pdf"], { encoding: "latin1" });
+  expect(pdf.match(/\/TrimBox \[28\.346 28\.346 /g)).toHaveLength(2);
+});
+
 // Item 1.7: offline. The service worker keeps every file of the application on the first visit.
 test("works offline once loaded, the scan test too", async ({ page, context }) => {
   await page.evaluate(async () => {

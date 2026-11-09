@@ -261,6 +261,8 @@
  "Size of the linear barcode": "Größe des linearen Barcodes",
  "As the 2D symbol: {size} %": "Wie das 2D-Symbol: {size} %",
  "Bar width reduction": "Balkenbreitenreduktion",
+ "Crop marks": "Schnittmarken",
+ "In the PDF and EPS, on a 10 mm margin": "Im PDF und EPS, auf einem Rand von 10 mm",
  "PNG resolution": "PNG-Auflösung",
  "At the label's size ({dpi} dpi)": "In der Größe des Etiketts ({dpi} dpi)",
  "At the label's size": "In der Größe des Etiketts",

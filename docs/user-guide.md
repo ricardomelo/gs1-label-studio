@@ -396,6 +396,7 @@ Only the choices that apply to the symbol are shown.
 | Linear barcode beside it | An EAN-13, UPC-A or EAN-8 as the GTIN takes, or UPC-E, beside a 2D symbol |
 | Bearer bars | ITF-14: a frame (suits every printing method) or bars of 2X at the top and bottom |
 | Bar width reduction | Linear symbols: 0.010 to 0.050 mm taken off every bar, for printing that spreads ink |
+| Crop marks | None, or marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
 | PNG resolution | At the label's size (12 pixels a module), or 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said |
 | Text in the SVG | Outlines (no font needed) or real text, editable but needing Liberation Sans and OCR-B where it is printed |
 | Domain in the GS1 Digital Link URI | `https://id.gs1.org` by default; your resolver's domain |
@@ -427,7 +428,7 @@ with the page.
 |---|---|
 | Download SVG | Vector, at real size in millimetres; the text as outlines or as text (option *Text in the SVG*) |
 | PNG | At the label's size (12 pixels a module) or at the resolution chosen; its dpi recorded in the file |
-| PDF | One page the size of the label, vector, the text as outlines, in process black (100 % K) |
+| PDF | One page the size of the label, vector, the text as outlines, in process black (100 % K); with *Crop marks*, 10 mm larger on every side |
 | EPS | The PDF's drawing in PostScript, for prepress |
 | Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it |
 | ZPL (203 dpi) | The label in ZPL II with the printer's own commands, for the printer profile chosen (section 10) |
@@ -655,7 +656,8 @@ Under the Export bar, **Generate in bulk** draws the label shown, with its optio
 - **To print**: **One PDF, a label a page**; **Label sheets** — Avery L7160, L7163, L7651, 5160 or a **Custom sheet…**
   (page, label size, columns × rows, margins and pitch) — each label at 100 % centred in its place, starting from any
   label of the first sheet. A label larger than the sheet's labels is said before generating; labels are never scaled.
-  **One ZPL file** with every label, for the printer profile chosen.
+  **One ZPL file** with every label, for the printer profile chosen. The option *Crop marks* puts them around each
+  label's PDF and EPS and every page of the PDF of a label a page, never on label sheets, whose labels are die-cut.
 - **Generate N labels** makes one zip with the files chosen and `generated.csv`, which lists every row and what was
   made of it, or why nothing was. Rows in error or skipped are left out and named there.
 
