@@ -18,6 +18,7 @@ import {
   layoutLabel,
   pdfContent,
   pngAt,
+  pyFixed,
   specificationFor,
   type LabelOptions,
 } from "../src/index.ts";
@@ -167,6 +168,26 @@ describe("a PNG at a chosen resolution", () => {
     expect(png.width).toBe(Math.round(layout.width * 6));
     expect(pngAt(layout, 72).pixelsPerModule).toBe(1); // never less than a pixel
     expect(await read(await labelPng(layout, font, at300.pixelsPerModule, at300.dpi))).toEqual(expectedReads(CASES[1]![1]));
+  }, SLOW);
+
+  it("goes in the zip, and the README gives its resolution and the X-dimension it prints at", async () => {
+    const options = CASES[1]![1];
+    const layout = layoutLabel(options, font); // X = 0.495 mm
+    const files = unzip(await labelZip(options, layout, font, "itf", undefined, false, 300));
+    const png = files.get("itf.png")!;
+    expect(png).toEqual(await labelPng(layout, font, 6, 300));
+    expect(decodePng(png).perMetre).toBe(11811);
+    expect(await read(png)).toEqual(expectedReads(options));
+    const readme = new TextDecoder().decode(files.get("README.txt")).split("\r\n");
+    expect(readme).toContain(`PNG: 300 dpi, 6 pixels a module, so it prints at X = 0.508 mm, ${pyFixed(layout.width * 0.508, 1)} x ` +
+      `${pyFixed(layout.height * 0.508, 1)} mm`);
+    expect(readme.indexOf(readme.find((l) => l.startsWith("PNG:"))!)).toBeLessThan(readme.findIndex((l) => l.startsWith("Label size:")));
+    expect(labelReadme(options, layout, false, 72)).toContain("PNG: 72 dpi, 1 pixel a module, so it prints at X = 0.353 mm");
+    // Without a choice: the PNG at the label's size, the README as before.
+    const plain = unzip(await labelZip(options, layout, font, "itf"));
+    expect(plain.get("itf.png")).toEqual(await labelPng(layout, font));
+    expect(new TextDecoder().decode(plain.get("README.txt"))).toBe(labelReadme(options, layout));
+    expect(labelReadme(options, layout)).not.toContain("PNG:");
   }, SLOW);
 });
 

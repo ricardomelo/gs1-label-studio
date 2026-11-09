@@ -26,7 +26,7 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
 | A thermal label printer (Zebra and printers that emulate ZPL) | **ZPL** | The printer's own commands, at its resolution |
 | A TSC or generic thermal printer, an older Zebra, a Datamax-O'Neil or Honeywell | **TSPL**, **EPL2** or **DPL** (section 8) | The printer's own commands, checked in an emulator: test-print first |
 | A system (ERP, WMS) that prints labels | **ZPL template** | Placeholders the system fills in |
-| Every file of one label, to send to someone | **Zip of all** | SVG, PNG, PDF, EPS and a README of the data, sizes and how to print |
+| Every file of one label, to send to someone | **Zip of all** | SVG, PNG, PDF, EPS and a README of the data, sizes and how to print; the PNG at the resolution chosen |
 
 ## 2. Artwork and prepress: SVG, PDF, EPS
 

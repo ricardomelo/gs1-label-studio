@@ -509,7 +509,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       }
       if (kind === "pdf") download(`${name}.pdf`, await labelPdf(options, layout, font, settings.cropMarks), "application/pdf");
       if (kind === "eps") download(`${name}.eps`, labelEps(options, layout, font, settings.cropMarks), "application/postscript");
-      if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg, settings.cropMarks), "application/zip");
+      if (kind === "zip") download(`${name}.zip`, await labelZip(options, layout, font, name, view.svg, settings.cropMarks, settings.pngResolution), "application/zip");
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));

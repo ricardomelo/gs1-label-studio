@@ -397,7 +397,7 @@ Only the choices that apply to the symbol are shown.
 | Bearer bars | ITF-14: a frame (suits every printing method) or bars of 2X at the top and bottom |
 | Bar width reduction | Linear symbols: 0.010 to 0.050 mm taken off every bar, for printing that spreads ink |
 | Crop marks | None, or marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
-| PNG resolution | At the label's size (12 pixels a module), or 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said |
+| PNG resolution | At the label's size (12 pixels a module), or 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said; for the PNG on its own and in the zip |
 | Text in the SVG | Outlines (no font needed) or real text, editable but needing Liberation Sans and OCR-B where it is printed |
 | Domain in the GS1 Digital Link URI | `https://id.gs1.org` by default; your resolver's domain |
 | Label | For an SSCC: the symbol alone, or the GS1 Logistic Label (section 9) |
@@ -430,7 +430,7 @@ with the page.
 | PNG | At the label's size (12 pixels a module) or at the resolution chosen; its dpi recorded in the file |
 | PDF | One page the size of the label, vector, the text as outlines, in process black (100 % K); with *Crop marks*, 10 mm larger on every side |
 | EPS | The PDF's drawing in PostScript, for prepress |
-| Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it |
+| Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it; the PNG at the *PNG resolution* chosen, which the README then gives with the X-dimension it prints at |
 | ZPL (203 dpi) | The label in ZPL II with the printer's own commands, for the printer profile chosen (section 10) |
 | ZPL template | The same ZPL with `{{01}}`, `{{10}}`… or `{{URI}}` where the values go, each described in a comment at the top |
 

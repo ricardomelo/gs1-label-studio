@@ -333,3 +333,10 @@ file rather than in registration colour; the PDF's TrimBox and BleedBox say wher
 each label's files and every page of the PDF of a label a page, but not on label sheets, whose labels are die-cut.
 Poppler and Ghostscript draw each file in the tests, the symbol is read back, each mark is found where it belongs, and
 nothing else is printed outside the label.
+
+## Session 52 — 9 November 2026: the zip's PNG at the resolution chosen
+
+The crop marks' session had noted that the zip's PNG kept the label's size whatever PNG resolution was chosen, while
+the PNG button and bulk followed the choice. The zip now holds the same PNG as the button, and its README gives the
+resolution, the whole pixels a module and the X-dimension and size the PNG then prints at, as the option's list says
+them; with no choice the zip is byte for byte what it was.

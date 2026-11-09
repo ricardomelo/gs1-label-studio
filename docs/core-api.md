@@ -602,8 +602,8 @@ Every file of a label in a zip, with a README.
 | Name | Kind | Declaration | Description |
 |---|---|---|---|
 | `fileName` | function | `function fileName(name: string): string` | A name a file system takes: letters, digits, "_", "." and "-" (the resolver's zip_name). |
-| `labelReadme` | function | `function labelReadme(options: LabelOptions, layout: Layout, cropMarks = false): string` | The README.txt: what the symbol holds, its size and its X-dimension, the label's size, and how to print it. |
-| `labelZip` | function | `async function labelZip( options: LabelOptions, layout: Layout, font: HriFont, name: string, svg = labelSvg(options, layout, font), cropMarks = false, ): Pro…` | The label as SVG, PNG, PDF and EPS, and its README.txt, in one zip; the files named `name`; the PDF and EPS with crop marks if asked. |
+| `labelReadme` | function | `function labelReadme(options: LabelOptions, layout: Layout, cropMarks = false, pngResolution: number \| null = null): string` | The README.txt: what the symbol holds, its size and its X-dimension, the label's size, and how to print it; the crop marks and a PNG resolution chosen, if any. |
+| `labelZip` | function | `async function labelZip( options: LabelOptions, layout: Layout, font: HriFont, name: string, svg = labelSvg(options, layout, font), cropMarks = false, pngRes…` | The label as SVG, PNG, PDF and EPS, and its README.txt, in one zip; the files named `name`; the PDF and EPS with crop marks if asked; the PNG at the resolution chosen (`pngAt()`), or else at the one at which it prints at the label's size. |
 | `zipArchive` | function | `async function zipArchive(files: { name: string; bytes: Uint8Array }[], date = new Date()): Promise&lt;Uint8Array&lt;ArrayBuffer&gt;&gt;` | A zip of the files, each deflated (no folders, no encryption, no zip64: labels are small). |
 
 ## scan.ts

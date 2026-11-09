@@ -2664,6 +2664,10 @@
      "status": "passed"
     },
     {
+     "name": "a PNG at a chosen resolution › goes in the zip, and the README gives its resolution and the X-dimension it prints at",
+     "status": "passed"
+    },
+    {
      "name": "crop marks › puts the label on a page 10 mm larger on every side, its TrimBox and BleedBox the label, the marks in K alone",
      "status": "passed"
     },
@@ -4783,7 +4787,7 @@
      ]
     },
     {
-     "name": "a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution",
+     "name": "a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution, in the zip too",
      "status": "listed",
      "projects": [
       "desktop",

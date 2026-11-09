@@ -392,7 +392,7 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
 });
 
 // The rest of item 1.5: prepress.
-test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution", async ({ page }) => {
+test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution, in the zip too", async ({ page }) => {
   await expect(page.locator("#opt-reduction")).toHaveCount(0); // a QR code alone has no bars
   await on(page, "label");
   await page.selectOption("#opt-linear", "auto");
@@ -408,6 +408,12 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   // pHYs: 11811 pixels a metre, 300 dpi.
   const at = png.indexOf("pHYs");
   expect(png.readUInt32BE(at + 4)).toBe(11811);
+  // The zip's PNG is the same file, and its README says what it prints at.
+  const [zip] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Zip of all" }).click()]);
+  const zipped = execFileSync("unzip", ["-p", (await zip.path())!, "dl-qrcode_01_09506000134376_10_B42.png"]);
+  expect(zipped.equals(png)).toBe(true);
+  expect(execFileSync("unzip", ["-p", (await zip.path())!, "README.txt"], { encoding: "utf8" }))
+    .toContain("PNG: 300 dpi, 6 pixels a module, so it prints at X = 0.508 mm, ");
 });
 
 // The rest of item 1.5: crop marks, on a page 10 mm (28.346 pt) larger on every side, the PDF's TrimBox the label.

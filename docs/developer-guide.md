@@ -296,7 +296,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 17 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
-| `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 14 |
+| `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 15 |
 | `printer` | the module in whole dots, profiles, the test label | 6 |
 | `pyformat` | Python's fixed-point rounding | 2 |
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |

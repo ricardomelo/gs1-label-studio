@@ -252,7 +252,7 @@ symbols each carry it, opening the logistic label of phase 4; signatures and ver
 NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
 EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
 designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
-Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later (9 November). The [history](docs/history.md) tells it session by session.
+Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later and the zip's PNG at the resolution chosen (9 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -296,7 +296,8 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later 
   zip with README ported from the resolver and checked against it, for every symbol from its layout (1.3); EPS (the
   PDF's drawing in PostScript, read back through Ghostscript); PDF and EPS in process black alone; a bar width
   reduction for linear symbols; the PNG at 300, 600 or 1200 dpi; crop marks on a 10 mm margin in the PDF and EPS,
-  the PDF's TrimBox the label, in bulk too but never on label sheets (9 November)*
+  the PDF's TrimBox the label, in bulk too but never on label sheets (9 November); the zip's PNG at the resolution
+  chosen, as the PNG alone and bulk's were (9 November)*
 - 1.6 Preview at real size with a ruler and a scan test; light and dark; phone width — *done:
   the editor screen (preview beside the options, live, desktop and phone, light and dark); the preview at real size
   between rulers in millimetres, the screen calibrated against a bank card; a scan test that reads the label back with

@@ -112,7 +112,7 @@ Which standard each follows: [conformance](conformance.md).
 |---|---|---|---|
 | SVG | At real size in millimetres, text as outlines or as text | `e7826a5` | `labelsvg`: the label's SVG, drawn and read back · `roundtrip`: sizes the SVG in millimetres |
 | PNG | 12 pixels a module with its dpi recorded, as the resolver's | `c5a6ce2` | `render`: PNG: the resolver's size |
-| PNG at a chosen resolution | 300, 600 or 1200 dpi, a whole number of pixels a module, the X-dimension it prints at said | `af29b21` | `prepress`: takes the whole number of pixels a module · `editor`: a PNG at a chosen resolution |
+| PNG at a chosen resolution | 300, 600 or 1200 dpi, a whole number of pixels a module, the X-dimension it prints at said; the zip's PNG too, its README giving the resolution, the pixels a module and the X-dimension and size it prints at | `af29b21` | `prepress`: takes the whole number of pixels a module · `prepress`: goes in the zip, and the README gives its resolution · `editor`: a PNG at a chosen resolution, in the zip too |
 | PDF | One page the label's size, vector, text as outlines, written without a library | `c5a6ce2` | `render`: PDF: the resolver's page |
 | PDF of several pages | One page a label, each its size; one page gives labelPdf's bytes | `cdcb24a` | `batch`: writes each page its size |
 | EPS | The PDF's drawing under a PostScript prolog, read back through Ghostscript | `af29b21` | `prepress`: drawn by Ghostscript and read back |
