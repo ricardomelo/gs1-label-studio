@@ -252,7 +252,7 @@ symbols each carry it, opening the logistic label of phase 4; signatures and ver
 NFC tags (1.19) after the symbols were complete — all done by 31 October with 1.20 and 1.21. Then phase 3's ZPL, TSPL,
 EPL2 and DPL (31 October to 2 November), the GS1 Logistic Label in the printer languages (2 to 6 November), the
 designer and the saved work (3 to 8 November), French, German and Italian (8 November) and following the Syntax
-Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen, From and To's postcodes with a space, the URI's own parameters in bulk and the marks a word starts with in From and To (9 November). The [history](docs/history.md) tells it session by session.
+Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later, the zip's PNG at the resolution chosen, From and To's postcodes with a space, the URI's own parameters in bulk, the marks a word starts with in From and To and element strings in the rows' order (9 November). The [history](docs/history.md) tells it session by session.
 
 **Phase 0 — setting up**
 
@@ -377,7 +377,10 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   were added in — *done 30 October (mock-up B of three): one list under the key, "+ Add attributes" adding a row whose
   AI field lists the key's qualifiers not yet given first, then every attribute; links beside it add a qualifier of
   the key straight away; each row says whether it goes to the URI's path or its query string, a qualifier at its
-  left edge in the qualifiers' colour; two qualifiers the key does not take together are said on the row*
+  left edge in the qualifiers' colour; two qualifiers the key does not take together are said on the row. Since
+  9 November (a reviewer's comment) the rows' order, qualifiers included, is the element string's (GS1-128, GS1
+  DataMatrix, GS1 QR Code, DataBar Expanded and their text), the URI keeping its own; a pasted element string keeps its
+  order, and in bulk the columns' order is the element string's*
 - 1.16 The human readable text placed and sized as the General Specifications allow (section 4.14): below the symbol
   (the default) or above it, beside a 2D symbol where the standard allows it; its character height chosen within the
   standard's range for the symbol and the X-dimension; for every symbol drawn with text, in every export, the scan

@@ -367,3 +367,10 @@ was broken after them, so the marks ended the line before (*Doca 3 --*) or stood
 word. A first try kept them with it always, and on 4 × 6 in that broke *--Hortifrutigranjeira-* between its letters,
 worse than before; so when the marks alone keep the word from fitting a line, it is broken after them as it was.
 Nine unit mutations and one browser mutation were caught.
+
+The same session then took up a reviewer's comment: in a GS1 DataMatrix, moving (17) above (10) changed neither the
+data nor the text, because the editor always put the key's qualifiers right after it, the order a GS1 Digital Link
+URI's path needs. An element string has no such order, and a variable-length AI such as (10) is best last, needing no
+FNC1 after it. The rows' order, qualifiers included, is now the element string's in every symbol that carries one and in
+its text; the URI, and the text under its symbol, keep the URI's order. A pasted element string keeps its order, and in
+bulk the columns' order is the element string's. Thirteen unit mutations and one browser mutation were caught.

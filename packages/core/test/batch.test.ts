@@ -8,6 +8,8 @@ import {
   checkRows,
   fitsSheet,
   generateBatch,
+  identify,
+  labelSvg,
   LABEL_SHEETS,
   labelFor,
   labelPdf,
@@ -283,6 +285,29 @@ describe("generating every row", () => {
     expect(printFileFor("epl2", drawn, ean, 203)).toMatch(/,N,"950600013435"/);
     expect(printFileFor("tspl", drawn, ean, 203)).toMatch(/"EAN13",\d+,0,/);
   });
+
+  // Session 55 (a reviewer's comment): the rows' order is the element string's, in the symbol and its text; a URI's
+  // symbol keeps the URI's order, in the URI and in its text
+  it("carries the element strings in the rows' order in the symbol and its text, a URI's symbol in the URI's", async () => {
+    const id = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] as [string, string][], order: ["17", "10"] };
+    const data = identify(engine, id, "https://id.gs1.org");
+    const lines = ["(01)09506000134376", "(17)271231", "(10)B42"];
+    const gs1128: LabelDesign = { ...QR, symbology: "gs1-128", environment: "distribution", spec: specificationFor(5, "gs1-128")!, table: 5 };
+    for (const design of [{ ...QR, symbology: "gs1-datamatrix" } as LabelDesign, gs1128]) {
+      const drawn = labelFor(data, design, font);
+      expect(drawn.options.hriLines).toEqual(lines);
+      const prefix = design.symbology === "gs1-128" ? "]C1" : "]d2";
+      expect(await read(svgPng(labelSvg(drawn.options, drawn.layout, font)))).toEqual([`${prefix} ${lines.join("")}`]);
+    }
+    expect(printFileFor("zpl", labelFor(data, gs1128, font), gs1128, 203)).toContain("^FD(01)09506000134376(17)271231(10)B42^FS");
+    // EPL2's GS1-128 takes a variable-length AI last only: (10) moved to the end can now be printed
+    expect(textFile(printFileFor("epl2", labelFor(data, gs1128, font), gs1128, 203))).toContain("(10)B42");
+    const usual = identify(engine, { ...id, order: undefined }, "https://id.gs1.org");
+    expect(() => printFileFor("epl2", labelFor(usual, gs1128, font), gs1128, 203)).toThrow(/Put it last/);
+    const qr = labelFor(data, QR, font);
+    expect(qr.options.hriLines).toEqual(["(01)09506000134376", "(10)B42", "(17)271231"]);
+    expect(await read(svgPng(labelSvg(qr.options, qr.layout, font)))).toEqual(["]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231"]);
+  }, SLOW);
 
   it("writes the GS1 Logistic Label of every row in ZPL, and says another language cannot", async () => {
     const sscc = checkRows(engine, parseDelimited("SSCC,GTIN,Count\n106141411234567897,09506000134376,24\n106141411234567903,09506000134376,12"),

@@ -5,6 +5,7 @@ import {
   fieldColumns,
   guessColumn,
   guessMapping,
+  identify,
   normaliseCell,
   parameterName,
   parseDelimited,
@@ -202,7 +203,13 @@ describe("a row's cells by their column's header", () => {
 describe("rows as identifications", () => {
   it("takes the key, its qualifiers and the attributes, with the fixed values last", () => {
     const id = rowIdentification(["0,5", "09506000134376", "B42", "2027-12-31", "x"], ["310n", "01", "10", "17", null], [["422", "076"]]);
-    expect(id).toEqual({ key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["310n", "0,5"], ["17", "271231"], ["422", "076"]] });
+    expect(id).toEqual({ key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["310n", "0,5"], ["17", "271231"], ["422", "076"]], order: ["310n", "10", "17", "422"] });
+    // The element string carries them in the columns' order, the batch (10) included; the URI's path keeps its own
+    const identified = identify(engine, id, "https://id.gs1.org");
+    expect(identified.elementString).toBe("(01)09506000134376(3101)000005(10)B42(17)271231(422)076");
+    expect(identified.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376/10/B42?3101=000005&17=271231&422=076");
+    // Columns in the usual order (the key's qualifiers first) give no order, as before
+    expect(rowIdentification(["09506000134376", "B42", "2027-12-31"], ["01", "10", "17"])).not.toHaveProperty("order");
   });
 
   it("says why a row has no key", () => {

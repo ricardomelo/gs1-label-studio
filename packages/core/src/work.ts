@@ -117,13 +117,15 @@ function damaged(what: string): never {
 function identification(value: unknown): Identification {
   if (!isRecord(value) || !isString(value.key) || !isString(value.value) || !isRecord(value.qualifiers)
     || !Object.values(value.qualifiers).every(isString) || !Array.isArray(value.attributes) || !value.attributes.every(isPair)
-    || (value.parameters !== undefined && !(Array.isArray(value.parameters) && value.parameters.every(isPair)))) {
+    || (value.parameters !== undefined && !(Array.isArray(value.parameters) && value.parameters.every(isPair)))
+    || (value.order !== undefined && !(Array.isArray(value.order) && value.order.every(isString)))) {
     damaged(PARTS.data);
   }
   return {
     key: value.key, value: value.value, qualifiers: { ...(value.qualifiers as Record<string, string>) },
     attributes: (value.attributes as [string, string][]).map(([ai, v]) => [ai, v]),
     ...(value.parameters ? { parameters: (value.parameters as [string, string][]).map(([n, v]) => [n, v]) } : {}),
+    ...(value.order ? { order: [...(value.order as string[])] } : {}),
   };
 }
 

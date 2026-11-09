@@ -10,9 +10,11 @@ import {
   exclusiveQualifiers,
   fieldsOf,
   identify,
+  inUriOrder,
   InputError,
   isKey,
   isSexCode,
+  orderOf,
   OTHER_KEYS,
   parametersProblem,
   qualifiersOf,
@@ -216,6 +218,56 @@ describe("qualifiers and attributes as one list (backlog 1.15)", () => {
     expect(() => identify(engine, { ...BASE, ...split })).toThrow(AttributeError);
     expect(splitRows("414", [["10", "B1"], ["254", "X"]])).toEqual({ qualifiers: { "254": "X" }, attributes: [["10", "B1"]] });
     expect(splitRows("01", [["", ""]])).toEqual({ qualifiers: {}, attributes: [["", ""]] });
+  });
+});
+
+// A reviewer's comment (9 November 2026): moving (17) above (10) changed neither a GS1 DataMatrix's data nor its text,
+// as the batch (10) was always put right after the GTIN. An element string may carry its AIs in any order after the key,
+// and a variable-length AI is best last, needing no FNC1 after it; only a GS1 Digital Link URI has an order of its own.
+describe("the element string in the order of the rows, the URI in its own (session 55)", () => {
+  const ROWS: [string, string][] = [["17", "271231"], ["10", "B42"]];
+
+  it("carries the qualifiers and attributes in the rows' order; the URI's path keeps its own", () => {
+    const order = orderOf("01", ROWS);
+    expect(order).toEqual(["17", "10"]);
+    const id: Identification = { ...BASE, ...splitRows("01", ROWS), order };
+    const identified = identify(engine, id, "https://id.gs1.org");
+    expect(identified.elementString).toBe("(01)09506000134376(17)271231(10)B42");
+    expect(dataFor("gs1-datamatrix", identified)).toBe("(01)09506000134376(17)271231(10)B42");
+    expect(dataFor("gs1-128", identified)).toBe("(01)09506000134376(17)271231(10)B42");
+    expect(identified.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376/10/B42?17=271231");
+    expect(rowsOf(id)).toEqual(ROWS);
+    // A serial between two attributes, an attribute chosen as 310n: each where its row is
+    const many: [string, string][] = [["310n", "0,5"], ["21", "S1"], ["17", "271231"], ["10", "B42"]];
+    const manyId: Identification = { ...BASE, ...splitRows("01", many), order: orderOf("01", many)! };
+    const manyIdentified = identify(engine, manyId, "https://id.gs1.org");
+    expect(manyIdentified.elementString).toBe("(01)09506000134376(3101)000005(21)S1(17)271231(10)B42");
+    expect(manyIdentified.digitalLinkUri).toBe("https://id.gs1.org/01/09506000134376/10/B42/21/S1?3101=000005&17=271231");
+    expect(rowsOf(manyId)).toEqual(many);
+  });
+
+  it("gives no order for the usual one, so that an identification is written as before", () => {
+    expect(orderOf("01", [["10", "B42"], ["21", "S1"], ["17", "271231"]])).toBeUndefined();
+    expect(orderOf("01", [["21", "S1"], ["10", "B42"]])).toEqual(["21", "10"]);
+    expect(orderOf("01", [])).toBeUndefined();
+    expect(orderOf("00", [["02", "09506000134376"], ["37", "24"]])).toBeUndefined();
+    // An AI the order does not name follows in its own place; one it names twice is placed once
+    const id: Identification = { ...BASE, qualifiers: { "10": "B42", "21": "S1" }, attributes: [["17", "271231"]], order: ["17", "17"] };
+    expect(identify(engine, id).elementString).toBe("(01)09506000134376(17)271231(10)B42(21)S1");
+  });
+
+  it("keeps the order of what was pasted, and gives it back the same", () => {
+    const pasted = fieldsOf(engine.parse("(01)09506000134376(17)271231(10)B42"));
+    expect(pasted).toEqual({ ...BASE, qualifiers: { "10": "B42" }, attributes: [["17", "271231"]], order: ["17", "10"] });
+    expect(identify(engine, pasted).elementString).toBe("(01)09506000134376(17)271231(10)B42");
+    // A URI is in the usual order: nothing to keep
+    expect(fieldsOf(engine.parse("https://id.gs1.org/01/09506000134376/10/B42?17=271231"))).not.toHaveProperty("order");
+  });
+
+  it("puts the text under a URI's symbol in the URI's order", () => {
+    const elements = engine.parse("(01)09506000134376(3101)000005(21)S1(17)271231(10)B42").elements;
+    expect(inUriOrder(elements).map((e) => e.ai)).toEqual(["01", "10", "21", "3101", "17"]);
+    expect(inUriOrder([])).toEqual([]);
   });
 });
 

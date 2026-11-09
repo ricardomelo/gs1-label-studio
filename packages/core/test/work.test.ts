@@ -48,6 +48,9 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     // What is optional may be left out, as an earlier file of the same version could
     const lean: Work = { ...WORK, picked: null, page: null, printer: null, columns: null, identification: { key: "00", value: "095060001343769984", qualifiers: {}, attributes: [] } };
     expect(readWork(workFile(lean))).toEqual(lean);
+    // The element string's order of the rows, when it is not the usual one (session 55)
+    const ordered: Work = { ...WORK, identification: { ...WORK.identification, order: ["17", "10", "3103"] } };
+    expect(readWork(workFile(ordered))).toEqual(ordered);
   });
 
   it("the studio's ZPL carries the work in comments and opens too, the commands unchanged", () => {
@@ -92,6 +95,7 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     const at = (what: string) => `The work file is damaged: ${what} is not as the studio writes it.`;
     expect(changed((c) => { c.mode = "many"; })).toBe(at("the mode"));
     expect(changed((c) => { (c.identification as Record<string, unknown>).attributes = [["17"]]; })).toBe(at("the data"));
+    expect(changed((c) => { (c.identification as Record<string, unknown>).order = ["17", 10]; })).toBe(at("the data"));
     expect(changed((c) => { (c.answers as Record<string, unknown>).retail = "yes"; })).toBe(at("step 2's answers"));
     expect(changed((c) => { c.picked = { symbol: "aztec" }; })).toBe(at("the symbol picked in step 2"));
     expect(changed((c) => { (c.settings as Record<string, unknown>).size = { percent: 100 }; })).toBe(at("the label's settings"));

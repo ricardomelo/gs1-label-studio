@@ -60,6 +60,36 @@ test("qualifiers and a decimal attribute go into the URI as typed", async ({ pag
   await expect(page.locator(".preview .error")).toContainText("Qualifiers (22) and (235) cannot be used together");
 });
 
+// Session 55 (9 November 2026), a reviewer's comment: moving (17) above (10) changed neither a GS1 DataMatrix's data nor
+// its text. The rows' order is now the element string's, in the symbol and its text; the URI keeps its own.
+test("the rows' order is the element string's, in a GS1 DataMatrix and its text; the URI keeps its own", async ({ page }) => {
+  await expect(page.locator(".order-hint")).toContainText("The order of these rows is the element string's");
+  await page.locator(".attr").nth(1).getByRole("button", { name: "Move up" }).click();
+  await expect(page.locator(".attr").first().getByRole("combobox")).toHaveValue("(17) USE BY or EXPIRY");
+  await expect(page.locator(".uri")).toHaveText("https://id.gs1.org/01/09506000134376/10/B42?17=271231");
+  await answer(page, "Is it scanned at a general retail point of sale?", "No");
+  await answer(page, "Is it a regulated healthcare item sold in a retail pharmacy?", "No");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  await answer(page, "Is it a regulated healthcare item?", "Yes");
+  await answer(page, "Is the code marked directly on the item?", "No");
+  await expect(page.locator(".chosen")).toContainText("GS1 DataMatrix · table 6");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(17)271231(10)B42", { timeout: 30_000 });
+  await on(page, "export");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields.filter((f) => f!.startsWith("("))).toEqual(["(01)09506000134376", "(17)271231", "(10)B42"]);
+  // Pasted in that order, it stays in that order
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134352(17)281130(10)L7");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator(".attr").first().getByRole("combobox")).toHaveValue("(17) USE BY or EXPIRY");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134352(17)281130(10)L7", { timeout: 30_000 });
+});
+
 test("a wrong check digit says which it should be", async ({ page }) => {
   await page.fill("#key-value", "09506000134377");
   await expect(page.locator("#key-hint")).toHaveText("The check digit does not match: it should be 6.");

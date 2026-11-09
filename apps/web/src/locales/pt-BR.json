@@ -193,7 +193,7 @@
  "+ Add attributes": "+ Adicionar atributos",
  "or a qualifier of the {key}:": "ou um qualificador do {key}:",
  "Other keys with the {key} (GS1 General Specifications 4.13):": "Outras chaves junto com o {key} (Especificações Gerais GS1 4.13):",
- "Qualifiers go to the GS1 Digital Link URI's path in the order its syntax asks, whatever their order here.": "Os qualificadores vão para o caminho do URI GS1 Digital Link na ordem que a sua sintaxe pede, qualquer que seja a ordem aqui.",
+ "The order of these rows is the element string's: GS1-128, GS1 DataMatrix, GS1 QR Code and DataBar Expanded carry them as shown. A GS1 Digital Link URI keeps its own order: the qualifiers in its path, in the order its syntax asks, then the attributes.": "A ordem destas linhas é a do element string: GS1-128, GS1 DataMatrix, GS1 QR Code e DataBar Expanded as carregam como aparecem aqui. O URI GS1 Digital Link mantém a sua própria ordem: os qualificadores no caminho, na ordem que a sua sintaxe pede, e depois os atributos.",
  "Parameters of the URI": "Parâmetros do URI",
  "— your own, not GS1: campaign, language, version…": "— seus, não da GS1: campanha, idioma, versão…",
  "The parameter \"{name}\" is given twice.": "O parâmetro \"{name}\" foi informado duas vezes.",

@@ -21,6 +21,14 @@ export interface Identification {
    * 1.17); never in element strings. A name made only of digits is refused: those are AIs.
    */
   parameters?: [string, string][];
+  /**
+   * The AIs of the qualifiers and attributes (an attribute's as chosen, e.g. "310n") in the order chosen for element
+   * strings, when it is not the usual one: the key's qualifiers first, in its GS1 Digital Link path's order, then the
+   * attributes. An element string may carry its AIs in any order after the key (GS1-128, GS1 DataMatrix, GS1 QR Code,
+   * DataBar Expanded), and a variable-length AI such as (10) is best last, as it then needs no FNC1 after it; a GS1
+   * Digital Link URI keeps its path's order whatever this says (the Syntax Engine writes it).
+   */
+  order?: string[];
 }
 
 export interface Identified extends ParsedInput {
@@ -51,7 +59,8 @@ export function checkKeyValue(key: string, value: string): string | null {
 }
 
 /**
- * The element string of the identification, in order — key, qualifiers in path order, attributes —, after the
+ * The element string of the identification: the key, then the qualifiers and attributes in the order chosen (`order`;
+ * without it, the qualifiers in path order, then the attributes), after the
  * resolver's checks on the attributes as chosen ("392n", "17": names the user sees), then decimal conversion and a
  * name's or address's spaces written as plus signs and its other characters outside CSET 82 as %XX (`resolveAttribute`).
  */
@@ -87,11 +96,54 @@ export function elementStringOf(id: Identification): { elementString: string; re
       );
     }
   }
-  const qualifiers = filled
-    .map((ai) => `(${ai})${escape(id.qualifiers[ai]!.trim())}`);
-  const elementString =
-    `(${id.key})${escape(id.value.trim())}` + qualifiers.join("") + resolved.map(([ai, v]) => `(${ai})${escape(v)}`).join("");
+  const parts: [string, string][] = [
+    ...filled.map((ai) => [ai, `(${ai})${escape(id.qualifiers[ai]!.trim())}`] as [string, string]),
+    ...resolved.map(([code, v], i) => [attributes[i]![0], `(${code})${escape(v)}`] as [string, string]),
+  ];
+  const elementString = `(${id.key})${escape(id.value.trim())}` + ordered(parts, id.order).map(([, text]) => text).join("");
   return { elementString, resolved };
+}
+
+/**
+ * Parts named by their AI in the order `order` gives them, each AI taking the first part of that AI not yet placed;
+ * parts it does not name follow in their own order.
+ */
+function ordered<T extends readonly [string, ...unknown[]]>(parts: readonly T[], order: readonly string[] | undefined): T[] {
+  if (!order?.length) return [...parts];
+  const left = [...parts];
+  const out: T[] = [];
+  for (const ai of order) {
+    const at = left.findIndex(([name]) => name === ai);
+    if (at >= 0) out.push(...left.splice(at, 1));
+  }
+  return [...out, ...left];
+}
+
+/**
+ * Element strings in the order a GS1 Digital Link URI carries them, for the text under a symbol that carries the URI:
+ * the key, its qualifiers in its path's order, then the rest as they come; an element string's own order (`order`)
+ * does not change the URI's.
+ */
+export function inUriOrder<T extends { ai: string }>(elements: readonly T[]): T[] {
+  const [key, ...rest] = elements;
+  if (!key) return [];
+  const path = qualifiersOf(key.ai);
+  const qualifiers = path.flatMap((ai) => {
+    const element = rest.find((e) => e.ai === ai);
+    return element ? [element] : [];
+  });
+  return [key, ...qualifiers, ...rest.filter((e) => !qualifiers.includes(e))];
+}
+
+/**
+ * The `order` of rows of qualifiers and attributes, or undefined when it is the usual one (the key's qualifiers first, in
+ * its path's order, then the attributes), so that an identification in the usual order is written as before.
+ */
+export function orderOf(key: string, rows: readonly (readonly [string, string])[]): string[] | undefined {
+  const { qualifiers, attributes } = splitRows(key, rows);
+  const usual = [...qualifiersOf(key).filter((ai) => ai in qualifiers), ...attributes.map(([ai]) => ai)];
+  const chosen = rows.map(([ai]) => ai);
+  return chosen.every((ai, i) => ai === usual[i]) ? undefined : chosen;
 }
 
 /** A GTIN typed in its own length (8, 12 or 13 digits) as the GTIN-14 the element string carries. */
@@ -170,12 +222,17 @@ export function fieldsOf(parsed: ParsedInput): Identification {
   const key = parsed.elements.find((e) => aiEntry(e.ai)?.dlpkey)?.ai ?? parsed.elements[0]?.ai ?? "01";
   const inPath = PATH_AIS[key] ?? new Set<string>();
   const id: Identification = { key, value: "", qualifiers: {}, attributes: [] };
+  const rows: [string, string][] = [];
   for (const e of parsed.elements) {
     if (e.ai === key && !id.value) id.value = e.value;
-    else if (inPath.has(e.ai) && !(e.ai in id.qualifiers)) id.qualifiers[e.ai] = e.value;
-    else id.attributes.push([e.ai, readable(e.ai, e.value)]);
+    else if (inPath.has(e.ai) && !(e.ai in id.qualifiers)) rows.push([e.ai, (id.qualifiers[e.ai] = e.value)]);
+    else {
+      id.attributes.push([e.ai, readable(e.ai, e.value)]);
+      rows.push([e.ai, e.value]);
+    }
   }
-  return id;
+  const order = orderOf(key, rows);
+  return order ? { ...id, order } : id;
 }
 
 function readable(ai: string, value: string): string {
@@ -186,17 +243,19 @@ function readable(ai: string, value: string): string {
 
 /**
  * The qualifiers and the data attributes as one list of rows, [AI, value] in the order shown (backlog 1.15, the owner's
- * idea of 30 October 2026): the key's qualifiers first, in the order of its GS1 Digital Link path, then the attributes.
+ * idea of 30 October 2026): in the order chosen (`order`), or the key's qualifiers first, in the order of its GS1 Digital
+ * Link path, then the attributes.
  */
 export function rowsOf(id: Identification): [string, string][] {
   const qualifiers = qualifiersOf(id.key).filter((ai) => ai in id.qualifiers).map((ai) => [ai, id.qualifiers[ai]!] as [string, string]);
-  return [...qualifiers, ...id.attributes];
+  return ordered([...qualifiers, ...id.attributes], id.order);
 }
 
 /**
  * Rows of the one list as the identification's qualifiers and attributes: a row whose AI is a qualifier of the key is
- * that qualifier, which the path places in its own order whatever the row's place; any other row, and a qualifier given
- * a second time, is an attribute (refused there with its reason).
+ * that qualifier, which a GS1 Digital Link URI's path places in its own order whatever the row's place; any other row,
+ * and a qualifier given a second time, is an attribute (refused there with its reason). Element strings keep the rows'
+ * order: `orderOf` gives it when it is not the usual one.
  */
 export function splitRows(key: string, rows: readonly (readonly [string, string])[]): Pick<Identification, "qualifiers" | "attributes"> {
   const own = new Set(qualifiersOf(key));

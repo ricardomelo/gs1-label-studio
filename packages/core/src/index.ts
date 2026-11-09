@@ -185,6 +185,8 @@ export {
   isKey,
   OTHER_KEYS,
   parametersProblem,
+  inUriOrder,
+  orderOf,
   rowsOf,
   splitRows,
   uriParameters,

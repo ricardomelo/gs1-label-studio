@@ -102,6 +102,19 @@ describe("a label of one's own", () => {
     expect(label.options.description).toBe("A label of one's own, 130 × 80 mm: QR code (GS1 Digital Link), GS1-128");
   });
 
+  // Session 55: the text under each barcode in the order its data carries: a GS1 DataMatrix's in the element string's
+  // order, the QR code's in its URI's
+  it("writes the text under each barcode in its data's order: the element string's, or the URI's", () => {
+    const page: DesignPage = { widthMm: 80, heightMm: 40, elements: [
+      { id: "qr", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: true, xMm: 4, yMm: 4 },
+      { id: "dm", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: true, xMm: 44, yMm: 4 },
+    ] };
+    const label = designLabel(page, engine.parse("(01)09506000134376(17)271231(10)B42") as Identified, font, { environment: "distribution" });
+    const lines = (id: string) => label.printer.symbols.find((s) => s.id === id)!.options.hriLines;
+    expect(lines("dm")).toEqual(["(01)09506000134376", "(17)271231", "(10)B42"]);
+    expect(lines("qr")).toEqual(["(01)09506000134376", "(10)B42", "(17)271231"]);
+  });
+
   it("reads back every barcode from the SVG and the PDF", async () => {
     const label = designLabel(PAGE, data, font, { environment: "distribution" });
     const svg = labelSvg(label.options, label.layout, font);

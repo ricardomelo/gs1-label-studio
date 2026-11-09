@@ -164,8 +164,12 @@ One list holds the key's qualifiers (batch, serial number, variant…) and its d
   Its arrow always lists every AI; typing filters the list.
 - The links beside it add a qualifier of the key at once: *+ (22) Product variant*, *+ (21) Serial number*…
 - Each row says where it goes: *qualifier · in the URI's path* (marked on its left edge) or *data attribute · in the
-  query string*. Qualifiers go to the URI's path in the order its syntax asks, whatever their order in the list; ↑ and ↓
-  move a row, × removes it.
+  query string*. ↑ and ↓ move a row, × removes it.
+- The rows' order is the element string's: GS1-128, GS1 DataMatrix, GS1 QR Code and GS1 DataBar Expanded carry the
+  qualifiers and attributes in that order, and so does their text. A batch or lot (10), whose length varies, is best
+  last: it then needs no separator (FNC1) after it, and EPL2 can print it. A GS1 Digital Link URI keeps its own order
+  whatever the list's: the qualifiers in its path, in the order its syntax asks, then the attributes; the text under its
+  symbol follows the URI. An element string pasted in another order keeps it.
 - Each value is checked on its row, with a hint of the format (*6 digits · date YYMMDD*, *up to 20 characters*).
 - Decimal attributes take a comma or a point: a net weight of `0,5` kg becomes *(3103) 000500*; the hint shows what goes
   in the code.
@@ -588,7 +592,8 @@ its preview steps through the rows.
    named by its header: a column *Campanha* gives `…?Campanha=Natal%202026` on each row's URI, after the data
    attributes, and an empty cell leaves it out. A header written `?utm_source` or `lang=` goes there at once, named
    `utm_source` or `lang`. A header of digits only, an empty one or two columns naming the same parameter are refused
-   on the rows that fill them; element strings have no place for parameters. Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
+   on the rows that fill them; element strings have no place for parameters. Each row's element string carries its
+   AIs in the columns' order, after the key (a batch column before the expiry's puts (10) first). Dates become YYMMDD from ISO and day-first forms (`31/12/2027 → 271231`). An AI that carries a time, such as
    (7003), (4324) or (8008), keeps a time after the date (`31/12/2027 15:30 → 2712311530`), (8008) its seconds too;
    (7011), whose time is optional, leaves out a midnight written with its seconds (`00:00:00`, how a date alone is
    exported); other dates drop it. A time may be on a 12-hour clock, with AM or PM (`31/12/2027 8:05 PM →

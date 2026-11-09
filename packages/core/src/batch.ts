@@ -1,7 +1,7 @@
 import { dotsWithin, MM_PER_INCH, snapToDots } from "./dots.ts";
 import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import type { HriFont } from "./hri.ts";
-import type { Identified } from "./identify.ts";
+import { inUriOrder, type Identified } from "./identify.ts";
 import { labelSvg, layoutLabel, BEARER_FRAME_MM, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type Layout } from "./layout.ts";
 import { symbolFor } from "./linear.ts";
 import type { SymbolSpecification } from "./specifications.ts";
@@ -107,7 +107,8 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
   const encoded = dataFor(symbology, shown);
   // A URI's scheme and domain are not case-sensitive (RFC 3986), its path and query are: capitals only there
   const data = design.qrUpperDomain && symbology === "dl-qrcode" ? upperCaseDomain(encoded) : encoded;
-  const lines = shown.elements.map((e) => `(${e.ai})${e.value}`);
+  // The text under a URI's symbol in the URI's order, under an element string's in the element string's
+  const lines = (SYMBOLOGIES[symbology].data === "uri" ? inUriOrder(shown.elements) : shown.elements).map((e) => `(${e.ai})${e.value}`);
   const twoD = TWO_D.includes(symbology);
   let linear: LabelOptions["linear"] = null;
   if (twoD && design.linear !== "none") {

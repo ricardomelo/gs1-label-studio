@@ -373,6 +373,12 @@
   before it (*--Hortifrutigranjeira*, *,-Agroindustrial*) keeps them on its line, where the marks used to end the line
   before it (*Doca 3 --* / *Hortifrutigranjeira*) or stand alone on one; only when the marks alone keep the word from
   fitting a line is it broken after them, rather than between its letters.
+- Element strings in the rows' order (9 November; a reviewer's comment): moving (17) above (10) changed neither a GS1
+  DataMatrix's data nor its text, as the qualifiers were always put right after the key. The rows' order, qualifiers
+  included, is now the element string's, in GS1-128, GS1 DataMatrix, GS1 QR Code, DataBar Expanded, their text and the
+  print languages, so a variable-length (10) can go last with no FNC1 after it (and EPL2, which takes it last only, can
+  print it). A GS1 Digital Link URI keeps its own order, and so does the text under its symbol. A pasted element string
+  keeps its order; in bulk, the columns' order is the element string's; the work file keeps it.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

@@ -11,7 +11,7 @@ import {
   qualifiersOf,
   sexCode,
 } from "./dictionary.ts";
-import { checkKeyValue, identify, normaliseKeyValue, parametersProblem, type Identification, type Identified } from "./identify.ts";
+import { checkKeyValue, identify, normaliseKeyValue, orderOf, parametersProblem, type Identification, type Identified } from "./identify.ts";
 import { InputError, type SyntaxEngine } from "./syntax.ts";
 import type { Table } from "./table.ts";
 
@@ -236,8 +236,8 @@ function dateCell(ai: string, value: string, timed = true): string | undefined {
 
 /**
  * A row as the editor's identification: the first column holding a primary key gives the key (a key among the fixed
- * values too), its qualifiers go to the qualifiers, the rest are attributes in the columns' order, the fixed values
- * last; a column of a parameter of the URI gives a parameter named by its header (`headers`). Empty cells are left out.
+ * values too), its qualifiers go to the qualifiers, the rest are attributes; the element string carries them all in the
+ * columns' order (`order`, qualifiers included), the fixed values last; a column of a parameter of the URI gives a parameter named by its header (`headers`). Empty cells are left out.
  */
 export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: FixedValue[] = [],
   headers: readonly string[] = []): Identification {
@@ -267,7 +267,8 @@ export function rowIdentification(row: string[], mapping: ColumnMapping, fixed: 
     if (qualifiers.has(ai) && !(ai in id.qualifiers)) id.qualifiers[ai] = v;
     else id.attributes.push([ai, v]);
   }
-  return id;
+  const order = orderOf(key, pairs.filter((pair) => pair !== keyPair));
+  return order ? { ...id, order } : id;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { carriesTime, isDateAi, isFullYearDate, isPercentEncoded, percentDecode } from "./dictionary.ts";
 import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
-import type { Identified } from "./identify.ts";
+import { inUriOrder, type Identified } from "./identify.ts";
 import { BARS, layoutLabel, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import { bitmapRects, pictureBitmap, turnedPicture, type Picture } from "./picture.ts";
 import { expectedReads } from "./scan.ts";
@@ -343,7 +343,8 @@ function symbolOptions(element: DesignSymbol, identified: Identified, options: D
   const spec = bars && table !== undefined ? specificationFor(table, symbology as SpecSymbol) : undefined;
   if (bars && !spec) throw new InputError(`Table ${table} does not allow ${SYMBOLOGIES[symbology].name}: choose another symbol or scanning environment.`);
   return {
-    symbology, data, showHri: element.hri, hriLines: carried.elements.map((e) => `(${e.ai})${e.value}`),
+    symbology, data, showHri: element.hri,
+    hriLines: (SYMBOLOGIES[symbology].data === "uri" ? inUriOrder(carried.elements) : carried.elements).map((e) => `(${e.ai})${e.value}`),
     size: element.size, environment: options.environment, error: options.error ?? "m", version: null,
     ...(spec ? { spec, table } : {}),
   };

@@ -277,7 +277,7 @@ that say what is true; together they are the [inventory of features](test-invent
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 16 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 17 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
@@ -288,12 +288,12 @@ that say what is true; together they are the [inventory of features](test-invent
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
-| `identify` | the editor's identification, one list, parameters, several keys | 20 |
+| `identify` | the editor's identification, one list, parameters, several keys | 24 |
 | `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 70 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 13 |
-| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 17 |
+| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 18 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
 | `prepress` | EPS through Ghostscript, 100 % K, bar width reduction, PNG at a resolution | 15 |
@@ -319,7 +319,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle, resizing held within the label (apps/web/test) | 27 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 90 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 91 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 7 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 

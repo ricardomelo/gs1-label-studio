@@ -17,6 +17,7 @@ import {
   parametersProblem,
   qualifiersOf,
   resolveAttribute,
+  orderOf,
   rowsOf,
   splitRows,
   SYNTAX_ENGINE,
@@ -88,7 +89,11 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
 
   const setAll = (next: Row[]) => {
     setRows(next);
-    onChange({ ...id, ...splitRows(id.key, next.map((row) => [row.ai, row.value] as const)) });
+    const pairs = next.map((row) => [row.ai, row.value] as const);
+    // The rows' order is the element string's (GS1-128, GS1 DataMatrix…); a GS1 Digital Link URI keeps its path's
+    const { order: _previous, ...rest } = id;
+    const order = orderOf(id.key, pairs);
+    onChange({ ...rest, ...splitRows(id.key, pairs), ...(order ? { order } : {}) });
   };
 
   const move = (index: number, by: number) => {
@@ -287,9 +292,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
           ))}
         </div>
       )}
-      {ownQualifiers.length > 0 && (
-        <div className="hint">{t("Qualifiers go to the GS1 Digital Link URI's path in the order its syntax asks, whatever their order here.")}</div>
-      )}
+      {rows.length > 1 && <div className="hint order-hint">{t("The order of these rows is the element string's: GS1-128, GS1 DataMatrix, GS1 QR Code and DataBar Expanded carry them as shown. A GS1 Digital Link URI keeps its own order: the qualifiers in its path, in the order its syntax asks, then the attributes.")}</div>}
 
       <h3>
         {t("Parameters of the URI")} <span className="opt">{t("— your own, not GS1: campaign, language, version…")}</span>
