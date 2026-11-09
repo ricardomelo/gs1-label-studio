@@ -1437,6 +1437,22 @@ test("the GS1 Logistic Label: two marks in a row kept together, no line starting
   expect(fields.slice(0, 4)).toEqual(["FROM", "Cooperativa", "Supermercados,-", "Agroindustrial"]);
 });
 
+// Session 53 (9 November 2026), the open points of session 50: a postcode written with a space is kept on one line, and
+// a number too long for the column, broken between its digits, does not start a line with its hyphen.
+test("the GS1 Logistic Label: a postcode with a space kept whole, no line starting with a mark inside a long number", async ({ page }) => {
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "4x6");
+  await page.fill("#opt-from", "Avenida Paulista 1578 CEP 01310 200\nPedido 450001234567891-0000012345");
+  await page.fill("#opt-to", "");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
+  await on(page, "export");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields.slice(0, 7)).toEqual(["FROM", "Avenida Paulista", "1578 CEP", "01310 200", "Pedido", "45000123456789", "1-0000012345"]);
+});
+
 // Item 4.1 in TSPL and DPL (6 November 2026): the GS1 Logistic Label of an SSCC alone, which their GS1-128 carries.
 test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page }) => {
   await page.fill("#paste", "(00)106141411234567897");

@@ -112,6 +112,26 @@ describe("the GS1 Logistic Label", () => {
         expect(lines.join(" ").replace(`X${run} `, `X${run}`)).toBe(`Rua ${"X".repeat(k)}${run}Cooperativa`);
       }
     }
+    // A piece wider than the whole column, broken between its characters, does not start a line with a mark either: the
+    // character before the mark (and the marks before it) go to the next line with it, whichever character the edge falls on
+    for (const run of ["-", "--", ",-", "/–"]) {
+      for (let k = 18; k <= 34; k++) {
+        const word = `1234567890${"9".repeat(k - 10)}${run}1234567890`; // digits around the marks: no break after them
+        const lines = marks([word]);
+        expect(lines.length).toBeGreaterThan(1);
+        for (const line of lines) expect(line).not.toMatch(/^[-‐‑–—/,;]/u);
+        expect(lines.join("")).toBe(word);
+      }
+    }
+    // A space between two digits (a postcode 01305 100, a telephone 11 3456 7890) is not a place to break while the
+    // numbers fit a line together; numbers too long for one line together are broken at their spaces as before
+    for (let k = 1; k <= 16; k++) {
+      const lines = marks([`${"X".repeat(k)} CEP 01305 100`]);
+      expect(lines.some((line) => line.endsWith("01305 100"))).toBe(true);
+      expect(lines.join(" ")).toBe(`${"X".repeat(k)} CEP 01305 100`);
+    }
+    expect(marks(["Tel. 11 3456 7890 11 3456 7890 11 3456 7890"]).join(" ")).toBe("Tel. 11 3456 7890 11 3456 7890 11 3456 7890");
+    for (const line of marks(["Tel. 11 3456 7890 11 3456 7890 11 3456 7890"])) expect(line).not.toMatch(/^ | $/);
     const leading = marks(["/" + "X".repeat(40), "a-b"]);
     expect(leading[0]).toMatch(/^\/XX/);
     expect(leading.join("")).toBe("/" + "X".repeat(40) + "a-b");

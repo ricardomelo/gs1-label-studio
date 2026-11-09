@@ -152,14 +152,37 @@ function pieces(word: string): string[] {
 }
 
 /**
+ * The words of a line (runs of spaces become one), with words that end and begin with a digit joined by their space
+ * (a postcode 01305 100, a telephone 11 3456 7890) while they fit `room` together; numbers too long for a line
+ * together stay separate words, so they are broken at their spaces.
+ */
+function words(line: string, room: number, measure: (text: string) => number): string[] {
+  const out: string[] = [];
+  let group: string[] = [];
+  const close = () => {
+    if (group.length > 1 && measure(group.join(" ")) <= room) out.push(group.join(" "));
+    else out.push(...group);
+    group = [];
+  };
+  for (const word of line.split(/\s+/).filter(Boolean)) {
+    if (group.length && !(/\d$/u.test(group.at(-1)!) && /^\d/u.test(word))) close();
+    group.push(word);
+  }
+  close();
+  return out;
+}
+
+/**
  * A line of free text in lines no wider than `room` as `measure` gives widths: broken between words (runs of spaces
- * become one), then within a word after a hyphen, slash, comma or semicolon (`pieces`), and a piece wider than the
- * room on its own broken between its characters.
+ * become one, never between two digits while the numbers fit together, `words`), then within a word after a hyphen,
+ * slash, comma or semicolon (`pieces`), and a piece wider than the room on its own broken between its characters, where
+ * a mark the edge falls on takes the character before it (and the marks before it) to the next line, so that no line
+ * starts with one.
  */
 function wrapped(line: string, room: number, measure: (text: string) => number): string[] {
   const lines: string[] = [];
   let current = "";
-  for (const word of line.split(/\s+/).filter(Boolean)) {
+  for (const word of words(line, room, measure)) {
     pieces(word).forEach((piece, i) => {
       const joined = current ? current + (i === 0 ? " " : "") + piece : piece;
       if (measure(joined) <= room) {
@@ -170,8 +193,14 @@ function wrapped(line: string, room: number, measure: (text: string) => number):
       current = "";
       for (const char of piece) {
         if (current && measure(current + char) > room) {
-          lines.push(current);
-          current = "";
+          const chars = [...current];
+          let start = chars.length;
+          if (BREAK_AFTER.test(char)) {
+            while (start > 0 && BREAK_AFTER.test(chars[start - 1]!)) start--;
+            start = start > 1 ? start - 1 : chars.length; // a line of marks alone keeps them: nothing better to carry
+          }
+          lines.push(chars.slice(0, start).join(""));
+          current = chars.slice(start).join("");
         }
         current += char;
       }

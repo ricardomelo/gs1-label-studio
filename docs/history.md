@@ -340,3 +340,12 @@ The crop marks' session had noted that the zip's PNG kept the label's size whate
 the PNG button and bulk followed the choice. The zip now holds the same PNG as the button, and its README gives the
 resolution, the whole pixels a module and the X-dimension and size the PNG then prints at, as the option's list says
 them; with no choice the zip is byte for byte what it was.
+
+## Session 53 — 9 November 2026: From and To's postcodes with a space and long numbers
+
+Asked to read the handover and apply its corrections, the session found no correction written by the owner and took
+up the defects session 50 had left in From and To. A postcode written with a space (*CEP 01310 200*) could be broken at
+the space, leaving *200* alone on a line: numbers separated by a space now stay together while they fit a line, as a
+postcode with a hyphen already did. And a number too long for its column, broken between its digits, could start a
+line with its hyphen: the character before the mark now goes with it. A house number written just before the postcode,
+with no comma, now goes to the postcode's line with it.
