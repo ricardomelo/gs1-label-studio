@@ -21,6 +21,11 @@ people alone, what worked and what weighed.
 A snapshot is saved with `node scripts/metrics.mjs --write` at the end of each backlog item and at each release
 (`snapshots/<date>.json`), so the evolution can be drawn without rewriting history.
 
+The commits are counted from the whole history, which a cloud session's clone does not hold (it fetches only the last
+commits), so the script refuses a shallow clone: run `git fetch --unshallow` first. Correction of 10 November 2026:
+the snapshots of 29 October to 9 November had been taken in shallow clones and counted 44 to 61 commits; their
+`commits` were counted again from the history at each snapshot's `head` (81 to 354), the other figures unchanged.
+
 ## Line categories
 
 Defined once in `scripts/metrics.mjs` and not changed without a note here, so that the figures stay comparable:

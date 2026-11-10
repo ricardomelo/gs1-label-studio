@@ -19,6 +19,12 @@ const hasCommits = (() => {
     return false;
   }
 })();
+// A cloud session clones only the last commits, and a count taken there is far too low (the snapshots of 29 October
+// to 9 November counted 44 to 61 commits rather than 81 to 354), so a shallow clone is refused.
+if (hasCommits && git("rev-parse", "--is-shallow-repository").trim() === "true") {
+  console.error("The clone is shallow, so the commits cannot be counted: run git fetch --unshallow first.");
+  process.exit(1);
+}
 
 // Every tracked file falls in one category. Effort is estimated from code, tests and docs only; data and
 // translations, configuration and generated files are counted but not weighed as programming effort.
