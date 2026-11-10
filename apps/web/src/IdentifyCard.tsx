@@ -78,10 +78,15 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
   const keyProblem = id.value ? checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) : null;
   const ownQualifiers = qualifiersOf(id.key);
   const used = new Set(rows.map((row) => row.ai));
-  // The AIs offered: the key's qualifiers not yet given first, then every attribute.
-  const choices = [
-    ...ownQualifiers.filter((ai) => !used.has(ai)).map((ai) => ({ value: label(ai), note: t("qualifier · in the URI's path") })),
-    ...attributesForKey(id.key).map((a) => ({ value: aiText(a.ai, a.title), ...(a.elementStringOnly ? { note: t("element strings only") } : {}) })),
+  // The AIs a row offers: the key's qualifiers not given on another row first, then every attribute. The row's own AI
+  // stays offered: typing 21 makes the row (21) as it is typed, and it once took (21) out of its own list (the owner's
+  // report of 10 November 2026).
+  const attributeChoices = attributesForKey(id.key).map((a) => ({ value: aiText(a.ai, a.title), ...(a.elementStringOnly ? { note: t("element strings only") } : {}) }));
+  const choicesFor = (index: number) => [
+    ...ownQualifiers
+      .filter((ai) => !rows.some((row, i) => i !== index && row.ai === ai))
+      .map((ai) => ({ value: label(ai), note: t("qualifier · in the URI's path") })),
+    ...attributeChoices,
   ];
 
   function label(ai: string): string {
@@ -218,7 +223,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
                 placeholder={t("Pick from the list or type, e.g. 17")}
                 // An AI chosen reads in the language shown, even when it was chosen in another
                 value={ai && chosen ? label(ai) : typed}
-                options={choices}
+                options={choicesFor(index)}
                 onChange={(text) => {
                   const next = [...rows];
                   const code = attributeCode(text);

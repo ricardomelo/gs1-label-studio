@@ -913,6 +913,17 @@ test("an attribute's AI: the arrow lists every AI even after one is chosen; typi
   await field.press("Delete");
   await expect(field).toHaveValue("(8040) IM");
   await page.keyboard.press("Escape");
+  // A qualifier typed by its AI stays in its own row's list, though typing it makes the row that qualifier; one given
+  // on another row is not offered again (the owner's report of 10 November 2026: typing 21 listed (321n), (421)…)
+  await page.getByRole("button", { name: "+ Add attributes" }).click();
+  const added = page.locator(".attr").last().getByRole("combobox");
+  for (const [typed, first] of [["21", "(21) Serial number"], ["22", "(22) Product variant"]] as const) {
+    await added.fill(typed);
+    await expect(page.locator(".combo-list li").first()).toHaveText(`${first} · qualifier · in the URI's path`);
+  }
+  await added.fill("10");
+  await expect(page.locator(".combo-list li", { hasText: "(10) Batch/lot" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
 });
 
 // "Start over" (the owner, 30 October 2026): every field and choice as on a first visit.
