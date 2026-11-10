@@ -388,6 +388,11 @@
 - A qualifier typed by its AI stays in the list (10 November; the owner's report): typing 21 in an AI field made the row
   (21) as it was typed, and the list then left out (21) as given already, offering (321n), (421), (4321) and (7021)
   instead. A row's list now leaves out only the qualifiers given on other rows.
+- Short choices as buttons (10 November; the owner's request, mock-up A of two): Error correction (L, M, Q, H), Scheme
+  and domain (As typed, In capitals) and Crop marks (None, In the PDF and EPS) are a row of buttons, the chosen
+  option's full text under them, the arrow keys moving the choice. Sliders, the request, were assessed and left out:
+  they suit an ordered scale of evenly spaced values only, the sizes (80 to 200 %) and text heights are not evenly
+  spaced and change with the table, and the categorical choices have no order; the longer lists stay lists.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

@@ -374,3 +374,9 @@ URI's path needs. An element string has no such order, and a variable-length AI 
 FNC1 after it. The rows' order, qualifiers included, is now the element string's in every symbol that carries one and in
 its text; the URI, and the text under its symbol, keep the URI's order. A pasted element string keeps its order, and in
 bulk the columns' order is the element string's. Thirteen unit mutations and one browser mutation were caught.
+
+On 10 November the owner's comments on the new test plan brought three small fixes to the AI fields (the list closing
+on Escape when opened from its arrow, a chosen name edited anywhere, a qualifier typed by its AI kept in its own list)
+and a request to put sliders in place of the short lists among the label's options. Mock-ups of both showed sliders
+cutting the options' names and implying an order the categorical choices do not have; the three choices of two to four
+short options became rows of buttons instead, the longer ones staying lists.

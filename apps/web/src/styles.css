@@ -162,6 +162,12 @@ details.epc summary, details.sign summary, details.printer summary { font-weight
 .seg { display: inline-flex; border: 1.5px solid var(--navy); border-radius: 6px; overflow: hidden; }
 .seg button { border: 0; background: transparent; color: var(--navy); font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--navy); color: var(--card); }
+/* A short choice among the label's options as buttons in a row (Segmented.tsx), as tall as a list beside it */
+.seg-label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+.seg-field .seg { display: flex; flex-wrap: wrap; width: max-content; max-width: 100%; }
+.seg-field .seg button { font-size: 14px; padding: 8px 14px; }
+.seg button[aria-checked="true"] { background: var(--navy); color: var(--card); }
+.seg-field .seg button:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offset: -3px; }
 .real { display: grid; grid-template-columns: 18px auto; grid-template-rows: 18px auto; justify-content: start; overflow: auto; max-height: 70vh; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
 .real .symbol svg { width: 100%; height: 100%; display: block; }
 .ruler { display: block; stroke: #5b6575; fill: #5b6575; font-size: 8px; }

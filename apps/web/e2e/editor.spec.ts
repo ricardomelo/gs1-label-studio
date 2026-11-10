@@ -458,8 +458,9 @@ test("crop marks around the label in the PDF, the EPS and the zip, and around ev
   expect(plain).not.toContain("/TrimBox");
   const [, , w, h] = box(plain, "/MediaBox");
   await on(page, "label");
-  await expect(page.locator("#opt-crop")).toHaveValue("none");
-  await page.selectOption("#opt-crop", "marks");
+  await expect(page.locator("#opt-crop [aria-checked=true]")).toHaveText("None");
+  await page.locator("#opt-crop").getByRole("radio", { name: "In the PDF and EPS" }).click();
+  await expect(page.locator(".seg-field:has(#opt-crop) .hint")).toHaveText("In the PDF and EPS, on a 10 mm margin");
   await on(page, "export");
   const marked = readFileSync(await download(/^PDF$/)).toString("latin1");
   const media = box(marked, "/MediaBox");
@@ -480,8 +481,9 @@ test("crop marks around the label in the PDF, the EPS and the zip, and around ev
   await on(page, "more");
   await page.selectOption("#language", "pt-BR");
   await on(page, "label");
-  await expect(page.locator("label[for=opt-crop]")).toHaveText("Marcas de corte");
-  await expect(page.locator("#opt-crop option:checked")).toHaveText("No PDF e no EPS, numa margem de 10 mm");
+  await expect(page.locator("#opt-crop-label")).toHaveText("Marcas de corte");
+  await expect(page.getByRole("radiogroup", { name: "Marcas de corte" }).getByRole("radio", { checked: true })).toHaveText("No PDF e no EPS");
+  await expect(page.locator(".seg-field:has(#opt-crop) .hint")).toHaveText("No PDF e no EPS, numa margem de 10 mm");
   // In bulk: every page of the PDF of a label a page.
   await on(page, "data");
   await page.getByRole("button", { name: "Em lote" }).click();
@@ -1186,7 +1188,7 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await on(page, "label");
   await page.selectOption("#opt-qr-mode", "alphanumeric");
   await expect(page.locator(".preview .error")).toContainText("alphanumeric mode cannot encode “h”");
-  await page.selectOption("#opt-qr-upper", "upper");
+  await page.getByRole("radiogroup", { name: "Scheme and domain" }).getByRole("radio", { name: "In capitals" }).click();
   await expect(page.locator(".preview .error")).toContainText("cannot encode “?”"); // the query string of (17)
   await on(page, "data");
   await page.locator(".attr").nth(1).getByRole("button", { name: "Remove attribute" }).click();
@@ -1201,6 +1203,19 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await on(page, "export");
   await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
   await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code in the printer's automatic mode");
+  // The error correction as buttons in a row (the owner's request of 10 November 2026): a press, or the arrow keys on
+  // the chosen one, changes it; its full name said under them
+  await on(page, "label");
+  const levels = page.getByRole("radiogroup", { name: "Error correction" });
+  await expect(levels.getByRole("radio")).toHaveText(["L", "M", "Q", "H"]);
+  await expect(page.locator(".seg-field:has(#opt-ecl) .hint")).toHaveText("M — medium (15 %)");
+  await levels.getByRole("radio", { name: "H" }).click();
+  await expect(page.locator(".caption")).toContainText("correction H");
+  await levels.getByRole("radio", { checked: true }).press("ArrowLeft");
+  await expect(levels.getByRole("radio", { checked: true })).toHaveText("Q");
+  await expect(levels.getByRole("radio", { checked: true })).toBeFocused();
+  await expect(page.locator(".caption")).toContainText("correction Q");
+  await expect(page.locator(".seg-field:has(#opt-ecl) .hint")).toHaveText("Q — quartile (25 %)");
 });
 
 // Item 1.18 (mock-up A of two, 31 October 2026): a JWS of the code's data, a security marking's code read from the marking.

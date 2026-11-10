@@ -29,6 +29,7 @@ import { keepGuides, keptGuides } from "./guides.ts";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
 import type { SymbolSizing } from "./resize.ts";
 import { scanSvg } from "./scan.ts";
+import { Segmented } from "./Segmented.tsx";
 import {
   BEARER_CHOICES,
   ENVIRONMENT_NAMES,
@@ -599,23 +600,23 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="opt-qr-upper">{t("Scheme and domain")}</label>
-                    <select id="opt-qr-upper" value={s.qrUpperDomain ? "upper" : "as"} onChange={(e) => set("qrUpperDomain", e.target.value === "upper")}>
-                      <option value="as">{t("As typed (https://id.gs1.org)")}</option>
-                      <option value="upper">{t("In capitals (HTTPS://ID.GS1.ORG)")}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="opt-ecl">{t("Error correction")}</label>
-                    <select id="opt-ecl" value={s.error} onChange={(e) => set("error", e.target.value as ErrorLevel)}>
-                      {ERROR_LEVELS.map((level) => (
-                        <option key={level} value={level}>
-                          {t(ERROR_NAMES[level])}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Segmented
+                    id="opt-qr-upper"
+                    label={t("Scheme and domain")}
+                    value={s.qrUpperDomain ? "upper" : "as"}
+                    options={[
+                      { value: "as", text: t("As typed"), detail: t("As typed (https://id.gs1.org)") },
+                      { value: "upper", text: t("In capitals"), detail: t("In capitals (HTTPS://ID.GS1.ORG)") },
+                    ]}
+                    onChange={(value) => set("qrUpperDomain", value === "upper")}
+                  />
+                  <Segmented
+                    id="opt-ecl"
+                    label={t("Error correction")}
+                    value={s.error}
+                    options={ERROR_LEVELS.map((level) => ({ value: level, text: level.toUpperCase(), detail: t(ERROR_NAMES[level]) }))}
+                    onChange={(value) => set("error", value as ErrorLevel)}
+                  />
                 </>
               )}
               {(view.linearPossible || (view.guided && view.twoD && s.linear !== "none")) && (
@@ -663,13 +664,16 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                   </select>
                 </div>
               )}
-              <div>
-                <label htmlFor="opt-crop">{t("Crop marks")}</label>
-                <select id="opt-crop" value={s.cropMarks ? "marks" : "none"} onChange={(e) => set("cropMarks", e.target.value === "marks")}>
-                  <option value="none">{t("None")}</option>
-                  <option value="marks">{t("In the PDF and EPS, on a 10 mm margin")}</option>
-                </select>
-              </div>
+              <Segmented
+                id="opt-crop"
+                label={t("Crop marks")}
+                value={s.cropMarks ? "marks" : "none"}
+                options={[
+                  { value: "none", text: t("None") },
+                  { value: "marks", text: t("In the PDF and EPS"), detail: t("In the PDF and EPS, on a 10 mm margin") },
+                ]}
+                onChange={(value) => set("cropMarks", value === "marks")}
+              />
               <div>
                 <label htmlFor="opt-png">{t("PNG resolution")}</label>
                 <select

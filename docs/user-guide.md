@@ -383,7 +383,8 @@ or QR code is refused there (Labelize does not turn them).
 
 ## 6. The label's options
 
-Only the choices that apply to the symbol are shown.
+Only the choices that apply to the symbol are shown. A choice of two to four short options is a row of buttons (press
+one, or use the arrow keys on the chosen one); a longer choice is a list.
 
 | Option | What it does |
 |---|---|
@@ -395,12 +396,12 @@ Only the choices that apply to the symbol are shown.
 | Text height | From 2.0 mm (the minimum) to 5.0 mm; 2.2 mm by default; 3.0 mm is what the GS1 Logistic Label asks |
 | QR code version | Automatic (the smallest that fits) or 1 to 40; refused when the data does not fit |
 | Encoding mode | QR code: automatic (modes mixed, the smallest symbol), or numeric, alphanumeric or byte for the whole data; a character the mode cannot take is named |
-| Scheme and domain | As typed, or in capitals (`HTTPS://ID.GS1.ORG`), which lets alphanumeric mode encode the URI's start; the path and the query stay as typed |
-| Error correction | QR code: L (7 %), M (15 %), Q (25 %), H (30 %) |
+| Scheme and domain | Two buttons: As typed, or In capitals (`HTTPS://ID.GS1.ORG`), which lets alphanumeric mode encode the URI's start; the path and the query stay as typed |
+| Error correction | QR code: four buttons, L (7 %), M (15 %), Q (25 %), H (30 %), the chosen level's name under them |
 | Linear barcode beside it | An EAN-13, UPC-A or EAN-8 as the GTIN takes, or UPC-E, beside a 2D symbol |
 | Bearer bars | ITF-14: a frame (suits every printing method) or bars of 2X at the top and bottom |
 | Bar width reduction | Linear symbols: 0.010 to 0.050 mm taken off every bar, for printing that spreads ink |
-| Crop marks | None, or marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
+| Crop marks | Two buttons: None, or In the PDF and EPS, marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
 | PNG resolution | At the label's size (12 pixels a module), or 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said; for the PNG on its own and in the zip |
 | Text in the SVG | Outlines (no font needed) or real text, editable but needing Liberation Sans and OCR-B where it is printed |
 | Domain in the GS1 Digital Link URI | `https://id.gs1.org` by default; your resolver's domain |
