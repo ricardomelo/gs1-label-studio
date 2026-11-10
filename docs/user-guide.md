@@ -6,7 +6,7 @@ spreadsheet, as files for artwork or as print files for label printers. The stud
 computer.
 
 Every feature named here is listed in [features.md](features.md) with the tests that prove it. How to send the files to
-a printer or to prepress: the [printing guide](printing-guide.md). The words used: the [glossary](#17-glossary).
+a printer or to prepress: the [printing guide](printing-guide.md). The words used: the [glossary](#18-glossary).
 
 ## Contents
 
@@ -25,8 +25,9 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 13. [In bulk: rows from a spreadsheet](#13-in-bulk-rows-from-a-spreadsheet)
 14. [In bulk: the validation report](#14-in-bulk-the-validation-report)
 15. [In bulk: sequences and generating every label](#15-in-bulk-sequences-and-generating-every-label)
-16. [Messages and what to do](#16-messages-and-what-to-do)
-17. [Glossary](#17-glossary)
+16. [Shortcuts worth knowing](#16-shortcuts-worth-knowing)
+17. [Messages and what to do](#17-messages-and-what-to-do)
+18. [Glossary](#18-glossary)
 
 ## 1. What the studio does
 
@@ -444,7 +445,7 @@ never printed: the zip's README (*Data checked by the GS1 Barcode Syntax Engine 
 PDF's *Producer* (a PDF reader shows it among the document's properties) and the EPS's `%%Creator` comment.
 
 Files are named after the symbol, the key and its qualifiers: `gs1-128_00_106141411234567897.zpl`. What ZPL cannot print
-correctly is refused with the reason, never printed wrong (section 16). How to use each file: the
+correctly is refused with the reason, never printed wrong (section 17). How to use each file: the
 [printing guide](printing-guide.md).
 
 ### Saving the work and opening it again
@@ -675,7 +676,29 @@ Under the Export bar, **Generate in bulk** draws the label shown, with its optio
 Generation runs in the background with a progress bar and **Cancel**; the page stays usable meanwhile. A thousand QR
 code labels as SVG and one PDF took 10.7 s when measured ([performance targets](metrics/README.md#performance-targets-backlog-25)).
 
-## 16. Messages and what to do
+## 16. Shortcuts worth knowing
+
+The studio understands more than its fields show. Each shortcut below is tried by a test that passes, and is worth
+showing to someone new to the tool.
+
+| Type or paste | Where | What the studio does |
+|---|---|---|
+| A scanner's output, its symbology identifier first: `]d2010950600013435210ABC123{GS}17271231` (GS1 DataMatrix) or `]C1…` (GS1-128) | **Have the data already? Paste it** | Fills in every field, as from the element string; `{GS}` or `^` stands for the group separator a scanner sends (section 3) |
+| An element string without brackets: `^0109506000134352^10ABC123{GS}17271231` | the same | The same as with brackets |
+| A GS1 Digital Link URI with your own parameters: `https://id.gs1.org/01/09506000134376/10/B42?17=271231&20=12&a=1&b=2` | the same | (17) and (20) become data attributes, `a` and `b` two rows of **Parameters of the URI**; the URI is kept as pasted |
+| A GTIN in its own length: `9506000134376` (13 digits), 8 or 12 digits too | the key's value | Taken as it is; the check digit is checked as you type |
+| A decimal with a comma: `0,5` in a net weight (310n) | an attribute's value | Written with its decimal places in the AI: *(3103) 000500*, which the hint shows |
+| A patient's sex as a word: `Masculino`, `female`, `weiblich`, `Inconnu` | (7252)'s value | Its ISO/IEC 5218 digit: *(7252) 1*, *2*, *0*; a letter such as *M* is refused, as it means male or female by language |
+| A name as people write it: `Maria José` | (7253), (7254), (4300)–(4320) | Written for the barcode as *Maria+Jos%C3%A9*; a pasted *Jo%C3%A3o* is shown as *João* |
+| An AI's number: `21` | an attribute's AI field | Lists (21) first, then the AIs that contain 21; the arrow lists every AI |
+| A spreadsheet's rows, copied with their header row | **In bulk** → paste, **Use the pasted rows** | No file needed (section 13) |
+| Headers in any of the six languages, or GS1 data titles: *Lote*, *Validade*, *Verfallsdatum*, *DOB* | a bulk table's header row | Each column goes to its AI; dates such as `31/12/2027` become `271231` |
+| A header written `?utm_source` or `lang=` | the same | The column becomes one of the URI's own parameters, named `utm_source` or `lang` |
+
+Not yet: pasting an EPC read from an RFID tag (its hexadecimal or its tag URI) to fill in the fields. The studio
+writes a key's EPC (section 11) but does not read one back.
+
+## 17. Messages and what to do
 
 | Message (or its start) | Why | What to do |
 |---|---|---|
@@ -721,7 +744,7 @@ code labels as SVG and one PDF took 10.7 s when measured ([performance targets](
 | *the A6 label is 148 mm high* (too short) | The page cannot hold its symbols | A larger page (A5, 6 × 8 in) |
 | *Not a name the pattern knows: {…}* | A file name pattern with an unknown name | `{row}`, `{symbol}`, `{key}`, an AI or a column's header |
 
-## 17. Glossary
+## 18. Glossary
 
 | Term | Meaning |
 |---|---|
