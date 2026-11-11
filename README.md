@@ -669,10 +669,11 @@ now. Effort: S a session, M two or three, L more.
   (f) the phone's bottom bar: *Scan* (step 2) reads as reading a barcode, which a future reading module would mean;
   renamed after the scanning environment, such as *Where* or *Use*, with an icon to match;
   (g) a switch at the top of step 3 between *The symbol only* and *A label*, which today hides in a list;
-  (h) the PNG's resolution beside its button (the owner, 11 November 2026, a comment on the test plan): today
+  (h) the PNG's resolution and the SVG's text beside their buttons (the owner, 11 November 2026, a comment on the test plan): today
   **PNG resolution** is among the label's options, far from the **PNG** button; a split button *PNG (300 dpi) ▾*,
   its arrow listing the resolutions (at the label's size, 300, 600, 1200 dpi), the choice kept as today, so the
-  button downloads at once and the option lives where it is used
+  button downloads at once and the option lives where it is used; likewise **Text in the SVG** beside the **SVG**
+  button, *SVG (outlines) ▾*, its arrow offering outlines or text (the owner's second comment, the same day)
 - 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): a *Tour* button in the header that
   points out, one at a time, the steps and the main buttons on each device, skipped and seen again at will, in the six
   languages; the README's tour and the user guide's sections as its text
