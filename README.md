@@ -239,7 +239,7 @@ says more.
 **Where it stands** (11 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
 first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
-and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
+and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: Argox's manual in the Drive since 11 November), direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. Phase 6, the owner's review of 11 November
 (twelve points on versions, usability, templates, EPC+ and DotCode), is assessed and ordered, to start on 13 November;
 DotCode stays as it is for now. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
@@ -494,7 +494,11 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   Link URI, text in the dot fonts, the test label; GS1-128 (the manual's `!102`, which Labelize encodes as text),
   EAN-8, UPC-A, UPC-E and GS1 DataBar refused until a test reads them; GS1-128 of an SSCC alone done 6 November as
   `EAN128`, its 20 digits, which Labelize draws as ZPL's UCC case mode*
-- 3.4 PPLB · 3.5 PPLA — manuals to gather (Argox, Elgin); PPLB is close to EPL2
+- 3.4 PPLB · 3.5 PPLA — PPLB is close to EPL2, PPLA to DPL. The owner put Argox's PPLA programming manual in the
+  Drive's references on 11 November 2026 (`argox-ppla-programming-manual.pdf`, 1996–1998; its text names PPLB too):
+  to start on 13 November, after 6.1 to 6.3's mock-ups, by reading it for each barcode's command, then finding how to
+  test the symbols without a printer (Labelize's DPL and EPL2 where the commands are the same, ADR 0002), and
+  whether a PPLB manual is still needed
 - 3.6 EPL2 — *done 31 October through Labelize: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with bearer bars, GS1-128 (UCC/EAN
   128, a variable-length element string last only; over several symbols too), Data Matrix with a GS1 Digital Link URI,
   text in fonts 1 to 5, the test label; GS1 DataMatrix (no FNC1) and QR (Japanese models only) refused, as the guide
@@ -636,8 +640,9 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 
 **Phase 6 — the owner's review of 11 November 2026** (twelve points, assessed and ordered; to start on Friday
 13 November, when the week's quota starts again). Recommended order: 6.1 and 6.2 (small, seen at once), then the
-usability study 6.3 as mock-ups for the owner, then 6.4 to 6.6 as the study decides, 6.7 after an assessment;
-6.8 left for now. Effort: S a session, M two or three, L more.
+usability study 6.3 as mock-ups for the owner, then PPLA and PPLB (3.4, 3.5: the manual is in the Drive since
+11 November) while the owner looks at them, then 6.4 to 6.6 as the study decides, 6.7 after an assessment; 6.8 left for
+now. Effort: S a session, M two or three, L more.
 
 - 6.1 The version in the header, and new versions found by themselves (S). Under *GS1 Label Studio*, the commit and its
   date (About already has them), linking to About. The service worker already fetches pages from the network first
