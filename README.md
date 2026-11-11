@@ -236,12 +236,12 @@ says more.
 
 ## Backlog
 
-**Where it stands** (9 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
+**Where it stands** (11 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
 first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
-printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. No step is waiting unconditionally: what
-comes next is chosen with the owner. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
+printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. Phase 6, the owner's review of 11 November
+(twelve points on versions, usability, templates, EPC+ and DotCode), is assessed and ordered, to start on 13 November. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
 German and Italian texts by native speakers.
 
 **How the order went.** On 29 October: the editor's corrections (1.10) first, being small and seen every day; the
@@ -632,6 +632,64 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 **Phase 5 — beyond the browser** (if needed)
 
 - 5.1 CLI and HTTP API from the same core
+
+**Phase 6 — the owner's review of 11 November 2026** (twelve points, assessed and ordered; to start on Friday
+13 November, when the week's quota starts again). Recommended order: 6.1 and 6.2 (small, seen at once), then the
+usability study 6.3 as mock-ups for the owner, then 6.4 to 6.6 as the study decides, 6.7 and 6.8 after an
+assessment each. Effort: S a session, M two or three, L more.
+
+- 6.1 The version in the header, and new versions found by themselves (S). Under *GS1 Label Studio*, the commit and its
+  date (About already has them), linking to About. The service worker already fetches pages from the network first
+  and takes over at once (`skipWaiting`, `clients.claim`), but an installed app brought back from the background keeps
+  the page it had: the page will ask for a new worker when it opens and whenever it comes back to the screen, and
+  when one is ready show a bar *A new version is ready — Reload* (the work in progress is kept for the next visit, so a
+  reload loses nothing). Recommended rather than a check icon, which asks the user to think of it, or a reload
+  without asking, which would redraw the page under someone typing
+- 6.2 The name on the installed app's opening screen (S). The manifest already gives *GS1 Label Studio* as `name`,
+  but Android 12 and later draw the opening screen themselves with the icon alone, whatever the manifest says. So: a
+  launch screen of the page's own, only in the installed app (`display-mode: standalone`), the icon with the name under
+  it, gone as soon as the page is ready, never held longer. To check first on the owner's phone (its Android version)
+- 6.3 A usability study by device, as mock-ups first (M): Playwright screenshots of the real application with each
+  proposal, on a computer, a tablet and a phone, in a doc for the owner to choose from, then the chosen ones built.
+  It covers the owner's points (a) to (g), which bear on one another:
+  (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
+  languages;
+  (b) the label's options grouped by what they do (the symbol and its size; its human readable text; the GS1 Digital
+  Link URI; prepress and files), each group framed with its title;
+  (c) step 3 in sight while step 2 changes it: on a computer the label's preview kept on screen as the page scrolls
+  (or step 3 beside step 2); on a phone, a small picture of each symbol in step 2's choices;
+  (d) step 2, optional, more visible on a computer, where it is easily passed by;
+  (e) step 2 saying plainly how to start its answers again, and that choosing the symbol yourself sets them aside;
+  (f) the phone's bottom bar: *Scan* (step 2) reads as reading a barcode, which a future reading module would mean;
+  renamed after the scanning environment, such as *Where* or *Use*, with an icon to match;
+  (g) a switch at the top of step 3 between *The symbol only* and *A label*, which today hides in a list
+- 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): a *Tour* button in the header that
+  points out, one at a time, the steps and the main buttons on each device, skipped and seen again at will, in the six
+  languages; the README's tour and the user guide's sections as its text
+- 6.5 Labels by segment (M to L; reopens the owner's word of 3 November, which left product and healthcare
+  templates out): under *A label* (6.3 g), a list of templates grouped by segment (logistics: the GS1 Logistic Label;
+  a label of one's own; the works saved; then retail, healthcare and patients as the owner chooses them, one at a
+  time, each from the General Specifications or GS1's guidelines). Choosing one sets step 1 to its key, qualifiers
+  and attributes; data that the template has no place for is named first, with *Keep it* and *Leave it out*. The
+  owner to say which segments and templates come first
+- 6.6 A barcode on a label of one's own with the options of the symbol alone (M): today its symbol, size, human
+  readable text and element strings; then the human readable text's place and height (1.16), error correction and
+  the QR code's encoding modes (1.14), the bar width reduction, ITF-14's bearer bars, and a linear symbol beside a
+  2D one, in the files and in the four printer languages (ADR 0002: a native command only once a test shows the same
+  symbol)
+- 6.7 EPC+ and EPC++ (assessment first, then M to L): the Tag Data Standard's newer schemes (`sgtin+`, `sscc+`,
+  `dsgtin+`…), which carry an alphanumeric serial and further data, and their `++` forms, which also carry the GS1
+  Digital Link URI's domain; from TDS and TDT 2.3 (in the owner's Drive), tested against their examples and, where it
+  has them, epc-tds. With it, the reverse of today's card: an EPC pasted in step 1 (its hexadecimal or its tag URI,
+  classic or +) fills the fields, a shortcut for section 16 of the user guide. Where: the card stays in step 3 while it
+  fits; a mode of its own beside *One code* and *In bulk* only if the study (6.3) shows the options outgrow it
+- 6.8 GS1 DotCode (decision): it is not offered because no independent decoder reads it back (ZXing does not), and
+  every symbol is read back before it is offered (CLAUDE.md; 1.3). Options: (A, recommended) a decoder of our own,
+  written from the DotCode specification (ISO/IEC 21471, or AIM's DotCode specification), that reads the dots from
+  the studio's own SVG: not a camera's reader, but independent of bwip-js's encoder, enough to prove the data, the
+  structure and the error correction; then DotCode offered where tables 12 and 13 allow it. It needs the
+  specification, bought or from AIM. (B) DotCode drawn with a warning that nothing has read it back: quicker, but
+  against the rule above, so only by the owner's explicit word. (C) Left as it is, GS1 DataMatrix recommended instead
 
 ## Licence
 
