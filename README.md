@@ -657,7 +657,7 @@ now. Effort: S a session, M two or three, L more.
   it, gone as soon as the page is ready, never held longer. To check first on the owner's phone (its Android version)
 - 6.3 A usability study by device, as mock-ups first (M): Playwright screenshots of the real application with each
   proposal, on a computer, a tablet and a phone, in a doc for the owner to choose from, then the chosen ones built.
-  It covers the owner's points (a) to (h), which bear on one another:
+  It covers the owner's points (a) to (i), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;
   (b) the label's options grouped by what they do (the symbol and its size; its human readable text; the GS1 Digital
@@ -673,7 +673,11 @@ now. Effort: S a session, M two or three, L more.
   **PNG resolution** is among the label's options, far from the **PNG** button; a split button *PNG (300 dpi) ▾*,
   its arrow listing the resolutions (at the label's size, 300, 600, 1200 dpi), the choice kept as today, so the
   button downloads at once and the option lives where it is used; likewise **Text in the SVG** beside the **SVG**
-  button, *SVG (outlines) ▾*, its arrow offering outlines or text (the owner's second comment, the same day)
+  button, *SVG (outlines) ▾*, its arrow offering outlines or text (the owner's second comment, the same day);
+  (i) the printer's buttons: **ZPL (203)** and **ZPL template** among the file buttons replaced by one button that
+  opens the **Printer** section and brings it into view, where the profile, its language and the print files are (the
+  owner's third comment, the same day); one click more for those who print daily, so the mock-up also shows the
+  section's own download button within reach
 - 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): a *Tour* button in the header that
   points out, one at a time, the steps and the main buttons on each device, skipped and seen again at will, in the six
   languages; the README's tour and the user guide's sections as its text
