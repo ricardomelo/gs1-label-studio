@@ -241,7 +241,8 @@ first release) and composite components (1.3, later). Phase 4 is done — the GS
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: their manuals to gather), direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. Phase 6, the owner's review of 11 November
-(twelve points on versions, usability, templates, EPC+ and DotCode), is assessed and ordered, to start on 13 November. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
+(twelve points on versions, usability, templates, EPC+ and DotCode), is assessed and ordered, to start on 13 November;
+DotCode stays as it is for now. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
 German and Italian texts by native speakers.
 
 **How the order went.** On 29 October: the editor's corrections (1.10) first, being small and seen every day; the
@@ -635,8 +636,8 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 
 **Phase 6 — the owner's review of 11 November 2026** (twelve points, assessed and ordered; to start on Friday
 13 November, when the week's quota starts again). Recommended order: 6.1 and 6.2 (small, seen at once), then the
-usability study 6.3 as mock-ups for the owner, then 6.4 to 6.6 as the study decides, 6.7 and 6.8 after an
-assessment each. Effort: S a session, M two or three, L more.
+usability study 6.3 as mock-ups for the owner, then 6.4 to 6.6 as the study decides, 6.7 after an assessment;
+6.8 left for now. Effort: S a session, M two or three, L more.
 
 - 6.1 The version in the header, and new versions found by themselves (S). Under *GS1 Label Studio*, the commit and its
   date (About already has them), linking to About. The service worker already fetches pages from the network first
@@ -683,7 +684,7 @@ assessment each. Effort: S a session, M two or three, L more.
   has them, epc-tds. With it, the reverse of today's card: an EPC pasted in step 1 (its hexadecimal or its tag URI,
   classic or +) fills the fields, a shortcut for section 16 of the user guide. Where: the card stays in step 3 while it
   fits; a mode of its own beside *One code* and *In bulk* only if the study (6.3) shows the options outgrow it
-- 6.8 GS1 DotCode (decision): it is not offered because no independent decoder reads it back (ZXing does not), and
+- 6.8 GS1 DotCode — *left as it is for now (the owner, 11 November 2026: option C)*: it is not offered because no independent decoder reads it back (ZXing does not), and
   every symbol is read back before it is offered (CLAUDE.md; 1.3). Options: (A, recommended) a decoder of our own,
   written from the DotCode specification (ISO/IEC 21471, or AIM's DotCode specification), that reads the dots from
   the studio's own SVG: not a camera's reader, but independent of bwip-js's encoder, enough to prove the data, the
