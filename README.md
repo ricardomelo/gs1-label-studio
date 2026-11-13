@@ -638,8 +638,8 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 
 - 5.1 CLI and HTTP API from the same core
 
-**Phase 6 — the owner's review of 11 November 2026** (twelve points, assessed and ordered; to start on Friday
-13 November, when the week's quota starts again). Recommended order: 6.1 and 6.2 (small, seen at once), then the
+**Phase 6 — the owner's review of 11 November 2026** (twelve points, then the owner's comments of 11 and 13
+November, assessed and ordered; to start when the week's quota starts again). Recommended order: 6.1, 6.2 and 6.9 (small, seen at once), then the
 usability study 6.3 as mock-ups for the owner, then PPLA and PPLB (3.4, 3.5: the manual is in the Drive since
 11 November) while the owner looks at them, then 6.4 to 6.6 as the study decides, 6.7 after an assessment; 6.8 left for
 now. Effort: S a session, M two or three, L more.
@@ -657,7 +657,7 @@ now. Effort: S a session, M two or three, L more.
   it, gone as soon as the page is ready, never held longer. To check first on the owner's phone (its Android version)
 - 6.3 A usability study by device, as mock-ups first (M): Playwright screenshots of the real application with each
   proposal, on a computer, a tablet and a phone, in a doc for the owner to choose from, then the chosen ones built.
-  It covers the owner's points (a) to (i), which bear on one another:
+  It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;
   (b) the label's options grouped by what they do (the symbol and its size; its human readable text; the GS1 Digital
@@ -677,9 +677,18 @@ now. Effort: S a session, M two or three, L more.
   (i) the printer's buttons: **ZPL (203)** and **ZPL template** among the file buttons replaced by one button that
   opens the **Printer** section and brings it into view, where the profile, its language and the print files are (the
   owner's third comment, the same day); one click more for those who print daily, so the mock-up also shows the
-  section's own download button within reach
-- 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): a *Tour* button in the header that
-  points out, one at a time, the steps and the main buttons on each device, skipped and seen again at will, in the six
+  section's own download button within reach;
+  (j) the linear symbol beside a 2D one, its two options said plainly (the owner's comment of 11 November 2026):
+  **Size of the linear barcode** sets that symbol's X-dimension (the width of a narrow bar, from the scanning
+  environment's table); **Bar width reduction** then takes a fixed amount, in mm, off every bar of every linear
+  symbol, half on each side, leaving the symbol's size and the 2D symbol's modules as they are, so the spaces widen
+  by as much. The two do not change each other, but a fixed reduction weighs more on a small X (0.02 mm is 6 % of
+  0.330 mm, 8 % of 0.264 mm). The list shows only *0.020 mm*, which reads as a bar's width: each value to say what it
+  takes off and its share of the X, such as *0.020 mm off each bar (6 % of X 0.330 mm)*, a ? to say what it is for
+  (the press's ink gain, which the printer gives), and the two options side by side in the linear symbol's group (b)
+- 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): on a computer a button that stands
+  out in the header, on a phone or tablet an entry of the menu (the owner, 13 November 2026), that points out, one at a
+  time, the steps and the main buttons on each device, skipped and seen again at will, in the six
   languages; the README's tour and the user guide's sections as its text
 - 6.5 Labels by segment (M to L; reopens the owner's word of 3 November, which left product and healthcare
   templates out): under *A label* (6.3 g), a list of templates grouped by segment (logistics: the GS1 Logistic Label;
@@ -705,6 +714,10 @@ now. Effort: S a session, M two or three, L more.
   structure and the error correction; then DotCode offered where tables 12 and 13 allow it. It needs the
   specification, bought or from AIM. (B) DotCode drawn with a warning that nothing has read it back: quicker, but
   against the rule above, so only by the owner's explicit word. (C) Left as it is, GS1 DataMatrix recommended instead
+- 6.9 The Delete key removes the chosen element of a label of one's own (S; the owner, 13 November 2026), as the
+  **Delete** button over the label does, and Backspace too; never while a field of the properties has the focus, where
+  the keys edit the text; a screen reader told what was removed
+
 
 ## Licence
 
