@@ -642,7 +642,7 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 November, assessed and ordered; to start when the week's quota starts again). Recommended order: 6.1, 6.2 and 6.9 (small, seen at once), then the
 usability study 6.3 as mock-ups for the owner, then PPLA and PPLB (3.4, 3.5: the manual is in the Drive since
 11 November) while the owner looks at them, then 6.4 to 6.6 as the study decides, 6.7 after an assessment; 6.8 left for
-now. Effort: S a session, M two or three, L more.
+now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it. Effort: S a session, M two or three, L more.
 
 - 6.1 The version in the header, and new versions found by themselves (S) — *done 13 November: the commit and its
   date under the name, linking to About (mock-up A of two: B put them beside the name as a badge); a new release asked
@@ -731,6 +731,21 @@ now. Effort: S a session, M two or three, L more.
   **Delete** button over the label does, and Backspace too; never while a field of the properties has the focus, where
   the keys edit the text; a screen reader told what was removed — *done 13 November: from the label's canvas, its
   tools, the designer's buttons or nowhere; not with Ctrl, Alt or Command, nor from a button elsewhere on the page*
+- 6.10 An assistant for first-time users (L; the owner, 13 November 2026; ADR 0006): simple questions that set up the
+  whole scenario of a lay user — what is identified and what for (a product sold in shops or online, a medicine or
+  medical device, a case of several units, a pallet or parcel shipped, something else), then two to four questions
+  that depend on it (where it is sold; the lot, expiry or serial on each unit; a QR code that opens the brand's own
+  website; how it will be printed) — and fills steps 1, 2 and 3, explaining the rules that apply (two barcodes side by
+  side keeping their quiet zones, the 2D symbol within 50 mm of the EAN-13's centre, the back's lower right quadrant,
+  the size range, the GTIN from the company's own prefix), each with its section of the General Specifications.
+  Options taken under the owner's rule, open to change: (A, taken) a dialog, one question per screen, full screen on a
+  phone, ending in a summary and a card above step 1 (B a step 0 above step 1 with every question in sight; C templates
+  only); a need written in one's own words read by keywords offline in the six languages (B cards only; C an AI, which
+  needs a service and sends what is typed out of the browser: not offered); opened by itself on a first visit and from
+  an *Assistant* button. Step 2 still chooses the symbol from the decision tree; the templates by segment (6.5) become
+  its scenarios, the tour (6.4) follows it. Mock-ups (A recommended, B) in a doc for the owner, 13 November, its link
+  in the handover. Deliveries: the core's scenarios, questions and keywords; the dialog on three devices; cases,
+  pallets, healthcare and the other keys; the documents
 
 
 ## Licence

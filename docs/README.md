@@ -49,6 +49,7 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 | [ADR 0003](adr/0003-product-scope-and-ux.md) | product scope and user experience: who it is for, ask what is identified, paste anything, right by construction, real size, private; the screens; bulk; export formats; GS1 QR Code not offered |
 | [ADR 0004](adr/0004-port-of-the-resolver-label-studio.md) | the resolver's label studio ported to TypeScript and kept as the reference the tests compare with |
 | [ADR 0005](adr/0005-documentation-and-feature-inventory.md) | the documents by reader, the inventory drawn from the tests, features naming their tests, the core's API reference generated, a test keeping them in step |
+| [ADR 0006](adr/0006-assistant-for-first-time-users.md) | an assistant for first-time users: one question per screen, a need written in one's own words read by keywords offline, the answers given to step 2's decision tree, the rules for the artwork; what stays out of an offline tool |
 
 The documentation is written in British English only.
 
