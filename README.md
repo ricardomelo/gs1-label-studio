@@ -662,6 +662,13 @@ now. Effort: S a session, M two or three, L more.
   owner's phone in the test plan*
 - 6.3 A usability study by device, as mock-ups first (M): Playwright screenshots of the real application with each
   proposal, on a computer, a tablet and a phone, in a doc for the owner to choose from, then the chosen ones built.
+  *Mock-ups done 13 November (twenty screenshots in a doc for the owner, its link in the handover): recommended (a) A, a ? opening a
+  popover, a sheet on a phone; (b) framed groups, folded on a phone; (c) the tablet's layout on a computer, the label
+  always on the right, and a picture of each choice in step 2 on a phone; (d) a prompt over the label until step 2 is
+  answered; (e) Start the answers again; (f) Where with a map pin; (g) a switch, the barcode only or a label, the kinds
+  as cards; (h) split buttons; (i) one printer button, the section with its own downloads; (j) the two options in one
+  group, each reduction saying what it takes off. Built from the next session unless the owner chooses otherwise,
+  (h), (i) and (j) first*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;
