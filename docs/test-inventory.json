@@ -4953,6 +4953,33 @@
      ]
     },
     {
+     "name": "the PNG's and the SVG's options open from an arrow beside their buttons, are kept, and close on Escape or a press elsewhere",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "Label printer… opens the printer's section and brings it into view; the print files are downloaded there",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the linear barcode's size and bar width reduction in one group, each reduction with its share of the X and a ? that says what it is for",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "crop marks around the label in the PDF, the EPS and the zip, and around every label in bulk",
      "status": "listed",
      "projects": [

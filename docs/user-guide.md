@@ -366,7 +366,7 @@ of my own (barcodes and text placed freely)*:
 A barcode, line, box or image past the label's edge, or a barcode overlapping another element (its quiet zones must stay
 clear; a box's outline counts only where it is drawn), is named in red under
 the size; the label is still drawn. **Scan test** reads every barcode. The label exports as SVG, PNG, PDF and EPS and
-in bulk, and in ZPL with the printer's own commands (the Export bar's file, its test print and the bulk ZPL file): each
+in bulk, and in ZPL with the printer's own commands (the printer section's file, its test print and the bulk ZPL file): each
 barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
 row), its bars where the label puts them; each line of text with `^A0` at its capitals' height; each line and box with
 `^GB`, its edges at the nearest dots; each image as a graphic field (`^GFA`, in ZPL's own compression, which every
@@ -408,11 +408,10 @@ one, or use the arrow keys on the chosen one); a longer choice is a list.
 | Scheme and domain | Two buttons: As typed, or In capitals (`HTTPS://ID.GS1.ORG`), which lets alphanumeric mode encode the URI's start; the path and the query stay as typed |
 | Error correction | QR code: four buttons, L (7 %), M (15 %), Q (25 %), H (30 %), the chosen level's name under them |
 | Linear barcode beside it | An EAN-13, UPC-A or EAN-8 as the GTIN takes, or UPC-E, beside a 2D symbol |
+| Size of the linear barcode | In the framed group *Linear barcode (EAN-13)*: its X-dimension, as the 2D symbol's size by default, each size with the X it gives |
 | Bearer bars | ITF-14: a frame (suits every printing method) or bars of 2X at the top and bottom |
-| Bar width reduction | Linear symbols: 0.010 to 0.050 mm taken off every bar, for printing that spreads ink |
+| Bar width reduction | In the same group, for every linear symbol: 0.010 to 0.050 mm taken off every bar, half on each side, each value with its share of the X (*0.020 mm less on every bar (6 % of X 0.330 mm)*); the symbol's size and the 2D symbol do not change, the spaces widen. The **?** beside its name says what it is for: a press spreads the ink, so take off what the printer asks for, and none for a label, laser or inkjet printer |
 | Crop marks | Two buttons: None, or In the PDF and EPS, marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
-| PNG resolution | At the label's size (12 pixels a module), or 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said; for the PNG on its own and in the zip |
-| Text in the SVG | Outlines (no font needed) or real text, editable but needing Liberation Sans and OCR-B where it is printed |
 | Domain in the GS1 Digital Link URI | `https://id.gs1.org` by default; your resolver's domain |
 | Label | For an SSCC: the symbol alone, or the GS1 Logistic Label (section 9) |
 
@@ -440,13 +439,15 @@ with the page.
 
 | Button | File |
 |---|---|
-| Download SVG | Vector, at real size in millimetres; the text as outlines or as text (option *Text in the SVG*) |
-| PNG | At the label's size (12 pixels a module) or at the resolution chosen; its dpi recorded in the file |
+| Download SVG | Vector, at real size in millimetres. The arrow **▾** beside it chooses the human readable text: *Outlines* (no font needed: prints the same in any program) or *Text* (editable in a drawing program; needs the Liberation Sans and OCR-B fonts) |
+| PNG (616 dpi) | At the label's size (12 pixels a module) or at the resolution chosen with the arrow **▾** beside it: 300, 600 or 1200 dpi with a whole number of pixels a module, the X-dimension it prints at said. The choice is kept and shown on the button (*PNG (300 dpi)*); its dpi recorded in the file |
 | PDF | One page the size of the label, vector, the text as outlines, in process black (100 % K); with *Crop marks*, 10 mm larger on every side |
 | EPS | The PDF's drawing in PostScript, for prepress |
-| Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it; the PNG at the *PNG resolution* chosen, which the README then gives with the X-dimension it prints at |
-| ZPL (203 dpi) | The label in ZPL II with the printer's own commands, for the printer profile chosen (section 10) |
-| ZPL template | The same ZPL with `{{01}}`, `{{10}}`… or `{{URI}}` where the values go, each described in a comment at the top |
+| Zip of all | SVG, PNG, PDF and EPS with a README of the data, the symbol, its sizes and how to print it; the PNG at the resolution chosen beside the PNG's button, which the README then gives with the X-dimension it prints at |
+| Label printer… | Opens the section *Printer* (section 10) and brings it into view: the print file in the profile's language (*Download ZPL (203 dpi)*) and the *ZPL template* are downloaded there, beside the test print |
+
+The menus of the two arrows open under them on a computer and rise from the bottom of the screen on a phone; the arrow
+keys move between the choices, Enter chooses, Escape or a press elsewhere closes them.
 
 The release of the GS1 Barcode Syntax Engine that checked the data is written where a file has a place for it that is
 never printed: the zip's README (*Data checked by the GS1 Barcode Syntax Engine 1.4.1 (dictionary 2026-01-27).*), the
@@ -466,7 +467,7 @@ correctly is refused with the reason, never printed wrong (section 17). How to u
 3. Later, or in another browser, **Open…** takes the file back: the fields, the choices and the label return as they
    were saved. In bulk, take the spreadsheet again: its columns are chosen as they were saved (the rows stay in the
    spreadsheet, not in the work).
-4. The ZPL the Export bar downloads carries the same work in comments (`^FX GS1 Label Studio work 1/3 …`), which
+4. The ZPL the printer section downloads carries the same work in comments (`^FX GS1 Label Studio work 1/3 …`), which
    printers and Labelary ignore: **Open…** takes that ZPL back too. A ZPL made elsewhere cannot be opened — its printer
    commands do not keep the fields, the meaning of the data or the sizes in millimetres; Labelary's viewer draws it.
 5. This browser also keeps the last work by itself, a moment after each change. On the next visit a bar under the
@@ -544,8 +545,10 @@ A thermal printer prints whole dots, so a module must be a whole number of dots 
 - **Test print** (in the profile's language) adds a 50 mm ruler with a tick every 10 mm and the settings under the label:
   print it and measure the ruler to check the printer's scale.
 
-The print file's button of the Export bar — *ZPL (203 dpi)*, *TSPL (203 dpi)*, *EPL2 (300 dpi)*, *DPL (300 dpi)*,
-*PPLA (203 dpi)* or *PPLB (203 dpi)*, a `.zpl`, `.prn`, `.epl`, `.dpl`, `.ppla` or `.pplb` file — and the bulk print file use the same profile and dots. The ZPL template is offered with a ZPL profile.
+The section's download button — *Download ZPL (203 dpi)*, *TSPL (203 dpi)*, *EPL2 (300 dpi)*, *DPL (300 dpi)*,
+*PPLA (203 dpi)* or *PPLB (203 dpi)*, a `.zpl`, `.prn`, `.epl`, `.dpl`, `.ppla` or `.pplb` file — and the bulk print
+file use the same profile and dots. The ZPL template is offered with a ZPL profile. The Export bar's **Label printer…**
+opens this section and brings it into view.
 
 ## 11. RFID and NFC (EPC), and NFC tags
 

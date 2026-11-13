@@ -19,17 +19,19 @@ import {
   parseElementString,
   type DesignPage,
   type PlacedElement,
-  type PrinterLanguageInfo,
   type RowStatus,
+  symbolFor,
   type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useState } from "react";
+import { Help } from "./Help.tsx";
 import { DesignerGuides, DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
 import { keepGuides, keptGuides } from "./guides.ts";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
 import type { SymbolSizing } from "./resize.ts";
 import { scanSvg } from "./scan.ts";
 import { Segmented } from "./Segmented.tsx";
+import { SplitButton } from "./SplitButton.tsx";
 import {
   BEARER_CHOICES,
   ENVIRONMENT_NAMES,
@@ -153,9 +155,8 @@ interface Props {
   onChange: (settings: LabelSettings) => void;
   view: LabelView;
   onDownload: (kind: FileKind) => void;
-  onDownloadZpl: (template: boolean) => void;
-  /** The printer profile's language, for the print file's button (ADR 0002). */
-  printLanguage: PrinterLanguageInfo;
+  /** Opens the printer's section and brings it into view (backlog 6.3 i): its print files are downloaded there. */
+  onPrinter: () => void;
   fileError: string | null;
   /** In bulk: the row shown among the data rows, and a way to show another. */
   rows?: { index: number; count: number; row: number; status: RowStatus; onMove: (index: number) => void };
@@ -196,7 +197,18 @@ const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 const step = (zoom: number, by: 1 | -1) =>
   by > 0 ? (ZOOMS.find((z) => z > zoom) ?? zoom) : ([...ZOOMS].reverse().find((z) => z < zoom) ?? zoom);
 
-export function LabelCard({ children, generate, printer, printLanguage, settings: s, onChange, view, onDownload, onDownloadZpl, fileError, rows }: Props) {
+/** The name of the EAN/UPC that goes beside the 2D symbol for this element string, or null when none can. */
+function linearName(elementString: string, choice: LinearChoice): string | null {
+  if (choice === "none") return null;
+  try {
+    const gtin = parseElementString(elementString).find((e) => e.ai === "01")?.value;
+    return gtin ? tm(SYMBOLOGIES[symbolFor(gtin, choice)[0]].name) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function LabelCard({ children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
   const aiList = (() => {
@@ -235,6 +247,10 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
       (error: unknown) => setScanned({ svg, status: "error", message: error instanceof Error ? error.message : String(error) }),
     );
   }
+  // The linear barcode's group (backlog 6.3 j): beside a 2D symbol, or the symbol itself; its name and X
+  const linearBeside = s.linear !== "none" && (view.linearPossible || Boolean(view.guided && view.twoD));
+  const barsName = linearBeside ? linearName(view.elementString, s.linear) : view.hasBars ? (s.logistic !== "none" ? tm(SYMBOLOGIES["gs1-128"].name) : tm(SYMBOLOGIES[s.symbology].name)) : null;
+  const barsX = linearBeside ? linearXDimension(s.environment, s.linearSize ?? s.size) : view.xMm;
   const snap = snapToDots(view.xMm, s.dpi);
   const target = view.sizeBase ?? (view.twoD ? ENVIRONMENTS[s.environment]?.["2d"][1] : ENVIRONMENTS[s.environment]?.linear?.[1]);
 
@@ -368,12 +384,39 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
           <div className="exportbar" data-pane="export" data-beside="">
             <b>{t("Export")}</b>
             <div className="downloads">
-              <button type="button" className="btn primary" disabled={!view.svg} onClick={() => onDownload("svg")}>
-                {t("Download SVG")}
-              </button>
-              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("png")}>
-                PNG{s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}
-              </button>
+              {/* Each file's options beside its button (backlog 6.3 h, the owner's comments of 11 November 2026) */}
+              <SplitButton
+                primary
+                text={t("Download SVG")}
+                menuLabel={t("SVG options")}
+                heading={t("The human readable text in the SVG")}
+                disabled={!view.svg}
+                onClick={() => onDownload("svg")}
+                value={s.hriAsText ? "text" : "outline"}
+                choices={[
+                  { value: "outline", text: t("Outlines"), detail: t("no font needed: prints the same in any program") },
+                  { value: "text", text: t("Text"), detail: t("editable in a drawing program; needs the Liberation Sans and OCR-B fonts") },
+                ]}
+                onChoose={(value) => set("hriAsText", value === "text")}
+              />
+              <SplitButton
+                text={`PNG${s.pngResolution ? ` (${s.pngResolution} dpi)` : view.pngDpi ? ` (${Math.round(view.pngDpi)} dpi)` : ""}`}
+                menuLabel={t("PNG options")}
+                heading={t("PNG resolution (the choice is kept)")}
+                disabled={!view.svg}
+                onClick={() => onDownload("png")}
+                value={s.pngResolution ? String(s.pngResolution) : ""}
+                choices={[
+                  { value: "", text: view.pngDpi ? t("At the label's size ({dpi} dpi)", { dpi: Math.round(view.pngDpi) }) : t("At the label's size") },
+                  ...(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => ({
+                    value: String(dpi),
+                    text: pixelsPerModule === 1
+                      ? t("{dpi} dpi — 1 pixel a module, X {x} mm", { dpi, x: formatNumber(xMm, 3) })
+                      : t("{dpi} dpi — {n} pixels a module, X {x} mm", { dpi, n: pixelsPerModule, x: formatNumber(xMm, 3) }),
+                  })),
+                ]}
+                onChoose={(value) => set("pngResolution", value ? Number(value) : null)}
+              />
               <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownload("pdf")}>
                 PDF
               </button>
@@ -389,12 +432,11 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
               >
                 {t("Zip of all")}
               </button>
-              <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(false)}>
-                {t("{language} ({dpi} dpi)", { language: printLanguage.name, dpi: s.dpi })}
-              </button>
-              {printLanguage.templates && (
-                <button type="button" className="btn" disabled={!view.svg} onClick={() => onDownloadZpl(true)}>
-                  {t("ZPL template")}
+              {/* The print files in the printer's section, beside its profile and test print (backlog 6.3 i, the owner's
+                  comment of 11 November 2026) */}
+              {printer && (
+                <button type="button" className="btn" onClick={onPrinter}>
+                  {t("Label printer…")}
                 </button>
               )}
             </div>
@@ -633,36 +675,7 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                       </select>
                     </div>
                   )}
-                  {s.linear !== "none" && (
-                    <div>
-                      <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
-                      <select
-                        id="opt-linear-size"
-                        value={s.linearSize ?? ""}
-                        onChange={(e) => set("linearSize", e.target.value ? Number(e.target.value) : null)}
-                      >
-                        <option value="">{t("As the 2D symbol: {size} %", { size: s.size })}</option>
-                        {linearSizesFor(s.environment).map((size) => (
-                          <option key={size} value={size}>
-                            {t("{size} % (X {x} mm)", { size, x: formatNumber(linearXDimension(s.environment, size), 3) })}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </>
-              )}
-              {view.hasBars && (
-                <div>
-                  <label htmlFor="opt-reduction">{t("Bar width reduction")}</label>
-                  <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
-                    {REDUCTIONS.map((mm) => (
-                      <option key={mm} value={mm}>
-                        {mm ? `${formatNumber(mm, 3)} mm` : t("None")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               )}
               <Segmented
                 id="opt-crop"
@@ -675,38 +688,62 @@ export function LabelCard({ children, generate, printer, printLanguage, settings
                 onChange={(value) => set("cropMarks", value === "marks")}
               />
               <div>
-                <label htmlFor="opt-png">{t("PNG resolution")}</label>
-                <select
-                  id="opt-png"
-                  value={s.pngResolution ?? ""}
-                  onChange={(e) => set("pngResolution", e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">{view.pngDpi ? t("At the label's size ({dpi} dpi)", { dpi: Math.round(view.pngDpi) }) : t("At the label's size")}</option>
-                  {(view.pngResolutions ?? []).map(({ dpi, pixelsPerModule, xMm }) => (
-                    <option key={dpi} value={dpi}>
-                      {pixelsPerModule === 1
-                        ? t("{dpi} dpi — 1 pixel a module, X {x} mm", { dpi, x: formatNumber(xMm, 3) })
-                        : t("{dpi} dpi — {n} pixels a module, X {x} mm", { dpi, n: pixelsPerModule, x: formatNumber(xMm, 3) })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="opt-hritext">{t("Text in the SVG")}</label>
-                <select
-                  id="opt-hritext"
-                  value={s.hriAsText ? "text" : "outline"}
-                  onChange={(e) => set("hriAsText", e.target.value === "text")}
-                >
-                  <option value="outline">{t("Outlines, no font needed")}</option>
-                  <option value="text">{t("Text, editable (needs the fonts)")}</option>
-                </select>
-              </div>
-              <div>
                 <label htmlFor="opt-stem">{t("Domain in the GS1 Digital Link URI")}</label>
                 <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
               </div>
             </div>
+            {(linearBeside || view.hasBars) && (
+              // The linear barcode's two options in one group, each said plainly (backlog 6.3 j, the owner's comment of
+              // 11 November 2026): the size sets its X; a reduction takes a fixed amount off every bar, and says what
+              // share of that X it is, since 0.020 mm read as a bar's width.
+              <fieldset className="group">
+                <legend>{barsName ? t("Linear barcode ({name})", { name: barsName }) : t("Linear barcode")}</legend>
+                <div className="grid">
+                  {linearBeside && (
+                    <div>
+                      <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
+                      <select
+                        id="opt-linear-size"
+                        value={s.linearSize ?? ""}
+                        onChange={(e) => set("linearSize", e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">{t("As the 2D symbol: {size} % (X {x} mm)", { size: s.size, x: formatNumber(linearXDimension(s.environment, s.size), 3) })}</option>
+                        {linearSizesFor(s.environment).map((size) => (
+                          <option key={size} value={size}>
+                            {t("{size} % (X {x} mm)", { size, x: formatNumber(linearXDimension(s.environment, size), 3) })}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {view.hasBars && (
+                    <div>
+                      <div className="label-row">
+                        <label htmlFor="opt-reduction">{t("Bar width reduction")}</label>
+                        <Help
+                          name={t("Bar width reduction")}
+                          text={t("A press (offset, flexography, gravure) spreads the ink and widens the bars. Take off what the printer asks for; none for a label printer, a laser printer or an inkjet.")}
+                        />
+                      </div>
+                      <select id="opt-reduction" value={s.reduction} onChange={(e) => set("reduction", Number(e.target.value))}>
+                        {REDUCTIONS.map((mm) => (
+                          <option key={mm} value={mm}>
+                            {mm
+                              ? t("{mm} mm less on every bar ({share} % of X {x} mm)", { mm: formatNumber(mm, 3), share: Math.round((mm / barsX) * 100), x: formatNumber(barsX, 3) })
+                              : t("None")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <div className="hint">
+                  {linearBeside
+                    ? t("The size sets the X of the {name} (the width of a narrow bar). The reduction takes a fixed amount off every bar, half on each side: the barcode's size and the 2D symbol do not change, the spaces widen.", { name: barsName ?? t("linear barcode") })
+                    : t("The reduction takes a fixed amount off every bar, half on each side: the symbol's size does not change, the spaces widen.")}
+                </div>
+              </fieldset>
+            )}
             {view.gs1128 && view.gs1128.elements.length > 1 && (
               <div className="gs1128">
                 <div className="gs1128-head">

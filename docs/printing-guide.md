@@ -72,7 +72,7 @@ rounded differently bar by bar and the symbol degrades: an EAN-13 at 100 % (0.33
    X-dimension that prints. If none fits, the nearest is printed and said.
 3. **Print a test**: *Test print (ZPL)* adds a 50 mm ruler and the settings under the label. Measure the ruler: if it is
    not 50 mm, the printer's resolution or its scale setting differs from the profile.
-4. **Send the ZPL** to the printer: copy the `.zpl` file to it (on Windows, `copy /b label.zpl \\computer\printer`
+4. **Send the ZPL** to the printer: download it with the section's *Download ZPL (203 dpi)* and copy the `.zpl` file to it (on Windows, `copy /b label.zpl \\computer\printer`
    to a shared printer; on Linux and macOS, `lp -d printer -o raw label.zpl`), or through the printer's own utility.
    Direct printing from the browser (WebUSB, Zebra Browser Print) is planned (backlog 3.8).
 
@@ -136,8 +136,8 @@ Besides ZPL, the studio writes **TSPL/TSPL2** (TSC and most generic thermal prin
 Zebras and printers that emulate it; `.epl`) and **DPL** (Datamax-O'Neil and Honeywell printers; `.dpl`) with the
 printer's own commands (backlog 3.3 and 3.6, 31 October 2026; 3.7, 2 November 2026), and **PPLA** and **PPLB**
 (Argox printers; `.ppla`, `.pplb`; backlog 3.4 and 3.5, 13 November 2026, below). Choose a profile in that language
-under *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)*: the Export bar's button, the test print and the bulk print file then
-use it.
+under *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)* (the Export bar's **Label printer…** opens it): the section's
+download button, the test print and the bulk print file then use it.
 
 **How they are checked.** No simulator renders TSPL, EPL2 or DPL the way Labelary renders ZPL from Zebra's firmware.
 The tests print them with **Labelize**, an open-source emulator of these languages, and read every symbol back with

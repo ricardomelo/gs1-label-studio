@@ -473,6 +473,18 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     }
   }
 
+  // The Export bar's Label printer… (backlog 6.3 i): the printer's section opened and brought into view, its title in
+  // focus, where its print files, profile and test print are.
+  const [printerOpen, setPrinterOpen] = useState(false);
+  function openPrinter() {
+    setPrinterOpen(true);
+    requestAnimationFrame(() => {
+      const section = document.getElementById("printer");
+      section?.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      section?.querySelector("summary")?.focus({ preventScroll: true });
+    });
+  }
+
   // A test label (backlog 3.1): the label with a 50 mm ruler and the settings below it.
   function testPrint() {
     const data = label.data;
@@ -960,8 +972,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           }}
           view={view}
           onDownload={(kind) => void downloadFile(kind)}
-          onDownloadZpl={downloadZpl}
-          printLanguage={language}
+          onPrinter={openPrinter}
           rows={bulk && rows.length
             ? {
                 index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2,
@@ -1008,6 +1019,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             range={xRange}
             widthProblem={zplWidthProblem}
             onTestPrint={testPrint}
+            open={printerOpen}
+            onOpen={setPrinterOpen}
+            onDownload={downloadZpl}
+            canDownload={Boolean(view.svg)}
           />
           }
         >

@@ -39,10 +39,15 @@ interface Props {
   range: readonly [number, number] | null;
   widthProblem: string | null;
   onTestPrint: () => void;
+  /** Open or folded, held by the page: the Export bar's Label printer… opens it (backlog 6.3 i). */
+  open: boolean;
+  onOpen: (open: boolean) => void;
+  /** The print file in the profile's language, or a ZPL template; there is nothing to download yet without a label. */
+  onDownload: (template: boolean) => void;
+  canDownload: boolean;
 }
 
-export function PrinterSection({ profiles, profile, onProfiles, onProfile, module, dots, onDots, range, widthProblem, onTestPrint }: Props) {
-  const [open, setOpen] = useState(false);
+export function PrinterSection({ profiles, profile, onProfiles, onProfile, module, dots, onDots, range, widthProblem, onTestPrint, open, onOpen, onDownload, canDownload }: Props) {
   const [editing, setEditing] = useState<PrinterProfile | null>(null);
   const all = [...GENERIC_PROFILES, ...profiles];
   const own = profiles.some((p) => p.id === profile.id);
@@ -59,7 +64,7 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
   }
 
   return (
-    <details className="printer" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
+    <details className="printer" id="printer" open={open} onToggle={(event) => onOpen((event.target as HTMLDetailsElement).open)}>
       <summary>{t("Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)")}</summary>
       <p className="hint">{t(PRINTER_TEXTS.intro)}</p>
       {language.id !== "zpl" && !language.as && (
@@ -166,7 +171,16 @@ export function PrinterSection({ profiles, profile, onProfiles, onProfile, modul
             </button>
           </>
         )}
-        <button type="button" className="btn primary" disabled={!module || Boolean(widthProblem)} onClick={onTestPrint}>
+        {/* The print files, here beside the test print, from the Export bar's Label printer… (backlog 6.3 i) */}
+        <button type="button" className="btn primary" disabled={!canDownload} onClick={() => onDownload(false)}>
+          {t("Download {language} ({dpi} dpi)", { language: language.name, dpi: profile.dpi })}
+        </button>
+        {language.templates && (
+          <button type="button" className="btn" disabled={!canDownload} onClick={() => onDownload(true)}>
+            {t("ZPL template")}
+          </button>
+        )}
+        <button type="button" className="btn" disabled={!module || Boolean(widthProblem)} onClick={onTestPrint}>
           {t("Test print ({language})", { language: language.name })}
         </button>
       </div>

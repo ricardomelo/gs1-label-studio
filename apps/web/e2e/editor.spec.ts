@@ -27,6 +27,23 @@ async function on(page: Page, pane: (typeof PANES)[number]) {
   if (await bar.isVisible()) await bar.locator("button").nth(PANES.indexOf(pane)).click();
 }
 
+/** The printer's section opened by its title when it is folded (a print file's download may have opened it already). */
+async function openPrinter(page: Page) {
+  const section = page.locator("details.printer");
+  if (!(await section.evaluate((details) => (details as HTMLDetailsElement).open))) await section.locator("summary").click();
+}
+
+/**
+ * A print file's button, in the printer's section (backlog 6.3 i): the section opened from the Export bar's Label
+ * printer… when it is folded, as a person would.
+ */
+async function printFile(page: Page, name: string) {
+  await on(page, "export");
+  const section = page.locator("details.printer");
+  if (!(await section.evaluate((details) => (details as HTMLDetailsElement).open))) await page.getByRole("button", { name: "Label printer…" }).click();
+  return section.getByRole("button", { name: `Download ${name}`, exact: true });
+}
+
 /** A qualifier's value: its row added from the key's qualifiers first if it is not in the list yet (backlog 1.15). */
 async function qualifier(page: Page, ai: string, value: string) {
   await on(page, "data");
@@ -77,7 +94,7 @@ test("the rows' order is the element string's, in a GS1 DataMatrix and its text;
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(17)271231(10)B42", { timeout: 30_000 });
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.filter((f) => f!.startsWith("("))).toEqual(["(01)09506000134376", "(17)271231", "(10)B42"]);
   // Pasted in that order, it stays in that order
@@ -265,12 +282,12 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
     "100 % (X 0.495 mm, recommended)", "120 % (X 0.594 mm)", "150 % (X 0.743 mm)",
   ]);
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(download.suggestedFilename()).toBe("gs1-128_00_106141411234567897.zpl");
   // In TSPL too: an SSCC alone as EAN128, its 20 digits with the check digit, and the studio's text below
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "tspl-203");
-  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "TSPL (203 dpi)")).click()]);
   expect(tspl.suggestedFilename()).toBe("gs1-128_00_106141411234567897.prn");
   const tsplFile = readFileSync((await tspl.path())!, "utf8");
   expect(tsplFile).toMatch(/^BARCODE \d+,\d+,"EAN128",\d+,0,0,4,4,"00106141411234567897"\r$/m);
@@ -282,7 +299,7 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(00)106141411234567897");
   // Wider than a four-inch printer prints (backlog 3.1)
   await on(page, "export");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("mm wide; Any ZPL printer, 203 dpi, 104 mm prints 104 mm");
 });
 
@@ -322,7 +339,7 @@ test("a case in general distribution: ITF-14 with its bearer bars and digits, at
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(download.suggestedFilename()).toBe("itf14_01_19506000134373.pdf");
   // The ZPL draws the same bearer bars with ^GB, and the digits below them.
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const text = readFileSync((await zpl.path())!, "utf8");
   expect(text).toContain("^BY4,3.0,257^B2N,257,N,N,N^FD19506000134373^FS"); // 31.75 mm: 257 dots
   expect(text.match(/\^GB\d+,8,8\^FS/g)).toHaveLength(2);
@@ -338,7 +355,7 @@ test("a case's GTIN at a retail till: GS1 DataBar Omnidirectional; with a batch,
   await expect(page.locator(".caption")).toContainText("GS1 DataBar Omnidirectional · bars 15.19 mm · X 0.330 mm");
   // ^BR prints it 33 modules high; table 1 asks for 46: the ZPL is refused, with the reason.
   await on(page, "export");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("^BR prints GS1 DataBar Omnidirectional 33 modules high");
   await qualifier(page, "10", "B42");
   const step = page.locator("section[aria-labelledby='scan-title']");
@@ -430,9 +447,12 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   await expect(page.locator(".preview svg desc")).toContainText("bars reduced by 0.020 mm (bar width reduction)");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
-  await expect(page.locator("#opt-png option").nth(1)).toHaveText("300 dpi — 6 pixels a module, X 0.508 mm");
-  await page.selectOption("#opt-png", "300");
+  // The resolution beside the PNG's button (backlog 6.3 h)
   await on(page, "export");
+  await page.getByRole("button", { name: "PNG options" }).click();
+  const resolutions = page.getByRole("menu", { name: "PNG resolution (the choice is kept)" });
+  await expect(resolutions.getByRole("menuitemradio").nth(1)).toHaveText("300 dpi — 6 pixels a module, X 0.508 mm");
+  await resolutions.getByRole("menuitemradio", { name: /^300 dpi/ }).click();
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG (300 dpi)" }).click()]);
   const png = readFileSync((await download.path())!);
   // pHYs: 11811 pixels a metre, 300 dpi.
@@ -444,6 +464,145 @@ test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chos
   expect(zipped.equals(png)).toBe(true);
   expect(execFileSync("unzip", ["-p", (await zip.path())!, "README.txt"], { encoding: "utf8" }))
     .toContain("PNG: 300 dpi, 6 pixels a module, so it prints at X = 0.508 mm, ");
+});
+
+// Backlog 6.3 (h), the owner's comments of 11 November 2026: each file's options beside its button, a split button.
+test("the PNG's and the SVG's options open from an arrow beside their buttons, are kept, and close on Escape or a press elsewhere", async ({ page }, info) => {
+  await on(page, "label");
+  await expect(page.locator("#opt-png")).toHaveCount(0);
+  await expect(page.locator("#opt-hritext")).toHaveCount(0);
+  await on(page, "export");
+  // The PNG: the choice made marked, the arrow keys move, Escape gives the focus back to the arrow
+  const arrow = page.getByRole("button", { name: "PNG options" });
+  await expect(arrow).toHaveAttribute("aria-expanded", "false");
+  await arrow.click();
+  await expect(arrow).toHaveAttribute("aria-expanded", "true");
+  const menu = page.getByRole("menu", { name: "PNG resolution (the choice is kept)" });
+  const items = menu.getByRole("menuitemradio");
+  await expect(items).toHaveText([
+    "At the label's size (616 dpi)",
+    "300 dpi — 6 pixels a module, X 0.508 mm",
+    "600 dpi — 12 pixels a module, X 0.508 mm",
+    "1200 dpi — 23 pixels a module, X 0.487 mm",
+  ]);
+  await expect(items.first()).toHaveAttribute("aria-checked", "true");
+  await expect(items.first()).toBeFocused();
+  if (info.project.name === "phone") {
+    // A sheet from the bottom of the screen on a phone
+    const box = (await menu.boundingBox())!;
+    expect(box.y + box.height).toBeCloseTo(page.viewportSize()!.height, 0);
+    expect(box.width).toBeCloseTo(page.viewportSize()!.width, 0);
+  }
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await expect(items.nth(2)).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(arrow).toBeFocused();
+  // Enter chooses; the button says the resolution and downloads at it
+  await arrow.click();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "PNG (300 dpi)", exact: true })).toBeVisible();
+  const [png] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG (300 dpi)", exact: true }).click()]);
+  const bytes = readFileSync((await png.path())!);
+  expect(bytes.readUInt32BE(bytes.indexOf("pHYs") + 4)).toBe(11811);
+  // A press elsewhere closes it without choosing
+  await arrow.click();
+  await expect(menu.getByRole("menuitemradio", { name: /^300 dpi/ })).toHaveAttribute("aria-checked", "true");
+  await page.locator("h2.pane-title, .exportbar > b").locator("visible=true").first().click();
+  await expect(menu).toHaveCount(0);
+  // The SVG: outlines, or text that a drawing program edits
+  const svgFile = async () => {
+    const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download SVG", exact: true }).click()]);
+    return readFileSync((await file.path())!, "utf8");
+  };
+  expect(await svgFile()).not.toContain("<text");
+  await page.getByRole("button", { name: "SVG options" }).click();
+  const svgMenu = page.getByRole("menu", { name: "The human readable text in the SVG" });
+  await expect(svgMenu.getByRole("menuitemradio")).toHaveText([
+    "Outlinesno font needed: prints the same in any program",
+    "Texteditable in a drawing program; needs the Liberation Sans and OCR-B fonts",
+  ]);
+  await svgMenu.getByRole("menuitemradio", { name: /^Text/ }).click();
+  expect(await svgFile()).toContain("font-family=\"'Liberation Sans'");
+});
+
+// Backlog 6.3 (i), the owner's comment of 11 November 2026: one button to the printer's section, which has the downloads.
+test("Label printer… opens the printer's section and brings it into view; the print files are downloaded there", async ({ page }) => {
+  await on(page, "export");
+  const bar = page.locator(".exportbar");
+  await expect(bar.getByRole("button", { name: /ZPL/ })).toHaveCount(0);
+  const section = page.locator("details.printer");
+  await expect(section).not.toHaveAttribute("open", "");
+  await bar.getByRole("button", { name: "Label printer…" }).click();
+  await expect(section).toHaveAttribute("open", "");
+  await expect(section.locator("summary")).toBeFocused();
+  await expect(section.locator("summary")).toBeInViewport();
+  const [zpl] = await Promise.all([page.waitForEvent("download"), section.getByRole("button", { name: "Download ZPL (203 dpi)" }).click()]);
+  expect(zpl.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42.zpl");
+  expect(readFileSync((await zpl.path())!, "utf8")).toContain("^BQN,2,");
+  const [template] = await Promise.all([page.waitForEvent("download"), section.getByRole("button", { name: "ZPL template" }).click()]);
+  expect(template.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42-template.zpl");
+  // The button follows the profile's language; folded again, the bar's button opens it again
+  await page.selectOption("#prn-profile", "epl2-203");
+  await expect(section.getByRole("button", { name: "Download EPL2 (203 dpi)" })).toBeVisible();
+  await expect(section.getByRole("button", { name: "ZPL template" })).toHaveCount(0);
+  await section.locator("summary").click();
+  await expect(section).not.toHaveAttribute("open", "");
+  await bar.getByRole("button", { name: "Label printer…" }).click();
+  await expect(section).toHaveAttribute("open", "");
+});
+
+// Backlog 6.3 (j), the owner's comment of 11 November 2026: the linear barcode's two options in one group, said plainly.
+test("the linear barcode's size and bar width reduction in one group, each reduction with its share of the X and a ? that says what it is for", async ({ page }) => {
+  await on(page, "label");
+  await expect(page.locator("fieldset.group")).toHaveCount(0); // a QR code alone has no bars
+  await page.selectOption("#opt-linear", "auto");
+  const group = page.locator("fieldset.group");
+  await expect(group.locator("legend")).toHaveText("Linear barcode (EAN-13)");
+  await expect(group.locator("#opt-linear-size option").first()).toHaveText("As the 2D symbol: 100 % (X 0.330 mm)");
+  await expect(group.locator("#opt-reduction option")).toHaveText([
+    "None",
+    "0.010 mm less on every bar (3 % of X 0.330 mm)",
+    "0.015 mm less on every bar (5 % of X 0.330 mm)",
+    "0.020 mm less on every bar (6 % of X 0.330 mm)",
+    "0.025 mm less on every bar (8 % of X 0.330 mm)",
+    "0.030 mm less on every bar (9 % of X 0.330 mm)",
+    "0.040 mm less on every bar (12 % of X 0.330 mm)",
+    "0.050 mm less on every bar (15 % of X 0.330 mm)",
+  ]);
+  await expect(group.locator(".hint")).toHaveText(
+    "The size sets the X of the EAN-13 (the width of a narrow bar). The reduction takes a fixed amount off every bar, half on each side: the barcode's size and the 2D symbol do not change, the spaces widen.",
+  );
+  // A smaller linear barcode: the shares follow its X
+  const sizes = await group.locator("#opt-linear-size option").evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
+  await page.selectOption("#opt-linear-size", sizes.at(-1)!);
+  const x = Number((await group.locator("#opt-linear-size option:checked").textContent())!.match(/X ([\d.]+) mm/)![1]);
+  await expect(group.locator("#opt-reduction option").nth(3)).toHaveText(`0.020 mm less on every bar (${Math.round((0.02 / x) * 100)} % of X ${x.toFixed(3)} mm)`);
+  // The ?: opens and closes, on Escape too
+  const help = group.getByRole("button", { name: "What is Bar width reduction?" });
+  const note = group.getByRole("note");
+  await expect(note).toBeHidden();
+  await help.click();
+  await expect(help).toHaveAttribute("aria-expanded", "true");
+  await expect(note).toHaveText("A press (offset, flexography, gravure) spreads the ink and widens the bars. Take off what the printer asks for; none for a label printer, a laser printer or an inkjet.");
+  await expect(note).toBeInViewport();
+  await page.keyboard.press("Escape");
+  await expect(note).toBeHidden();
+  await expect(help).toBeFocused();
+  await help.click();
+  await group.locator("legend").click();
+  await expect(note).toBeHidden();
+  // A linear symbol alone: the reduction alone, named after the symbol and its own X
+  await page.selectOption("#opt-linear", "none");
+  await expect(group).toHaveCount(0);
+  await page.selectOption("#opt-symbol", "gs1-128");
+  await expect(group.locator("legend")).toHaveText("Linear barcode (GS1-128)");
+  await expect(group.locator("#opt-linear-size")).toHaveCount(0);
+  await expect(group.locator("#opt-reduction option").nth(3)).toHaveText(/^0\.020 mm less on every bar \(\d+ % of X \d\.\d{3} mm\)$/);
+  await expect(group.locator(".hint")).toHaveText("The reduction takes a fixed amount off every bar, half on each side: the symbol's size does not change, the spaces widen.");
 });
 
 // The rest of item 1.5: crop marks, on a page 10 mm (28.346 pt) larger on every side, the PDF's TrimBox the label.
@@ -1201,7 +1360,7 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
   await on(page, "export");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("ZPL writes the QR code in the printer's automatic mode");
   // The error correction as buttons in a row (the owner's request of 10 November 2026): a press, or the arrow keys on
   // the chosen one, changes it; its full name said under them
@@ -1299,7 +1458,7 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   await page.selectOption("#prn-module", "6");
   await expect(section.locator(".hint.ok")).toContainText("X 0.751 mm (6 dots at 203 dpi)");
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^BQN,2,6^FD");
   // A narrow printer of one's own: the label no longer fits
   await page.selectOption("#prn-profile", "new");
@@ -1308,7 +1467,7 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   await page.fill("#prn-width", "15");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.locator("#prn-profile")).toHaveValue(/^own-/);
-  await expect(page.getByRole("button", { name: "ZPL (300 dpi)" })).toBeVisible();
+  await expect((await printFile(page, "ZPL (300 dpi)"))).toBeVisible();
   await expect(section.locator(".hint.error")).toContainText("Desk printer prints 15 mm");
   await expect(section.getByRole("button", { name: "Test print (ZPL)" })).toBeDisabled();
   await page.getByRole("button", { name: "Edit profile" }).click();
@@ -1321,18 +1480,18 @@ test("printer profiles: a profile of one's own, the module's dots within the ran
   // Kept in this browser
   await page.reload();
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await expect(page.locator("#prn-profile option", { hasText: "Desk printer" })).toHaveCount(1);
 });
 
 // Backlog 3.3 and 3.6 (ADR 0002): the print file in the profile's language, TSPL or EPL2 besides ZPL, checked in Labelize.
 test("printer languages: a TSPL or EPL2 profile writes its own file, says it is checked in an emulator, refuses what it cannot print", async ({ page }) => {
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "tspl-203");
   await expect(page.locator("details.printer .hint.error")).toContainText("TSPL files are checked in Labelize, an emulator, not yet on a TSPL printer");
   await expect(page.getByRole("button", { name: "ZPL template" })).toHaveCount(0);
-  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "TSPL (203 dpi)")).click()]);
   expect(tspl.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42.prn");
   const text = readFileSync((await tspl.path())!, "utf8");
   expect(text).toMatch(/^SIZE [\d.]+ mm,[\d.]+ mm\r\n/);
@@ -1343,23 +1502,23 @@ test("printer languages: a TSPL or EPL2 profile writes its own file, says it is 
   expect(readFileSync((await test.path())!, "utf8")).toContain('"50 mm: measure this line"');
   // EPL2 has no QR code but on Japanese models: refused, with the reason
   await page.selectOption("#prn-profile", "epl2-203");
-  await page.getByRole("button", { name: "EPL2 (203 dpi)" }).click();
+  await (await printFile(page, "EPL2 (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("EPL2's QR code is for Japanese printer models only");
   // A profile of one's own in EPL2, kept
   await page.selectOption("#prn-profile", "new");
   await page.fill("#prn-name", "Old warehouse printer");
   await page.selectOption("#prn-language", "epl2");
   await page.getByRole("button", { name: "Save profile" }).click();
-  await expect(page.getByRole("button", { name: "EPL2 (203 dpi)" })).toBeVisible();
+  await expect((await printFile(page, "EPL2 (203 dpi)"))).toBeVisible();
 });
 
 // Backlog 3.7 (ADR 0002): DPL for Datamax-O'Neil and Honeywell printers, checked in Labelize as TSPL and EPL2 are.
 test("printer languages: a DPL profile writes a label format in tenths of a millimetre, and refuses a GS1 DataMatrix", async ({ page }) => {
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "dpl-300");
   await expect(page.locator("details.printer .hint.error")).toContainText("DPL files are checked in Labelize, an emulator, not yet on a DPL printer");
-  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (300 dpi)" }).click()]);
+  const [dpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "DPL (300 dpi)")).click()]);
   expect(dpl.suggestedFilename()).toBe("dl-qrcode_01_09506000134376_10_B42.dpl");
   const text = readFileSync((await dpl.path())!, "latin1");
   expect(text.startsWith("\x02L\rm\rD11\rz\r")).toBe(true);
@@ -1374,19 +1533,19 @@ test("printer languages: a DPL profile writes a label format in tenths of a mill
   await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-datamatrix");
   await on(page, "export");
-  await page.getByRole("button", { name: "DPL (300 dpi)" }).click();
+  await (await printFile(page, "DPL (300 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("DPL's Data Matrix (W1c) has no FNC1 in the manual");
 });
 
 // Backlog 3.4 and 3.5 (ADR 0002): Argox's PPLA and PPLB, written with the DPL and EPL2 commands Argox's manual gives alike
 test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands, say so, and refuse what Argox's manual lacks", async ({ page }) => {
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await expect(page.locator("details.printer summary")).toHaveText("Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)");
   // The example's QR code: PPLA has none
   await page.selectOption("#prn-profile", "ppla-203");
   await expect(page.locator("details.printer .hint.error")).toContainText("PPLA files are written with the DPL commands Argox's manual gives alike, and checked in Labelize as DPL");
-  await page.getByRole("button", { name: "PPLA (203 dpi)" }).click();
+  await (await printFile(page, "PPLA (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("PPLA has no QR code");
   // A Data Matrix with the GS1 Digital Link URI: a PPLA label format, as DPL writes it
   await on(page, "scan");
@@ -1394,7 +1553,7 @@ test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands,
   await on(page, "label");
   await page.selectOption("#opt-symbol", "dl-datamatrix");
   await on(page, "export");
-  const [ppla] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PPLA (203 dpi)" }).click()]);
+  const [ppla] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "PPLA (203 dpi)")).click()]);
   expect(ppla.suggestedFilename()).toBe("dl-datamatrix_01_09506000134376_10_B42.ppla");
   const text = readFileSync((await ppla.path())!, "latin1");
   expect(text.startsWith("\x02L\rm\rD11\rz\r")).toBe(true);
@@ -1402,19 +1561,19 @@ test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands,
   // PPLB has no Data Matrix
   await page.selectOption("#prn-profile", "pplb-203");
   await expect(page.locator("details.printer .hint.error")).toContainText("PPLB files are written with the EPL2 commands Argox's manual gives alike, and checked in Labelize as EPL2");
-  await page.getByRole("button", { name: "PPLB (203 dpi)" }).click();
+  await (await printFile(page, "PPLB (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("PPLB has no Data Matrix");
   // GS1-128: (10) before (17) is refused in EPL2's name and its reason; an SSCC alone, PPLB's B command with 1E
   await on(page, "label");
   await page.selectOption("#opt-symbol", "gs1-128");
   await on(page, "export");
-  await page.getByRole("button", { name: "PPLB (203 dpi)" }).click();
+  await (await printFile(page, "PPLB (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("PPLB is written with EPL2's commands, which its manual gives alike: EPL2's GS1-128 (UCC/EAN 128) carries an element string of no predefined length only last");
   await on(page, "data");
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "export");
-  const [pplb] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PPLB (203 dpi)" }).click()]);
+  const [pplb] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "PPLB (203 dpi)")).click()]);
   expect(pplb.suggestedFilename()).toBe("gs1-128_00_106141411234567897.pplb");
   const commands = readFileSync((await pplb.path())!, "latin1");
   expect(commands).toMatch(/^\r\nN\r\nq\d+\r\n/);
@@ -1442,14 +1601,14 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
   // In ZPL (backlog 3.2): A5 is wider than a 4-inch printer prints, refused; a 6-inch printer of one's own writes it, each
   // GS1-128 a ^BC, the label's text and rules with it; its test label too. Another language refuses it, with the reason.
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("The label is 148.0 mm wide");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "new");
   await page.fill("#prn-name", "Six-inch printer");
   await page.fill("#prn-width", "168");
   await page.getByRole("button", { name: "Save profile" }).click();
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const text = readFileSync((await zpl.path())!, "utf8");
   expect(text.match(/\^BCN/g)).toHaveLength(2);
   expect(text).toContain("^PW1183\n^LL1678"); // 148 × 210 mm at 203 dpi
@@ -1458,7 +1617,7 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   const [test] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Test print (ZPL)" }).click()]);
   expect(readFileSync((await test.path())!, "utf8")).toContain("50 mm: measure this line");
   await page.selectOption("#prn-profile", "tspl-203");
-  await page.getByRole("button", { name: "TSPL (203 dpi)" }).click();
+  await (await printFile(page, "TSPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("TSPL's GS1-128 is offered for an SSCC (00) alone");
 });
 
@@ -1484,7 +1643,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await expect(page.locator(".scan-result")).toHaveText(
     "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24", { timeout: 30_000 });
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const text = readFileSync((await zpl.path())!, "utf8");
   expect(text).toContain("^CI28");
   for (const title of ["CONTENT", "CONTEÚDO", "COUNT", "QUANTIDADE", "SSCC"]) expect(text).toContain(`^FD${title}^FS`);
@@ -1500,7 +1659,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await expect(page.locator("#opt-logistic-second")).toHaveValue("pt-BR");
   await page.selectOption("#opt-logistic-second", "es");
   await on(page, "export");
-  const [spanish] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [spanish] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const es = readFileSync((await spanish.path())!, "utf8");
   for (const title of ["CONTENIDO", "CANTIDAD"]) expect(es).toContain(`^FD${title}^FS`);
   expect(es).not.toContain("^FDCONTEÚDO^FS");
@@ -1510,7 +1669,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
     await page.selectOption("#opt-logistic-second", language);
     await expect(page.locator(".preview .error")).toHaveCount(0);
     await on(page, "export");
-    const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
     const zplText = readFileSync((await download.path())!, "utf8");
     for (const title of titles) expect(zplText).toContain(`^FD${title}^FS`);
     expect(zplText).not.toContain("^FDCONTENIDO^FS");
@@ -1536,7 +1695,7 @@ test("the GS1 Logistic Label: From and To wrapped within their columns, smaller 
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.slice(0, 9)).toEqual(["FROM", "Distribuidora de", "Alimentos Dal", "Giardino Ltda.", "Avenida", "Engenheiro Luís", "Carlos Berrini", "1748, São Paulo", "SP"]);
   expect(fields.slice(9, 17)).toEqual(["TO", "Supermercados", "Exemplo S.A. —", "Centro de", "Distribuição 12", "Rodovia", "Anhanguera km 26,", "Cajamar SP"]);
@@ -1562,7 +1721,7 @@ test("the GS1 Logistic Label: a word too long for its column broken after a hyph
   await page.fill("#opt-to", "Armazém/Recebimento");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.slice(0, 9)).toEqual(["FROM", "Hortifrutigranjeira-", "Cooperativa", "Rua Augusta,1500,", "Consolação", "CEP 01305-100", "TO", "Armazém/", "Recebimento"]);
 });
@@ -1578,12 +1737,12 @@ test("the GS1 Logistic Label: two marks in a row kept together, no line starting
   await page.fill("#opt-to", "");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5");
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "new");
   await page.fill("#prn-name", "Six-inch printer");
   await page.fill("#prn-width", "168");
   await page.getByRole("button", { name: "Save profile" }).click();
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.slice(0, 4)).toEqual(["FROM", "Cooperativa", "Supermercados,-", "Agroindustrial"]);
 });
@@ -1599,7 +1758,7 @@ test("the GS1 Logistic Label: a postcode with a space kept whole, no line starti
   await page.fill("#opt-to", "");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.slice(0, 7)).toEqual(["FROM", "Avenida Paulista", "1578 CEP", "01310 200", "Pedido", "45000123456789", "1-0000012345"]);
 });
@@ -1615,7 +1774,7 @@ test("the GS1 Logistic Label: the marks a word starts with kept with it", async 
   await page.fill("#opt-to", "");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
   expect(fields.slice(0, 8)).toEqual(["FROM", "Doca 3", "--Hortifrutigranjeira", "Cooperativa", ",-Agroindustrial", "Setor --", "Superintendência-", "Administrativa"]);
 });
@@ -1629,16 +1788,16 @@ test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page })
   await page.fill("#opt-from", "Dal Giardino S.p.A.");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "tspl-203");
-  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "TSPL (203 dpi)")).click()]);
   const tsplFile = readFileSync((await tspl.path())!, "utf8");
   expect(tsplFile).toMatch(/^SIZE 101\.6 mm,152\.4 mm\r$/m);
   expect(tsplFile).toMatch(/^BARCODE \d+,\d+,"EAN128",\d+,0,0,4,4,"00106141411234567897"\r$/m);
   expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",0,\d+,\d+,"Dal Giardino S\.p\.A\."\r$/m);
   expect(tsplFile).toMatch(/^BAR 0,\d+,812,2\r$/m);
   await page.selectOption("#prn-profile", "dpl-203");
-  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const [dpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "DPL (203 dpi)")).click()]);
   const dplFile = readFileSync((await dpl.path())!, "latin1");
   expect(dplFile).toMatch(/\r1q\d\d\d{3}\d{8}0010614141123456789\r/);
   expect(dplFile).toMatch(/\r1\d{3}000\d{8}Dal Giardino S\.p\.A\.\r/);
@@ -1659,12 +1818,12 @@ test("the GS1 Logistic Label with a QR code beside its data, read back, and in Z
     "✓ Read as intended: ]C1 (00)106141411234567897 and ]C1 (02)09506000134376(37)24(10)ABC123 and " +
       "]Q1 https://id.gs1.org/00/106141411234567897?02=09506000134376&37=24&10=ABC123", { timeout: 30_000 });
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "new");
   await page.fill("#prn-name", "Six-inch printer");
   await page.fill("#prn-width", "168");
   await page.getByRole("button", { name: "Save profile" }).click();
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^BY1,3\.0,1\^FO\d+,\d+\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/106141411234567897\?02=/);
   // A GS1 DataMatrix instead: the element string
   await on(page, "label");
@@ -1861,7 +2020,7 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   await on(page, "export");
   const [pdf] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
   expect(readFileSync((await pdf.path())!).subarray(0, 4).toString()).toBe("%PDF");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("The label is 150.0 mm wide");
   // Deleting the selected element takes it off the page
   await on(page, "label");
@@ -1872,14 +2031,14 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   // own commands, each element where the page puts it
   await page.fill("#page-width", "100");
   await on(page, "export");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("runs past the label's edge");
   await on(page, "label");
   await page.locator(".design-list button", { hasText: "QR code" }).click();
   await page.fill("#el-x", "5");
   await page.fill("#el-y", "5");
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const file = readFileSync((await zpl.path())!, "utf8");
   const dots = (mm: number) => Math.round((mm / 25.4) * 203);
   expect(file).toContain(`^PW${dots(100)}\n^LL${dots(90)}`);
@@ -1890,9 +2049,9 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   await expect(page.locator(".error.small")).toHaveCount(0);
   // In DPL: records by their bottom left corner, rows up from the label's bottom in tenths of a millimetre (the text at
   // 70 mm, 559 dots at 203 dpi, so column 0699), the text in the printer's internal fonts, the QR code with W1D
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "dpl-203");
-  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const [dpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "DPL (203 dpi)")).click()]);
   const dplFile = readFileSync((await dpl.path())!, "latin1");
   expect(dplFile).toMatch(/\r1[0-2](\w)\1(?:000)\d{4}0699BATCH B42\r/);
   expect(dplFile).toMatch(/\r1[0-2](\w)\1(?:000)\d{4}0699EXP 31\.12\.2027\r/);
@@ -1949,7 +2108,7 @@ test("a label of one's own: shapes added, changed, sized, named, and written in 
   // Drawn on the page: the frame's four sides and the line among its rectangles
   await expect(page.locator(".preview .symbol svg")).toBeAttached();
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const file = readFileSync((await zpl.path())!, "utf8");
   const dots = (mm: number) => Math.round((mm / 25.4) * 203);
   expect(file).toContain(`^FO${dots(2)},${dots(2)}^GB${dots(98) - dots(2)},${dots(58) - dots(2)},${dots(0.8)}^FS`);
@@ -1959,7 +2118,7 @@ test("a label of one's own: shapes added, changed, sized, named, and written in 
   await page.fill("#el-height-mm", "60");
   await expect(page.locator(".design-problems")).toContainText("Line down 60 mm goes past the label's edge.");
   await on(page, "export");
-  await page.getByRole("button", { name: "ZPL (203 dpi)" }).click();
+  await (await printFile(page, "ZPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("A line or box runs past the label's edge");
 });
 
@@ -1993,7 +2152,7 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   expect([work.format, work.identification.qualifiers["10"], work.page.elements.length]).toEqual(["gs1-label-studio.work", "LOT7", 3]);
   await expect(page.locator(".work-note")).toContainText(`Saved as ${saved.suggestedFilename()}: Open… takes it back`);
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const zplPath = (await zpl.path())!;
   expect(readFileSync(zplPath, "utf8")).toMatch(/^\^XA\n\^FX GS1 Label Studio work 1\/\d+ /);
   for (const file of [savedPath, zplPath]) {
@@ -2051,7 +2210,7 @@ test("a label of one's own: a date's time in hh and mm, in the drawing and the Z
   await page.fill("#el-y", "52");
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDEXP 31/12/2027 15.30^FS");
 });
 
@@ -2089,7 +2248,7 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
   await page.fill("#el-y", "52");
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDDOB 15/01/1960 08:30^FS");
 });
 
@@ -2173,7 +2332,7 @@ test("one code: a name typed with spaces and accents written as %XX in the code,
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended: ]d2 (8018)950600013435200008(7254)Maria+Jos%C3%A9(7253)Concei%C3%A7%C3%A3o", { timeout: 30_000 });
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const text = readFileSync((await zpl.path())!, "utf8");
   expect(text).toContain("^FDMaria José Conceição^FS");
   expect(text).toContain("_17254Maria+Jos%C3%A9_17253Concei%C3%A7%C3%A3o");
@@ -2349,7 +2508,7 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image logo");
   // In ZPL, a graphic field at its corner, 40 mm wide at 203 dpi
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const file = readFileSync((await zpl.path())!, "utf8");
   const dots = (mm: number) => Math.round((mm / 25.4) * 203);
   expect(file).toContain(`^FO${dots(50)},${dots(4)}^GFA,`);
@@ -2361,9 +2520,9 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   await page.selectOption("#el-symbol", "dl-datamatrix");
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await on(page, "export");
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "epl2-203");
-  const [epl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "EPL2 (203 dpi)" }).click()]);
+  const [epl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "EPL2 (203 dpi)")).click()]);
   const bytes = readFileSync((await epl.path())!);
   const latin1 = bytes.toString("latin1");
   const gw = /\r\nGW(\d+),(\d+),(\d+),(\d+),/.exec(latin1)!;
@@ -2373,7 +2532,7 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   expect(latin1.endsWith("P1\r\n")).toBe(true);
   // In TSPL, BITMAP with the same bytes (a dark dot a 0 bit in both), then the text and the Data Matrix
   await page.selectOption("#prn-profile", "tspl-203");
-  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "TSPL (203 dpi)")).click()]);
   const tsplBytes = readFileSync((await tspl.path())!);
   const tsplText = tsplBytes.toString("latin1");
   const bitmap = /\r\nBITMAP (\d+),(\d+),(\d+),(\d+),0,/.exec(tsplText)!;
@@ -2385,7 +2544,7 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   expect(tsplText.endsWith("PRINT 1\r\n")).toBe(true);
   // In DPL an image is refused with the reason: DPL prints a stored image, which Labelize does not draw
   await page.selectOption("#prn-profile", "dpl-203");
-  await page.getByRole("button", { name: "DPL (203 dpi)" }).click();
+  await (await printFile(page, "DPL (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("an image is not offered in DPL yet");
   // Kept in the work file and opened again
   await on(page, "more");
@@ -2434,7 +2593,7 @@ test("a label of one's own: an image's darkness changed by its slider, printed a
   expect(usual).toMatchObject({ threshold: undefined, circle: true, mid: true, light: false });
   const zplOf = async () => {
     await on(page, "export");
-    const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
     await on(page, "label");
     return /\^GFA,[^]*?\^FS/.exec(readFileSync((await zpl.path())!, "utf8"))![0];
   };
@@ -2514,7 +2673,7 @@ test("a label of one's own: an image's greys as dots for a photo, at its darknes
   expect(await kept()).toEqual({ threshold: undefined, dither: undefined, square: 0 }); // grey 128 is not below half way
   const zplOf = async () => {
     await on(page, "export");
-    const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+    const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
     await on(page, "label");
     return /\^GFA,[^]*?\^FS/.exec(readFileSync((await zpl.path())!, "utf8"))![0];
   };
@@ -2643,7 +2802,7 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   await expect(page.locator("#el-height-mm")).toHaveValue("12.5");
   await expect(page.locator("#el-x")).toHaveValue("60");
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const dots = (mm: number) => Math.round((mm / 25.4) * 203);
   expect(readFileSync((await zpl.path())!, "utf8")).toMatch(new RegExp(`\\^GFA,(\\d+),\\1,${Math.ceil((dots(90) - dots(60)) / 8)},`));
   await on(page, "label");
@@ -2792,7 +2951,7 @@ test("a label of one's own: an element resized from the keyboard, by the arrow k
   await expect(handle).toBeFocused();
   // In the ZPL, a box 26 × 24.5 mm: 208 × 196 dots at 203 dpi
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^GB208,196,/);
   await on(page, "label");
   // The text block: 3 mm to 3.5 mm, then down four heights and more, never under 2 mm
@@ -2886,7 +3045,7 @@ test("a label of one's own: an element moved from the keyboard, by the arrow key
   await expect(page.locator("#el-x")).toHaveValue("50");
   // In the ZPL, the box at 50 mm and 30 mm: 400 and 240 dots at 203 dpi (its right edge, 90 mm, rounded to dot 719)
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^FO400,240\^GB319,160,/);
   // In Portuguese, the name and the hint
   await on(page, "more");
@@ -3319,14 +3478,14 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   await rotation.getByRole("button", { name: "270°", exact: true }).click();
   await expect(page.locator(".design-problems")).toHaveCount(0);
   await on(page, "export");
-  const [zpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "ZPL (203 dpi)" }).click()]);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const file = readFileSync((await zpl.path())!, "utf8");
   expect(file).toMatch(/\^BCR,/);
   expect(file).toMatch(/\^A0B,\d+,\d+\^FB\d+,1,0,L\^FDBATCH B42\^FS/);
   // In EPL2 too, B and A with their rotation (1 a quarter, 3 three quarters)
-  await page.locator("details.printer summary").click();
+  await openPrinter(page);
   await page.selectOption("#prn-profile", "epl2-203");
-  const [epl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "EPL2 (203 dpi)" }).click()]);
+  const [epl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "EPL2 (203 dpi)")).click()]);
   const eplFile = readFileSync((await epl.path())!, "utf8");
   expect(eplFile).toMatch(/^B\d+,\d+,1,1E,/m);
   expect(eplFile).toMatch(/^A\d+,\d+,3,\d,\d,\d,N,"BATCH B42"/m);
@@ -3341,7 +3500,7 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   const printer = page.locator("details.printer");
   if ((await printer.getAttribute("open")) === null) await printer.locator("summary").click();
   await page.selectOption("#prn-profile", "tspl-203");
-  const [tspl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "TSPL (203 dpi)" }).click()]);
+  const [tspl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "TSPL (203 dpi)")).click()]);
   const tsplFile = readFileSync((await tspl.path())!, "utf8");
   expect(tsplFile).toMatch(/^DMATRIX \d+,\d+,\d+,\d+,c126,x\d+,r90,/m);
   expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",270,\d+,\d+,"BATCH B42"\r$/m);
@@ -3356,7 +3515,7 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   await on(page, "export");
   if ((await printer.getAttribute("open")) === null) await printer.locator("summary").click();
   await page.selectOption("#prn-profile", "dpl-203");
-  const [dpl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "DPL (203 dpi)" }).click()]);
+  const [dpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "DPL (203 dpi)")).click()]);
   const dplFile = readFileSync((await dpl.path())!, "latin1");
   expect(dplFile).toMatch(/\r2d\w\w\d{3}\d{8}09506000134376\r/);
   expect(dplFile).toMatch(/\r4[0-2](\w)\1(?:000)\d{8}BATCH B42\r/);
