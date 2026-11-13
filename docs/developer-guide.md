@@ -174,6 +174,7 @@ Each module, in the order of the flow above.
 | `zpl.ts` | `zplLabel`, `zplTemplate`, `fillTemplate`, `zplTestLabel`, `gs1128FieldData` (mode N, FNC1, code sets), graphic fields in stripes and in ZPL's ASCII compression, `zplPage` (a label of one's own, its turned fields: `zplTurnedField`) |
 | `printers.ts` | What every printer language shares: `PrintSymbolOptions`, `PrintLabelOptions`, `PrinterUnsupportedError`, `PrintFile` (text, or bytes where EPL2's `GW` carries an image) with `printFileBytes` and `joinPrintFiles`, the text lines around a symbol (`textLines`), the bitmap font nearest a height |
 | `tspl.ts`, `epl.ts`, `dpl.ts` | TSPL/TSPL2, EPL2 and DPL with the printer's commands (`tsplLabel`, `eplLabel`, `dplLabel` and their test labels; a label of one's own with `tsplPage` and `eplPage`, a fixed-pitch font fitted to a line's capitals and width by `fittingFont` in `printers.ts`); DPL's positions in tenths of a millimetre from the label's bottom left corner; what Labelize does not read back refused |
+| `argox.ts` | Argox's PPLA and PPLB (`pplaLabel`, `pplbLabel`, their test labels and pages, `pplbLogisticLabel`): the DPL and EPL2 writers' files, refusing what Argox's manual lacks and saying DPL's or EPL2's refusals in PPLA's or PPLB's name |
 | `printFile.ts` | `PRINTER_LANGUAGES` (name, extension, printers, how checked, templates), `printLabel` and `printTestLabel` by language |
 | `printer.ts` | `GENERIC_PROFILES`, `profileProblem`, `moduleChoice`, `printWidthProblem` |
 
@@ -319,9 +320,10 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle, resizing held within the label (apps/web/test) | 27 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 92 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 93 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
+| `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
 `pnpm build`, each on a desktop, a phone and a tablet held horizontally (a test about one layout skipped in the others).

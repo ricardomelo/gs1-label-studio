@@ -21,6 +21,7 @@ import { joinPrintFiles, printFileBytes, PrinterUnsupportedError, type PrintFile
 import { eplLogisticLabel, eplPage } from "./epl.ts";
 import { tsplPage } from "./tspl.ts";
 import { dplPage } from "./dpl.ts";
+import { pplaPage, pplbLogisticLabel, pplbPage } from "./argox.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
@@ -284,10 +285,10 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
 
 /**
  * The label's print file in the printer's language at `dpi`, a module `dotsPerModule` whole dots (the nearest when not
- * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL and EPL2 (backlog 4.1),
- * and in TSPL and DPL as a page of their own (`logisticPage`) where their GS1-128 carries it (an SSCC alone), a
- * label of one's own in ZPL, EPL2, TSPL and DPL (backlog 4.2), each of its barcodes at its own whole dots a module: text, or
- * bytes when EPL2 or TSPL sends an image (GW, BITMAP).
+ * given); with `notes`, the test label (backlog 3.1). The GS1 Logistic Label is written in ZPL, EPL2 and PPLB (backlog
+ * 4.1), and in TSPL, DPL and PPLA as a page of their own (`logisticPage`) where their GS1-128 carries it (an SSCC alone),
+ * a label of one's own in every language (backlog 4.2), each of its barcodes at its own whole dots a module: text, or
+ * bytes when EPL2, PPLB or TSPL sends an image (GW, BITMAP).
  */
 export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, design: LabelDesign, dpi: number, dotsPerModule?: number,
   notes?: readonly string[]): PrintFile {
@@ -295,6 +296,8 @@ export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, desig
     if (language === "epl2") return eplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
     if (language === "tspl") return tsplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
     if (language === "dpl") return dplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
+    if (language === "ppla") return pplaPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
+    if (language === "pplb") return pplbPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
     return zplPage(printPageFor(drawn.designed, dpi), notes ? { notes } : {});
   }
   if (drawn.logistic) {
@@ -302,6 +305,8 @@ export function printFileFor(language: PrinterLanguage, drawn: DrawnLabel, desig
     if (language === "epl2") return eplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
     if (language === "tspl") return tsplPage(logisticPage(drawn.logistic, dpi, d), notes ? { notes } : {});
     if (language === "dpl") return dplPage(logisticPage(drawn.logistic, dpi, d), notes ? { notes } : {});
+    if (language === "ppla") return pplaPage(logisticPage(drawn.logistic, dpi, d), notes ? { notes } : {});
+    if (language === "pplb") return pplbLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
     return zplLogisticLabel(drawn.logistic, dpi, d, notes ? { notes } : {});
   }
   const options = zplOptionsFor(drawn, design, dpi, dotsPerModule);

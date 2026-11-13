@@ -23,11 +23,12 @@ export function languageOf(profile: Pick<PrinterProfile, "language">): PrinterLa
 
 /**
  * A profile for any printer of each language at its common resolutions, four inches wide (104 mm), as most label
- * printers are: ZPL at 152 to 600 dpi, TSPL, EPL2 and DPL at 203 and 300 dpi (EPL2's fonts are defined for those two).
+ * printers are: ZPL at 152 to 600 dpi, TSPL, EPL2, DPL, PPLA and PPLB at 203 and 300 dpi (EPL2's fonts are defined for
+ * those two, and Argox's printers have those two: OS-214 and X-1000+ at 203 dpi, OS-314 and X-3000+ at 300 dpi).
  */
 export const GENERIC_PROFILES: readonly PrinterProfile[] = [
   ...[152, 203, 300, 406, 600].map((dpi) => ({ id: `zpl-${dpi}`, name: `Any ZPL printer, ${dpi} dpi, 104 mm`, dpi, widthMm: 104 })),
-  ...(["tspl", "epl2", "dpl"] as const).flatMap((language) => [203, 300].map((dpi) => ({
+  ...(["tspl", "epl2", "dpl", "ppla", "pplb"] as const).flatMap((language) => [203, 300].map((dpi) => ({
     id: `${language}-${dpi}`, name: `Any ${PRINTER_LANGUAGES[language].name} printer, ${dpi} dpi, 104 mm`, dpi, widthMm: 104, language,
   }))),
 ];
@@ -35,7 +36,7 @@ export const GENERIC_PROFILES: readonly PrinterProfile[] = [
 /** What is wrong with a profile the person described, or null. */
 export function profileProblem(profile: Pick<PrinterProfile, "name" | "dpi" | "widthMm" | "language">): string | null {
   if (!profile.name.trim()) return "A profile needs a name.";
-  if (profile.language !== undefined && !(profile.language in PRINTER_LANGUAGES)) return "The printer's language is ZPL, TSPL, EPL2 or DPL.";
+  if (profile.language !== undefined && !(profile.language in PRINTER_LANGUAGES)) return "The printer's language is ZPL, TSPL, EPL2, DPL, PPLA or PPLB.";
   if (!Number.isFinite(profile.dpi) || profile.dpi < 100 || profile.dpi > 1200) return "The resolution is from 100 to 1200 dpi.";
   if (!Number.isFinite(profile.widthMm) || profile.widthMm < 10 || profile.widthMm > 500) return "The print width is from 10 to 500 mm.";
   return null;

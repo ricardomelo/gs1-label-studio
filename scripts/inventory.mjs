@@ -22,7 +22,7 @@ export const AREAS = [
   ["Symbols and the label's layout", ["layout", "labelsvg", "bars", "hriplace", "gs1128", "qrmode", "logistic", "design", "place", "picture", "imagefile", "resize", "said", "guides", "pyformat"]],
   ["Exports and prepress: SVG, PNG, PDF, EPS, zip", ["render", "prepress", "roundtrip"]],
   ["In bulk: rows, the report, sequences, generation", ["table", "bulk", "report", "sequence", "batch"]],
-  ["Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL", ["dots", "printer", "zpl", "labelary", "printlangs"]],
+  ["Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB", ["dots", "printer", "zpl", "labelary", "printlangs", "argox"]],
   ["RFID, NFC and digital signatures", ["epc", "ndef", "sign"]],
   ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian", ["i18n"]],

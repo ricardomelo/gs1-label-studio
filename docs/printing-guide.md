@@ -13,7 +13,7 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
 5. [ZPL templates for systems](#5-zpl-templates-for-systems)
 6. [Checking a printed symbol](#6-checking-a-printed-symbol)
 7. [What ZPL refuses, and why](#7-what-zpl-refuses-and-why)
-8. [TSPL, EPL2 and DPL, and the other printer languages](#8-tspl-epl2-and-dpl-and-the-other-printer-languages)
+8. [TSPL, EPL2, DPL, PPLA and PPLB](#8-tspl-epl2-dpl-ppla-and-pplb)
 
 ## 1. Which file for which printing
 
@@ -24,7 +24,7 @@ printer (PDF and label sheets), or on a thermal label printer (ZPL). How to make
 | A web page, a document, a screen | **SVG** or **PNG** | PNG at the label's size or at 300, 600 or 1200 dpi |
 | An office or laser printer | **PDF**, one label a page or on **label sheets** | Printed at 100 % ("actual size") |
 | A thermal label printer (Zebra and printers that emulate ZPL) | **ZPL** | The printer's own commands, at its resolution |
-| A TSC or generic thermal printer, an older Zebra, a Datamax-O'Neil or Honeywell | **TSPL**, **EPL2** or **DPL** (section 8) | The printer's own commands, checked in an emulator: test-print first |
+| A TSC or generic thermal printer, an older Zebra, a Datamax-O'Neil or Honeywell, an Argox | **TSPL**, **EPL2**, **DPL**, **PPLA** or **PPLB** (section 8) | The printer's own commands, checked in an emulator: test-print first |
 | A system (ERP, WMS) that prints labels | **ZPL template** | Placeholders the system fills in |
 | Every file of one label, to send to someone | **Zip of all** | SVG, PNG, PDF, EPS and a README of the data, sizes and how to print; the PNG at the resolution chosen |
 
@@ -66,7 +66,7 @@ A thermal printer prints whole dots (152, 203, 300, 406 or 600 dpi). A module th
 rounded differently bar by bar and the symbol degrades: an EAN-13 at 100 % (0.330 mm) prints as 3 dots (0.375 mm) at
 203 dpi or 4 dots (0.339 mm) at 300 dpi.
 
-1. **Choose the printer** in *Printer (ZPL, TSPL, EPL2, DPL)*: a generic profile at its resolution, or a profile of your own with its
+1. **Choose the printer** in *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)*: a generic profile at its resolution, or a profile of your own with its
    print width (the printer's specification sheet gives both).
 2. **Choose the module**: the studio offers the whole numbers of dots within the table's range and says the
    X-dimension that prints. If none fits, the nearest is printed and said.
@@ -130,13 +130,14 @@ PDF offered instead.
 | The GS1 Logistic Label | In ZPL and EPL2; in TSPL and DPL for an SSCC alone (their GS1-128 carries nothing else yet); not as a template: print its PDF meanwhile. In EPL2, an element string of no predefined length must end its symbol, and the 2D symbol can only be a Data Matrix with a URI. A6 and A5 are wider than a 4-inch printer prints: a 4 × 6 in label, or a wider printer's profile |
 | A label of one's own | In ZPL, EPL2, TSPL and DPL (not as a template). EPL2, TSPL and DPL refuse what they refuse for a symbol alone (in TSPL: GS1-128, EAN-8, UPC, GS1 DataBar; in DPL: GS1 DataMatrix, GS1-128 but for an SSCC alone, GS1 DataBar). DPL places each record in tenths of a millimetre from the label's bottom left corner, so the printer must know the label's length (it senses the gap) and an edge can land a dot off at 300 dpi; DPL refuses an image (it prints one stored in the printer first, which Labelize does not draw): print its PDF, or another language, meanwhile. A turned barcode or text goes in DPL with its record's rotation (2, 3, 4: 90°, 180°, 270° clockwise), turned about its bottom left corner as the manual's figure 8-1 shows, which Labelize places otherwise (the tests move it for Labelize), not yet seen on a Datamax or Honeywell printer: print a test label turned before a production run; Labelize does not turn DPL's Data Matrix or QR code, so a turned one is refused. In TSPL an image goes as `BITMAP`, whose dots are raw bytes as `GW`'s (a dot whose bit is 0 prints black, as Labelize draws it): send that file unchanged too. A turned barcode or text goes in TSPL with `BARCODE`'s, `TEXT`'s and `DMATRIX`'s rotation, turned about its point of origin as the manual's own example prints it (four symbols from one point, each in its own quarter), which Labelize places otherwise (the tests move it for Labelize), not yet seen on a TSC printer: print a test label turned before a production run; Labelize does not turn `QRCODE`, so a turned QR code is refused in TSPL. A barcode whose bars, or a line, box or image, would run past the label's edge at the printer's dots is refused. An image goes in EPL2 as `GW`, whose dots are raw bytes: send that file to the printer unchanged, as a binary file (not opened and saved in a text editor, nor sent line by line); a dot whose bit is 0 prints black, as Zebra says (Labelize, the emulator of the tests, prints them the other way round, so its tests invert them), not yet seen on an EPL2 printer; if an image prints wrapped or not at all, the printer's Windows mode should be off (`WN`, the guide's default). A turned barcode or text goes in EPL2 with `A`'s and `B`'s rotation, its point of origin turned with it (the guide's figure 2: at 90° the origin is the field's top right corner), which Labelize places otherwise (the tests move it for Labelize), not yet seen on an EPL2 printer: print a test label turned before a production run; a Data Matrix has no rotation in EPL2 (`b`), so one turned is refused there; a QR code is printed upright (ZPL's `^BQ` has no orientation) |
 
-## 8. TSPL, EPL2 and DPL, and the other printer languages
+## 8. TSPL, EPL2, DPL, PPLA and PPLB
 
 Besides ZPL, the studio writes **TSPL/TSPL2** (TSC and most generic thermal printers; `.prn`), **EPL2** (older
 Zebras and printers that emulate it; `.epl`) and **DPL** (Datamax-O'Neil and Honeywell printers; `.dpl`) with the
-printer's own commands (backlog 3.3 and 3.6, 31 October 2026; 3.7, 2 November 2026). Choose a TSPL, EPL2 or DPL profile
-under *Printer (ZPL, TSPL, EPL2, DPL)*: the Export bar's button, the test print and the bulk print file then use that
-language.
+printer's own commands (backlog 3.3 and 3.6, 31 October 2026; 3.7, 2 November 2026), and **PPLA** and **PPLB**
+(Argox printers; `.ppla`, `.pplb`; backlog 3.4 and 3.5, 13 November 2026, below). Choose a profile in that language
+under *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)*: the Export bar's button, the test print and the bulk print file then
+use it.
 
 **How they are checked.** No simulator renders TSPL, EPL2 or DPL the way Labelary renders ZPL from Zebra's firmware.
 The tests print them with **Labelize**, an open-source emulator of these languages, and read every symbol back with
@@ -160,8 +161,8 @@ production run**. The studio says so beside a TSPL, EPL2 or DPL profile.
 | Checked with | Labelary | Labelize | Labelize | Labelize |
 
 What a language cannot print, or what no test has read back, is refused with the reason, never printed wrong; the PDF
-or ZPL print it meanwhile. TSPL, EPL2 and DPL at 203 and 300 dpi are offered as generic profiles; a profile of your own
-takes any language.
+or ZPL print it meanwhile. TSPL, EPL2, DPL, PPLA and PPLB at 203 and 300 dpi are offered as generic profiles; a profile
+of your own takes any language.
 
 **DPL counts from the label's bottom.** A DPL record places a field by its bottom left corner, measured from the
 label's bottom left corner in tenths of a millimetre. The studio turns its positions into those, so the printer must
@@ -169,5 +170,12 @@ know the label's length: calibrate it to the labels loaded (it senses the gap) b
 also given in tenths of a millimetre; a module that would not print as whole dots is refused, with another size to
 choose.
 
-**PPLA and PPLB** (Argox and Elgin) come next (backlog 3.4, 3.5): they wait for their manuals. Meanwhile their printers print the PDF through their driver, and
-many Argox and Elgin printers also understand EPL2 (PPLB is close to it) — check with the test label.
+**PPLA and PPLB (Argox).** An Argox printer speaks one of two languages, set on the printer (its display or its
+self-test printout says which). Argox's *Programmer's Manual* (49.20002.001, December 2000) gives **PPLA** as
+compatible with Datamax's DPL and **PPLB** with Eltron's EPL2, and the same syntax for every command the studio
+writes; so a PPLA file is written as DPL's and a PPLB file as EPL2's, and the tests print each in Labelize as DPL or
+EPL2 and read every symbol back. PPLA prints what the DPL column says, but no QR code: the manual's bar codes are 20
+linear ones, MaxiCode, PDF-417 and Data Matrix. PPLB prints what the EPL2 column says, but no Data Matrix: its only 2D
+bar codes are PDF-417 and MaxiCode. Any other refusal is DPL's or EPL2's, said in PPLA's or PPLB's name. PPLA and PPLB
+at 203 and 300 dpi are generic profiles (Argox's OS-214 and X-1000+ print at 203 dpi, OS-314 and X-3000+ at 300).
+Elgin's printers, and other Argox models, may speak PPLA, PPLB or EPL2: check with the test label.

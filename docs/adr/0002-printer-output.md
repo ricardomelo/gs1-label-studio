@@ -168,19 +168,21 @@ commands (label length, sensor, speed, heat) are not sent: the printer keeps its
   Zebra firmware prints; emulations by other brands are proven only on their own hardware.
 - TSPL, EPL2 and DPL are checked with **Labelize** (github.com/GOODBOY008/labelize), an open-source emulator. It is young (version 1.10.0, October 2026) and an approximation of the firmware, which it says itself;
   where it and the manual disagree the symbol is refused, and a print from a physical printer always outranks it.
-- PPLA and PPLB have no simulator known; their manuals are still to be gathered.
+- PPLA and PPLB have no simulator known. Argox's programmer's manual (49.20002.001, December 2000) gives PPLA as
+  compatible with DPL and PPLB with EPL2, with the same syntax for every command the studio writes: their files are
+  DPL's and EPL2's, checked in Labelize as those languages, refusing what Argox's manual lacks (13 November 2026).
 
 ## Order of work
 
 ZPL II (done for the symbols above, GS1 DataBar and ITF-14's bearer bars included; the label layout next), then TSPL
-and EPL2 (31 October 2026, the symbols above), DPL (2 November 2026, the symbols above), then PPLB and PPLA (manuals to
-gather).
+and EPL2 (31 October 2026, the symbols above), DPL (2 November 2026, the symbols above), then PPLB and PPLA (13 November
+2026, as EPL2 and DPL).
 The order can change with the printers the owner has at hand for tests.
 
 ## Open points for the owner
 
 - Physical printers for tests (model, resolution, language): none for now; to be listed when available.
 - Manuals: TSPL's, EPL2's and DPL's (Datamax's Class Series 2) are the manufacturers' public PDFs (above); Honeywell's
-  current DPL reference needs a sign-in; PPLA's and PPLB's to be gathered before their items. Copies go in the Drive `references` folder, never in this repository.
+  current DPL reference needs a sign-in; PPLA's and PPLB's is Argox's programmer's manual (both languages, in the Drive since 11 November 2026). Copies go in the Drive `references` folder, never in this repository.
 - A printer whose ZPL emulation fails a symbol: refuse it for that printer profile, or offer the image as an exception?
   To be decided with the first such printer.

@@ -19,7 +19,7 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 7. [Seeing it at real size, and the scan test](#7-seeing-it-at-real-size-and-the-scan-test)
 8. [Exporting the label](#8-exporting-the-label)
 9. [The GS1 Logistic Label](#9-the-gs1-logistic-label)
-10. [Printer (ZPL, TSPL, EPL2, DPL)](#10-printer-zpl-tspl-epl2-dpl)
+10. [Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)](#10-printer-zpl-tspl-epl2-dpl-ppla-pplb)
 11. [RFID and NFC (EPC), and NFC tags](#11-rfid-and-nfc-epc-and-nfc-tags)
 12. [Digital signature (GS1, JWS)](#12-digital-signature-gs1-jws)
 13. [In bulk: rows from a spreadsheet](#13-in-bulk-rows-from-a-spreadsheet)
@@ -44,7 +44,7 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
   available to check it), and GS1 QR Code is not offered (beside the QR code with a GS1 Digital Link URI it confuses;
   [ADR 0003](adr/0003-product-scope-and-ux.md)).
 - **Files for artwork and for printers.** SVG, PNG, PDF and EPS at real size, a zip of all, and ZPL II, TSPL, EPL2
-  and DPL with the printer's own commands (ZPL also as a template with placeholders).
+  and DPL with the printer's own commands, PPLA and PPLB for Argox printers (ZPL also as a template with placeholders).
 - **Labels.** The GS1 Logistic Label for an SSCC, and a label of your own: barcodes, text with fields from the data,
   lines, boxes and images placed, turned and resized (section 5). The work is saved as a file and opened again
   (section 8), and the last one is offered again on your next visit.
@@ -70,7 +70,7 @@ English.
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
 - **3 — Label.** The label, redrawn as you type, its tools over it, the **Export** bar below it, then its options, the
-  GS1 Digital Link URI and the element string, and the sections *Printer (ZPL, TSPL, EPL2, DPL)*, *RFID and NFC (EPC)* and *Digital
+  GS1 Digital Link URI and the element string, and the sections *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)*, *RFID and NFC (EPC)* and *Digital
   signature (GS1, JWS)*.
 
 On a computer the page takes the screen's whole width, as above. At its foot, **About GS1 Label Studio**: the
@@ -95,7 +95,7 @@ bar at the bottom, as phone apps do:
 | **Data** | step 1 (or the rows, in bulk), with a small live preview at the top: tap it to open the label |
 | **Scan** | step 2, where the code is scanned |
 | **Label** | the label, its tools and its options |
-| **Export** | the downloads, *Generate in bulk* and *Printer (ZPL, TSPL, EPL2, DPL)* |
+| **Export** | the downloads, *Generate in bulk* and *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)* |
 | **More** | **Language**, **Install the app**, *RFID and NFC (EPC)*, *Digital signature* and About |
 
 Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
@@ -518,21 +518,25 @@ a GS1 DataMatrix and a QR code, saying why. In TSPL and DPL for an SSCC alone, t
 carries: the same text, rules and 2D symbol, with what each refuses for a symbol alone refused here too (other element
 strings, a GS1 QR Code; in DPL a GS1 DataMatrix). A ZPL template does not write it yet (its PDF prints it).
 
-## 10. Printer (ZPL, TSPL, EPL2, DPL)
+## 10. Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)
 
 A thermal printer prints whole dots, so a module must be a whole number of dots or the symbol degrades. **Printer
-(ZPL, TSPL, EPL2, DPL)** sets the printer the print files are for, and its language:
+(ZPL, TSPL, EPL2, DPL, PPLA, PPLB)** sets the printer the print files are for, and its language:
 
-![Printer (ZPL, TSPL, EPL2, DPL): the profile and the module's dots](images/guide/printer.png)
+![Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB): the profile and the module's dots](images/guide/printer.png)
 
-- **Printer profile**: *Any ZPL printer* at 152, 203, 300, 406 or 600 dpi, *Any TSPL printer*, *Any EPL2 printer* and
-  *Any DPL printer* at 203 and 300 dpi, all 104 mm wide, or your own — **New profile…** takes a name, the language (ZPL,
-  TSPL, EPL2 or DPL), the
+- **Printer profile**: *Any ZPL printer* at 152, 203, 300, 406 or 600 dpi, *Any TSPL printer*, *Any EPL2 printer*,
+  *Any DPL printer*, *Any PPLA printer* and *Any PPLB printer* at 203 and 300 dpi, all 104 mm wide, or your own — **New
+  profile…** takes a name, the language (ZPL, TSPL, EPL2, DPL, PPLA or PPLB), the
   resolution (100 to 1200 dpi) and the print width (10 to 500 mm); **Edit profile** changes it. Your profiles are kept
   in this browser.
 - With a TSPL, EPL2 or DPL profile the studio says that its files are checked in an emulator (Labelize), not yet on such a
   printer: print the test label and scan it before a production run. What the language cannot print is refused with
-  the reason ([printing guide, section 8](printing-guide.md#8-tspl-epl2-and-dpl-and-the-other-printer-languages)).
+  the reason ([printing guide, section 8](printing-guide.md#8-tspl-epl2-dpl-ppla-and-pplb)).
+- An Argox printer speaks PPLA or PPLB (its display or self-test printout says which). With a PPLA or PPLB profile the
+  studio says that its files are written with the DPL or EPL2 commands Argox's manual gives alike, and checked in
+  Labelize as DPL or EPL2. PPLA has no QR code and PPLB no Data Matrix: choose a Data Matrix for PPLA, a GS1-128 or an
+  EAN for PPLB, or print the PDF.
 - **Module**: the whole numbers of dots within the table's X-dimension range, the nearest to the label's size by
   default; the X-dimension printed is said (*✓ X 0.500 mm (4 dots at 203 dpi) is within the table's 0.396 to 0.990
   mm*), or that no whole number of dots fits.
@@ -540,8 +544,8 @@ A thermal printer prints whole dots, so a module must be a whole number of dots 
 - **Test print** (in the profile's language) adds a 50 mm ruler with a tick every 10 mm and the settings under the label:
   print it and measure the ruler to check the printer's scale.
 
-The print file's button of the Export bar — *ZPL (203 dpi)*, *TSPL (203 dpi)*, *EPL2 (300 dpi)* or *DPL (300 dpi)*, a
-`.zpl`, `.prn`, `.epl` or `.dpl` file — and the bulk print file use the same profile and dots. The ZPL template is offered with a ZPL profile.
+The print file's button of the Export bar — *ZPL (203 dpi)*, *TSPL (203 dpi)*, *EPL2 (300 dpi)*, *DPL (300 dpi)*,
+*PPLA (203 dpi)* or *PPLB (203 dpi)*, a `.zpl`, `.prn`, `.epl`, `.dpl`, `.ppla` or `.pplb` file — and the bulk print file use the same profile and dots. The ZPL template is offered with a ZPL profile.
 
 ## 11. RFID and NFC (EPC), and NFC tags
 

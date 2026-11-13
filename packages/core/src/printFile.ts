@@ -1,3 +1,4 @@
+import { pplaLabel, pplaTestLabel, pplbLabel, pplbTestLabel } from "./argox.ts";
 import { dplLabel, dplTestLabel } from "./dpl.ts";
 import { eplLabel, eplTestLabel } from "./epl.ts";
 import type { PrintLabelOptions } from "./printers.ts";
@@ -8,9 +9,10 @@ import { zplLabel, zplTestLabel } from "./zpl.ts";
 /**
  * The printer languages the studio writes (ADR 0002), each with the printer's own commands, and how each is checked:
  * ZPL through Labelary, which renders what Zebra firmware prints; TSPL, EPL2 and DPL through Labelize, an open-source
- * emulator — none yet on a physical printer (backlog 3.9).
+ * emulator; Argox's PPLA and PPLB with the DPL and EPL2 commands Argox's manual gives alike, through Labelize as DPL and
+ * EPL2 (argox.ts) — none yet on a physical printer (backlog 3.9).
  */
-export type PrinterLanguage = "zpl" | "tspl" | "epl2" | "dpl";
+export type PrinterLanguage = "zpl" | "tspl" | "epl2" | "dpl" | "ppla" | "pplb";
 
 export interface PrinterLanguageInfo {
   id: PrinterLanguage;
@@ -23,6 +25,8 @@ export interface PrinterLanguageInfo {
   checkedWith: string;
   /** Whether it has templates with {{AI}} placeholders. */
   templates: boolean;
+  /** The language whose commands it is written with and whose emulator checks it (Argox's PPLA and PPLB). */
+  as?: PrinterLanguage;
 }
 
 export const PRINTER_LANGUAGES: Record<PrinterLanguage, PrinterLanguageInfo> = {
@@ -30,6 +34,8 @@ export const PRINTER_LANGUAGES: Record<PrinterLanguage, PrinterLanguageInfo> = {
   tspl: { id: "tspl", name: "TSPL", extension: "prn", printers: "TSC and most generic thermal printers (TSPL/TSPL2)", checkedWith: "Labelize", templates: false },
   epl2: { id: "epl2", name: "EPL2", extension: "epl", printers: "older Zebras and printers that emulate EPL2", checkedWith: "Labelize", templates: false },
   dpl: { id: "dpl", name: "DPL", extension: "dpl", printers: "Datamax-O'Neil and Honeywell printers that speak DPL", checkedWith: "Labelize", templates: false },
+  ppla: { id: "ppla", name: "PPLA", extension: "ppla", printers: "Argox printers set to PPLA (Datamax-compatible)", checkedWith: "Labelize", templates: false, as: "dpl" },
+  pplb: { id: "pplb", name: "PPLB", extension: "pplb", printers: "Argox printers set to PPLB (Eltron-compatible)", checkedWith: "Labelize", templates: false, as: "epl2" },
 };
 
 /** One label with one symbol in the printer's language, ready to print. */
@@ -43,6 +49,10 @@ export function printLabel(language: PrinterLanguage, symbology: SymbologyId, da
       return eplLabel(symbology, data, options);
     case "dpl":
       return dplLabel(symbology, data, options);
+    case "ppla":
+      return pplaLabel(symbology, data, options);
+    case "pplb":
+      return pplbLabel(symbology, data, options);
   }
 }
 
@@ -57,5 +67,9 @@ export function printTestLabel(language: PrinterLanguage, symbology: SymbologyId
       return eplTestLabel(symbology, data, options, notes);
     case "dpl":
       return dplTestLabel(symbology, data, options, notes);
+    case "ppla":
+      return pplaTestLabel(symbology, data, options, notes);
+    case "pplb":
+      return pplbTestLabel(symbology, data, options, notes);
   }
 }

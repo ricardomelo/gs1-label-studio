@@ -1378,6 +1378,49 @@ test("printer languages: a DPL profile writes a label format in tenths of a mill
   await expect(page.locator(".error.small")).toContainText("DPL's Data Matrix (W1c) has no FNC1 in the manual");
 });
 
+// Backlog 3.4 and 3.5 (ADR 0002): Argox's PPLA and PPLB, written with the DPL and EPL2 commands Argox's manual gives alike
+test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands, say so, and refuse what Argox's manual lacks", async ({ page }) => {
+  await on(page, "export");
+  await page.locator("details.printer summary").click();
+  await expect(page.locator("details.printer summary")).toHaveText("Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)");
+  // The example's QR code: PPLA has none
+  await page.selectOption("#prn-profile", "ppla-203");
+  await expect(page.locator("details.printer .hint.error")).toContainText("PPLA files are written with the DPL commands Argox's manual gives alike, and checked in Labelize as DPL");
+  await page.getByRole("button", { name: "PPLA (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("PPLA has no QR code");
+  // A Data Matrix with the GS1 Digital Link URI: a PPLA label format, as DPL writes it
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "dl-datamatrix");
+  await on(page, "export");
+  const [ppla] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PPLA (203 dpi)" }).click()]);
+  expect(ppla.suggestedFilename()).toBe("dl-datamatrix_01_09506000134376_10_B42.ppla");
+  const text = readFileSync((await ppla.path())!, "latin1");
+  expect(text.startsWith("\x02L\rm\rD11\rz\r")).toBe(true);
+  expect(text).toMatch(/\r1W1c(\w)\1(?:000)\d{8}2000\d{6}https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231\r/);
+  // PPLB has no Data Matrix
+  await page.selectOption("#prn-profile", "pplb-203");
+  await expect(page.locator("details.printer .hint.error")).toContainText("PPLB files are written with the EPL2 commands Argox's manual gives alike, and checked in Labelize as EPL2");
+  await page.getByRole("button", { name: "PPLB (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("PPLB has no Data Matrix");
+  // GS1-128: (10) before (17) is refused in EPL2's name and its reason; an SSCC alone, PPLB's B command with 1E
+  await on(page, "label");
+  await page.selectOption("#opt-symbol", "gs1-128");
+  await on(page, "export");
+  await page.getByRole("button", { name: "PPLB (203 dpi)" }).click();
+  await expect(page.locator(".error.small")).toContainText("PPLB is written with EPL2's commands, which its manual gives alike: EPL2's GS1-128 (UCC/EAN 128) carries an element string of no predefined length only last");
+  await on(page, "data");
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "export");
+  const [pplb] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PPLB (203 dpi)" }).click()]);
+  expect(pplb.suggestedFilename()).toBe("gs1-128_00_106141411234567897.pplb");
+  const commands = readFileSync((await pplb.path())!, "latin1");
+  expect(commands).toMatch(/^\r\nN\r\nq\d+\r\n/);
+  expect(commands).toMatch(/\r\nB\d+,\d+,0,1E,\d,\d,\d+,N,"00106141411234567897"\r\n/);
+});
+
 // Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
 test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
   await expect(page.locator('#opt-logistic option[value="a6"]')).toHaveCount(0); // a GTIN: no logistic label

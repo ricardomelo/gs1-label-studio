@@ -408,4 +408,7 @@
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,
   conformance's DPL heading and manuals, and the developer guide's layout.
+- Argox's PPLA and PPLB (backlog 3.4, 3.5; 13 November): written with the DPL and EPL2 commands Argox's programmer's
+  manual gives alike, checked in Labelize as those languages; PPLA's QR code and PPLB's Data Matrix and QR code refused;
+  generic profiles at 203 and 300 dpi.
 - Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).

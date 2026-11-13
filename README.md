@@ -50,11 +50,10 @@ source.
 - **Private, offline, anywhere.** Everything runs in the page: no server, no account, no upload. After the first visit
   it works without a connection, and installs as an application.
 
-> **Status (8 November 2026):** in development before its first release, published at
+> **Status (13 November 2026):** in development before its first release, published at
 > <https://ricardomelo.github.io/gs1-label-studio/> since 31 October 2026. One code (phase 1), in bulk (phase 2) and
 > the labels (phase 4: the GS1 Logistic Label, the designer, the saved work) are done; of the printers (phase 3), ZPL,
-> TSPL, EPL2 and DPL are done, PPLB and PPLA wait for their manuals, and direct printing and tests on physical printers
-> are still to come. The [backlog](#backlog) says what is done and what comes next.
+> TSPL, EPL2, DPL, PPLA and PPLB are done, and direct printing and tests on physical printers are still to come. The [backlog](#backlog) says what is done and what comes next.
 
 > **Community software.** GS1 Label Studio is maintained by its community, not by GS1 or any GS1 Member Organisation;
 > GS1 is a registered trademark of GS1 AISBL. It is provided "as is", without warranties or conditions of any kind
@@ -138,7 +137,7 @@ its data titles also in a second language. **Save** keeps the work as a file to 
 ### 6. Files for artwork, print files for label printers
 
 <p align="center">
-  <img src="docs/images/guide/printer.png" alt="Printer (ZPL, TSPL, EPL2, DPL): a printer profile, the module in whole dots within the table's range, a test print" width="560">
+  <img src="docs/images/guide/printer.png" alt="Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB): a printer profile, the module in whole dots within the table's range, a test print" width="560">
 </p>
 
 **SVG, PNG, PDF and EPS** at real size for artwork, in process black, with a bar width reduction for the press and crop marks if asked;
@@ -236,10 +235,10 @@ says more.
 
 ## Backlog
 
-**Where it stands** (11 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
+**Where it stands** (13 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
 first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
-and DPL, each checked through an emulator; still to come are PPLB and PPLA (3.4, 3.5: Argox's manual in the Drive since 11 November), direct
+and DPL, each checked through an emulator, and Argox's PPLA and PPLB (13 November) as DPL and EPL2; still to come are direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. Phase 6, the owner's review of 11 November
 (twelve points on versions, usability, templates, EPC+ and DotCode), is assessed and ordered, to start on 13 November;
 DotCode stays as it is for now. Open points include GS1-128 beyond an SSCC in TSPL and DPL and a review of the French,
@@ -494,11 +493,12 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   Link URI, text in the dot fonts, the test label; GS1-128 (the manual's `!102`, which Labelize encodes as text),
   EAN-8, UPC-A, UPC-E and GS1 DataBar refused until a test reads them; GS1-128 of an SSCC alone done 6 November as
   `EAN128`, its 20 digits, which Labelize draws as ZPL's UCC case mode*
-- 3.4 PPLB · 3.5 PPLA — PPLB is close to EPL2, PPLA to DPL. The owner put Argox's PPLA programming manual in the
-  Drive's references on 11 November 2026 (`argox-ppla-programming-manual.pdf`, 1996–1998; its text names PPLB too):
-  to start on 13 November, after 6.1 to 6.3's mock-ups, by reading it for each barcode's command, then finding how to
-  test the symbols without a printer (Labelize's DPL and EPL2 where the commands are the same, ADR 0002), and
-  whether a PPLB manual is still needed
+- 3.4 PPLB · 3.5 PPLA — *done 13 November: Argox's programmer's manual (49.20002.001, December 2000, in the Drive's
+  references; it holds both languages, so no other manual is needed) gives PPLA as compatible with Datamax's DPL and
+  PPLB with Eltron's EPL2, and the same syntax for every command the studio writes (argox.ts lists them); so a PPLA
+  file is DPL's and a PPLB file EPL2's, each printed in Labelize as that language and read back, refusing what the manual
+  lacks: PPLA's QR code, PPLB's Data Matrix and QR code. Generic profiles at 203 and 300 dpi; a refusal of DPL or EPL2
+  said in PPLA's or PPLB's name*
 - 3.6 EPL2 — *done 31 October through Labelize: EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 with bearer bars, GS1-128 (UCC/EAN
   128, a variable-length element string last only; over several symbols too), Data Matrix with a GS1 Digital Link URI,
   text in fonts 1 to 5, the test label; GS1 DataMatrix (no FNC1) and QR (Japanese models only) refused, as the guide

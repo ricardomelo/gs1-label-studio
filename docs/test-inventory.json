@@ -3,6 +3,122 @@
  "skipped": 0,
  "programs": [
   {
+   "program": "argox",
+   "file": "packages/core/test/argox.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla ean13 9506000134352 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla ean8 95012346 at 0.33 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla upca 614141000036 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla upce 01234565 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla itf14 19506000134359 at 0.5 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla gs1-128 (00)095060001343520000 at 0.495 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla dl-datamatrix https://id.gs1.org/01/09506000134352/10/A~B at 0.495 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb ean13 9506000134352 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb ean8 95012346 at 0.33 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb upca 614141000036 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb upce 01234565 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb itf14 19506000134359 at 0.5 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb gs1-128 (00)106141411234567897 at 0.33 mm, 203 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb gs1-128 (01)09506000134352(17)271231(10)AB-12 at 0.33 mm, 300 dpi",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › PPLA's records as Argox's manual writes them: STX L, m, D11, z, then EAN-13 as F, UCC/EAN-128 as q, the quantity, E",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › PPLB's commands as Argox's manual writes them: N, q, B with E30 and 1E, P",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla: the test label, its ruler and settings, as the base language writes it",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb: the test label, its ruler and settings, as the base language writes it",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla: a label of one's own at 304.8 dpi, its barcodes read back",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb: a label of one's own at 203 dpi, its barcodes read back",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › ppla: the GS1 Logistic Label, every GS1-128 read back",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB: the DPL and EPL2 commands Argox's manual gives alike, read back › pplb: the GS1 Logistic Label, every GS1-128 read back",
+     "status": "passed"
+    },
+    {
+     "name": "what PPLA and PPLB refuse, with the reason › PPLA has no QR code; PPLB has no Data Matrix and no QR code (Argox's manual)",
+     "status": "passed"
+    },
+    {
+     "name": "what PPLA and PPLB refuse, with the reason › a refusal of DPL or EPL2 is said in PPLA's or PPLB's name, its reason kept",
+     "status": "passed"
+    },
+    {
+     "name": "what PPLA and PPLB refuse, with the reason › PPLB refuses a Data Matrix beside the GS1 Logistic Label's data; PPLA a QR code on a page",
+     "status": "passed"
+    },
+    {
+     "name": "PPLA and PPLB among the printer languages › each written with DPL's or EPL2's commands and checked in Labelize as that language, at 203 and 300 dpi",
+     "status": "passed"
+    }
+   ],
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
    "program": "attributes",
    "file": "packages/core/test/attributes.test.ts",
    "kind": "unit",
@@ -936,7 +1052,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
   },
   {
    "program": "environments",
@@ -2224,7 +2340,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
   },
   {
    "program": "labelsvg",
@@ -2748,7 +2864,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
   },
   {
    "program": "printlangs",
@@ -3256,7 +3372,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
   },
   {
    "program": "pyformat",
@@ -4640,7 +4756,7 @@
      "status": "passed"
     }
    ],
-   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2 and DPL"
+   "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
   },
   {
    "program": "editor",
@@ -5117,6 +5233,15 @@
     },
     {
      "name": "printer languages: a DPL profile writes a label format in tenths of a millimetre, and refuses a GS1 DataMatrix",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands, say so, and refuse what Argox's manual lacks",
      "status": "listed",
      "projects": [
       "desktop",
