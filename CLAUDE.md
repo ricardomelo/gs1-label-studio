@@ -37,6 +37,10 @@ this public repository.
 - At the start of a session add its line to `docs/metrics/sessions.csv` (session id, date, start time in UTC); at
   the end fill in the end time, Claude's working minutes, the commits and the backlog items, and whether the session
   stopped at a usage limit.
+- Name the session at its start, so that sessions can be found by searching (the maintainer, 13 November 2026):
+  `set_session_title` with `GS1LS S<number> · <date> · <topic in Portuguese>` (the number is the session's line in
+  `sessions.csv`, two digits; e.g. `GS1LS S59 · 2026-11-13 · 6.3 usabilidade (h, i, j)`); at the end, rename it if
+  the topic changed. The handover's section heading names the same number.
 - When the maintainer reports time spent (decisions, tests, printers, reviews), add it to the time sheet in Drive
   (`Owner time sheet — gs1-label-studio`).
 - At the end of each backlog item and at each release: `node scripts/metrics.mjs --write` and commit the snapshot.
