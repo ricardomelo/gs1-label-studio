@@ -12,9 +12,20 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- The installed app's opening screen (backlog 6.2): Android 12 and later draw their own with the icon alone, so the
+         page shows the icon with the name under it, only in the installed app, until React draws the page in its place;
+         on the manifest's background colour, as the screen Android draws before it. Inline, as styles.css comes with the
+         application's script. -->
+    <style>
+      #launch { display: none; }
+      @media (display-mode: standalone) {
+        #launch { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: #eef2f6; color: #002c6c; font: 600 22px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+        #launch img { width: 96px; height: 96px; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="launch" aria-hidden="true"><img src="/icon.svg" alt="" /><span>GS1 Label Studio</span></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

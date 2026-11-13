@@ -385,4 +385,7 @@ On 11 November the owner reviewed the studio in twelve points, put in the backlo
 Drive's connectors down, the session took phase 6's recommended order from the backlog: first the version under the
 name, linking to About, and new releases found by themselves — an installed app brought back from the background had
 kept the page it was opened with, since a service worker that takes over at once does not reload a page already open.
-The page now asks for a new worker when it comes back to the screen and offers a reload when one has taken over.
+The page now asks for a new worker when it comes back to the screen and offers a reload when one has taken over. Then the installed app's opening screen,
+the icon with the name, as Android 12 and later draw the icon alone, and the Delete key removing a label's chosen
+element (6.2 and 6.9). The owner, meanwhile, sent the handover, the time sheet and the test plan as files: the plan had
+77 steps ticked, sections 1 to 5.

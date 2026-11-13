@@ -398,6 +398,9 @@
   release when it opens and whenever it comes back to the screen, so an installed app brought back from the background
   finds it too; a bar then offers *Reload*, the work in progress offered back afterwards, or × to leave it for the next
   visit.
+- The installed app's opening screen (13 November; backlog 6.2, mock-up A of two): Android 12 and later open an
+  installed app on its icon alone, so the page shows the icon with *GS1 Label Studio* under it, on the same background,
+  until it is drawn; never in a browser's tab.
 - The Delete key on a label of one's own (13 November; the owner's request, backlog 6.9): Delete or Backspace removes
   the chosen element, as the **Delete** button does, from the label's canvas, its tools or the designer's buttons, never
   in a field; a screen reader is told what was removed.

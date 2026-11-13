@@ -105,7 +105,8 @@ live preview's bar.
 
 **Install the app** puts the studio on the home screen, where it opens without the browser's bars and works offline, under
 the name *GS1 Label Studio*. Chrome, Edge and Samsung Internet show their install dialog; on an iPhone or iPad the button
-says how: Share, then *Add to Home Screen*; other browsers install from their menu. Once installed, the button says so.
+says how: Share, then *Add to Home Screen*; other browsers install from their menu. Once installed, the button says so. The installed app opens on its icon with the name *GS1 Label Studio* under it,
+until the page is ready.
 On a tablet the button is under **More** too.
 
 <p>

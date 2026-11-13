@@ -221,3 +221,46 @@ test("a new version found by itself is offered as a reload that loses nothing; a
   await expect(page.getByRole("region", { name: "Your last work" })).toContainText("(01) 09506000134352");
   await expect(bar).toHaveCount(0);
 });
+
+// Backlog 6.2, mock-up A of two (13 November 2026): Android 12 and later open an installed app on the icon alone, so the
+// page's own opening screen gives the icon and the name, on the manifest's background colour, until the page is drawn;
+// in a browser's tab it is never shown. Chromium cannot pretend to be an installed app (display-mode is not among the
+// media features it emulates), so the installed app is stood in for by the page with its display-mode rule always true.
+test("the installed app opens on the icon with the name until the page is drawn; a browser's tab never shows it", async ({ browser, baseURL }, info) => {
+  test.skip(info.project.name !== "phone");
+  for (const installed of [false, true]) {
+    const context = await browser.newContext({ ...info.project.use, serviceWorkers: "block" });
+    const page = await context.newPage();
+    if (installed) {
+      await page.route(baseURL!, async (route) => {
+        const response = await route.fetch();
+        const html = await response.text();
+        expect(html).toMatch(/@media ?\(display-mode: ?standalone\)/);
+        await route.fulfill({ response, body: html.replace(/\(display-mode: ?standalone\)/g, "all") });
+      });
+    }
+    // The application's script held back: the page not drawn yet
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/assets\/index-[\w-]+\.js$/, async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto(baseURL!, { waitUntil: "commit" });
+    const launch = page.locator("#launch");
+    await expect(launch).toBeAttached();
+    if (installed) {
+      await expect(launch).toBeVisible();
+      await expect(launch).toHaveText("GS1 Label Studio");
+      await expect(launch).toHaveCSS("background-color", "rgb(238, 242, 246)"); // the manifest's background_color
+      expect(await launch.locator("img").evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    } else {
+      await expect(launch).toBeHidden();
+    }
+    // Drawn, the page takes its place at once
+    release();
+    await expect(page.locator(".preview .symbol svg")).toBeAttached();
+    await expect(launch).toHaveCount(0);
+    await context.close();
+  }
+});

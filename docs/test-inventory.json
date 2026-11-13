@@ -5563,6 +5563,15 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "the installed app opens on the icon with the name until the page is drawn; a browser's tab never shows it",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"

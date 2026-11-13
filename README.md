@@ -657,6 +657,9 @@ now. Effort: S a session, M two or three, L more.
   but Android 12 and later draw the opening screen themselves with the icon alone, whatever the manifest says. So: a
   launch screen of the page's own, only in the installed app (`display-mode: standalone`), the icon with the name under
   it, gone as soon as the page is ready, never held longer. To check first on the owner's phone (its Android version)
+  — *done 13 November: the icon and the name on the manifest's background colour, in the page's HTML so that the page
+  drawn replaces it (mock-up A of two: B, white on navy, jumped from Android's own light screen); to be seen on the
+  owner's phone in the test plan*
 - 6.3 A usability study by device, as mock-ups first (M): Playwright screenshots of the real application with each
   proposal, on a computer, a tablet and a phone, in a doc for the owner to choose from, then the chosen ones built.
   It covers the owner's points (a) to (j), which bear on one another:
