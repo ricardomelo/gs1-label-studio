@@ -665,7 +665,8 @@ now. Effort: S a session, M two or three, L more.
   *Mock-ups done 13 November (twenty screenshots in a doc for the owner, its link in the handover): recommended (a) A, a ? opening a
   popover, a sheet on a phone; (b) framed groups, folded on a phone; (c) the tablet's layout on a computer, the label
   always on the right, and a picture of each choice in step 2 on a phone; (d) a prompt over the label until step 2 is
-  answered; (e) Start the answers again; (f) Where with a map pin; (g) a switch, the barcode only or a label, the kinds
+  answered; (e) Start the answers again; (f) Use with a shop front (the owner's choice, 13 November: Where
+  with a map pin would be confused with the GLN, a location's key); (g) a switch, the barcode only or a label, the kinds
   as cards; (h) split buttons; (i) one printer button, the section with its own downloads; (j) the two options in one
   group, each reduction saying what it takes off. Built from the next session unless the owner chooses otherwise,
   (h), (i) and (j) first*
