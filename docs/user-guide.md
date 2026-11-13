@@ -62,7 +62,8 @@ English.
 
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
-- The header: **One code** or **In bulk** (section 13), **Language**, **Open…** and **Save** (the work kept as a file
+- The header: the name, with the version under it (the commit the page was built from and its date, which opens
+  About), **One code** or **In bulk** (section 13), **Language**, **Open…** and **Save** (the work kept as a file
   on your computer, section 8), and **Start over**, which clears every field and choice as on a first visit (on a
   phone, Language, Open… and Save are under **More** and Start over is a round icon beside the live preview).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
@@ -78,6 +79,11 @@ commit it was built from, with its date — the way to tell whether the page sho
 is made with, each linked to its repository; the GS1 Barcode Syntax Engine with the release that checks the data and the
 date of its GS1 Barcode Syntax Dictionary (*GS1 Barcode Syntax Engine 1.4.1 — … · GS1 Barcode Syntax Dictionary of
 2026-01-27*).
+
+**A new version.** The page looks for a new release when it opens and whenever it comes back to the screen — an
+installed app brought back from the background included. When one is ready, a bar under the header says *A new version
+of GS1 Label Studio is ready*: **Reload** opens it, and the work in progress is offered back (*Your last work … is kept
+in this browser — Continue it*); × leaves it for the next visit. Nothing is redrawn unasked.
 
 ### On a phone
 

@@ -21,8 +21,13 @@ export const MADE_WITH: readonly { name: string; url: string; licence: string; u
   { name: "Liberation Sans", url: "https://github.com/liberationfonts/liberation-fonts", licence: "SIL Open Font License 1.1", use: en("the human readable text's font") },
 ];
 
+/** The day of the commit the build was made from, as 2026-11-13 ("" outside a Git checkout); in About and the header. */
+export function buildDate(): string {
+  return __BUILD__.date ? new Date(__BUILD__.date).toISOString().slice(0, 10) : "";
+}
+
 export function About() {
-  const date = __BUILD__.date ? new Date(__BUILD__.date).toISOString().slice(0, 10) : "";
+  const date = buildDate();
   return (
     <footer className="about" data-pane="more" aria-labelledby="about-title">
       <h2 id="about-title">{t("About GS1 Label Studio")}</h2>

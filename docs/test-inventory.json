@@ -1,5 +1,5 @@
 {
- "date": "2026-11-10",
+ "date": "2026-11-13",
  "skipped": 0,
  "programs": [
   {
@@ -5530,6 +5530,24 @@
     },
     {
      "name": "an iPhone is told to install from Share, Add to Home Screen; the name on the home screen is GS1 Label Studio",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the version under the name, the same as About's, links to About",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a new version found by itself is offered as a reload that loses nothing; a first visit's worker is not",
      "status": "listed",
      "projects": [
       "desktop",

@@ -644,7 +644,9 @@ usability study 6.3 as mock-ups for the owner, then PPLA and PPLB (3.4, 3.5: the
 11 November) while the owner looks at them, then 6.4 to 6.6 as the study decides, 6.7 after an assessment; 6.8 left for
 now. Effort: S a session, M two or three, L more.
 
-- 6.1 The version in the header, and new versions found by themselves (S). Under *GS1 Label Studio*, the commit and its
+- 6.1 The version in the header, and new versions found by themselves (S) — *done 13 November: the commit and its
+  date under the name, linking to About (mock-up A of two: B put them beside the name as a badge); a new release asked
+  for when the page opens and when it comes back to the screen, then offered in a bar, Reload or × for later*. Under *GS1 Label Studio*, the commit and its
   date (About already has them), linking to About. The service worker already fetches pages from the network first
   and takes over at once (`skipWaiting`, `clients.claim`), but an installed app brought back from the background keeps
   the page it had: the page will ask for a new worker when it opens and whenever it comes back to the screen, and

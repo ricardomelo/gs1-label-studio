@@ -380,3 +380,9 @@ on Escape when opened from its arrow, a chosen name edited anywhere, a qualifier
 and a request to put sliders in place of the short lists among the label's options. Mock-ups of both showed sliders
 cutting the options' names and implying an order the categorical choices do not have; the three choices of two to four
 short options became rows of buttons instead, the longer ones staying lists.
+
+On 11 November the owner reviewed the studio in twelve points, put in the backlog as phase 6. On 13 November, with the
+Drive's connectors down, the session took phase 6's recommended order from the backlog: first the version under the
+name, linking to About, and new releases found by themselves — an installed app brought back from the background had
+kept the page it was opened with, since a service worker that takes over at once does not reload a page already open.
+The page now asks for a new worker when it comes back to the screen and offers a reload when one has taken over.

@@ -170,3 +170,54 @@ test("an iPhone is told to install from Share, Add to Home Screen; the name on t
   expect([manifest.name, manifest.short_name]).toEqual(["GS1 Label Studio", "GS1 Label Studio"]);
   await context.close();
 });
+
+// Backlog 6.1, mock-up A of two (13 November 2026): the version under the name, linking to About, on every device.
+test("the version under the name, the same as About's, links to About", async ({ page }, info) => {
+  const version = page.locator("header.top .version");
+  await expect(version).toBeVisible();
+  await expect(version).toHaveText(/^[0-9a-f]{7,} · \d{4}-\d{2}-\d{2}$/);
+  const about = page.locator("footer.about");
+  const commit = (await version.textContent())!.split(" · ")[0]!;
+  await expect(about.locator("a.mono")).toHaveText(commit);
+  await expect(about).toContainText(`${commit} · ${(await version.textContent())!.split(" · ")[1]}`);
+  await version.click();
+  await expect(about.getByRole("heading", { name: "About GS1 Label Studio" })).toBeInViewport();
+  if (info.project.name === "phone") await expect(tabs(page).getByRole("button", { name: "More" })).toHaveAttribute("aria-current", "page");
+});
+
+// Backlog 6.1: a new release found by itself. The page asks for a new service worker whenever it comes back to the
+// screen; a new worker taking over a page that already had one is a new release, offered in a bar as a reload, which
+// loses nothing (the last work is offered on the next visit). A first visit's worker takes over too, but is no release.
+test("a new version found by itself is offered as a reload that loses nothing; a first visit's worker is not", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop");
+  const bar = page.getByRole("status").filter({ hasText: "A new version of GS1 Label Studio is ready." });
+  // The first visit's worker takes the page over: no new version
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await expect(bar).toHaveCount(0);
+  // Back on the screen, the page asks for a new worker
+  await page.evaluate(() => {
+    const w = window as unknown as { asked: number };
+    w.asked = 0;
+    ServiceWorkerRegistration.prototype.update = async function () { w.asked++; return this; };
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(await page.evaluate(() => (window as unknown as { asked: number }).asked)).toBe(1);
+  // A new worker takes over the page: a new release, put off with Later until the next visit
+  await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event("controllerchange")));
+  await expect(bar).toBeVisible();
+  await bar.getByRole("button", { name: "Later" }).click();
+  await expect(bar).toHaveCount(0);
+  await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event("controllerchange")));
+  await expect(bar).toHaveCount(0);
+
+  // On the next visit, work typed and then a new release: Reload brings the new page and offers the work back
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await page.fill("#paste", "(01)09506000134352(10)LOT9");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await page.waitForTimeout(800);
+  await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event("controllerchange")));
+  await bar.getByRole("button", { name: "Reload" }).click();
+  await expect(page.getByRole("region", { name: "Your last work" })).toContainText("(01) 09506000134352");
+  await expect(bar).toHaveCount(0);
+});

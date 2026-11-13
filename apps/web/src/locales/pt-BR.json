@@ -683,5 +683,8 @@
  "Grid and rulers": "Grade e réguas",
  "Lines every few millimetres over the label, and rulers along its top and left": "Linhas a cada poucos milímetros sobre a etiqueta, e réguas no alto e à esquerda",
  "URI parameter: {name}": "Parâmetro do URI: {name}",
- "URI parameter (the header names it)": "Parâmetro do URI (o cabeçalho dá o nome)"
+ "URI parameter (the header names it)": "Parâmetro do URI (o cabeçalho dá o nome)",
+ "A new version of GS1 Label Studio is ready.": "Uma nova versão do GS1 Label Studio está pronta.",
+ "Reload": "Recarregar",
+ "Later": "Depois"
 }

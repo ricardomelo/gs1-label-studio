@@ -84,7 +84,7 @@ import {
   type Work,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
-import { About } from "./About.tsx";
+import { About, buildDate } from "./About.tsx";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
@@ -102,6 +102,7 @@ import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
 import { TabBar } from "./TabBar.tsx";
 import { InstallApp } from "./InstallApp.tsx";
+import { onUpdateReady, updateReady } from "./update.ts";
 import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 
@@ -566,6 +567,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const tablet = useMedia(TABLET_QUERY);
   const tabbed = phone || tablet;
   const [tab, setTab] = useState<Pane>("data");
+  // A new release ready (backlog 6.1, update.ts): offered as a reload, or put off until the next visit
+  const [update, setUpdate] = useState(updateReady);
+  useEffect(() => onUpdateReady(() => setUpdate(true)), []);
   const scrolled = useRef<Partial<Record<Pane, number>>>({});
   const goTo = useRef<string | null>(null);
   function showPane(next: Pane, target?: string) {
@@ -755,7 +759,15 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   return (
     <div className="app" data-tab={tab}>
       <header className="top">
-        <h1>GS1 Label Studio</h1>
+        {/* The version under the name (backlog 6.1, mock-up A of two), linking to About, which says more */}
+        <span className="brand">
+          <h1>GS1 Label Studio</h1>
+          {__BUILD__.commit && (
+            <a className="version mono" href="#about-title" title={t("Version")}>
+              {buildDate() ? `${__BUILD__.commit} · ${buildDate()}` : __BUILD__.commit}
+            </a>
+          )}
+        </span>
         <span className="mode" role="group" aria-label={t("Mode")}>
           <button type="button" aria-pressed={!bulk} onClick={() => setMode("one")}>
             {t("One code")}
@@ -771,6 +783,17 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         {!phone && workButtons}
         {!phone && startOver}
       </header>
+      {update && (
+        <div className="update-ready" role="status">
+          <span>{t("A new version of GS1 Label Studio is ready.")}</span>
+          <button type="button" className="btn primary" onClick={() => window.location.reload()}>
+            {t("Reload")}
+          </button>
+          <button type="button" className="close" aria-label={t("Later")} title={t("Later")} onClick={() => setUpdate(false)}>
+            ×
+          </button>
+        </div>
+      )}
       {offer && offer !== "reading" && (
         <div className="kept-work" role="region" aria-label={t("Your last work")}>
           <span>

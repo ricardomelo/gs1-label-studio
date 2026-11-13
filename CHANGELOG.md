@@ -393,6 +393,11 @@
   option's full text under them, the arrow keys moving the choice. Sliders, the request, were assessed and left out:
   they suit an ordered scale of evenly spaced values only, the sizes (80 to 200 %) and text heights are not evenly
   spaced and change with the table, and the categorical choices have no order; the longer lists stay lists.
+- The version in the header, and new versions found by themselves (13 November; the owner's review of 11 November,
+  backlog 6.1, mock-up A of two): the commit and its date under the name, linking to About. The page asks for a new
+  release when it opens and whenever it comes back to the screen, so an installed app brought back from the background
+  finds it too; a bar then offers *Reload*, the work in progress offered back afterwards, or × to leave it for the next
+  visit.
 - Documentation brought up to date (8 November): the README's languages badge (six), test count, status, a tour stop
   for the designer and the GS1 Logistic Label, where the backlog stands, item 4.2 as dated sub-items, the development
   commands and workflows; the history from session 10 to 44; the documents' index, the user guide's summary,

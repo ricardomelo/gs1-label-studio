@@ -683,5 +683,8 @@
  "Grid and rulers": "Raster und Lineale",
  "Lines every few millimetres over the label, and rulers along its top and left": "Linien im Abstand weniger Millimeter über dem Etikett und Lineale oben und links",
  "URI parameter: {name}": "Parameter des URI: {name}",
- "URI parameter (the header names it)": "Parameter des URI (die Überschrift benennt ihn)"
+ "URI parameter (the header names it)": "Parameter des URI (die Überschrift benennt ihn)",
+ "A new version of GS1 Label Studio is ready.": "Eine neue Version von GS1 Label Studio ist bereit.",
+ "Reload": "Neu laden",
+ "Later": "Später"
 }

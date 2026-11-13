@@ -44,6 +44,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; }
 header.top { background: #002c6c; color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
 header.top h1 { margin: 0; font-size: 20px; }
 header.top span { opacity: 0.85; font-size: 13px; }
+/* The version under the name (backlog 6.1) */
+header.top .brand { display: inline-flex; flex-direction: column; line-height: 1.15; opacity: 1; }
+header.top .version { color: #fff; opacity: 0.8; font-size: 12px; text-decoration: underline dotted; text-underline-offset: 2px; align-self: flex-start; }
+header.top .version:hover, header.top .version:focus-visible { opacity: 1; }
+/* A new release ready (backlog 6.1): a bar under the header, the page left as it is until Reload */
+.update-ready { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 16px; background: #fff4cc; border-bottom: 1px solid #e0c060; color: #1a1a1a; font-size: 14px; }
+.update-ready span { overflow-wrap: anywhere; }
+.update-ready .close { border: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
 main.editor { display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 20px; padding: 20px; align-items: start; } /* the whole width (1.10 a) */
 .card { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 20px; min-width: 0; }
 h2 { font-size: 17px; color: var(--navy); margin: 0 0 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
