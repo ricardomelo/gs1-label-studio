@@ -686,5 +686,7 @@
  "URI parameter (the header names it)": "Parameter des URI (die Überschrift benennt ihn)",
  "A new version of GS1 Label Studio is ready.": "Eine neue Version von GS1 Label Studio ist bereit.",
  "Reload": "Neu laden",
- "Later": "Später"
+ "Later": "Später",
+ "Removed: {name}": "Entfernt: {name}",
+ "Removes the chosen element (Delete key)": "Entfernt das gewählte Element (Entf-Taste)"
 }

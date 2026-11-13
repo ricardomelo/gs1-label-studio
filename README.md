@@ -718,7 +718,8 @@ now. Effort: S a session, M two or three, L more.
   against the rule above, so only by the owner's explicit word. (C) Left as it is, GS1 DataMatrix recommended instead
 - 6.9 The Delete key removes the chosen element of a label of one's own (S; the owner, 13 November 2026), as the
   **Delete** button over the label does, and Backspace too; never while a field of the properties has the focus, where
-  the keys edit the text; a screen reader told what was removed
+  the keys edit the text; a screen reader told what was removed — *done 13 November: from the label's canvas, its
+  tools, the designer's buttons or nowhere; not with Ctrl, Alt or Command, nor from a button elsewhere on the page*
 
 
 ## Licence

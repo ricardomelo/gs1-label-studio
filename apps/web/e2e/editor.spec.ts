@@ -3350,6 +3350,48 @@ test("a label of one's own: each new element a step right and down from one alre
   await expect(page.locator(".design-list button[aria-pressed]")).toHaveCount(7);
 });
 
+// The Delete key (backlog 6.9, the owner, 13 November 2026): Delete or Backspace removes the chosen element, as the
+// Delete button does, from the canvas, its tools or the designer's buttons; never in a field, where the keys edit the
+// text, nor with Ctrl, nor from a button elsewhere; a screen reader is told what was removed.
+test("a label of one's own: the Delete key removes the chosen element, never while a field is being typed in", async ({ page }) => {
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "designer");
+  const list = page.locator(".design-list button[aria-pressed]");
+  const removed = page.getByTestId("design-removed");
+  for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "+ Text" }).click();
+  await expect(list).toHaveCount(5);
+  // In the text's field the keys edit the text
+  await page.fill("#el-text", "LOT");
+  await page.locator("#el-text").press("Backspace");
+  await page.locator("#el-text").press("Home");
+  await page.locator("#el-text").press("Delete");
+  await expect(page.locator("#el-text")).toHaveValue("O");
+  await expect(list).toHaveCount(5);
+  // From the list of elements, Delete; from the chosen one's outline on the label, Backspace
+  await page.locator(".design-list button", { hasText: "“O”" }).press("Delete");
+  await expect(list).toHaveCount(4);
+  await expect(page.locator(".design-list")).not.toContainText("“O”");
+  await expect(removed).toHaveText("Removed: “O”");
+  await page.locator(".design-list button", { hasText: "“Text”" }).first().click();
+  await expect(removed).toHaveText("");
+  await page.getByTestId("move-outline").focus();
+  await page.keyboard.press("Backspace");
+  await expect(list).toHaveCount(3);
+  await expect(removed).toHaveText("Removed: “Text”");
+  // With Ctrl, or from a button outside the label's canvas and the designer, nothing is removed
+  await page.locator(".design-list button", { hasText: "“Text”" }).first().click();
+  await page.locator(".design-list button", { hasText: "“Text”" }).first().press("Control+Backspace");
+  await page.getByRole("button", { name: "Scan test" }).focus();
+  await page.keyboard.press("Delete");
+  await expect(list).toHaveCount(3);
+  // The Delete button says what it removed too
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(list).toHaveCount(2);
+  await expect(removed).toHaveText("Removed: “Text”");
+});
+
 // The grid and rulers (backlog 4.2, mock-up A of two, 8 November 2026, taken under the owner's rule): one button over the
 // canvas turns them on or off, kept in this browser; lines every few millimetres, stronger every 10 mm; rulers in
 // millimetres along the label's top and left, the chosen element's span marked on them; drawn only, never in the label.

@@ -359,7 +359,8 @@ of my own (barcodes and text placed freely)*:
    reads in any direction, so it stays upright. A line or box needs none: choose *Line across* or *Line down*, or swap
    its width and height.
 9. A frame around the whole label, or around a barcode clear of its quiet zones, is not an overlap.
-10. **Delete** takes the chosen element off the label.
+10. **Delete** takes the chosen element off the label; so does the Delete or Backspace key, unless you are typing in
+    a field (where the keys edit its text).
 
 A barcode, line, box or image past the label's edge, or a barcode overlapping another element (its quiet zones must stay
 clear; a box's outline counts only where it is drawn), is named in red under
@@ -700,6 +701,7 @@ showing to someone new to the tool.
 | A spreadsheet's rows, copied with their header row | **In bulk** → paste, **Use the pasted rows** | No file needed (section 13) |
 | Headers in any of the six languages, or GS1 data titles: *Lote*, *Validade*, *Verfallsdatum*, *DOB* | a bulk table's header row | Each column goes to its AI; dates such as `31/12/2027` become `271231` |
 | A header written `?utm_source` or `lang=` | the same | The column becomes one of the URI's own parameters, named `utm_source` or `lang` |
+| The Delete or Backspace key, an element chosen | a label of one's own, outside its fields | Removes the element, as the **Delete** button does (section 5) |
 
 Not yet: pasting an EPC read from an RFID tag (its hexadecimal or its tag URI) to fill in the fields. The studio
 writes a key's EPC (section 11) but does not read one back.

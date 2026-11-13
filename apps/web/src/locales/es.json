@@ -686,5 +686,7 @@
  "URI parameter (the header names it)": "Parámetro del URI (el encabezado le da nombre)",
  "A new version of GS1 Label Studio is ready.": "Hay una nueva versión de GS1 Label Studio lista.",
  "Reload": "Recargar",
- "Later": "Más tarde"
+ "Later": "Más tarde",
+ "Removed: {name}": "Eliminado: {name}",
+ "Removes the chosen element (Delete key)": "Elimina el elemento elegido (tecla Supr)"
 }

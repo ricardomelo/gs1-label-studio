@@ -5458,6 +5458,15 @@
      ]
     },
     {
+     "name": "a label of one's own: the Delete key removes the chosen element, never while a field is being typed in",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "a label of one's own: a grid and rulers turned on and off, kept for the next visit, never in the label",
      "status": "listed",
      "projects": [

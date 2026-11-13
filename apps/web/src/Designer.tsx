@@ -1,7 +1,7 @@
 import {
   aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { gridLines, rulerTicks } from "./guides.ts";
@@ -136,10 +136,46 @@ interface ToolsProps {
 /** The image file's name, without its extension, as the element is named. */
 const imageName = (file: File) => file.name.replace(/\.[^.]+$/, "") || file.name;
 
+/**
+ * Whether a key pressed removes the chosen element (backlog 6.9, the owner, 13 November 2026): Delete or Backspace, as
+ * in drawing programs, when the focus is on the label's canvas, its tools, the designer's buttons or nowhere; never in
+ * a field, where the keys edit its text, nor with Ctrl, Alt or the Command key, which belong to the browser.
+ */
+export function removesElement(event: Pick<KeyboardEvent, "key" | "ctrlKey" | "altKey" | "metaKey" | "target">): boolean {
+  if ((event.key !== "Delete" && event.key !== "Backspace") || event.ctrlKey || event.altKey || event.metaKey) return false;
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target || target === document.body || target === document.documentElement) return true;
+  if (target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return false;
+  return target.closest(".canvas-frame, .design-tools, .designer") !== null;
+}
+
 /** + Barcode, + Text, + Shape, + Image, the grid and rulers, and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange, guides, onGuides }: ToolsProps) {
   const file = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  // What was removed, said to a screen reader (backlog 6.9): the button's or the key's work, its element gone from sight
+  const [removed, setRemoved] = useState("");
+  const remove = () => {
+    const element = page.elements.find((e) => e.id === selected);
+    if (!element) return false;
+    setRemoved(t("Removed: {name}", { name: elementName(element) }));
+    onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null);
+    return true;
+  };
+  // Said once: an element chosen again clears it, so that the next removal is said even under the same name
+  useEffect(() => {
+    if (selected) setRemoved("");
+  }, [selected]);
+  const removeNow = useRef(remove);
+  removeNow.current = remove;
+  useEffect(() => {
+    const keyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || !removesElement(event)) return;
+      if (removeNow.current()) event.preventDefault(); // nor anything else the key would do
+    };
+    document.addEventListener("keydown", keyDown);
+    return () => document.removeEventListener("keydown", keyDown);
+  }, []);
   // A new element never lands exactly on another: a step right and down from one at its corner (place.ts)
   const add = (element: DesignElement) => {
     const placed = { ...element, ...freeCorner(page, element.xMm, element.yMm) };
@@ -191,9 +227,12 @@ export function DesignerTools({ page, selected, symbology, onChange, guides, onG
       >
         <span aria-hidden="true">#</span> {t("Grid and rulers")}
       </button>
-      <button type="button" className="btn" disabled={!selected} onClick={() => onChange({ ...page, elements: page.elements.filter((e) => e.id !== selected) }, null)}>
+      <button type="button" className="btn" disabled={!selected} title={t("Removes the chosen element (Delete key)")} aria-keyshortcuts="Delete Backspace" onClick={remove}>
         {t("Delete")}
       </button>
+      <p className="visually-hidden" aria-live="polite" data-testid="design-removed">
+        {removed}
+      </p>
       {problem && (
         <p className="hint error wide" role="alert">
           {problem}
