@@ -309,7 +309,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
           Each part marked with its destination on a phone or a tablet (backlog 1.21, layout.ts); data-beside, what a
           tablet held horizontally keeps beside every destination. */}
       <div className="panel">
-        <div className="stage" data-pane="label export" data-beside="">
+        <div className="stage" data-pane="label export" data-beside="" data-tour="label">
           <h2 id="label-title" data-pane="label" data-beside="">
             <span className="n">3</span> {t("Label")} <span className="badge">{t("updates as you type")}</span>
           </h2>
@@ -437,7 +437,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
           <h2 className="pane-title" data-pane="export">
             {t("Export")}
           </h2>
-          <div className="exportbar" data-pane="export" data-beside="">
+          <div className="exportbar" data-pane="export" data-beside="" data-tour="export">
             <b>{t("Export")}</b>
             <div className="downloads">
               {/* Each file's options beside its button (backlog 6.3 h, the owner's comments of 11 November 2026) */}
@@ -501,7 +501,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
         </div>
 
         <div className="side" data-pane="label export more">
-          <div className="options" data-pane="label">
+          <div className="options" data-pane="label" data-tour="options">
             {/* The barcode only or a label, then the kinds of label as cards (backlog 6.3 g, the study's mock-up):
                 the label was the first entry of a list that held both, and easily missed. A kind that does not fit
                 the data says why; a work saved is the third card, where the templates of 6.5 will go. */}

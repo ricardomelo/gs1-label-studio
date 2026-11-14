@@ -44,6 +44,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; }
 header.top { background: #002c6c; color: #fff; padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
 header.top h1 { margin: 0; font-size: 20px; }
 header.top span { opacity: 0.85; font-size: 13px; }
+header.top .tagline { flex: 1 1 160px; min-width: 0; line-height: 1.3; } /* wraps within its room, so that the tour's button keeps the header on one row */
 /* The version under the name (backlog 6.1) */
 header.top .brand { display: inline-flex; flex-direction: column; line-height: 1.15; opacity: 1; }
 header.top .version { color: #fff; opacity: 0.8; font-size: 12px; text-decoration: underline dotted; text-underline-offset: 2px; align-self: flex-start; }
@@ -617,3 +618,15 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
 .kinds .kind:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offset: 2px; }
 .options > .seg-field:first-child { margin-bottom: 4px; }
 @media (max-width: 700px) { .kinds { grid-template-columns: 1fr; } }
+/* The tour (backlog 6.4, mock-up A of two): the ring's shadow dims the page, a clear backdrop keeps it from clicks */
+.tour-backdrop { position: fixed; inset: 0; z-index: 1000; }
+.tour-ring { position: fixed; z-index: 1001; border-radius: 10px; pointer-events: none; box-shadow: 0 0 0 3px #f2a900, 0 0 0 9999px rgba(0, 20, 50, 0.55); transition: left 0.2s, top 0.2s, width 0.2s, height 0.2s; }
+.tour-card { position: fixed; z-index: 1002; width: min(340px, calc(100vw - 24px)); background: var(--card); color: var(--ink); border-radius: 10px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3); padding: 14px 16px; font-size: 14px; line-height: 1.45; }
+.tour-card h3 { margin: 0 28px 6px 0; font-size: 16px; color: var(--navy); }
+.tour-card p { margin: 0 0 12px; }
+.tour-card .close { position: absolute; top: 6px; right: 8px; border: 0; background: none; color: var(--navy); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }
+.tour-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tour-actions .count { font-size: 12px; color: var(--muted); margin-right: auto; }
+.tour-actions .link { font-size: 13px; }
+.tour-open { display: inline-flex; align-items: center; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { .tour-ring { transition: none; } }

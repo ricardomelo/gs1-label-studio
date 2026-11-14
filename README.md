@@ -63,6 +63,9 @@ source.
 
 ## A tour of the studio
 
+In the studio itself, **Tour** in the header (**Take the tour** in *More* on a phone or a tablet) points these out one at
+a time. → [User guide, the tour](docs/user-guide.md#the-tour)
+
 ### 1. Say what the code identifies — or paste what you have
 
 <p align="center">
@@ -719,7 +722,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
 - 6.4 A tour of the studio (S to M, after 6.3, as it follows the layout chosen): on a computer a button that stands
   out in the header, on a phone or tablet an entry of the menu (the owner, 13 November 2026), that points out, one at a
   time, the steps and the main buttons on each device, skipped and seen again at will, in the six
-  languages; the README's tour and the user guide's sections as its text
+  languages; the README's tour and the user guide's sections as its text — *done 14 November (mock-up A of two: the page
+  dimmed, an amber ring around what is shown and a card beside it; B left the page bright with the card in a corner):
+  nine stops on a computer from **Tour** in the header, eight on a phone or a tablet from **Take the tour** in *More*,
+  each destination of the bar opened in turn; Esc, Skip the tour, the arrow keys, the focus brought back*
 - 6.5 Labels by segment (M to L; reopens the owner's word of 3 November, which left product and healthcare
   templates out): under *A label* (6.3 g), a list of templates grouped by segment (logistics: the GS1 Logistic Label;
   a label of one's own; the works saved; then retail, healthcare and patients as the owner chooses them, one at a

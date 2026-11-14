@@ -4823,6 +4823,46 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "tour",
+   "file": "apps/web/test/tour.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the tour's card › goes at the right of the target when there is room, level with its top",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's card › goes at its left when the right has no room",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's card › goes under a target as wide as the window, over one at its bottom",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's card › stays whole within the window, even for a target taller than it",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's card › keeps its side's top within the window when the target starts above it",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's ring › is the part of the target inside the window",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's stops › on a computer, the three steps, the label's parts and the header's buttons, ending on the tour's own button",
+     "status": "passed"
+    },
+    {
+     "name": "the tour's stops › on a phone or a tablet, each destination opened before it is pointed at, ending on More",
+     "status": "passed"
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
    "program": "work",
    "file": "packages/core/test/work.test.ts",
    "kind": "unit",
@@ -5051,6 +5091,24 @@
     },
     {
      "name": "until step 2 is answered the label says its symbol is the default one; step 2's answers cleared or kept",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the tour points out the steps and the main buttons one at a time, beside each, and gives the focus back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the tour reads in the page's language, and in bulk it still points at step 1",
      "status": "listed",
      "projects": [
       "desktop",

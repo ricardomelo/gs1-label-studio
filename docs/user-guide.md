@@ -125,6 +125,16 @@ under it, and the card above step 1 names the ones left (*Replace them with your
 loses its mark as soon as its value is yours, or its row is removed; once none is left the card says *✓ Every example
 value is replaced with yours*.
 
+### The tour
+
+The **Tour** button in the header (on a phone or a tablet, **Take the tour** in *More*) points out the steps and the main
+buttons one at a time: the rest of the page is dimmed, the part shown is ringed in amber, and a card beside it says what
+it is for, with *1 of 9*, **Skip the tour**, **Back** and **Next** (**Done** at the last). On a computer it shows step 1,
+step 2, the label, its options, the exports, *One code* and *In bulk*, the assistant, *Open…* and *Save*, and ends on its
+own button. On a phone or a tablet it opens each destination of the bar in turn — *Data*, *Use*, *Label*, *Export* — then
+points at the mode, the assistant, *Start over* and *More*. Esc or × closes it at any stop, the arrow keys move between
+stops, and closing it brings back where it was opened. The page behind cannot be pressed while it is open.
+
 ### On a phone
 
 A phone — and a tablet held upright, or a narrow window — shows one column and one part at a time, chosen in the tab

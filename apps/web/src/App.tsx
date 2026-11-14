@@ -90,6 +90,8 @@ import {
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { About, buildDate } from "./About.tsx";
 import { answersText, Assistant, examplesText } from "./Assistant.tsx";
+import { Tour } from "./Tour.tsx";
+import { COMPUTER_TOUR, TABBED_TOUR } from "./tour.ts";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
@@ -196,6 +198,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // The assistant (backlog 6.10, ADR 0006): open at its first question or at its summary; what it last set up, said in
   // a card above step 1. It opens by itself on a first visit — nothing kept, and never opened here before.
   const [assistant, setAssistant] = useState<{ atSummary: boolean } | null>(null);
+  // The tour of the studio (backlog 6.4): open or not
+  const [touring, setTouring] = useState(false);
   const [assisted, setAssisted] = useState<{ answers: AssistantAnswers; outcome: AssistantOutcome } | null>(null);
   const firstVisit = useRef(true);
   useEffect(() => {
@@ -739,7 +743,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     ? new Intl.DateTimeFormat(lang, { dateStyle: "long", timeStyle: "short" }).format(offer.saved)
     : null;
   const workButtons = (
-    <span className="work">
+    <span className="work" data-tour="work">
       <button type="button" className={phone ? "btn" : "start-over"} title={t("Opens a work saved here (.json), or a ZPL downloaded here")} onClick={() => openInput.current?.click()}>
         {t("Open…")}
       </button>
@@ -783,14 +787,14 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // kept for screen readers, at the right of the name, so that every tab has it (the owner, 14 November 2026: the
   // Label tab had none while it stood in the live preview's bar; mock-up A of two).
   const startOver = phone ? (
-    <button type="button" className="start-over round" aria-label={t("Start over")} title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
+    <button type="button" className="start-over round" data-tour="start-over" aria-label={t("Start over")} title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M20 12a8 8 0 1 1-2.34-5.66" />
         <path d="M20 4v5h-5" />
       </svg>
     </button>
   ) : (
-    <button type="button" className="start-over" title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
+    <button type="button" className="start-over" data-tour="start-over" title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
       {t("Start over")}
     </button>
   );
@@ -830,8 +834,19 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const examples = useMemo(() => (assisted ? new Map(exampleValues(assisted.outcome)) : undefined), [assisted]);
   const left = assisted ? examplesLeft(assisted.outcome, id) : [];
   const assistantButton = (
-    <button type="button" className="start-over assistant-open" onClick={() => setAssistant({ atSummary: false })}>
+    <button type="button" className="start-over assistant-open" data-tour="assistant" onClick={() => setAssistant({ atSummary: false })}>
       {t("Assistant")}
+    </button>
+  );
+  // The tour's entry (backlog 6.4, the owner, 13 November 2026): a button in the header on a computer, an entry of More
+  // on a phone or a tablet
+  const tourButton = (
+    <button type="button" className={tabbed ? "btn tour-open" : "start-over tour-open"} data-tour="tour" title={t("Shows the steps and the main buttons, one at a time")} onClick={() => setTouring(true)}>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M15.5 8.5l-2 5-5 2 2-5z" />
+      </svg>
+      {tabbed ? t("Take the tour") : t("Tour")}
     </button>
   );
 
@@ -855,7 +870,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           )}
         </span>
         {phone && startOver}
-        <span className="mode" role="group" aria-label={t("Mode")}>
+        <span className="mode" role="group" aria-label={t("Mode")} data-tour="mode">
           <button type="button" aria-pressed={!bulk} onClick={() => setMode("one")}>
             {t("One code")}
           </button>
@@ -864,6 +879,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           </button>
         </span>
         {assistantButton}
+        {!tabbed && tourButton}
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
         {/* On a phone the language is in "More" and Start over an icon beside the name, leaving the header to the name,
             the mode and the assistant */}
@@ -923,7 +939,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       </div>
       <main className="editor">
         <div className="steps" data-pane="data scan">
-          <div data-pane="data">
+          <div data-pane="data" data-tour="data">
           {bulk ? (
             <BulkCard
               table={dataTable}
@@ -1046,7 +1062,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           </>
           )}
           </div>
-          <div data-pane="scan">
+          <div data-pane="scan" data-tour="scan">
           <ScanCard
             identifierKey={active.key}
             walked={walked}
@@ -1142,6 +1158,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             <div className="settings">
               {phone && languageMenu}
               {phone && workButtons}
+              {tourButton}
               <InstallApp />
             </div>
           )}
@@ -1159,6 +1176,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           onClose={() => setAssistant(null)}
         />
       )}
+      {touring && <Tour stops={tabbed ? TABBED_TOUR : COMPUTER_TOUR} onPane={(pane) => showPane(pane)} onClose={() => {
+            setTouring(false);
+            if (tabbed) showPane("more"); // where it was opened from
+          }} />}
       <TabBar
         tab={tab}
         onTab={(next) => showPane(next)}

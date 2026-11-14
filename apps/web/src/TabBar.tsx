@@ -42,7 +42,7 @@ export function TabBar({ tab, onTab, alerts }: { tab: Pane; onTab: (pane: Pane) 
   return (
     <nav className="tabs" aria-label={t("Sections")}>
       {PANES.map((pane) => (
-        <button key={pane} type="button" aria-current={pane === tab ? "page" : undefined} onClick={() => onTab(pane)}>
+        <button key={pane} type="button" data-tour={`tab-${pane}`} aria-current={pane === tab ? "page" : undefined} onClick={() => onTab(pane)}>
           <span className="icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {ICONS[pane]}

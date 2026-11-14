@@ -386,6 +386,95 @@ test("until step 2 is answered the label says its symbol is the default one; ste
   expect(errors).toEqual([]);
 });
 
+test("the tour points out the steps and the main buttons one at a time, beside each, and gives the focus back", async ({ page }) => {
+  // On a computer from the header's button; on a phone or a tablet from More, pointing at the destinations' bar (backlog 6.4)
+  const tabbed = await page.locator("nav.tabs").isVisible();
+  const stops = tabbed
+    ? ["tab-data", "tab-scan", "tab-label", "tab-export", "mode", "assistant", "start-over", "tab-more"]
+    : ["data", "scan", "label", "options", "export", "mode", "assistant", "work", "tour"];
+  await on(page, "more");
+  const opener = page.getByRole("button", { name: tabbed ? "Take the tour" : "Tour", exact: true });
+  await opener.click();
+  const card = page.getByRole("dialog", { name: tabbed ? "Data: what the code identifies" : "1. What the code identifies" });
+  await expect(card).toBeVisible();
+  const view = page.viewportSize()!;
+  const seen: string[] = [];
+  for (let i = 0; i < stops.length; i++) {
+    const stop = stops[i]!;
+    await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stop);
+    await expect(page.locator(".tour-card")).toContainText(`${i + 1} of ${stops.length}`);
+    seen.push(stop);
+    const target = page.locator(`[data-tour="${stop}"]`).first();
+    await expect(target).toBeVisible();
+    // On a phone or a tablet, the destination pointed at is the one shown behind
+    if (tabbed) await expect(page.locator(".app")).toHaveAttribute("data-tab", ["data", "scan", "label", "export", "data", "data", "data", "more"][i]!);
+    await expect(page.locator(".tour-card .btn.primary")).toBeFocused();
+    // The ring around what is shown, as far as it is in the window; the card whole in the window and beside it
+    await expect(async () => {
+      const t = (await target.boundingBox())!;
+      const ring = (await page.locator(".tour-ring").boundingBox())!;
+      const box = (await page.locator(".tour-card").boundingBox())!;
+      const top = Math.max(0, t.y);
+      const bottom = Math.min(view.height, t.y + t.height);
+      expect(ring.x).toBeLessThanOrEqual(Math.max(0, t.x) + 1);
+      expect(ring.y).toBeLessThanOrEqual(top + 1);
+      expect(ring.x + ring.width).toBeGreaterThanOrEqual(Math.min(view.width, t.x + t.width) - 1);
+      expect(ring.y + ring.height).toBeGreaterThanOrEqual(bottom - 1);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(view.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(view.height);
+      const apart = box.x >= ring.x + ring.width || box.x + box.width <= ring.x || box.y >= ring.y + ring.height || box.y + box.height <= ring.y;
+      expect(apart).toBe(true);
+    }).toPass({ timeout: 3000 });
+    if (i === 1) {
+      // Back, and a press on In bulk behind the dimmed page, which does nothing
+      await page.locator(".tour-card").getByRole("button", { name: "Back" }).click();
+      await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stops[0]!);
+      const bulk = page.locator("header.top .mode button").nth(1);
+      const at = (await bulk.boundingBox())!;
+      await page.mouse.click(at.x + at.width / 2, at.y + at.height / 2);
+      await expect(bulk).toHaveAttribute("aria-pressed", "false");
+      await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stops[0]!);
+      await page.locator(".tour-card").getByRole("button", { name: "Next" }).click();
+      await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stops[1]!);
+    }
+    if (i < stops.length - 1) await page.locator(".tour-card").getByRole("button", { name: "Next" }).click();
+  }
+  expect(seen).toEqual(stops);
+  await expect(page.locator(".tour-card").getByRole("button", { name: "Skip the tour" })).toHaveCount(0);
+  await page.locator(".tour-card").getByRole("button", { name: "Done" }).click();
+  await expect(page.locator(".tour-card")).toHaveCount(0);
+  await expect(page.locator(".tour-ring")).toHaveCount(0);
+  await expect(opener).toBeFocused();
+
+  // Escape closes it at any stop, and Skip the tour too; the arrow keys move between stops
+  await opener.click();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stops[1]!);
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", stops[0]!);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".tour-card")).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await opener.click();
+  await page.locator(".tour-card").getByRole("button", { name: "Skip the tour" }).click();
+  await expect(page.locator(".tour-card")).toHaveCount(0);
+});
+
+test("the tour reads in the page's language, and in bulk it still points at step 1", async ({ page }) => {
+  await on(page, "more");
+  await page.selectOption("#language", "pt-BR");
+  await page.getByRole("button", { name: "Em lote" }).click();
+  const tabbed = await page.locator("nav.tabs").isVisible();
+  await on(page, "more");
+  await page.getByRole("button", { name: tabbed ? "Fazer o tour guiado" : "Tour guiado", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: tabbed ? "Dados: o que o código identifica" : "1. O que o código identifica" })).toBeVisible();
+  await expect(page.locator(".tour-card")).toContainText(tabbed ? "1 de 8" : "1 de 9");
+  await expect(page.locator(".tour-card")).toContainText("Pular o tour");
+  await expect(page.locator("[data-tour=data] section[aria-labelledby='rows-title']")).toHaveCount(1);
+});
+
 test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async ({ page }) => {
   await page.fill("#paste", "https://id.gs1.org/00/106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
