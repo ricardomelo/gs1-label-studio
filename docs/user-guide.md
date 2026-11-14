@@ -65,7 +65,7 @@ English.
 - The header: the name, with the version under it (the commit the page was built from and its date, which opens
   About), **One code** or **In bulk** (section 13), **Assistant** (below), **Language**, **Open…** and **Save** (the work kept as a file
   on your computer, section 8), and **Start over**, which clears every field and choice as on a first visit (on a
-  phone, Language, Open… and Save are under **More** and Start over is a round icon beside the live preview).
+  phone, Language, Open… and Save are under **More** and Start over is a round icon at the right of the name).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
   parameters.
 - **2 — Where is it scanned?** Questions that choose the symbol specification table and the symbol.
@@ -139,7 +139,7 @@ bar at the bottom, as phone apps do:
 Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
 live preview — opens its tab. A red dot on **Data** says the data has an error; on **Label**, that the label cannot be
 drawn. The header keeps the name and, on a row of their own under it, **One code / In bulk** and **Assistant**; **Start over** is the round reload icon at the right of the
-live preview's bar.
+name, on every tab.
 
 **Install the app** puts the studio on the home screen, where it opens without the browser's bars and works offline, under
 the name *GS1 Label Studio*. Chrome, Edge and Samsung Internet show their install dialog; on an iPhone or iPad the button

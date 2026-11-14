@@ -36,13 +36,19 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(page.locator("#scan-title")).toBeHidden();
   await expect(page.locator("#label-title")).toBeHidden();
   await expect(page.locator(".mini")).toBeVisible();
-  // Start over: a round icon at the right of the live preview's bar, not in the header
-  const reload = page.locator(".mini-bar").getByRole("button", { name: "Start over" });
-  await expect(reload).toBeVisible();
-  const [bar0, icon] = [(await page.locator(".mini-bar").boundingBox())!, (await reload.boundingBox())!];
-  expect(icon.x + icon.width).toBeGreaterThan(bar0.x + bar0.width - 24);
-  expect(icon.width).toBe(icon.height);
-  await expect(page.locator("header.top").getByRole("button", { name: "Start over" })).toHaveCount(0);
+  // Start over: a round icon at the right of the name, in the header, so that every tab has it (the owner, 14 November
+  // 2026: the Label tab had none while it stood in the live preview's bar)
+  const reload = page.locator("header.top").getByRole("button", { name: "Start over" });
+  const startOverBeside = async () => {
+    await expect(reload).toBeVisible();
+    const [head, name, icon] = [(await page.locator("header.top").boundingBox())!, (await page.locator("header.top h1").boundingBox())!, (await reload.boundingBox())!];
+    expect(icon.x + icon.width).toBeGreaterThan(head.x + head.width - 24); // at the right
+    expect(icon.y).toBeLessThan(name.y + name.height); // on the name's row
+    expect(icon.width).toBe(icon.height);
+    expect(icon.width).toBeGreaterThanOrEqual(44); // a finger's size
+  };
+  await startOverBeside();
+  await expect(page.locator(".mini-bar").getByRole("button", { name: "Start over" })).toHaveCount(0);
   // The live preview opens the label
   await page.locator(".mini").click();
   await expect(bar.getByRole("button", { name: "Label" })).toHaveAttribute("aria-current", "page");
@@ -50,6 +56,7 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(page.locator("#identify-title")).toBeHidden();
   await expect(page.locator(".exportbar")).toBeHidden();
   await expect(page.locator(".mini")).toBeHidden();
+  await startOverBeside();
   // A link to step 2 from the label's options opens Scan
   await bar.getByRole("button", { name: "Use" }).click();
   await page.getByRole("group", { name: "Is it scanned at a general retail point of sale?" }).getByRole("button", { name: "Yes" }).click();

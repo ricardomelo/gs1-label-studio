@@ -147,8 +147,6 @@ input[aria-invalid="true"] { border-color: var(--error); }
   .mini-bar { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 12px; }
   .mini { display: flex; flex: 1; min-width: 0; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); text-decoration: none; min-height: 64px; }
   .mini svg { height: 64px; width: auto; max-width: 100%; background: #fff; }
-  .mini-bar .start-over.round { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--navy); background: transparent; color: var(--navy); display: grid; place-items: center; padding: 0; cursor: pointer; }
-  .mini-bar .start-over.round:active { background: var(--indicator); }
 }
 details.epc, details.sign, details.printer { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; }
 details.epc summary, details.sign summary, details.printer summary { font-weight: 600; cursor: pointer; }
@@ -560,7 +558,10 @@ input.example { border-color: #c98a1b; box-shadow: 0 0 0 2px rgba(201, 138, 27, 
 header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c; border-color: #fff; font-weight: 700; }
 @media (max-width: 900px) {
   header.top { flex-wrap: wrap; row-gap: 8px; }
-  header.top .brand { flex: 1 1 100%; }
+  /* Start over at the right of the name, on every tab (the owner, 14 November 2026) */
+  header.top .brand { flex: 1 1 calc(100% - 54px); }
+  header.top .start-over.round { flex: none; margin-left: 0; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding: 0; }
+  header.top .start-over.round:active { background: rgba(255, 255, 255, 0.15); }
   header.top .mode { margin-left: 0; flex: 1 1 auto; }
   header.top .mode button { flex: 1; padding: 8px 12px; }
   header.top .assistant-open { margin-left: 0; padding: 8px 16px; }

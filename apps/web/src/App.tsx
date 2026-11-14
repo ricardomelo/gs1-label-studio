@@ -771,8 +771,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     void keep(LAST_WORK, null);
     onStartOver?.();
   };
-  // In the header on a computer and a tablet; on a phone a round reload icon at the right of the live preview's bar
-  // (the owner, 31 October 2026), its name kept for screen readers.
+  // In the header on a computer and a tablet; on a phone a round reload icon (the owner, 31 October 2026), its name
+  // kept for screen readers, at the right of the name, so that every tab has it (the owner, 14 November 2026: the
+  // Label tab had none while it stood in the live preview's bar; mock-up A of two).
   const startOver = phone ? (
     <button type="button" className="start-over round" aria-label={t("Start over")} title={t("Clears the data and every choice, as on a first visit")} onClick={startOverClick}>
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -845,6 +846,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             </a>
           )}
         </span>
+        {phone && startOver}
         <span className="mode" role="group" aria-label={t("Mode")}>
           <button type="button" aria-pressed={!bulk} onClick={() => setMode("one")}>
             {t("One code")}
@@ -855,8 +857,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         </span>
         {assistantButton}
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
-        {/* On a phone the language is in "More" and Start over beside the live preview, leaving the header to the
-            name and the mode */}
+        {/* On a phone the language is in "More" and Start over an icon beside the name, leaving the header to the name,
+            the mode and the assistant */}
         {!phone && languageMenu}
         {!phone && workButtons}
         {!phone && startOver}
@@ -910,7 +912,6 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             <span className="error small">{view.error ?? t("Loading…")}</span>
           </a>
         )}
-        {phone && startOver}
       </div>
       <main className="editor">
         <div className="steps" data-pane="data scan">

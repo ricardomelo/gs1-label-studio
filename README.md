@@ -677,7 +677,9 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   (h), (i) and (j) first; (h), (i) and (j) done 13 November, (a) on 14 November: a ? beside every option of the label, twenty texts
   in the six languages; (b) and (f) on 14 November: the options in five framed groups (and the GS1 Logistic Label's),
   folded on a phone with a line saying what is set; the phone's Scan renamed Use, with a shop front; with them the
-  assistant's button beside One code and In bulk on every device (the owner, 14 November: it was missing on a phone)*
+  assistant's button beside One code and In bulk on every device (the owner, 14 November: it was missing on a phone);
+  then the phone's Start over moved from the live preview's bar to the header, at the right of the name, so that the
+  Label tab has it too (the owner, 14 November; mock-up A of two)*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;
