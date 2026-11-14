@@ -277,6 +277,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | File | What it tests | Tests |
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
+| `assistant` | the assistant's scenarios reaching step 2's table and symbol, read back by ZXing; a need read by keywords | 37 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
 | `batch` | label sheets, several-page PDF, file names, generating every row | 17 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |

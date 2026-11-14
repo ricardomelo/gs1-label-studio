@@ -93,6 +93,27 @@ export {
   type SymbolOption,
   type Walk,
 } from "./guide.ts";
+export {
+  ASSISTANT_DATA,
+  ASSISTANT_QUESTIONS,
+  assistantOutcome,
+  assistantQuestion,
+  assistantSteps,
+  EXAMPLE_VALUES,
+  nextAssistantStep,
+  normaliseNeed,
+  readNeed,
+  websiteStem,
+  type AssistantAnswers,
+  type AssistantOption,
+  type AssistantOutcome,
+  type AssistantPrint,
+  type AssistantQuestion,
+  type AssistantRule,
+  type AssistantScenario,
+  type AssistantStep,
+  type OtherKey,
+} from "./assistant.ts";
 export { HriFont } from "./hri.ts";
 export { pyFixed } from "./pyformat.ts";
 export {

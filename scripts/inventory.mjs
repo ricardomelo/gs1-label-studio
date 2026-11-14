@@ -18,7 +18,7 @@ const fromIndex = args.indexOf("--from");
 /** Areas in the order of the user guide; each test file (a "program", as in the resolver's inventory) in one. */
 export const AREAS = [
   ["Input and identification: the Syntax Engine, keys, qualifiers, attributes", ["syntax", "syntax-engine", "identify", "identifiers", "attributes", "checkDigit"]],
-  ["Where it is scanned: the guided choice and the symbol specification tables", ["guide", "specifications", "environments"]],
+  ["Where it is scanned: the assistant, the guided choice and the symbol specification tables", ["assistant", "guide", "specifications", "environments"]],
   ["Symbols and the label's layout", ["layout", "labelsvg", "bars", "hriplace", "gs1128", "qrmode", "logistic", "design", "place", "picture", "imagefile", "resize", "said", "guides", "pyformat"]],
   ["Exports and prepress: SVG, PNG, PDF, EPS, zip", ["render", "prepress", "roundtrip"]],
   ["In bulk: rows, the report, sequences, generation", ["table", "bulk", "report", "sequence", "batch"]],

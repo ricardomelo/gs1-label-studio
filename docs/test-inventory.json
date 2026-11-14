@@ -1,5 +1,5 @@
 {
- "date": "2026-11-13",
+ "date": "2026-11-14",
  "skipped": 0,
  "programs": [
   {
@@ -117,6 +117,162 @@
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
+   "program": "assistant",
+   "file": "packages/core/test/assistant.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the assistant's scenarios › a product sold in shops, nothing else: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a product with a QR code to the brand's website (the owner's example): its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a product for a marketplace with a lot and an expiry date: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a medicine for a pharmacy: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a medical device for hospitals (UDI): its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a shipping case, its GTIN alone: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a shipping case with a lot: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a case sold at a till, which is a product: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a pallet: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › an asset on a label: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › an asset marked directly, close up: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a returnable container: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a location: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a document: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a service relationship: its screens, step 2's table and symbol, read back by ZXing",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › the brand's own website is the GS1 Digital Link URI's domain; GS1's leaves id.gs1.org",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › the rules for two barcodes are said only when there are two",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › a pallet gets a GS1 Logistic Label, 4 × 6 in on a label printer and A6 otherwise",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › asks screen by screen, and sets nothing up until every one is answered",
+     "status": "passed"
+    },
+    {
+     "name": "the assistant's scenarios › the data offered depends on the scenario; every question has options",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Preciso adicionar um QR Code com o site da minha marca no produto que vou vender no varejo",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › um produto para vender no marketplace",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › preciso montar uma etiqueta de UDI",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › I sell a product in shops and on Amazon, with a lot and an expiry date",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Medicamento para farmácia com lote, validade e número de série",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › dispositivo médico para hospitais, impressora de etiquetas Zebra",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Etiqueta para palete enviado ao centro de distribuição",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › caixa de embarque com 12 unidades",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Patrimônio da empresa",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › barril retornável",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Un producto para vender en una tienda, con un código QR que abra mi sitio web",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Un produit vendu en magasin, imprimé chez l'imprimerie",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Ein Produkt für den Einzelhandel mit Charge und Verfallsdatum",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › Un prodotto da vendere in negozio con lotto",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › QR code com o meu site",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › finds nothing in a sentence with no known word, or an empty one",
+     "status": "passed"
+    },
+    {
+     "name": "a need written in one's own words › does not take a word for another that it only starts like",
+     "status": "passed"
+    }
+   ],
+   "area": "Where it is scanned: the assistant, the guided choice and the symbol specification tables"
   },
   {
    "program": "attributes",
@@ -1076,7 +1232,7 @@
      "status": "passed"
     }
    ],
-   "area": "Where it is scanned: the guided choice and the symbol specification tables"
+   "area": "Where it is scanned: the assistant, the guided choice and the symbol specification tables"
   },
   {
    "program": "epc",
@@ -1728,7 +1884,7 @@
      "status": "passed"
     }
    ],
-   "area": "Where it is scanned: the guided choice and the symbol specification tables"
+   "area": "Where it is scanned: the assistant, the guided choice and the symbol specification tables"
   },
   {
    "program": "guides",
@@ -4476,7 +4632,7 @@
      "status": "passed"
     }
    ],
-   "area": "Where it is scanned: the guided choice and the symbol specification tables"
+   "area": "Where it is scanned: the assistant, the guided choice and the symbol specification tables"
   },
   {
    "program": "syntax",
