@@ -11,6 +11,14 @@ export function Help({ name, text }: { name: string; text: string }) {
   const id = useId();
   const box = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const note = useRef<HTMLSpanElement>(null);
+
+  // A ? near the bottom of the screen opened its text out of sight (seen in CI): the text is brought into view, unless
+  // it is the phone's sheet, fixed at the bottom of the screen already
+  useEffect(() => {
+    const text = note.current;
+    if (open && text && getComputedStyle(text).position !== "fixed") text.scrollIntoView({ block: "nearest" });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -43,7 +51,7 @@ export function Help({ name, text }: { name: string; text: string }) {
       >
         ?
       </button>
-      <span className="help-text" id={id} role="note" hidden={!open}>
+      <span className="help-text" id={id} role="note" hidden={!open} ref={note}>
         {text}
       </span>
     </span>

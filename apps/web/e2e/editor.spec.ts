@@ -616,6 +616,12 @@ test("every option of the label has a ? that says what it is for", async ({ page
         .map((label) => label.textContent));
   await on(page, "label");
   expect(await withoutHelp()).toEqual([]);
+  // A ? at the bottom of the screen: its text brought into view (CI's desktop opened it out of sight)
+  const crop = page.getByRole("button", { name: "What is Crop marks?" });
+  await crop.evaluate((button) => window.scrollBy(0, button.getBoundingClientRect().bottom - window.innerHeight + 2));
+  await crop.click();
+  await expect(page.locator(".options .help-text:visible")).toBeInViewport({ ratio: 0.95 });
+  await page.keyboard.press("Escape");
   // A QR code with an EAN-13 beside it, then a GS1 Logistic Label: their options too
   await page.selectOption("#opt-linear", "auto");
   expect(await withoutHelp()).toEqual([]);
