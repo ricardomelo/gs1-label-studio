@@ -272,7 +272,8 @@ General Specifications for that application:
 - **Only in addition to one of the above** — symbols the standard allows beside another, never alone.
 - **Not for this data** — with the reason (*UPC-A carries a GTIN-12*).
 
-Choosing one changes the label at once. At a till, GS1 DataBar Expanded carries everything only for a variable measure
+Choosing one changes the label at once. On a phone, where the label is on another tab, each choice shows a small
+picture of its symbol at the right, drawn from your data, so you see what you choose before you tap it. At a till, GS1 DataBar Expanded carries everything only for a variable measure
 item (a count or a measure that varies, AIs 30, 31nn, 32nn, 35nn, 36nn); otherwise it carries the GTIN alone.
 
 **Choose a symbol yourself** offers every symbol with the key's scanning environments instead, starting from the

@@ -104,6 +104,7 @@ import { symbolSizing } from "./resize.ts";
 import { elementName } from "./Designer.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
+import { choicePictures } from "./choicePictures.ts";
 import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
 import { TabBar } from "./TabBar.tsx";
 import { InstallApp } from "./InstallApp.tsx";
@@ -603,6 +604,13 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const phone = useMedia(PHONE_QUERY);
   const tablet = useMedia(TABLET_QUERY);
   const tabbed = phone || tablet;
+  // On a phone step 2 is a tab of its own, the label out of sight: each choice shows its symbol (backlog 6.3 c). Drawn
+  // again only when the data, the answers or the key change (the guidance is a new object at every render).
+  const pictures = useMemo(
+    () => (phone && guide && checked.identified && font && !settings.expert ? choicePictures(guide, checked.identified, font, active.key) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [phone, checked.identified, font, settings.expert, active.key, answers],
+  );
   const [tab, setTab] = useState<Pane>("data");
   // A new release ready (backlog 6.1, update.ts): offered as a reload, or put off until the next visit
   const [update, setUpdate] = useState(updateReady);
@@ -1052,6 +1060,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             choice={choice}
             onPick={setPicked}
             expert={settings.expert}
+            pictures={pictures}
             onExpert={(expert) =>
               // Choosing it yourself starts from the guided choice.
               setSettings(expert ? { ...settings, expert, symbology, linear: linearChoice, environment: environment ?? settings.environment } : { ...settings, expert })

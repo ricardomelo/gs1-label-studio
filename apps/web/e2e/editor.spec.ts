@@ -1,10 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
 
 // The editor (ADR 0004, mock-ups of 28 October 2026): what the code identifies on the left, the label redrawn beside
 // it as anything changes. On a phone and a tablet (backlog 1.21) the same tests move between the destinations as a
 // person would, through the tab bar or the rail (on()).
+
+const require = createRequire(import.meta.url);
 
 let errors: string[] = [];
 
@@ -283,6 +286,53 @@ test("at a retail till, a batch and a date: the EAN-13 with a QR code beside it,
   await step.getByRole("radio", { name: /^GS1 DataBar Expanded alone/ }).click();
   await expect(page.locator(".caption")).toContainText("GS1 DataBar Expanded · bars 11.23 mm · X 0.330 mm");
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(01)09506000134376");
+});
+
+// On a phone step 2 is a tab of its own, the label out of sight: a small picture of each choice (backlog 6.3 c, the
+// usability study's recommendation), drawn from the data of step 1. Each picture is read back by ZXing, drawn large in
+// a page of its own as the browser draws it.
+async function readPicture(page: Page, src: string) {
+  const { prepareZXingModule, readBarcodes } = await import("zxing-wasm/reader");
+  const wasmBinary = readFileSync(require.resolve("zxing-wasm/reader/zxing_reader.wasm")).buffer as ArrayBuffer;
+  await prepareZXingModule({ overrides: { wasmBinary }, fireImmediately: true });
+  const view = await page.context().newPage();
+  await view.setContent(`<body style="margin:0;background:#fff"><img style="width:1200px;padding:40px;background:#fff" src="${src}"></body>`);
+  const png = await view.locator("img").screenshot();
+  await view.close();
+  const results = await readBarcodes(new Blob([new Uint8Array(png)], { type: "image/png" }), { formats: [], tryHarder: true, maxNumberOfSymbols: 4 });
+  return results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort();
+}
+
+test("on a phone each choice of step 2 shows its symbol, drawn from the data and read back", async ({ page }, info) => {
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  const choices = step.getByRole("radio");
+  await expect(choices.first()).toContainText("EAN-13, with a QR code (GS1 Digital Link) beside it");
+  if (!info.project.name.includes("phone")) {
+    // A computer and a tablet keep the label in view beside step 2: no pictures
+    await expect(step.locator("img.pic")).toHaveCount(0);
+    return;
+  }
+  // Every choice that can be picked has its picture; those not drawn have none
+  for (const radio of await choices.all()) {
+    await expect(radio.locator("img.pic")).toHaveCount((await radio.isDisabled()) ? 0 : 1);
+  }
+  const picture = (name: RegExp) => step.getByRole("radio", { name }).locator("img.pic").getAttribute("src");
+  const both = await readPicture(page, (await picture(/^EAN-13, with a QR code/))!);
+  expect(both).toHaveLength(2);
+  expect(both[0]).toBe("]E0 9506000134376");
+  expect(both[1]).toMatch(/^]Q1 https:\/\/id\.gs1\.org\/01\/09506000134376\/10\/B42\?17=271231$/);
+  expect(await readPicture(page, (await picture(/^EAN-13 alone/))!)).toEqual(["]E0 9506000134376"]);
+  expect(await readPicture(page, (await picture(/^GS1 DataBar Omnidirectional alone/))!)).toEqual(["]e0 (01)09506000134376"]);
+  // The picture follows the data: a new batch is drawn in the QR code
+  await on(page, "data");
+  await page.fill("#q-10", "C77");
+  await on(page, "scan");
+  expect((await readPicture(page, (await picture(/^EAN-13, with a QR code/))!))[1]).toContain("/10/C77");
+  // The picture is for the eye: the choice is still named by its text alone
+  await expect(step.getByRole("radio", { name: /^EAN-13 alone/ }).locator("img.pic")).toHaveAttribute("alt", "");
+  expect(errors).toEqual([]);
 });
 
 test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async ({ page }) => {

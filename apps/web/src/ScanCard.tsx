@@ -137,6 +137,8 @@ interface Props {
   onPick: (choice: Choice) => void;
   expert: boolean;
   onExpert: (expert: boolean) => void;
+  /** On a phone, a small picture of each choice by its key (choicePictures.ts, backlog 6.3 c). */
+  pictures?: Readonly<Record<string, string>>;
 }
 
 function YesNo({ question, value, onAnswer }: { question: QuestionId; value?: boolean; onAnswer: Props["onAnswer"] }) {
@@ -152,7 +154,7 @@ function YesNo({ question, value, onAnswer }: { question: QuestionId; value?: bo
   );
 }
 
-export function ScanCard({ identifierKey, walked, guide, dataError, answers, onAnswer, choice, onPick, expert, onExpert }: Props) {
+export function ScanCard({ identifierKey, walked, guide, dataError, answers, onAnswer, choice, onPick, expert, onExpert, pictures }: Props) {
   const byKey = walked.steps.filter((s) => s.byKey).map((s) => BY_KEY[`${s.question}:${s.answer}`]).filter(Boolean).map((text) => t(text!));
   const asked = walked.steps.filter((s) => !s.byKey).map((s) => s.question as QuestionId);
   const short = KEY_TEXTS[identifierKey]?.short ?? t("key");
@@ -219,6 +221,7 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
                 <div className="pick-group">{t(GROUPS[group])}</div>
                 {list.map((item) => {
                   const selected = same(item.choice, choice);
+                  const picture = pictures?.[item.key];
                   return (
                     <button
                       key={item.key}
@@ -226,7 +229,7 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
                       role="radio"
                       aria-checked={selected}
                       disabled={!item.choice}
-                      className={selected ? "pick selected" : "pick"}
+                      className={`pick${selected ? " selected" : ""}${picture ? " pictured" : ""}`}
                       onClick={() => item.choice && onPick(item.choice)}
                     >
                       <span className="dot" aria-hidden="true" />
@@ -235,6 +238,8 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
                         {item.tag && <span className={`tag ${item.tag}`}>{t(TAGS[item.tag])}</span>}
                       </span>
                       <span className="meta">{item.meta}</span>
+                      {/* The name says what it shows: the picture is for the eye alone */}
+                      {picture && <img className="pic" src={picture} alt="" />}
                     </button>
                   );
                 })}

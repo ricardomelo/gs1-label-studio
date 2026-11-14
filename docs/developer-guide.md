@@ -213,6 +213,7 @@ Each module, in the order of the flow above.
 | `src/IdentifyCard.tsx` | Step 1: paste box, key, the list of qualifiers and attributes (`AiCombo`), other keys, parameters |
 | `src/AiCombo.tsx` | The AI field: every AI from its arrow, filtered by typing |
 | `src/ScanCard.tsx` | Step 2: the tree's questions, the table, the recommended and allowed symbols, *Choose a symbol yourself* |
+| `src/choicePictures.ts` | On a phone, a small picture of each choice of step 2: the choice drawn as the label would (`labelFor`, `labelSvg`) from the data of step 1, at 100 % and without text, as an SVG data URI; App.tsx draws them again only when the data, the answers or the key change |
 | `src/Assistant.tsx` | The assistant's dialog (`<dialog>`, one question per screen, the whole screen on a phone), the sentence read as it is typed, the summary; App.tsx opens it on a first visit (`gs1-label-studio.assistant-seen` in localStorage, set in the Playwright configs so that other tests start without it), applies its outcome and says it in a card above step 1 |
 | `src/LabelCard.tsx` | Step 3: canvas, caption, zoom, *Fit / Real size*, scan test, Export bar, options, GS1-128 symbols, the coloured URI |
 | `src/RealSize.tsx` | Rulers and the screen's calibration |

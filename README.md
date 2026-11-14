@@ -682,8 +682,8 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   Label tab has it too (the owner, 14 November; mock-up A of two); (g) on 14 November: the switch *The barcode only* or
   *A label*, the kinds of label as cards (the GS1 Logistic Label greyed with its reason until the key is an SSCC; a
   label of one's own; a work saved, opening a file); (c) on a computer, 14 November: the tablet's layout, steps 1 and 2
-  and the options on the left, the label and its exports on the right, kept in view as the page scrolls (step 2's
-  pictures on a phone still to come)*
+  and the options on the left, the label and its exports on the right, kept in view as the page scrolls; and on a phone, 14 November, a small picture of each choice of step 2 at its right,
+  drawn from the data (mock-up A of two: B put a larger picture under each choice's text)*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;

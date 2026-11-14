@@ -176,6 +176,9 @@ details.epc summary, details.sign summary, details.printer summary { font-weight
 .pick.selected .dot { background: radial-gradient(var(--navy) 45%, transparent 50%); }
 .pick .name { font-weight: 600; font-size: 14px; }
 .pick .meta { grid-column: 2; color: var(--muted); font-size: 12px; }
+/* On a phone, a small picture of each choice at the right (backlog 6.3 c) */
+.pick.pictured { grid-template-columns: 20px 1fr 76px; }
+.pick .pic { grid-column: 3; grid-row: 1 / span 2; align-self: start; justify-self: end; max-width: 76px; max-height: 56px; width: auto; height: auto; background: #fff; border-radius: 4px; padding: 3px; }
 .tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 8px; margin-left: 6px; vertical-align: 1px; }
 .tag.recommended { background: #e2f3e8; color: #1b7a3e; }
 .tag.in-addition { background: #e8eef8; color: #002c6c; }
