@@ -5822,6 +5822,24 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "the assistant's button stands beside One code and In bulk, on every destination of a phone too",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the label's options in groups by what they do, folded with a line of what is set on a phone",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
