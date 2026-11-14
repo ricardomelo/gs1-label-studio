@@ -25,6 +25,7 @@ import {
 } from "@gs1-label-studio/core";
 import { useState } from "react";
 import { Help } from "./Help.tsx";
+import { OptionGroup } from "./OptionGroup.tsx";
 import { DesignerGuides, DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
 import { keepGuides, keptGuides } from "./guides.ts";
 import { Calibration, keptScale, RealSizeView } from "./RealSize.tsx";
@@ -209,6 +210,11 @@ function linearName(elementString: string, choice: LinearChoice): string | null 
   }
 }
 
+/** A folded group's line saying what is set (backlog 6.3 b): its parts that apply, joined. */
+function summary(...parts: (string | null | undefined)[]): string {
+  return parts.filter(Boolean).join(" · ");
+}
+
 /** An option's name with a ? that says what it is for (backlog 6.3 a). */
 function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; help: keyof typeof OPTION_HELP }) {
   return (
@@ -263,6 +269,8 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
   const barsName = linearBeside ? linearName(view.elementString, s.linear) : view.hasBars ? (s.logistic !== "none" ? tm(SYMBOLOGIES["gs1-128"].name) : tm(SYMBOLOGIES[s.symbology].name)) : null;
   const barsX = linearBeside ? linearXDimension(s.environment, s.linearSize ?? s.size) : view.xMm;
   const snap = snapToDots(view.xMm, s.dpi);
+  // The human readable text's place and height: not for EAN/UPC, whose digits section 5.2.5 places (backlog 1.16)
+  const hriPlaced = s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology);
   const target = view.sizeBase ?? (view.twoD ? ENVIRONMENTS[s.environment]?.["2d"][1] : ENVIRONMENTS[s.environment]?.linear?.[1]);
 
   return (
@@ -457,60 +465,67 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
 
         <div className="side" data-pane="label export more">
           <div className="options" data-pane="label">
-            {(
-              <div className="grid logistic">
-                <div>
-                  <OptionLabel htmlFor="opt-logistic" name={t("Label")} help="label" />
-                  <select
-                    id="opt-logistic"
-                    value={s.designer ? "designer" : s.logistic}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "designer") {
-                        onChange({ ...s, designer: true, logistic: "none", page: s.page ?? startingPage(s.symbology, aiList[0]?.ai), selected: s.selected });
-                      } else onChange({ ...s, designer: false, logistic: value as "none" | LogisticSize });
-                    }}
-                  >
-                    <option value="none">{t("The symbol alone")}</option>
-                    <option value="designer">{t("A label of my own (barcodes and text placed freely)")}</option>
-                    {view.logisticPossible && Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
-                      <option key={id} value={id}>
-                        {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {s.logistic !== "none" && (
-                  <>
-                    <div>
-                      <OptionLabel htmlFor="opt-logistic-2d" name={t("2D symbol beside the data")} help="logisticTwoD" />
-                      <select id="opt-logistic-2d" value={s.logisticTwoD} onChange={(e) => set("logisticTwoD", e.target.value as "none" | LogisticTwoD)}>
-                        <option value="none">{t("None")}</option>
-                        {LOGISTIC_TWO_D.map((id) => (
-                          <option key={id} value={id}>{tm(SYMBOLOGIES[id].name)}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <OptionLabel htmlFor="opt-logistic-second" name={t("Data titles also in")} help="logisticSecond" />
-                      <select id="opt-logistic-second" value={s.logisticSecond} onChange={(e) => set("logisticSecond", e.target.value as "none" | SecondLanguage)}>
-                        <option value="none">{t("English only")}</option>
-                        {Object.entries(SECOND_LANGUAGES).map(([id, name]) => (
-                          <option key={id} value={id} lang={id}>{name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <OptionLabel htmlFor="opt-from" name={t("From")} help="from" />
-                      <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
-                    </div>
-                    <div>
-                      <OptionLabel htmlFor="opt-to" name={t("To")} help="to" />
-                      <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
-                    </div>
-                  </>
-                )}
+            <div className="grid logistic">
+              <div>
+                <OptionLabel htmlFor="opt-logistic" name={t("Label")} help="label" />
+                <select
+                  id="opt-logistic"
+                  value={s.designer ? "designer" : s.logistic}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "designer") {
+                      onChange({ ...s, designer: true, logistic: "none", page: s.page ?? startingPage(s.symbology, aiList[0]?.ai), selected: s.selected });
+                    } else onChange({ ...s, designer: false, logistic: value as "none" | LogisticSize });
+                  }}
+                >
+                  <option value="none">{t("The symbol alone")}</option>
+                  <option value="designer">{t("A label of my own (barcodes and text placed freely)")}</option>
+                  {view.logisticPossible && Object.entries(LOGISTIC_SIZES).map(([id, size]) => (
+                    <option key={id} value={id}>
+                      {t("GS1 Logistic Label, {size} ({w} × {h} mm)", { size: size.name, w: formatNumber(size.widthMm), h: formatNumber(size.heightMm) })}
+                    </option>
+                  ))}
+                </select>
               </div>
+            </div>
+            {s.logistic !== "none" && (
+              <OptionGroup
+                title={t("The GS1 Logistic Label")}
+                summary={summary(
+                  s.logisticTwoD !== "none" ? tm(SYMBOLOGIES[s.logisticTwoD].name) : t("No 2D symbol"),
+                  s.logisticSecond !== "none" ? SECOND_LANGUAGES[s.logisticSecond] : t("English only"),
+                  s.logisticTo.split("\n")[0]?.trim() ? t("to {name}", { name: s.logisticTo.split("\n")[0]!.trim() }) : null,
+                )}
+              >
+                <div className="grid">
+                  <div>
+                    <OptionLabel htmlFor="opt-logistic-2d" name={t("2D symbol beside the data")} help="logisticTwoD" />
+                    <select id="opt-logistic-2d" value={s.logisticTwoD} onChange={(e) => set("logisticTwoD", e.target.value as "none" | LogisticTwoD)}>
+                      <option value="none">{t("None")}</option>
+                      {LOGISTIC_TWO_D.map((id) => (
+                        <option key={id} value={id}>{tm(SYMBOLOGIES[id].name)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <OptionLabel htmlFor="opt-logistic-second" name={t("Data titles also in")} help="logisticSecond" />
+                    <select id="opt-logistic-second" value={s.logisticSecond} onChange={(e) => set("logisticSecond", e.target.value as "none" | SecondLanguage)}>
+                      <option value="none">{t("English only")}</option>
+                      {Object.entries(SECOND_LANGUAGES).map(([id, name]) => (
+                        <option key={id} value={id} lang={id}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <OptionLabel htmlFor="opt-from" name={t("From")} help="from" />
+                    <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
+                  </div>
+                  <div>
+                    <OptionLabel htmlFor="opt-to" name={t("To")} help="to" />
+                    <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
+                  </div>
+                </div>
+              </OptionGroup>
             )}
             {s.designer && s.page && (
               <DesignerPanel
@@ -528,190 +543,140 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               />
             )}
             {!s.designer && (<>
-            <div className="grid">
-              {view.guided ? (
-                <div className="chosen">
-                  <span>
-                    <b>{view.guided.summary}</b> · {t("table {n}", { n: view.guided.table })}, {view.guided.application.toLowerCase()}
-                  </span>
-                  <a className="link" href="#scan-title">
-                    {t("Change in step 2")}
-                  </a>
-                </div>
-              ) : (
-                <div>
-                  <OptionLabel htmlFor="opt-symbol" name={t("Symbol")} help="symbol" />
-                  <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
-                    {OFFERED.map((symbology) => (
-                      <option key={symbology.id} value={symbology.id}>
-                        {tm(symbology.name)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {!view.guided && (
-                <div>
-                  <OptionLabel htmlFor="opt-env" name={t("Scanning environment")} help="environment" />
-                  <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
-                    {view.environments.map((name) => (
-                      <option key={name} value={name}>
-                        {ENVIRONMENT_NAMES[name] ? t(ENVIRONMENT_NAMES[name]) : name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div>
-                <OptionLabel htmlFor="opt-size" name={t("Size")} help="size" />
-                <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
-                  {view.sizes.map((size) => {
-                    const x = view.sizeBase
-                      ? (view.sizeBase * size) / 100
-                      : view.twoD ? xDimension(s.environment, size) : linearXDimension(s.environment, size);
-                    return (
-                      <option key={size} value={size}>
-                        {size === 100 ? t("{size} % (X {x} mm, recommended)", { size, x: formatNumber(x, 3) }) : t("{size} % (X {x} mm)", { size, x: formatNumber(x, 3) })}
-                      </option>
-                    );
-                  })}
-                </select>
+            {view.guided && (
+              <div className="chosen">
+                <span>
+                  <b>{view.guided.summary}</b> · {t("table {n}", { n: view.guided.table })}, {view.guided.application.toLowerCase()}
+                </span>
+                <a className="link" href="#scan-title">
+                  {t("Change in step 2")}
+                </a>
               </div>
-              <div>
-                <OptionLabel htmlFor="opt-hri" name={t("Human readable text")} help="hri" />
-                <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
-                  {Object.entries(HRI_CHOICES).map(([value, text]) => (
-                    <option key={value} value={value}>
-                      {t(text)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
-                <>
+            )}
+            {/* The options grouped by what they do (backlog 6.3 b): the symbol and its size; the linear barcode; the
+                human readable text; the GS1 Digital Link URI; prepress. A group with nothing in it is not drawn. */}
+            <OptionGroup
+              title={t("The symbol and its size")}
+              summary={summary(
+                view.guided ? view.guided.summary : tm(SYMBOLOGIES[s.symbology].name),
+                `${formatNumber(s.size)} %`,
+                view.isQr ? t("error correction {level}", { level: s.error.toUpperCase() }) : null,
+              )}
+            >
+              <div className="grid">
+                {!view.guided && (
                   <div>
-                    <OptionLabel htmlFor="opt-hri-position" name={t("Text position")} help="hriPosition" />
-                    <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
-                      {Object.entries(HRI_POSITION_NAMES)
-                        .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
-                        .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
-                        .map(([value, text]) => (
-                          <option key={value} value={value}>
-                            {t(text)}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <div>
-                    <OptionLabel htmlFor="opt-hri-height" name={t("Text height")} help="hriHeight" />
-                    <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
-                      {HRI_HEIGHTS.map(([mm, text]) => (
-                        <option key={mm} value={mm === 2.2 ? "" : mm}>
-                          {t(text)}
+                    <OptionLabel htmlFor="opt-symbol" name={t("Symbol")} help="symbol" />
+                    <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
+                      {OFFERED.map((symbology) => (
+                        <option key={symbology.id} value={symbology.id}>
+                          {tm(symbology.name)}
                         </option>
                       ))}
                     </select>
                   </div>
-                </>
-              )}
-              {s.symbology === "itf14" && (
-                <div>
-                  <OptionLabel htmlFor="opt-bearer" name={t("Bearer bars")} help="bearer" />
-                  <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
-                    {Object.entries(BEARER_CHOICES).map(([value, text]) => (
-                      <option key={value} value={value}>
-                        {t(text)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {view.isQr && (
-                <>
+                )}
+                {!view.guided && (
                   <div>
-                    <OptionLabel htmlFor="opt-version" name={t("QR code version")} help="version" />
-                    <select
-                      id="opt-version"
-                      value={s.version ?? ""}
-                      onChange={(e) => set("version", e.target.value ? Number(e.target.value) : null)}
-                    >
-                      <option value="">{t("Automatic (smallest that fits)")}</option>
-                      {Array.from({ length: 40 }, (_, i) => i + 1).map((v) => (
-                        <option key={v} value={v}>
-                          {t("{v} ({n} × {n} modules)", { v, n: 17 + 4 * v })}
+                    <OptionLabel htmlFor="opt-env" name={t("Scanning environment")} help="environment" />
+                    <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
+                      {view.environments.map((name) => (
+                        <option key={name} value={name}>
+                          {ENVIRONMENT_NAMES[name] ? t(ENVIRONMENT_NAMES[name]) : name}
                         </option>
                       ))}
                     </select>
                   </div>
+                )}
+                <div>
+                  <OptionLabel htmlFor="opt-size" name={t("Size")} help="size" />
+                  <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
+                    {view.sizes.map((size) => {
+                      const x = view.sizeBase
+                        ? (view.sizeBase * size) / 100
+                        : view.twoD ? xDimension(s.environment, size) : linearXDimension(s.environment, size);
+                      return (
+                        <option key={size} value={size}>
+                          {size === 100 ? t("{size} % (X {x} mm, recommended)", { size, x: formatNumber(x, 3) }) : t("{size} % (X {x} mm)", { size, x: formatNumber(x, 3) })}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                {s.symbology === "itf14" && (
                   <div>
-                    <OptionLabel htmlFor="opt-qr-mode" name={t("Encoding mode")} help="qrMode" />
-                    <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
-                      {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
+                    <OptionLabel htmlFor="opt-bearer" name={t("Bearer bars")} help="bearer" />
+                    <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
+                      {Object.entries(BEARER_CHOICES).map(([value, text]) => (
                         <option key={value} value={value}>
                           {t(text)}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <Segmented
-                    id="opt-qr-upper"
-                    label={t("Scheme and domain")}
-                    help={t(OPTION_HELP.qrUpper)}
-                    value={s.qrUpperDomain ? "upper" : "as"}
-                    options={[
-                      { value: "as", text: t("As typed"), detail: t("As typed (https://id.gs1.org)") },
-                      { value: "upper", text: t("In capitals"), detail: t("In capitals (HTTPS://ID.GS1.ORG)") },
-                    ]}
-                    onChange={(value) => set("qrUpperDomain", value === "upper")}
-                  />
-                  <Segmented
-                    id="opt-ecl"
-                    label={t("Error correction")}
-                    help={t(OPTION_HELP.error)}
-                    value={s.error}
-                    options={ERROR_LEVELS.map((level) => ({ value: level, text: level.toUpperCase(), detail: t(ERROR_NAMES[level]) }))}
-                    onChange={(value) => set("error", value as ErrorLevel)}
-                  />
-                </>
-              )}
-              {(view.linearPossible || (view.guided && view.twoD && s.linear !== "none")) && (
-                <>
-                  {view.linearPossible && (
+                )}
+                {view.isQr && (
+                  <>
                     <div>
-                      <OptionLabel htmlFor="opt-linear" name={t("Linear barcode beside it")} help="linear" />
-                      <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
-                        {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
+                      <OptionLabel htmlFor="opt-version" name={t("QR code version")} help="version" />
+                      <select
+                        id="opt-version"
+                        value={s.version ?? ""}
+                        onChange={(e) => set("version", e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">{t("Automatic (smallest that fits)")}</option>
+                        {Array.from({ length: 40 }, (_, i) => i + 1).map((v) => (
+                          <option key={v} value={v}>
+                            {t("{v} ({n} × {n} modules)", { v, n: 17 + 4 * v })}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <OptionLabel htmlFor="opt-qr-mode" name={t("Encoding mode")} help="qrMode" />
+                      <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
+                        {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
                           <option key={value} value={value}>
                             {t(text)}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
-                </>
-              )}
-              <Segmented
-                id="opt-crop"
-                label={t("Crop marks")}
-                help={t(OPTION_HELP.crop)}
-                value={s.cropMarks ? "marks" : "none"}
-                options={[
-                  { value: "none", text: t("None") },
-                  { value: "marks", text: t("In the PDF and EPS"), detail: t("In the PDF and EPS, on a 10 mm margin") },
-                ]}
-                onChange={(value) => set("cropMarks", value === "marks")}
-              />
-              <div>
-                <OptionLabel htmlFor="opt-stem" name={t("Domain in the GS1 Digital Link URI")} help="stem" />
-                <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
+                    <Segmented
+                      id="opt-ecl"
+                      label={t("Error correction")}
+                      help={t(OPTION_HELP.error)}
+                      value={s.error}
+                      options={ERROR_LEVELS.map((level) => ({ value: level, text: level.toUpperCase(), detail: t(ERROR_NAMES[level]) }))}
+                      onChange={(value) => set("error", value as ErrorLevel)}
+                    />
+                  </>
+                )}
+                {view.linearPossible && (
+                  <div>
+                    <OptionLabel htmlFor="opt-linear" name={t("Linear barcode beside it")} help="linear" />
+                    <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
+                      {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
+                        <option key={value} value={value}>
+                          {t(text)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
-            </div>
+            </OptionGroup>
             {(linearBeside || view.hasBars) && (
               // The linear barcode's two options in one group, each said plainly (backlog 6.3 j, the owner's comment of
               // 11 November 2026): the size sets its X; a reduction takes a fixed amount off every bar, and says what
               // share of that X it is, since 0.020 mm read as a bar's width.
-              <fieldset className="group">
-                <legend>{barsName ? t("Linear barcode ({name})", { name: barsName }) : t("Linear barcode")}</legend>
+              <OptionGroup
+                title={barsName ? t("Linear barcode ({name})", { name: barsName }) : t("Linear barcode")}
+                summary={summary(
+                  linearBeside ? (s.linearSize ? `${formatNumber(s.linearSize)} %` : t("as the 2D symbol")) : null,
+                  view.hasBars ? (s.reduction ? t("{mm} mm less on every bar", { mm: formatNumber(s.reduction, 3) }) : t("no bar width reduction")) : null,
+                )}
+              >
                 <div className="grid">
                   {linearBeside && (
                     <div>
@@ -756,8 +721,95 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                     ? t("The size sets the X of the {name} (the width of a narrow bar). The reduction takes a fixed amount off every bar, half on each side: the barcode's size and the 2D symbol do not change, the spaces widen.", { name: barsName ?? t("linear barcode") })
                     : t("The reduction takes a fixed amount off every bar, half on each side: the symbol's size does not change, the spaces widen.")}
                 </div>
-              </fieldset>
+              </OptionGroup>
             )}
+            <OptionGroup
+              title={t("Human readable text")}
+              summary={summary(
+                t(HRI_CHOICES[s.hri]),
+                hriPlaced ? t(HRI_POSITION_NAMES[s.hriPosition]) : null,
+                hriPlaced ? t(HRI_HEIGHTS.find(([mm]) => mm === (s.hriHeightMm ?? 2.2))?.[1] ?? "2.2 mm (default)") : null,
+              )}
+            >
+              <div className="grid">
+                <div>
+                  <OptionLabel htmlFor="opt-hri" name={t("Human readable text")} help="hri" />
+                  <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
+                    {Object.entries(HRI_CHOICES).map(([value, text]) => (
+                      <option key={value} value={value}>
+                        {t(text)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {hriPlaced && (
+                  <>
+                    <div>
+                      <OptionLabel htmlFor="opt-hri-position" name={t("Text position")} help="hriPosition" />
+                      <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
+                        {Object.entries(HRI_POSITION_NAMES)
+                          .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
+                          .filter(([value]) => !(s.symbology === "itf14" && value === "split"))
+                          .map(([value, text]) => (
+                            <option key={value} value={value}>
+                              {t(text)}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
+                      <OptionLabel htmlFor="opt-hri-height" name={t("Text height")} help="hriHeight" />
+                      <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
+                        {HRI_HEIGHTS.map(([mm, text]) => (
+                          <option key={mm} value={mm === 2.2 ? "" : mm}>
+                            {t(text)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+              </div>
+            </OptionGroup>
+            <OptionGroup
+              title={t("GS1 Digital Link URI")}
+              summary={summary(s.stem, view.isQr ? (s.qrUpperDomain ? t("In capitals") : t("As typed")) : null)}
+            >
+              <div className="grid">
+                <div>
+                  <OptionLabel htmlFor="opt-stem" name={t("Domain in the GS1 Digital Link URI")} help="stem" />
+                  <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
+                </div>
+                {view.isQr && (
+                  <Segmented
+                    id="opt-qr-upper"
+                    label={t("Scheme and domain")}
+                    help={t(OPTION_HELP.qrUpper)}
+                    value={s.qrUpperDomain ? "upper" : "as"}
+                    options={[
+                      { value: "as", text: t("As typed"), detail: t("As typed (https://id.gs1.org)") },
+                      { value: "upper", text: t("In capitals"), detail: t("In capitals (HTTPS://ID.GS1.ORG)") },
+                    ]}
+                    onChange={(value) => set("qrUpperDomain", value === "upper")}
+                  />
+                )}
+              </div>
+            </OptionGroup>
+            <OptionGroup title={t("Prepress")} summary={s.cropMarks ? t("Crop marks in the PDF and EPS") : t("No crop marks")}>
+              <div className="grid">
+                <Segmented
+                  id="opt-crop"
+                  label={t("Crop marks")}
+                  help={t(OPTION_HELP.crop)}
+                  value={s.cropMarks ? "marks" : "none"}
+                  options={[
+                    { value: "none", text: t("None") },
+                    { value: "marks", text: t("In the PDF and EPS"), detail: t("In the PDF and EPS, on a 10 mm margin") },
+                  ]}
+                  onChange={(value) => set("cropMarks", value === "marks")}
+                />
+              </div>
+            </OptionGroup>
             {view.gs1128 && view.gs1128.elements.length > 1 && (
               <div className="gs1128">
                 <div className="gs1128-head">

@@ -99,7 +99,7 @@ test("a tablet held horizontally: a rail on the left, the destination beside it,
   expect(box.x).toBe(0);
   expect(box.height).toBeCloseTo(page.viewportSize()!.height, 0);
   const label = page.locator(".canvas .preview");
-  for (const [name, shown] of [["Data", "#identify-title"], ["Scan", "#scan-title"], ["Label", "#opt-size"], ["Export", "details.printer"], ["More", "details.epc"]] as const) {
+  for (const [name, shown] of [["Data", "#identify-title"], ["Scan", "#scan-title"], ["Label", "#opt-logistic"], ["Export", "details.printer"], ["More", "details.epc"]] as const) {
     await rail.getByRole("button", { name }).click();
     await expect(page.locator(shown)).toBeVisible();
     await expect(label).toBeVisible();

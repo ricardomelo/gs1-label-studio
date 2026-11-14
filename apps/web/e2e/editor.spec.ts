@@ -44,6 +44,16 @@ async function printFile(page: Page, name: string) {
   return section.getByRole("button", { name: `Download ${name}`, exact: true });
 }
 
+/**
+ * An option of the label, its group unfolded first when it is folded (backlog 6.3 b: on a phone each group is folded
+ * under its name with a line saying what is set), as a person would.
+ */
+async function option(page: Page, selector: string) {
+  const head = page.locator(`.group.folding:not(.open):has(${selector}) > .group-head`);
+  if (await head.count()) await head.click();
+  return page.locator(selector);
+}
+
 /** A qualifier's value: its row added from the key's qualifiers first if it is not in the list yet (backlog 1.15). */
 async function qualifier(page: Page, ai: string, value: string) {
   await on(page, "data");
@@ -294,7 +304,7 @@ test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async
   expect(tsplFile).toMatch(/^TEXT \d+,\d+,"\d",0,\d+,\d+,2,"\(00\)106141411234567897"\r$/m);
   await page.selectOption("#prn-profile", "zpl-203");
   await on(page, "label");
-  await page.selectOption("#opt-size", "150");
+  await (await option(page, "#opt-size")).selectOption("150");
   await expect(page.locator(".caption")).toContainText("GS1-128 · bars 31.75 mm · X 0.743 mm");
   await expect(page.locator(".preview svg path[aria-label]")).toHaveAttribute("aria-label", "(00)106141411234567897");
   // Wider than a four-inch printer prints (backlog 3.1)
@@ -333,7 +343,7 @@ test("a case in general distribution: ITF-14 with its bearer bars and digits, at
     "A frame, 4.83 mm (any printing; needed with printing plates)", "Top and bottom, 2X (printing without plates: thermal, laser)",
   ]);
   await on(page, "label");
-  await page.selectOption("#opt-bearer", "bars");
+  await (await option(page, "#opt-bearer")).selectOption("bars");
   await expect(page.locator(".caption")).toContainText("label 71.5 × 39.6 mm at 100 %");
   await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PDF", exact: true }).click()]);
@@ -371,7 +381,7 @@ test("choosing ITF-14 yourself offers the key's scanning environments whose tabl
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "itf14");
+  await (await option(page, "#opt-symbol")).selectOption("itf14");
   const environments = await page.locator("#opt-env").evaluate((select: HTMLSelectElement) => [...select.options].map((o) => o.value));
   expect(environments).toEqual(["distribution", "pharmacy", "pharmacy-gd", "healthcare", "other"]);
   await expect(page.locator(".preview .error")).toContainText("ITF-14 carries the GTIN alone");
@@ -442,8 +452,8 @@ test("at real size the label is drawn between rulers in millimetres, at the scre
 test("a bar width reduction narrows the bars of a linear symbol; a PNG at a chosen resolution, in the zip too", async ({ page }) => {
   await expect(page.locator("#opt-reduction")).toHaveCount(0); // a QR code alone has no bars
   await on(page, "label");
-  await page.selectOption("#opt-linear", "auto");
-  await page.selectOption("#opt-reduction", "0.02");
+  await (await option(page, "#opt-linear")).selectOption("auto");
+  await (await option(page, "#opt-reduction")).selectOption("0.02");
   await expect(page.locator(".preview svg desc")).toContainText("bars reduced by 0.020 mm (bar width reduction)");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
@@ -558,10 +568,13 @@ test("Label printer… opens the printer's section and brings it into view; the 
 // Backlog 6.3 (j), the owner's comment of 11 November 2026: the linear barcode's two options in one group, said plainly.
 test("the linear barcode's size and bar width reduction in one group, each reduction with its share of the X and a ? that says what it is for", async ({ page }) => {
   await on(page, "label");
-  await expect(page.locator("fieldset.group")).toHaveCount(0); // a QR code alone has no bars
-  await page.selectOption("#opt-linear", "auto");
-  const group = page.locator("fieldset.group");
-  await expect(group.locator("legend")).toHaveText("Linear barcode (EAN-13)");
+  await expect(page.locator("#opt-reduction")).toHaveCount(0); // a QR code alone has no bars
+  await (await option(page, "#opt-linear")).selectOption("auto");
+  // Its group: framed on a computer and a tablet, folded under its name on a phone (backlog 6.3 b)
+  const group = page.locator(".group:has(#opt-reduction)");
+  const name = group.locator(":scope > legend, .group-title");
+  await expect(name).toHaveText("Linear barcode (EAN-13)");
+  await option(page, "#opt-reduction");
   await expect(group.locator("#opt-linear-size option").first()).toHaveText("As the 2D symbol: 100 % (X 0.330 mm)");
   await expect(group.locator("#opt-reduction option")).toHaveText([
     "None",
@@ -578,7 +591,7 @@ test("the linear barcode's size and bar width reduction in one group, each reduc
   );
   // A smaller linear barcode: the shares follow its X
   const sizes = await group.locator("#opt-linear-size option").evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
-  await page.selectOption("#opt-linear-size", sizes.at(-1)!);
+  await (await option(page, "#opt-linear-size")).selectOption(sizes.at(-1)!);
   const x = Number((await group.locator("#opt-linear-size option:checked").textContent())!.match(/X ([\d.]+) mm/)![1]);
   await expect(group.locator("#opt-reduction option").nth(3)).toHaveText(`0.020 mm less on every bar (${Math.round((0.02 / x) * 100)} % of X ${x.toFixed(3)} mm)`);
   // The ?: opens and closes, on Escape too
@@ -593,13 +606,13 @@ test("the linear barcode's size and bar width reduction in one group, each reduc
   await expect(note).toBeHidden();
   await expect(help).toBeFocused();
   await help.click();
-  await group.locator("legend").click();
+  await page.locator(".hint.es").click(); // a press elsewhere
   await expect(note).toBeHidden();
   // A linear symbol alone: the reduction alone, named after the symbol and its own X
-  await page.selectOption("#opt-linear", "none");
+  await (await option(page, "#opt-linear")).selectOption("none");
   await expect(group).toHaveCount(0);
-  await page.selectOption("#opt-symbol", "gs1-128");
-  await expect(group.locator("legend")).toHaveText("Linear barcode (GS1-128)");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-128");
+  await expect(name).toHaveText("Linear barcode (GS1-128)");
   await expect(group.locator("#opt-linear-size")).toHaveCount(0);
   await expect(group.locator("#opt-reduction option").nth(3)).toHaveText(/^0\.020 mm less on every bar \(\d+ % of X \d\.\d{3} mm\)$/);
   await expect(group.locator(".hint")).toHaveText("The reduction takes a fixed amount off every bar, half on each side: the symbol's size does not change, the spaces widen.");
@@ -617,16 +630,18 @@ test("every option of the label has a ? that says what it is for", async ({ page
   await on(page, "label");
   expect(await withoutHelp()).toEqual([]);
   // A ? at the bottom of the screen: its text brought into view (CI's desktop opened it out of sight)
+  await option(page, "#opt-crop");
   const crop = page.getByRole("button", { name: "What is Crop marks?" });
   await crop.evaluate((button) => window.scrollBy(0, button.getBoundingClientRect().bottom - window.innerHeight + 2));
   await crop.click();
   await expect(page.locator(".options .help-text:visible")).toBeInViewport({ ratio: 0.95 });
   await page.keyboard.press("Escape");
   // A QR code with an EAN-13 beside it, then a GS1 Logistic Label: their options too
-  await page.selectOption("#opt-linear", "auto");
+  await (await option(page, "#opt-linear")).selectOption("auto");
   expect(await withoutHelp()).toEqual([]);
   const helps = page.locator(".options .help-button");
   expect(await helps.count()).toBeGreaterThanOrEqual(14);
+  await option(page, "#opt-ecl");
   const ecl = page.getByRole("button", { name: "What is Error correction?" });
   await ecl.click();
   const note = page.locator(".options .help-text:visible");
@@ -648,6 +663,7 @@ test("every option of the label has a ? that says what it is for", async ({ page
   await on(page, "label");
   await page.selectOption("#opt-logistic", "a6");
   expect(await withoutHelp()).toEqual([]);
+  await option(page, "#opt-logistic-second");
   await page.getByRole("button", { name: "What is Data titles also in?" }).click();
   await expect(page.locator(".options .help-text:visible")).toHaveText("Each data title in English and in a second language, for a receiver who reads that language.");
   // In Portuguese: the question and its text translated
@@ -673,7 +689,7 @@ test("crop marks around the label in the PDF, the EPS and the zip, and around ev
   const [, , w, h] = box(plain, "/MediaBox");
   await on(page, "label");
   await expect(page.locator("#opt-crop [aria-checked=true]")).toHaveText("None");
-  await page.locator("#opt-crop").getByRole("radio", { name: "In the PDF and EPS" }).click();
+  await (await option(page, "#opt-crop")).getByRole("radio", { name: "In the PDF and EPS" }).click();
   await expect(page.locator(".seg-field:has(#opt-crop) .hint")).toHaveText("In the PDF and EPS, on a 10 mm margin");
   await on(page, "export");
   const marked = readFileSync(await download(/^PDF$/)).toString("latin1");
@@ -1078,7 +1094,7 @@ test("the caption counts the modules and the characters encoded, FNC1 and group 
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await expect(page.locator(".caption")).toContainText("31 characters encoded (FNC1 and 1 group separator included)");
 });
 
@@ -1148,7 +1164,7 @@ test("Start over clears the data and every choice, as on a first visit", async (
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await page.getByRole("button", { name: "Real size" }).click();
   await on(page, "more");
   await page.getByRole("button", { name: "Start over" }).click();
@@ -1232,7 +1248,7 @@ test("the GS1 Digital Link URI's own parameters: after the attributes, a name of
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(10)B42(17)271231(20)12", { timeout: 30_000 });
 });
@@ -1294,7 +1310,7 @@ test("several keys: an SSCC with the GTIN it contains and their count, each chec
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (00)106141411234567897(02)09506000134376(37)10", { timeout: 30_000 });
 });
@@ -1334,13 +1350,13 @@ test("the human readable text above, split, left or right, and higher; the symbo
   await expect(caption).toContainText("label ");
   const [w0, h0] = await size();
   await on(page, "label");
-  await page.selectOption("#opt-hri-position", "left");
+  await (await option(page, "#opt-hri-position")).selectOption("left");
   await expect.poll(async () => (await size())[0]).toBeGreaterThan(w0! + 10);
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
-  await page.selectOption("#opt-hri-position", "split");
+  await (await option(page, "#opt-hri-position")).selectOption("split");
   await expect.poll(async () => (await size())[0]).toBe(w0);
-  await page.selectOption("#opt-hri-height", "3");
+  await (await option(page, "#opt-hri-height")).selectOption("3");
   await expect.poll(async () => (await size())[1]).toBeGreaterThan(h0!);
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
@@ -1348,7 +1364,7 @@ test("the human readable text above, split, left or right, and higher; the symbo
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "ean13");
+  await (await option(page, "#opt-symbol")).selectOption("ean13");
   await expect(page.locator("#opt-hri-position")).toHaveCount(0);
 });
 
@@ -1359,7 +1375,7 @@ test("GS1-128 beyond 48 data characters in several symbols, each read back; the 
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-128");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-128");
   await expect(page.locator(".caption")).toContainText("GS1-128 in 2 symbols");
   await expect(page.locator(".gs1128-head")).toContainText("2 symbols, as many element strings as fit in each");
   await page.getByRole("button", { name: "Scan test" }).click();
@@ -1400,8 +1416,9 @@ test("in bulk: generating thousands of labels shows its progress and can be canc
 // Item 1.14: QR Code's encoding modes, one for the whole data (ISO/IEC 18004).
 test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; each read back", async ({ page }) => {
   await on(page, "label");
-  await page.selectOption("#opt-qr-mode", "alphanumeric");
+  await (await option(page, "#opt-qr-mode")).selectOption("alphanumeric");
   await expect(page.locator(".preview .error")).toContainText("alphanumeric mode cannot encode “h”");
+  await option(page, "#opt-qr-upper");
   await page.getByRole("radiogroup", { name: "Scheme and domain" }).getByRole("radio", { name: "In capitals" }).click();
   await expect(page.locator(".preview .error")).toContainText("cannot encode “?”"); // the query string of (17)
   await on(page, "data");
@@ -1410,7 +1427,7 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   await on(page, "label");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
-  await page.selectOption("#opt-qr-mode", "byte");
+  await (await option(page, "#opt-qr-mode")).selectOption("byte");
   await expect(page.locator(".caption")).toContainText("QR code version 4 · 33 × 33 = 1,089 modules · correction M · byte mode");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 HTTPS://ID.GS1.ORG/01/09506000134376/10/B42", { timeout: 30_000 });
@@ -1420,6 +1437,7 @@ test("QR Code's encoding mode: alphanumeric with the domain in capitals, byte; e
   // The error correction as buttons in a row (the owner's request of 10 November 2026): a press, or the arrow keys on
   // the chosen one, changes it; its full name said under them
   await on(page, "label");
+  await option(page, "#opt-ecl");
   const levels = page.getByRole("radiogroup", { name: "Error correction" });
   await expect(levels.getByRole("radio")).toHaveText(["L", "M", "Q", "H"]);
   await expect(page.locator(".seg-field:has(#opt-ecl) .hint")).toHaveText("M — medium (15 %)");
@@ -1586,7 +1604,7 @@ test("printer languages: a DPL profile writes a label format in tenths of a mill
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await on(page, "export");
   await (await printFile(page, "DPL (300 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("DPL's Data Matrix (W1c) has no FNC1 in the manual");
@@ -1606,7 +1624,7 @@ test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands,
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "dl-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("dl-datamatrix");
   await on(page, "export");
   const [ppla] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "PPLA (203 dpi)")).click()]);
   expect(ppla.suggestedFilename()).toBe("dl-datamatrix_01_09506000134376_10_B42.ppla");
@@ -1620,7 +1638,7 @@ test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands,
   await expect(page.locator(".error.small")).toContainText("PPLB has no Data Matrix");
   // GS1-128: (10) before (17) is refused in EPL2's name and its reason; an SSCC alone, PPLB's B command with 1E
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-128");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-128");
   await on(page, "export");
   await (await printFile(page, "PPLB (203 dpi)")).click();
   await expect(page.locator(".error.small")).toContainText("PPLB is written with EPL2's commands, which its manual gives alike: EPL2's GS1-128 (UCC/EAN 128) carries an element string of no predefined length only last");
@@ -1644,8 +1662,8 @@ test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowe
   await page.selectOption("#opt-logistic", "a6");
   await expect(page.locator(".preview .error")).toContainText("the A6 label is 148 mm high");
   await page.selectOption("#opt-logistic", "a5");
-  await page.fill("#opt-from", "Dal Giardino S.p.A.\nVia Roma 1, Milano");
-  await page.fill("#opt-to", "Supermarket DC 12");
+  await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.\nVia Roma 1, Milano");
+  await (await option(page, "#opt-to")).fill("Supermarket DC 12");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols");
   await expect(page.locator(".caption")).toContainText("label 148.0 × 210.0 mm");
   await page.getByRole("button", { name: "Scan test" }).click();
@@ -1683,15 +1701,15 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Dal Giardino S.p.A.");
+  await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.");
   await expect(page.locator(".preview .error")).toHaveCount(0);
   await expect(page.locator("#opt-logistic-second")).toHaveValue("none");
   await expect(page.locator("#opt-logistic-second option")).toHaveText(["English only", "Português", "Español", "Français", "Deutsch", "Italiano"]);
   const plain = await page.locator(".preview .symbol svg").innerHTML();
   // The second line takes room: with who sends it this label no longer fits its page, refused with the reason
-  await page.selectOption("#opt-logistic-second", "pt-BR");
+  await (await option(page, "#opt-logistic-second")).selectOption("pt-BR");
   await expect(page.locator(".preview .error")).toContainText("The label's text and symbols need 155 mm; the 4 × 6 in label is 152.4 mm high"); // with the free text at 3 mm
-  await page.fill("#opt-from", "");
+  await (await option(page, "#opt-from")).fill("");
   await expect(page.locator(".preview .error")).toHaveCount(0);
   await expect.poll(() => page.locator(".preview .symbol svg").innerHTML()).not.toBe(plain);
   await page.getByRole("button", { name: "Scan test" }).click();
@@ -1712,7 +1730,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await expect(page.locator(".work-note")).toContainText("Opened");
   await on(page, "label");
   await expect(page.locator("#opt-logistic-second")).toHaveValue("pt-BR");
-  await page.selectOption("#opt-logistic-second", "es");
+  await (await option(page, "#opt-logistic-second")).selectOption("es");
   await on(page, "export");
   const [spanish] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
   const es = readFileSync((await spanish.path())!, "utf8");
@@ -1721,7 +1739,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   // German, French and Italian write theirs (the owner, 8 November 2026)
   for (const [language, titles] of [["de", ["INHALT", "ANZAHL"]], ["fr", ["CONTENU", "QUANTITÉ"]], ["it", ["CONTENUTO", "QUANTITÀ"]]] as const) {
     await on(page, "label");
-    await page.selectOption("#opt-logistic-second", language);
+    await (await option(page, "#opt-logistic-second")).selectOption(language);
     await expect(page.locator(".preview .error")).toHaveCount(0);
     await on(page, "export");
     const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
@@ -1744,8 +1762,8 @@ test("the GS1 Logistic Label: From and To wrapped within their columns, smaller 
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Distribuidora de Alimentos Dal Giardino Ltda.\nAvenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP");
-  await page.fill("#opt-to", "Supermercados Exemplo S.A. — Centro de Distribuição 12\nRodovia Anhanguera km 26, Cajamar SP");
+  await (await option(page, "#opt-from")).fill("Distribuidora de Alimentos Dal Giardino Ltda.\nAvenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP");
+  await (await option(page, "#opt-to")).fill("Supermercados Exemplo S.A. — Centro de Distribuição 12\nRodovia Anhanguera km 26, Cajamar SP");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
@@ -1757,7 +1775,7 @@ test("the GS1 Logistic Label: From and To wrapped within their columns, smaller 
   expect(fields).not.toContain("Distribuidora de Alimentos Dal Giardino Ltda.");
   // Too long even at 3 mm: refused, the free text among the cures, in Portuguese too
   await on(page, "label");
-  await page.fill("#opt-from", Array(12).fill("Avenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP").join("\n"));
+  await (await option(page, "#opt-from")).fill(Array(12).fill("Avenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP").join("\n"));
   await expect(page.locator(".preview .error")).toContainText("Choose a smaller size, fewer element strings, shorter text in From and To, or the larger label.");
   await on(page, "more");
   await page.selectOption("#language", "pt-BR");
@@ -1772,8 +1790,8 @@ test("the GS1 Logistic Label: a word too long for its column broken after a hyph
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Hortifrutigranjeira-Cooperativa\nRua Augusta,1500,Consolação\nCEP 01305-100");
-  await page.fill("#opt-to", "Armazém/Recebimento");
+  await (await option(page, "#opt-from")).fill("Hortifrutigranjeira-Cooperativa\nRua Augusta,1500,Consolação\nCEP 01305-100");
+  await (await option(page, "#opt-to")).fill("Armazém/Recebimento");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
@@ -1788,8 +1806,8 @@ test("the GS1 Logistic Label: two marks in a row kept together, no line starting
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "a5");
-  await page.fill("#opt-from", "Cooperativa Supermercados,-Agroindustrial");
-  await page.fill("#opt-to", "");
+  await (await option(page, "#opt-from")).fill("Cooperativa Supermercados,-Agroindustrial");
+  await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5");
   await on(page, "export");
   await openPrinter(page);
@@ -1809,8 +1827,8 @@ test("the GS1 Logistic Label: a postcode with a space kept whole, no line starti
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Avenida Paulista 1578 CEP 01310 200\nPedido 450001234567891-0000012345");
-  await page.fill("#opt-to", "");
+  await (await option(page, "#opt-from")).fill("Avenida Paulista 1578 CEP 01310 200\nPedido 450001234567891-0000012345");
+  await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
@@ -1825,8 +1843,8 @@ test("the GS1 Logistic Label: the marks a word starts with kept with it", async 
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Doca 3 --Hortifrutigranjeira\nCooperativa ,-Agroindustrial\nSetor --Superintendência-Administrativa");
-  await page.fill("#opt-to", "");
+  await (await option(page, "#opt-from")).fill("Doca 3 --Hortifrutigranjeira\nCooperativa ,-Agroindustrial\nSetor --Superintendência-Administrativa");
+  await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
   const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
@@ -1840,7 +1858,7 @@ test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page })
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
   await page.selectOption("#opt-logistic", "4x6");
-  await page.fill("#opt-from", "Dal Giardino S.p.A.");
+  await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
   await openPrinter(page);
@@ -1866,7 +1884,7 @@ test("the GS1 Logistic Label with a QR code beside its data, read back, and in Z
   await on(page, "label");
   await page.selectOption("#opt-logistic", "a5");
   await expect(page.locator("#opt-logistic-2d")).toHaveValue("none");
-  await page.selectOption("#opt-logistic-2d", "dl-qrcode");
+  await (await option(page, "#opt-logistic-2d")).selectOption("dl-qrcode");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols · QR code (GS1 Digital Link) · 33 × 33 = 1,089 modules");
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toHaveText(
@@ -1882,7 +1900,7 @@ test("the GS1 Logistic Label with a QR code beside its data, read back, and in Z
   expect(readFileSync((await zpl.path())!, "utf8")).toMatch(/\^BY1,3\.0,1\^FO\d+,\d+\^BQN,2,6\^FDMA,https:\/\/id\.gs1\.org\/00\/106141411234567897\?02=/);
   // A GS1 DataMatrix instead: the element string
   await on(page, "label");
-  await page.selectOption("#opt-logistic-2d", "gs1-datamatrix");
+  await (await option(page, "#opt-logistic-2d")).selectOption("gs1-datamatrix");
   await expect(page.locator(".caption")).toContainText("· GS1 DataMatrix ·");
 });
 
@@ -2275,7 +2293,7 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix"); // smaller than the GSRN's DataBar Expanded
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix"); // smaller than the GSRN's DataBar Expanded
   await page.selectOption("#opt-logistic", "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   // (7250) offers its date's five formats, its year as given (by the rule for YYMMDD, 60 would be 2060), no time
@@ -2328,7 +2346,7 @@ test("in bulk: a patient list's columns guessed, names with accents encoded for 
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await page.selectOption("#opt-logistic", "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-y", "52");
@@ -2377,7 +2395,7 @@ test("one code: a name typed with spaces and accents written as %XX in the code,
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-symbol", "gs1-datamatrix");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
   await page.selectOption("#opt-logistic", "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-y", "52");
@@ -3876,4 +3894,60 @@ test("the assistant from its button: a sentence it does not know leaves the card
   await expect(page.locator("#opt-logistic")).toHaveValue("4x6");
   await expect(page.locator("#printer")).toHaveAttribute("open", "");
   expect(errors).toEqual([]);
+});
+
+// Backlog 6.3 (b), mock-up B of the usability study (13 November 2026): the label's options grouped by what they do,
+// framed and named on a computer and a tablet; folded on a phone under their names, each with a line saying what is set.
+test("the label's options in groups by what they do, folded with a line of what is set on a phone", async ({ page }, info) => {
+  await on(page, "label");
+  const names = page.locator(".options .group > legend, .options .group-title");
+  await expect(names).toHaveText(["The symbol and its size", "Human readable text", "GS1 Digital Link URI", "Prepress"]);
+  // Each option in its group
+  for (const [group, ids] of [
+    ["The symbol and its size", ["#opt-symbol", "#opt-env", "#opt-size", "#opt-version", "#opt-qr-mode", "#opt-ecl", "#opt-linear"]],
+    ["Human readable text", ["#opt-hri", "#opt-hri-position", "#opt-hri-height"]],
+    ["GS1 Digital Link URI", ["#opt-stem", "#opt-qr-upper"]],
+    ["Prepress", ["#opt-crop"]],
+  ] as const) {
+    const box = page.locator(".options .group").filter({ has: page.locator(":scope > legend, .group-title", { hasText: new RegExp(`^${group.replace(/[()]/g, "\\$&")}$`) }) });
+    for (const id of ids) await expect(box.locator(id), `${id} in ${group}`).toHaveCount(1);
+  }
+  const phone = info.project.name.includes("phone");
+  const symbolGroup = page.locator(".options .group:has(#opt-size)");
+  if (!phone) {
+    await expect(page.locator(".options .group.folding")).toHaveCount(0);
+    await expect(page.locator("#opt-size")).toBeVisible();
+    return;
+  }
+  // On a phone: folded, the line saying what is set; a tap opens one, another folds it
+  const head = symbolGroup.locator(".group-head");
+  await expect(head).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#opt-size")).toBeHidden();
+  await expect(page.locator(".options .group-summary")).toHaveText([
+    "QR code (GS1 Digital Link) · 100 % · error correction M",
+    "Full (every element) · Below the symbol · 2.2 mm (default)",
+    "https://id.gs1.org · As typed",
+    "No crop marks",
+  ]);
+  await head.click();
+  await expect(head).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("group", { name: "The symbol and its size" })).toBeVisible();
+  await page.locator("#opt-size").selectOption("200");
+  await expect(symbolGroup.locator(".group-summary")).toHaveText("QR code (GS1 Digital Link) · 200 % · error correction M");
+  await head.click();
+  await expect(page.locator("#opt-size")).toBeHidden();
+  // The linear barcode's group appears with its own line; crop marks said in theirs
+  await (await option(page, "#opt-linear")).selectOption("auto");
+  await expect(page.locator(".options .group:has(#opt-reduction) .group-summary")).toHaveText("as the 2D symbol · no bar width reduction");
+  await (await option(page, "#opt-crop")).getByRole("radio", { name: "In the PDF and EPS" }).click();
+  await expect(page.locator(".options .group:has(#opt-crop) .group-summary")).toHaveText("Crop marks in the PDF and EPS");
+  // A GS1 Logistic Label: its own group, named first
+  await on(page, "data");
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "a6");
+  await expect(names.first()).toHaveText("The GS1 Logistic Label");
+  await (await option(page, "#opt-to")).fill("Supermarket DC 12\nCajamar");
+  await expect(page.locator(".options .group:has(#opt-to) .group-summary")).toHaveText("No 2D symbol · English only · to Supermarket DC 12");
 });

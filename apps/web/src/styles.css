@@ -482,10 +482,20 @@ footer.about .hint { margin-top: 12px; }
 .designer .darkness label.dither input { width: auto; margin: 0; }
 @media (max-width: 700px) { .design-columns { grid-template-columns: 1fr; } }
 
-/* An option's group, framed and named (backlog 6.3 j, and b to come); a ? beside an option's name (Help.tsx). */
+/* An option's group, framed and named (backlog 6.3 b and j, OptionGroup.tsx); on a phone folded under its name with a
+   line saying what is set; a ? beside an option's name (Help.tsx). */
 fieldset.group { border: 1px solid var(--line); border-radius: 8px; padding: 4px 14px 12px; margin: 14px 0 0; min-width: 0; }
 .label-card fieldset.group .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 fieldset.group > legend { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--navy); padding: 0 6px; }
+.group.folding { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0 0; background: var(--card); }
+.group-head { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; width: 100%; text-align: left; background: transparent; border: 0; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; min-height: 56px; }
+.group-title { grid-column: 1; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--navy); }
+.group-summary { grid-column: 1; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.group-arrow { grid-column: 2; grid-row: 1 / span 2; color: var(--muted); font-size: 12px; transition: transform 0.15s; }
+.group.folding.open .group-arrow { transform: rotate(90deg); }
+.group.folding.open .group-head { border-bottom: 1px solid var(--line); }
+.group-body { padding: 0 14px 12px; }
+.group-body[hidden] { display: none; }
 .label-row { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; }
 .label-row label, .label-row .seg-label { margin: 0; }
 .help { position: relative; display: inline-flex; }
@@ -546,6 +556,7 @@ input.example { border-color: #c98a1b; box-shadow: 0 0 0 2px rgba(201, 138, 27, 
 .assisted .acts { display: flex; gap: 10px; flex-wrap: wrap; margin: 0; }
 .assisted .acts .link { padding: 0; font-size: 13px; }
 header.top .assistant-open { background: #fff; color: #002c6c; border-color: #fff; font-weight: 700; }
+}
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .assistant-found .chip { background: #23402c; color: #81c995; }
   :root:not([data-theme="light"]) .assistant-todo, :root:not([data-theme="light"]) .example-note { color: #f0c674; }

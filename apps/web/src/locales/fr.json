@@ -749,5 +749,17 @@
  "An EAN-13 or a UPC beside the 2D symbol, for tills that do not read 2D symbols yet. Both carry the same GTIN, side by side.": "Un EAN-13 ou un UPC à côté du symbole 2D, pour les caisses qui ne lisent pas encore les symboles 2D. Les deux portent le même GTIN, côte à côte.",
  "Marks at the corners of the PDF and the EPS showing the print shop where to cut, on a 10 mm margin.": "Des traits aux coins du PDF et de l’EPS qui montrent à l’imprimeur où couper, sur une marge de 10 mm.",
  "The website a phone opens from the QR code: GS1's resolver (id.gs1.org) or your own domain, which must answer the address.": "Le site qu’un téléphone ouvre depuis le QR code : le résolveur de GS1 (id.gs1.org) ou votre propre domaine, qui doit répondre à l’adresse.",
- "The linear barcode's own size, from its own table, when it must differ from the 2D symbol's.": "La taille propre du code-barres linéaire, d’après sa propre table, quand elle doit différer de celle du symbole 2D."
+ "The linear barcode's own size, from its own table, when it must differ from the 2D symbol's.": "La taille propre du code-barres linéaire, d’après sa propre table, quand elle doit différer de celle du symbole 2D.",
+ "Crop marks in the PDF and EPS": "Traits de coupe dans le PDF et l'EPS",
+ "GS1 Digital Link URI": "URI GS1 Digital Link",
+ "No 2D symbol": "Sans symbole 2D",
+ "No crop marks": "Sans traits de coupe",
+ "Prepress": "Prépresse",
+ "The GS1 Logistic Label": "L'étiquette logistique GS1",
+ "The symbol and its size": "Le symbole et sa taille",
+ "as the 2D symbol": "comme le symbole 2D",
+ "error correction {level}": "correction d'erreurs {level}",
+ "no bar width reduction": "sans réduction de la largeur des barres",
+ "to {name}": "pour {name}",
+ "{mm} mm less on every bar": "{mm} mm de moins sur chaque barre"
 }
