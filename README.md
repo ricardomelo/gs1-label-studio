@@ -674,7 +674,8 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   with a map pin would be confused with the GLN, a location's key); (g) a switch, the barcode only or a label, the kinds
   as cards; (h) split buttons; (i) one printer button, the section with its own downloads; (j) the two options in one
   group, each reduction saying what it takes off. Built from the next session unless the owner chooses otherwise,
-  (h), (i) and (j) first*
+  (h), (i) and (j) first; (h), (i) and (j) done 13 November, (a) on 14 November: a ? beside every option of the label, twenty texts
+  in the six languages*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;

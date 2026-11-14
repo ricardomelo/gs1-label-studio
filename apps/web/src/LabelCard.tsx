@@ -41,6 +41,7 @@ import {
   HRI_POSITION_NAMES,
   QR_MODE_NAMES,
   LINEAR_CHOICES,
+  OPTION_HELP,
   type HriChoice,
   type LinearChoice,
   ROW_STATUS_NAMES,
@@ -206,6 +207,16 @@ function linearName(elementString: string, choice: LinearChoice): string | null 
   } catch {
     return null;
   }
+}
+
+/** An option's name with a ? that says what it is for (backlog 6.3 a). */
+function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; help: keyof typeof OPTION_HELP }) {
+  return (
+    <div className="label-row">
+      <label htmlFor={htmlFor}>{name}</label>
+      <Help name={name} text={t(OPTION_HELP[help])} />
+    </div>
+  );
 }
 
 export function LabelCard({ children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, fileError, rows }: Props) {
@@ -449,7 +460,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
             {(
               <div className="grid logistic">
                 <div>
-                  <label htmlFor="opt-logistic">{t("Label")}</label>
+                  <OptionLabel htmlFor="opt-logistic" name={t("Label")} help="label" />
                   <select
                     id="opt-logistic"
                     value={s.designer ? "designer" : s.logistic}
@@ -472,7 +483,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 {s.logistic !== "none" && (
                   <>
                     <div>
-                      <label htmlFor="opt-logistic-2d">{t("2D symbol beside the data")}</label>
+                      <OptionLabel htmlFor="opt-logistic-2d" name={t("2D symbol beside the data")} help="logisticTwoD" />
                       <select id="opt-logistic-2d" value={s.logisticTwoD} onChange={(e) => set("logisticTwoD", e.target.value as "none" | LogisticTwoD)}>
                         <option value="none">{t("None")}</option>
                         {LOGISTIC_TWO_D.map((id) => (
@@ -481,7 +492,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="opt-logistic-second">{t("Data titles also in")}</label>
+                      <OptionLabel htmlFor="opt-logistic-second" name={t("Data titles also in")} help="logisticSecond" />
                       <select id="opt-logistic-second" value={s.logisticSecond} onChange={(e) => set("logisticSecond", e.target.value as "none" | SecondLanguage)}>
                         <option value="none">{t("English only")}</option>
                         {Object.entries(SECOND_LANGUAGES).map(([id, name]) => (
@@ -490,11 +501,11 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="opt-from">{t("From")}</label>
+                      <OptionLabel htmlFor="opt-from" name={t("From")} help="from" />
                       <textarea id="opt-from" rows={3} value={s.logisticFrom} placeholder={t("Who sends it: name, address")} onChange={(e) => set("logisticFrom", e.target.value)} />
                     </div>
                     <div>
-                      <label htmlFor="opt-to">{t("To")}</label>
+                      <OptionLabel htmlFor="opt-to" name={t("To")} help="to" />
                       <textarea id="opt-to" rows={3} value={s.logisticTo} placeholder={t("Who receives it")} onChange={(e) => set("logisticTo", e.target.value)} />
                     </div>
                   </>
@@ -529,7 +540,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 </div>
               ) : (
                 <div>
-                  <label htmlFor="opt-symbol">{t("Symbol")}</label>
+                  <OptionLabel htmlFor="opt-symbol" name={t("Symbol")} help="symbol" />
                   <select id="opt-symbol" value={s.symbology} onChange={(e) => set("symbology", e.target.value as SymbologyId)}>
                     {OFFERED.map((symbology) => (
                       <option key={symbology.id} value={symbology.id}>
@@ -541,7 +552,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               )}
               {!view.guided && (
                 <div>
-                  <label htmlFor="opt-env">{t("Scanning environment")}</label>
+                  <OptionLabel htmlFor="opt-env" name={t("Scanning environment")} help="environment" />
                   <select id="opt-env" value={s.environment} onChange={(e) => set("environment", e.target.value)}>
                     {view.environments.map((name) => (
                       <option key={name} value={name}>
@@ -552,7 +563,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 </div>
               )}
               <div>
-                <label htmlFor="opt-size">{t("Size")}</label>
+                <OptionLabel htmlFor="opt-size" name={t("Size")} help="size" />
                 <select id="opt-size" value={s.size} onChange={(e) => set("size", Number(e.target.value))}>
                   {view.sizes.map((size) => {
                     const x = view.sizeBase
@@ -567,7 +578,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 </select>
               </div>
               <div>
-                <label htmlFor="opt-hri">{t("Human readable text")}</label>
+                <OptionLabel htmlFor="opt-hri" name={t("Human readable text")} help="hri" />
                 <select id="opt-hri" value={s.hri} onChange={(e) => set("hri", e.target.value as HriChoice)}>
                   {Object.entries(HRI_CHOICES).map(([value, text]) => (
                     <option key={value} value={value}>
@@ -579,7 +590,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               {s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology) && (
                 <>
                   <div>
-                    <label htmlFor="opt-hri-position">{t("Text position")}</label>
+                    <OptionLabel htmlFor="opt-hri-position" name={t("Text position")} help="hriPosition" />
                     <select id="opt-hri-position" value={s.hriPosition} onChange={(e) => set("hriPosition", e.target.value as HriPosition)}>
                       {Object.entries(HRI_POSITION_NAMES)
                         .filter(([value]) => !(s.linear !== "none" && view.twoD && (value === "left" || value === "right")))
@@ -592,7 +603,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="opt-hri-height">{t("Text height")}</label>
+                    <OptionLabel htmlFor="opt-hri-height" name={t("Text height")} help="hriHeight" />
                     <select id="opt-hri-height" value={s.hriHeightMm ?? ""} onChange={(e) => set("hriHeightMm", e.target.value ? Number(e.target.value) : null)}>
                       {HRI_HEIGHTS.map(([mm, text]) => (
                         <option key={mm} value={mm === 2.2 ? "" : mm}>
@@ -605,7 +616,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               )}
               {s.symbology === "itf14" && (
                 <div>
-                  <label htmlFor="opt-bearer">{t("Bearer bars")}</label>
+                  <OptionLabel htmlFor="opt-bearer" name={t("Bearer bars")} help="bearer" />
                   <select id="opt-bearer" value={s.bearer} onChange={(e) => set("bearer", e.target.value as Bearer)}>
                     {Object.entries(BEARER_CHOICES).map(([value, text]) => (
                       <option key={value} value={value}>
@@ -618,7 +629,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               {view.isQr && (
                 <>
                   <div>
-                    <label htmlFor="opt-version">{t("QR code version")}</label>
+                    <OptionLabel htmlFor="opt-version" name={t("QR code version")} help="version" />
                     <select
                       id="opt-version"
                       value={s.version ?? ""}
@@ -633,7 +644,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="opt-qr-mode">{t("Encoding mode")}</label>
+                    <OptionLabel htmlFor="opt-qr-mode" name={t("Encoding mode")} help="qrMode" />
                     <select id="opt-qr-mode" value={s.qrMode} onChange={(e) => set("qrMode", e.target.value as QrMode | "auto")}>
                       {Object.entries(QR_MODE_NAMES).map(([value, text]) => (
                         <option key={value} value={value}>
@@ -645,6 +656,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                   <Segmented
                     id="opt-qr-upper"
                     label={t("Scheme and domain")}
+                    help={t(OPTION_HELP.qrUpper)}
                     value={s.qrUpperDomain ? "upper" : "as"}
                     options={[
                       { value: "as", text: t("As typed"), detail: t("As typed (https://id.gs1.org)") },
@@ -655,6 +667,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                   <Segmented
                     id="opt-ecl"
                     label={t("Error correction")}
+                    help={t(OPTION_HELP.error)}
                     value={s.error}
                     options={ERROR_LEVELS.map((level) => ({ value: level, text: level.toUpperCase(), detail: t(ERROR_NAMES[level]) }))}
                     onChange={(value) => set("error", value as ErrorLevel)}
@@ -665,7 +678,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 <>
                   {view.linearPossible && (
                     <div>
-                      <label htmlFor="opt-linear">{t("Linear barcode beside it")}</label>
+                      <OptionLabel htmlFor="opt-linear" name={t("Linear barcode beside it")} help="linear" />
                       <select id="opt-linear" value={s.linear} onChange={(e) => set("linear", e.target.value as LinearChoice)}>
                         {Object.entries(LINEAR_CHOICES).map(([value, text]) => (
                           <option key={value} value={value}>
@@ -680,6 +693,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
               <Segmented
                 id="opt-crop"
                 label={t("Crop marks")}
+                help={t(OPTION_HELP.crop)}
                 value={s.cropMarks ? "marks" : "none"}
                 options={[
                   { value: "none", text: t("None") },
@@ -688,7 +702,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 onChange={(value) => set("cropMarks", value === "marks")}
               />
               <div>
-                <label htmlFor="opt-stem">{t("Domain in the GS1 Digital Link URI")}</label>
+                <OptionLabel htmlFor="opt-stem" name={t("Domain in the GS1 Digital Link URI")} help="stem" />
                 <input id="opt-stem" className="mono" value={s.stem} onChange={(e) => set("stem", e.target.value)} spellCheck={false} />
               </div>
             </div>
@@ -701,7 +715,7 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
                 <div className="grid">
                   {linearBeside && (
                     <div>
-                      <label htmlFor="opt-linear-size">{t("Size of the linear barcode")}</label>
+                      <OptionLabel htmlFor="opt-linear-size" name={t("Size of the linear barcode")} help="linearSize" />
                       <select
                         id="opt-linear-size"
                         value={s.linearSize ?? ""}

@@ -487,7 +487,7 @@ fieldset.group { border: 1px solid var(--line); border-radius: 8px; padding: 4px
 .label-card fieldset.group .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 fieldset.group > legend { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--navy); padding: 0 6px; }
 .label-row { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; }
-.label-row label { margin: 0; }
+.label-row label, .label-row .seg-label { margin: 0; }
 .help { position: relative; display: inline-flex; }
 .help-button { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--muted); background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; line-height: 1; padding: 0; cursor: pointer; }
 .help-button[aria-expanded="true"] { border-color: var(--navy); color: var(--navy); }

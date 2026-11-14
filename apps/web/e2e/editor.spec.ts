@@ -605,6 +605,53 @@ test("the linear barcode's size and bar width reduction in one group, each reduc
   await expect(group.locator(".hint")).toHaveText("The reduction takes a fixed amount off every bar, half on each side: the symbol's size does not change, the spaces widen.");
 });
 
+// Backlog 6.3 (a), mock-up A of the usability study (13 November 2026): every option of the label has a ? beside its
+// name that says what it is for, in the page's language; a popover on a computer, a sheet on a phone.
+test("every option of the label has a ? that says what it is for", async ({ page }, info) => {
+  const withoutHelp = () =>
+    page.locator(".options").evaluate((options) =>
+      [...options.querySelectorAll("label[for^='opt-'], .seg-label")]
+        .filter((label) => !label.closest(".designer"))
+        .filter((label) => !label.parentElement?.querySelector(":scope > .help .help-button"))
+        .map((label) => label.textContent));
+  await on(page, "label");
+  expect(await withoutHelp()).toEqual([]);
+  // A QR code with an EAN-13 beside it, then a GS1 Logistic Label: their options too
+  await page.selectOption("#opt-linear", "auto");
+  expect(await withoutHelp()).toEqual([]);
+  const helps = page.locator(".options .help-button");
+  expect(await helps.count()).toBeGreaterThanOrEqual(14);
+  const ecl = page.getByRole("button", { name: "What is Error correction?" });
+  await ecl.click();
+  const note = page.locator(".options .help-text:visible");
+  await expect(note).toHaveText("How much of the symbol may be damaged or covered and still be read. A higher level makes the symbol larger; M is a common choice.");
+  await expect(note).toBeInViewport();
+  if (info.project.name.includes("phone")) {
+    // A sheet from the bottom of the screen, never over the field it explains
+    const box = (await note.boundingBox())!;
+    expect(box.y + box.height).toBeGreaterThan(page.viewportSize()!.height - 2);
+  }
+  await page.keyboard.press("Escape");
+  await expect(note).toHaveCount(0);
+  await expect(ecl).toBeFocused();
+  await on(page, "data");
+  await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.selectOption("#opt-logistic", "a6");
+  expect(await withoutHelp()).toEqual([]);
+  await page.getByRole("button", { name: "What is Data titles also in?" }).click();
+  await expect(page.locator(".options .help-text:visible")).toHaveText("Each data title in English and in a second language, for a receiver who reads that language.");
+  // In Portuguese: the question and its text translated
+  await page.keyboard.press("Escape");
+  await on(page, "more");
+  await page.getByLabel("Language").selectOption("pt-BR");
+  await on(page, "label");
+  await page.getByRole("button", { name: "O que é Títulos de dados também em?" }).click();
+  await expect(page.locator(".options .help-text:visible")).toHaveText("Cada título de dados em inglês e numa segunda língua, para quem recebe e lê essa língua.");
+  expect(errors).toEqual([]);
+});
+
 // The rest of item 1.5: crop marks, on a page 10 mm (28.346 pt) larger on every side, the PDF's TrimBox the label.
 test("crop marks around the label in the PDF, the EPS and the zip, and around every label in bulk", async ({ page }) => {
   const box = (text: string, key: string) => /\[([\d. ]+)\]/.exec(text.slice(text.indexOf(key)))![1]!.split(" ").map(Number);

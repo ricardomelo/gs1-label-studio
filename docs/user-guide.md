@@ -431,7 +431,9 @@ or QR code is refused there (Labelize does not turn them).
 ## 6. The label's options
 
 Only the choices that apply to the symbol are shown. A choice of two to four short options is a row of buttons (press
-one, or use the arrow keys on the chosen one); a longer choice is a list.
+one, or use the arrow keys on the chosen one); a longer choice is a list. The **?** beside each option's name says what
+it does and gives a tip, in the page's language: under the option on a computer, in a sheet from the bottom of the
+screen on a phone; Escape, the **?** again or a press elsewhere closes it.
 
 | Option | What it does |
 |---|---|

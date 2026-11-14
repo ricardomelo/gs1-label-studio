@@ -223,6 +223,31 @@ export const LINEAR_CHOICES = {
 } as const;
 export type LinearChoice = keyof typeof LINEAR_CHOICES;
 
+// What each of the label's options is for, said by the ? beside its name (backlog 6.3 a, mock-up A of the usability study,
+// 13 November 2026): what it does, then a tip.
+export const OPTION_HELP = {
+  label: "The symbol alone, for artwork; a label of your own, with barcodes and text placed freely; or the GS1 Logistic Label, for a pallet's or a parcel's SSCC, in its standard sizes.",
+  logisticTwoD: "A 2D symbol carrying the label's data, for scanners that read 2D symbols. The GS1-128 barcodes stay, for every other scanner.",
+  logisticSecond: "Each data title in English and in a second language, for a receiver who reads that language.",
+  from: "Who sends it, printed in the label's top section: a name and an address.",
+  to: "Who receives it, printed in the label's top section: a name and an address.",
+  symbol: "The barcode drawn. Step 2 recommends one from where it is scanned; choosing one here sets that recommendation aside.",
+  environment: "Where the code is scanned sets its smallest, recommended and largest size, from the General Specifications' symbol specification tables. Step 2 chooses it from your answers.",
+  size: "The symbol's size against its nominal size: it sets the X-dimension, the width of a narrow bar or of a module. The list holds only the sizes the table allows.",
+  hri: "The data printed in characters with the barcode, for people when no scanner is at hand. Keep it on products and labels; the key alone is shorter.",
+  hriPosition: "Under the symbol is usual. Above it, or the key below and the attributes above, where the label has no room under it.",
+  hriHeight: "The characters' height. The General Specifications ask for at least 2 mm; the GS1 Logistic Label uses 3 mm.",
+  bearer: "Bars around an ITF-14 stop a scanner from reading part of it as a shorter code. A frame also spreads a printing plate's pressure, so it is needed with plates.",
+  version: "A QR code's size in modules. Automatic takes the smallest that holds the data; a fixed version keeps every label of a series the same size.",
+  qrMode: "How the characters are packed into the symbol. Automatic mixes the modes for the smallest symbol; a single mode only where a reader or a test asks for it.",
+  qrUpper: "In capitals, the scheme and the domain pack into the alphanumeric mode, which makes the QR code smaller; a phone opens the address all the same.",
+  error: "How much of the symbol may be damaged or covered and still be read. A higher level makes the symbol larger; M is a common choice.",
+  linear: "An EAN-13 or a UPC beside the 2D symbol, for tills that do not read 2D symbols yet. Both carry the same GTIN, side by side.",
+  crop: "Marks at the corners of the PDF and the EPS showing the print shop where to cut, on a 10 mm margin.",
+  stem: "The website a phone opens from the QR code: GS1's resolver (id.gs1.org) or your own domain, which must answer the address.",
+  linearSize: "The linear barcode's own size, from its own table, when it must differ from the 2D symbol's.",
+} as const;
+
 // Step 2, where the code is scanned (backlog 1.2). The questions themselves are the core's (guide.ts: QUESTIONS).
 export const GUIDE_TEXTS = {
   answer: "Answer to see the symbols the GS1 General Specifications allow here, and the one recommended for this data.",

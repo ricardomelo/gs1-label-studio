@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from "react";
+import { Help } from "./Help.tsx";
 
 // A choice of two to four short options as buttons in a row (the owner's request of 10 November 2026, mock-up A of
 // two: B put sliders in their place, which suit an ordered scale only and cut the options' names): every option in
@@ -16,12 +17,14 @@ export interface SegmentedOption<T extends string> {
 interface Props<T extends string> {
   id: string;
   label: string;
+  /** What the choice is for, said by a ? beside its name (backlog 6.3 a). */
+  help?: string;
   value: T;
   options: readonly SegmentedOption<T>[];
   onChange: (value: T) => void;
 }
 
-export function Segmented<T extends string>({ id, label, value, options, onChange }: Props<T>) {
+export function Segmented<T extends string>({ id, label, help, value, options, onChange }: Props<T>) {
   const group = useRef<HTMLDivElement>(null);
   const chosen = options.find((option) => option.value === value);
 
@@ -36,9 +39,18 @@ export function Segmented<T extends string>({ id, label, value, options, onChang
 
   return (
     <div className="seg-field">
-      <span className="seg-label" id={`${id}-label`}>
-        {label}
-      </span>
+      {help ? (
+        <div className="label-row">
+          <span className="seg-label" id={`${id}-label`}>
+            {label}
+          </span>
+          <Help name={label} text={help} />
+        </div>
+      ) : (
+        <span className="seg-label" id={`${id}-label`}>
+          {label}
+        </span>
+      )}
       <div className="seg" role="radiogroup" id={id} aria-labelledby={`${id}-label`} ref={group}>
         {options.map((option, index) => (
           <button
