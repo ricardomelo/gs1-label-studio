@@ -91,6 +91,11 @@ specification table, the symbols it allows for this data, and the one it recomme
 the till with a QR code carrying a GS1 Digital Link URI beside it. **Choose a symbol yourself** offers every symbol,
 still within the tables' ranges. → [User guide, step 2](docs/user-guide.md#4-step-2--where-it-is-scanned)
 
+New to GS1? The **Assistant** asks in plain words what you want to identify and what for — a product for shops or a
+marketplace, a QR code that opens your website, a medicine, a pallet — or reads the need as you write it, then fills the
+three steps and says the rules for the artwork, each with its section of the General Specifications.
+→ [User guide, the assistant](docs/user-guide.md#the-assistant)
+
 ### 3. The label at its real size, read back in the browser
 
 <p align="center">
@@ -745,7 +750,9 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   an *Assistant* button. Step 2 still chooses the symbol from the decision tree; the templates by segment (6.5) become
   its scenarios, the tour (6.4) follows it. Mock-ups (A recommended, B) in a doc for the owner, 13 November, its link
   in the handover. Deliveries: the core's scenarios, questions and keywords; the dialog on three devices; cases,
-  pallets, healthcare and the other keys; the documents
+  pallets, healthcare and the other keys; the documents — *the core and the dialog done 14 November (every scenario,
+  cases, pallets, healthcare and the other keys included; the owner's three examples read as meant); next: the fields
+  still to type marked in step 1, then 6.4 and 6.5 on it*
 
 
 ## Licence

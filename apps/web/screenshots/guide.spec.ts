@@ -30,6 +30,19 @@ test("the editor at a glance", async ({ page }) => {
   await shot(page, "editor");
 });
 
+test("the assistant: a question, and the summary", async ({ page }) => {
+  await page.getByRole("button", { name: "Assistant", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Describe what you need").fill("A QR code with my website on the product I sell in shops");
+  await shot(page, "assistant");
+  for (let i = 0; i < 3; i++) await dialog.getByRole("button", { name: "Continue" }).click(); // what, where, the data on each unit
+  await dialog.getByLabel("Your website's domain").fill("www.example.com");
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /On the packaging's artwork/ }).click();
+  await dialog.getByRole("button", { name: "See the result" }).click();
+  await shot(page, "assistant-summary");
+});
+
 test("step 1: what the code identifies", async ({ page }) => {
   await paste(page, "]d2010950600013435210ABC123{GS}17271200");
   await expect(page.locator(".status")).toContainText("day 00");

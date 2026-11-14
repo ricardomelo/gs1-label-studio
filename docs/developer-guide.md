@@ -30,6 +30,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 │ App.tsx — state, steps    │──────▶│ syntax.ts      GS1 Barcode Syntax Engine (WebAssembly)   │
 │ IdentifyCard  step 1      │       │ identify.ts    key, qualifiers, attributes → data        │
 │ ScanCard      step 2      │       │ guide.ts       decision tree, carriers, recommendation   │
+│ Assistant     the dialog  │       │ assistant.ts   scenarios, questions, keywords, rules     │
 │ LabelCard     step 3      │       │ specifications.ts / environments.ts  sizes by table      │
 │ BulkCard, GeneratePanel   │       │ encode.ts      bwip-js, node-qrcode → geometry           │
 │ PrinterSection, EpcSection│       │ layout.ts, gs1128.ts, logistic.ts, hri.ts  the label     │
@@ -144,6 +145,7 @@ Each module, in the order of the flow above.
 | `specifications.ts` | Every row of the symbol specification tables 1 to 13 (General Specifications 26.0, 5.12.3); `specificationFor`, `specSizesFor`, `baseX`, `minimumBarHeight` |
 | `environments.ts` | The resolver's scanning environments (its `label.py`), sizes and checks; `environmentsFor` a key |
 | `guide.ts` | `TREE`, `QUESTIONS`, `walk` (figure 5-68), `guidance` and `carries` (section 2's carriers), `gs1128DataCharacters` |
+| `assistant.ts` | The assistant for first-time users (6.10, ADR 0006): `ASSISTANT_QUESTIONS`, `assistantSteps` and `nextAssistantStep` (the screens for the answers given), `assistantOutcome` (the key with example values, step 2's answers — never a symbol of its own but the EAN-13 and QR code pair a table allows in addition —, the URI's domain, a GS1 Logistic Label, the rules with their sections), `readNeed` (a sentence read by keywords in six languages) |
 
 ### Symbols and the label
 
@@ -211,6 +213,7 @@ Each module, in the order of the flow above.
 | `src/IdentifyCard.tsx` | Step 1: paste box, key, the list of qualifiers and attributes (`AiCombo`), other keys, parameters |
 | `src/AiCombo.tsx` | The AI field: every AI from its arrow, filtered by typing |
 | `src/ScanCard.tsx` | Step 2: the tree's questions, the table, the recommended and allowed symbols, *Choose a symbol yourself* |
+| `src/Assistant.tsx` | The assistant's dialog (`<dialog>`, one question per screen, the whole screen on a phone), the sentence read as it is typed, the summary; App.tsx opens it on a first visit (`gs1-label-studio.assistant-seen` in localStorage, set in the Playwright configs so that other tests start without it), applies its outcome and says it in a card above step 1 |
 | `src/LabelCard.tsx` | Step 3: canvas, caption, zoom, *Fit / Real size*, scan test, Export bar, options, GS1-128 symbols, the coloured URI |
 | `src/RealSize.tsx` | Rulers and the screen's calibration |
 | `src/resize.ts` | A label of one's own resized by dragging the chosen element's corner: `resized` (its top left corner kept, a barcode and a text block to the sizes their properties offer), `symbolSizing` (a barcode's bars or modules and allowed sizes), `handleAt` (the handle held within the label when the element runs past its edge), `keyResized` (an arrow key on the handle: the corner by a step, a barcode and a text block to their next size), `boxAfter` (the box an element would have at its new size, a barcode's laid out by `symbolSizing`'s `boxAt`), `heldResize` (dragging and the arrow keys held within the label: the last half millimetre or the largest size that keeps the element's box on it, never further past the edge than it is) |
@@ -321,7 +324,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle, resizing held within the label (apps/web/test) | 27 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 96 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 98 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |

@@ -101,7 +101,7 @@ export const ASSISTANT_QUESTIONS: Record<AssistantStep, AssistantQuestion> = {
     options: [
       { value: "shops", text: "In shops", help: "It goes through the till of a supermarket, pharmacy or shop." },
       { value: "online", text: "Online only", help: "On a marketplace or in my online shop." },
-      { value: "both", text: "Both", help: "In shops and online." },
+      { value: "both", text: "Both, in shops and online", help: "A till, and a marketplace or my online shop." },
     ],
   },
   data: {
@@ -118,7 +118,7 @@ export const ASSISTANT_QUESTIONS: Record<AssistantStep, AssistantQuestion> = {
     options: [
       { value: "own", text: "Yes, my website", help: "The QR code opens an address on my own domain." },
       { value: "gs1", text: "Yes, through GS1", help: "id.gs1.org, GS1's resolver, decides where the phone goes." },
-      { value: "no", text: "No", help: "The barcode alone." },
+      { value: "no", text: "No, the barcode alone", help: "Without a QR code." },
     ],
   },
   care: {
@@ -285,7 +285,7 @@ const RULES = {
   adjacent: { text: "The two barcodes side by side, keeping their white margins (quiet zones); which goes left or right is your choice.", section: "4.15.1" },
   radius: { text: "The whole 2D barcode, its margins included, within 50 mm of the EAN-13's centre, so that the till knows both belong to the same item.", section: "6.3.3.1" },
   same: { text: "The same GTIN, and the same lot and dates, in both barcodes.", section: "4.15.1" },
-  eanSize: { text: "Between 80 % and 200 % of the EAN-13's nominal size, never with its bars cut shorter.", section: "5.12.3, table 1" },
+  eanSize: { text: "Between 80 % and 200 % of the EAN-13's nominal size, never with its bars cut shorter.", section: "5.12.3.1" },
   ownSite: { text: "Your website must answer the address the QR code holds (your domain, then /01/ and the GTIN): a redirection is enough. Scan it with a phone before printing.", section: "" },
   gs1Site: { text: "With id.gs1.org, GS1's resolver decides where the phone goes: ask your GS1 office which links it can hold for your GTIN.", section: "" },
   healthcare: { text: "Your regulator says which of the lot, the expiry date, the serial number and the production date your item needs.", section: "" },

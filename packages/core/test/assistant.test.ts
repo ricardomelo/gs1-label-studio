@@ -63,7 +63,7 @@ function carried(symbol: SymbologyId, input: { elementString: string; digitalLin
 // recommendation) and the rules' sections that must be said.
 const SCENARIOS: [name: string, answers: AssistantAnswers, steps: string, table: number, symbols: SymbologyId[], sections: string[]][] = [
   ["a product sold in shops, nothing else", { scenario: "product", sold: "shops", data: [], web: "no", print: "artwork" },
-    "scenario sold data web print", 1, ["ean13"], ["1.2.3, 1.5", "6.3.3.1, 6.3.3.3", "5.12.3, table 1"]],
+    "scenario sold data web print", 1, ["ean13"], ["1.2.3, 1.5", "6.3.3.1, 6.3.3.3", "5.12.3.1"]],
   ["a product with a QR code to the brand's website (the owner's example)", { scenario: "product", sold: "shops", data: [], web: "own", domain: "minhamarca.com.br", print: "artwork" },
     "scenario sold data web print", 1, ["ean13", "dl-qrcode"], ["4.15.1", "6.3.3.1"]],
   ["a product for a marketplace with a lot and an expiry date", { scenario: "product", sold: "online", data: ["10", "17"], web: "no", print: "label-printer" },

@@ -5782,6 +5782,24 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "the assistant opens by itself on a first visit only; the owner's sentence sets up an EAN-13 with a QR code to the brand's website",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the assistant from its button: a sentence it does not know leaves the cards; a pallet gets a GS1 Logistic Label; Escape changes nothing",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"

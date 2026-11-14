@@ -616,7 +616,6 @@
  "Hospitals and clinics": "Ospedali e cliniche",
  "How will you print it?": "Come lo stamperà?",
  "I send a file to a print shop or a designer (SVG, PDF, EPS).": "Mando un file alla tipografia o al grafico (SVG, PDF, EPS).",
- "In shops and online.": "In negozio e online.",
  "In shops": "In negozio",
  "In shops, supermarkets, on a marketplace or in my online shop.": "In negozio, al supermercato, su un marketplace o nel mio negozio online.",
  "Is the case itself sold at a till?": "La scatola stessa viene venduta alla cassa?",
@@ -651,7 +650,6 @@
  "The GS1 Logistic Label: who sends it and who receives it at the top, the SSCC's barcode lowest.": "L’etichetta logistica GS1: chi spedisce e chi riceve in alto, il codice dell’SSCC in fondo.",
  "The QR code goes beside the EAN-13, and the till reads either. It opens the address it holds, so your website must answer it.": "Il codice QR va accanto all’EAN-13 e la cassa legge l’uno o l’altro. Apre l’indirizzo che porta, quindi il suo sito deve rispondere.",
  "The QR code opens an address on my own domain.": "Il codice QR apre un indirizzo del mio dominio.",
- "The barcode alone.": "Solo il codice a barre.",
  "The case has a GTIN of its own, different from the unit's, often the unit's with an indicator digit from 1 to 8 in front.": "La scatola ha un GTIN proprio, diverso da quello dell’unità, spesso quello dell’unità con una cifra indicatore da 1 a 8 davanti.",
  "The same GTIN, and the same lot and dates, in both barcodes.": "Lo stesso GTIN, e gli stessi lotto e date, in entrambi i codici.",
  "The same for a whole production run: AI (10).": "Lo stesso per un’intera produzione: AI (10).",
@@ -681,5 +679,9 @@
  "Your regulator says which of the lot, the expiry date, the serial number and the production date your item needs.": "La sua autorità sanitaria dice quali tra lotto, data di scadenza, numero di serie e data di produzione servono al suo articolo.",
  "Your website must answer the address the QR code holds (your domain, then /01/ and the GTIN): a redirection is enough. Scan it with a phone before printing.": "Il suo sito deve rispondere all’indirizzo che porta il codice QR (il suo dominio, poi /01/ e il GTIN): basta un reindirizzamento. Lo legga con il telefono prima di stampare.",
  "Zebra, Argox, Elgin, TSC… (ZPL, PPLA, TSPL…).": "Zebra, Argox, Elgin, TSC… (ZPL, PPLA, TSPL…).",
- "id.gs1.org, GS1's resolver, decides where the phone goes.": "id.gs1.org, il resolver di GS1, decide dove va il telefono."
+ "id.gs1.org, GS1's resolver, decides where the phone goes.": "id.gs1.org, il resolver di GS1, decide dove va il telefono.",
+ "Both, in shops and online": "Entrambi, in negozio e online",
+ "A till, and a marketplace or my online shop.": "Una cassa, e un marketplace o il mio negozio online.",
+ "No, the barcode alone": "No, solo il codice a barre",
+ "Without a QR code.": "Senza codice QR."
 }

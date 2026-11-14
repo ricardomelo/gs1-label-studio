@@ -63,7 +63,7 @@ English.
 ![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
 
 - The header: the name, with the version under it (the commit the page was built from and its date, which opens
-  About), **One code** or **In bulk** (section 13), **Language**, **Open…** and **Save** (the work kept as a file
+  About), **One code** or **In bulk** (section 13), **Assistant** (below), **Language**, **Open…** and **Save** (the work kept as a file
   on your computer, section 8), and **Start over**, which clears every field and choice as on a first visit (on a
   phone, Language, Open… and Save are under **More** and Start over is a round icon beside the live preview).
 - **1 — What does the code identify?** The key, its qualifiers and data attributes, and the GS1 Digital Link URI's own
@@ -84,6 +84,38 @@ date of its GS1 Barcode Syntax Dictionary (*GS1 Barcode Syntax Engine 1.4.1 — 
 installed app brought back from the background included. When one is ready, a bar under the header says *A new version
 of GS1 Label Studio is ready*: **Reload** opens it, and the work in progress is offered back (*Your last work … is kept
 in this browser — Continue it*); × leaves it for the next visit. Nothing is redrawn unasked.
+
+### The assistant
+
+![The assistant's first question, a need written in one's own words already read](images/guide/assistant.png)
+
+For a first barcode, the **Assistant** sets the steps up from a few simple questions (it opens by itself on a first
+visit; afterwards from the **Assistant** button in the header, or under **More** on a phone). Each screen asks one
+thing, with large cards to choose from and a *Why we ask* that says the rule behind it:
+
+1. **What do you want to identify?** A product I sell; a medicine or a medical device; a case of several units; a
+   pallet or a parcel I ship; something else (an asset, a returnable container, a location, a document, a service
+   relationship). Or type the need in your own words — *a QR code with my website on the product I sell in shops* —
+   and the assistant chooses the card and answers what it can (*A product I sell · In shops · Yes, my website*), to
+   check on the next screens. The words are read here, in the browser, by keywords in the six languages: a sentence
+   with no word it knows leaves the choice to the cards.
+2. Two to four questions that depend on it: where a product is sold; the lot, the dates or the serial number printed
+   on each unit; whether a phone's camera should open the brand's own website (then its domain), a page through GS1,
+   or nothing; whether a medicine goes to pharmacies or hospitals; whether a case is itself sold at a till; for
+   something else, which key, and whether it is marked directly on the item.
+3. **How will you print it?** On the packaging's artwork, with a label printer, or on label sheets with an office
+   printer.
+
+![The summary: the symbols, the values still to type and the rules for the artwork](images/guide/assistant-summary.png)
+
+The summary names the symbols step 2 will draw (*EAN-13, with a QR code (GS1 Digital Link) beside it*), what is still
+yours to type — the example values (GS1's example company prefix 950 6000) are only for trying the studio — and the
+rules that apply, each with its section of the General Specifications: the two barcodes side by side, the QR code within
+50 mm of the EAN-13's centre, the back's lower right quarter, the size range, a case's or a pallet's label height.
+**Fill in my data** fills steps 1, 2 and 3 (the key and its data, step 2's answers, the URI's domain, a GS1 Logistic
+Label for a pallet, the printer's section opened for a label printer); a card above step 1 says what was set up, with
+**See the rules again** and **Start the answers again**. The symbol always comes from step 2's table: the assistant
+answers its questions, it never picks a symbol of its own.
 
 ### On a phone
 

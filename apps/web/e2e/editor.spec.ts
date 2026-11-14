@@ -3674,3 +3674,95 @@ test("a label of one's own: a grid and rulers turned on and off, kept for the ne
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await expect(grid).toHaveCount(0);
 });
+
+// Backlog 6.10 (ADR 0006, mock-up A of two, 13 November 2026): the assistant for first-time users, one question per
+// screen, a need written in one's own words read by keywords, then the editor's steps filled in.
+test("the assistant opens by itself on a first visit only; the owner's sentence sets up an EAN-13 with a QR code to the brand's website", async ({ browser }, info) => {
+  // A first visit: a browser with nothing kept, neither the assistant seen nor a last work
+  const context = await browser.newContext({ ...info.project.use, storageState: { cookies: [], origins: [] } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+  await page.goto("/");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
+  await dialog.getByLabel("Describe what you need").fill("Preciso adicionar um QR Code com o site da minha marca no produto que vou vender no varejo");
+  await expect(dialog.locator(".assistant-found .chip")).toHaveText(["A product I sell", "In shops", "Yes, my website"]);
+  await expect(dialog.getByRole("radio", { name: /A product I sell/ })).toHaveAttribute("aria-checked", "true");
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await expect(dialog.getByRole("heading", { name: "Where will it be sold?" })).toBeFocused();
+  await expect(dialog.getByRole("radio", { name: /^In shops/ })).toHaveAttribute("aria-checked", "true");
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("checkbox", { name: /Batch or lot/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await expect(dialog.getByRole("radio", { name: /Yes, my website/ })).toHaveAttribute("aria-checked", "true");
+  const next = dialog.getByRole("button", { name: "Continue" });
+  await expect(next).toBeDisabled(); // the domain first
+  await dialog.getByLabel("Your website's domain").fill("www.minhamarca.com.br");
+  await next.click();
+  await dialog.getByRole("radio", { name: /On the packaging's artwork/ }).click();
+  await dialog.getByRole("button", { name: "See the result" }).click();
+  await expect(dialog.getByRole("heading", { name: "Ready: EAN-13, with a QR code (GS1 Digital Link) beside it" })).toBeVisible();
+  await expect(dialog.locator(".assistant-summary li")).toContainText(["within 50 mm of the EAN-13's centre"]);
+  await expect(dialog.locator(".assistant-summary")).toContainText("(General Specifications 6.3.3.1)");
+  await expect(dialog.locator(".assistant-todo")).toHaveText("The example values are only for trying the studio. Replace them with yours: GTIN, Batch or lot.");
+  await dialog.getByRole("button", { name: "Fill in my data" }).click();
+  await expect(dialog).toBeHidden();
+  const card = page.getByRole("region", { name: "Set up by the assistant" });
+  await expect(card).toContainText("A product I sell · In shops · Batch or lot · Yes, my website · On the packaging's artwork");
+  await expect(page.locator("#key-value")).toHaveValue("09506000134352");
+  await expect(page.locator(".uri")).toHaveText("https://www.minhamarca.com.br/01/09506000134352/10/ABC123");
+  await on(page, "label");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]E0 9506000134352 and ]Q1 https://www.minhamarca.com.br/01/09506000134352/10/ABC123", { timeout: 30_000 });
+  // The card shows the summary again; a second visit does not open the assistant by itself
+  await on(page, "data");
+  await card.getByRole("button", { name: "See the rules again" }).click();
+  await expect(dialog.getByRole("heading", { name: /^Ready: / })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await page.reload();
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  await expect(dialog).toHaveCount(0);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test("the assistant from its button: a sentence it does not know leaves the cards; a pallet gets a GS1 Logistic Label; Escape changes nothing", async ({ page }) => {
+  const dialog = page.getByRole("dialog");
+  const open = async () => {
+    await on(page, "more");
+    await page.getByRole("button", { name: "Assistant", exact: true }).click();
+    await expect(dialog.getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
+  };
+  await open();
+  await dialog.getByLabel("Describe what you need").fill("bom dia");
+  await expect(dialog.locator(".assistant-found")).toHaveText("No word I know yet: choose one of the cards.");
+  await expect(dialog.getByRole("button", { name: "Continue" })).toBeDisabled();
+  await dialog.getByRole("radio", { name: /A pallet or a parcel I ship/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /On labels, with a label printer/ }).click();
+  await dialog.getByRole("button", { name: "See the result" }).click();
+  await expect(dialog.getByRole("heading", { name: "Ready: GS1-128 on a GS1 Logistic Label" })).toBeVisible();
+  await expect(dialog.locator(".assistant-summary")).toContainText("between 400 mm and 800 mm from its base");
+  await dialog.getByRole("button", { name: "Back" }).click();
+  await expect(dialog.getByRole("radio", { name: /On labels, with a label printer/ })).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await on(page, "data");
+  await expect(page.locator("#key-value")).toHaveValue("09506000134376"); // nothing changed
+  await open();
+  await dialog.getByRole("radio", { name: /A pallet or a parcel I ship/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /On labels, with a label printer/ }).click();
+  await dialog.getByRole("button", { name: "See the result" }).click();
+  await dialog.getByRole("button", { name: "Fill in my data" }).click();
+  await on(page, "data");
+  await expect(page.locator("#key")).toHaveValue("00");
+  await expect(page.locator("#key-value")).toHaveValue("109506000000000016");
+  await on(page, "label");
+  await expect(page.locator("#opt-logistic")).toHaveValue("4x6");
+  await expect(page.locator("#printer")).toHaveAttribute("open", "");
+  expect(errors).toEqual([]);
+});

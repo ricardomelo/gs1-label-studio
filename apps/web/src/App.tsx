@@ -66,6 +66,8 @@ import {
   specSizesFor,
   walk,
   type Answers,
+  type AssistantAnswers,
+  type AssistantOutcome,
   type CellEdits,
   type ColumnMapping,
   type FixedValue,
@@ -85,6 +87,7 @@ import {
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { About, buildDate } from "./About.tsx";
+import { answersText, Assistant, examplesText } from "./Assistant.tsx";
 import { BulkCard } from "./BulkCard.tsx";
 import { EpcSection } from "./EpcSection.tsx";
 import { SignSection } from "./SignSection.tsx";
@@ -113,6 +116,9 @@ import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 
 const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-datamatrix"];
 const PNG_RESOLUTIONS = [300, 600, 1200]; // besides the PNG at the label's size (backlog 1.5)
+
+/** Kept in this browser once the assistant has opened by itself, so that it does so on a first visit only. */
+const ASSISTANT_SEEN = "gs1-label-studio.assistant-seen";
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
 
@@ -184,6 +190,23 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // The last work kept in this browser (backlog 4.3 (c)): read on arrival ("reading"), offered until the person answers,
   // and nothing kept meanwhile, so that the work offered is not replaced by the first visit's.
   const [offer, setOffer] = useState<KeptWork | "reading" | null>("reading");
+  // The assistant (backlog 6.10, ADR 0006): open at its first question or at its summary; what it last set up, said in
+  // a card above step 1. It opens by itself on a first visit — nothing kept, and never opened here before.
+  const [assistant, setAssistant] = useState<{ atSummary: boolean } | null>(null);
+  const [assisted, setAssisted] = useState<{ answers: AssistantAnswers; outcome: AssistantOutcome } | null>(null);
+  const firstVisit = useRef(true);
+  useEffect(() => {
+    if (offer === "reading" || !firstVisit.current) return;
+    firstVisit.current = false;
+    if (offer !== null) return;
+    try {
+      if (localStorage.getItem(ASSISTANT_SEEN)) return;
+      localStorage.setItem(ASSISTANT_SEEN, "1");
+    } catch {
+      return; // no storage: never opened by itself, rather than on every visit
+    }
+    setAssistant({ atSummary: false });
+  }, [offer]);
   useEffect(() => {
     kept("gcp").then((text) => text && setGcp(GcpTable.fromCompact(text)), () => undefined);
     kept(LAST_WORK).then((text) => setOffer(keptWork(text)), () => setOffer(null));
@@ -761,6 +784,43 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     </button>
   );
 
+  /** The symbols step 2 will draw for what the assistant sets up, by name. */
+  function symbolsOf(outcome: AssistantOutcome): string {
+    if (!engine) return "";
+    try {
+      const identified = identify(engine, outcome.identification, outcome.stem ?? DEFAULT_STEM);
+      const leaf = walk(outcome.identification.key, outcome.answers).leaf;
+      const pair = outcome.choice ?? (leaf ? guidance(leaf, identified).recommended : null);
+      if (!pair) return "";
+      const name = tm(SYMBOLOGIES[pair.symbol].name);
+      const names = pair.with ? t("{symbol}, with a {beside} beside it", { symbol: name, beside: tm(SYMBOLOGIES[pair.with].name) }) : name;
+      return outcome.logistic ? t("{symbols} on a GS1 Logistic Label", { symbols: names }) : names;
+    } catch {
+      return "";
+    }
+  }
+  /** What the assistant set up, in the editor: step 1's data, step 2's answers and choice, the label's domain. */
+  function applyAssistant(answersGiven: AssistantAnswers, outcome: AssistantOutcome) {
+    setOffer(null);
+    setMode("one");
+    setId(outcome.identification);
+    setOpened(opened + 1);
+    setAnswers(outcome.answers);
+    setPicked(outcome.choice ?? null);
+    setSettings({ ...settings, expert: false, designer: false, stem: outcome.stem ?? DEFAULT_STEM, logistic: outcome.logistic ?? "none" });
+    setFileError(null);
+    if (outcome.print === "label-printer") setPrinterOpen(true);
+    setAssisted({ answers: answersGiven, outcome });
+    setAssistant(null);
+    showPane("data");
+    window.scrollTo(0, 0);
+  }
+  const assistantButton = (
+    <button type="button" className={phone ? "btn" : "start-over assistant-open"} onClick={() => setAssistant({ atSummary: false })}>
+      {t("Assistant")}
+    </button>
+  );
+
   function cancelGeneration() {
     worker?.terminate();
     setWorker(null);
@@ -788,6 +848,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             {t("In bulk")}
           </button>
         </span>
+        {!phone && assistantButton}
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
         {/* On a phone the language is in "More" and Start over beside the live preview, leaving the header to the
             name and the mode */}
@@ -924,6 +985,28 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               }}
             />
           ) : (
+          <>
+          {assisted && (
+            <div className="assisted" role="region" aria-label={t("Set up by the assistant")}>
+              <p>
+                <b>{t("Set up by the assistant:")}</b> {answersText(assisted.answers)}.
+              </p>
+              <p className="assistant-todo">
+                {t("The example values are only for trying the studio. Replace them with yours: {fields}.", { fields: examplesText(assisted.outcome, assisted.answers) })}
+              </p>
+              <p className="acts">
+                <button type="button" className="link" onClick={() => setAssistant({ atSummary: true })}>
+                  {t("See the rules again")}
+                </button>
+                <button type="button" className="link" onClick={() => setAssistant({ atSummary: false })}>
+                  {t("Start the answers again")}
+                </button>
+                <button type="button" className="link" onClick={() => setAssisted(null)}>
+                  {t("Close")}
+                </button>
+              </p>
+            </div>
+          )}
           <IdentifyCard
             key={opened}
             id={id}
@@ -941,6 +1024,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             }}
             status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
           />
+          </>
           )}
           </div>
           <div data-pane="scan">
@@ -1028,6 +1112,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         >
           {tabbed && (
             <div className="settings">
+              {phone && assistantButton}
               {phone && languageMenu}
               {phone && workButtons}
               <InstallApp />
@@ -1038,6 +1123,15 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         </LabelCard>
       </main>
       <About />
+      {assistant && (
+        <Assistant
+          initial={assistant.atSummary && assisted ? assisted.answers : {}}
+          atSummary={assistant.atSummary}
+          symbolsOf={symbolsOf}
+          onApply={applyAssistant}
+          onClose={() => setAssistant(null)}
+        />
+      )}
       <TabBar
         tab={tab}
         onTab={(next) => showPane(next)}
