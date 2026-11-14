@@ -280,7 +280,7 @@ guided choice; **Change in step 2** goes back.
 
 ## 5. Step 3 — the label
 
-![Step 3: the label in its area, the Export bar, the options](images/guide/label-card.png)
+![Step 3: the label in its area and the Export bar; on a computer the options are beside it, on the left](images/guide/label-card.png)
 
 - The **caption** over the label says what is drawn: the symbol, its version or rows × columns and modules (or its width
   from the first bar to the last), the error correction, the X-dimension, the label's size at the chosen size, and the

@@ -88,7 +88,7 @@ test("step 2: where it is scanned", async ({ page }) => {
 });
 
 test("step 3: the label, its options and exports", async ({ page }) => {
-  await shot(label(page), "label-card");
+  await shot(label(page).locator(".stage"), "label-card"); // the label and its exports; the options are beside them (6.3 c)
   await page.getByRole("button", { name: "Real size" }).click();
   await page.getByRole("button", { name: "Calibrate the screen" }).click();
   await shot(label(page).locator(".stage"), "real-size");
@@ -162,7 +162,7 @@ test("step 3: a label of one's own", async ({ page }) => {
   await page.fill("#el-y", "42");
   await page.getByRole("group", { name: "Rotation" }).getByRole("button", { name: "270°", exact: true }).click();
   await expect(page.locator(".design-problems")).toHaveCount(0);
-  await shot(label(page).locator(".panel"), "designer");
+  await shot(label(page).locator(".stage"), "designer");
 });
 
 test("step 3: the GS1 Logistic Label", async ({ page }) => {
