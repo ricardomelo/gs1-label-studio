@@ -3897,7 +3897,7 @@ test("the assistant from its button: a sentence it does not know leaves the card
 // The assistant's button beside One code and In bulk on every device (the owner, 14 November 2026: on a phone it was
 // only under More, and on a computer it should stand by the mode): on a phone the mode and the assistant take a row of
 // their own under the name, the header no wider than the screen.
-test("the assistant's button stands beside One code and In bulk, on every destination of a phone too", async ({ page }) => {
+test("the assistant's button stands beside One code and In bulk, on every destination of a phone too", async ({ page }, info) => {
   const mode = page.getByRole("group", { name: "Mode" });
   const button = page.locator("header.top").getByRole("button", { name: "Assistant", exact: true });
   for (const pane of PANES) {
@@ -3911,6 +3911,17 @@ test("the assistant's button stands beside One code and In bulk, on every destin
   expect(Math.abs(box.y + box.height / 2 - (modeBox.y + modeBox.height / 2))).toBeLessThan(4); // on the same row
   expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  // Both modes whole, never squeezed out of the switch (one row on a phone hid In bulk)
+  for (const name of ["One code", "In bulk"]) {
+    const part = (await mode.getByRole("button", { name }).boundingBox())!;
+    expect(part.width, name).toBeGreaterThan(40);
+    expect(part.x + part.width, name).toBeLessThanOrEqual(modeBox.x + modeBox.width + 1);
+  }
+  if (info.project.name.includes("phone")) {
+    // A row of their own under the name
+    const brand = (await page.locator("header.top .brand").boundingBox())!;
+    expect(modeBox.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+  }
   await button.click();
   await expect(page.getByRole("dialog").getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
 });
