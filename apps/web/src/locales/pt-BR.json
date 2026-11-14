@@ -772,5 +772,9 @@
  "A work saved": "Um trabalho salvo",
  "Opens a work saved as a file (.json)": "Abre um trabalho salvo como arquivo (.json)",
  "The barcode only, for artwork; or a label: the GS1 Logistic Label, for a pallet's or a parcel's SSCC, in its standard sizes; a label of your own, with barcodes and text placed freely; or a work you saved.": "Só o código de barras, para a arte; ou uma etiqueta: a Etiqueta Logística GS1, para o SSCC de um palete ou volume, nos seus tamanhos padrão; uma etiqueta sua, com códigos e textos colocados livremente; ou um trabalho que você salvou.",
- "The GS1 General Specifications' sizes (6.6.4.5): A6 or 4 × 6 inches for an SSCC and a little more data, A5 or 6 × 8 inches for more.": "Os tamanhos das Especificações Gerais GS1 (6.6.4.5): A6 ou 4 × 6 polegadas para um SSCC e poucos dados a mais, A5 ou 6 × 8 polegadas para mais dados."
+ "The GS1 General Specifications' sizes (6.6.4.5): A6 or 4 × 6 inches for an SSCC and a little more data, A5 or 6 × 8 inches for more.": "Os tamanhos das Especificações Gerais GS1 (6.6.4.5): A6 ou 4 × 6 polegadas para um SSCC e poucos dados a mais, A5 ou 6 × 8 polegadas para mais dados.",
+ "Clear the answers": "Limpar as respostas",
+ "Go to step 2": "Ir ao passo 2",
+ "Your answers are kept and come back with Back to the guided choice.": "Suas respostas ficam guardadas e voltam com Voltar à escolha guiada.",
+ "The symbol by default: {symbol}. Answer step 2, Where is it scanned?, for the one the GS1 General Specifications recommend for this data.": "O símbolo padrão: {symbol}. Responda o passo 2, Onde é lido?, para ter o que as Especificações Gerais GS1 recomendam para estes dados."
 }

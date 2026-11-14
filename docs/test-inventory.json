@@ -5050,6 +5050,15 @@
      ]
     },
     {
+     "name": "until step 2 is answered the label says its symbol is the default one; step 2's answers cleared or kept",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "an SSCC in distribution: GS1-128 at table 5's sizes and bar height",
      "status": "listed",
      "projects": [

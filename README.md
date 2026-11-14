@@ -683,7 +683,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   *A label*, the kinds of label as cards (the GS1 Logistic Label greyed with its reason until the key is an SSCC; a
   label of one's own; a work saved, opening a file); (c) on a computer, 14 November: the tablet's layout, steps 1 and 2
   and the options on the left, the label and its exports on the right, kept in view as the page scrolls; and on a phone, 14 November, a small picture of each choice of step 2 at its right,
-  drawn from the data (mock-up A of two: B put a larger picture under each choice's text)*
+  drawn from the data (mock-up A of two: B put a larger picture under each choice's text); (d) and (e) re-assessed
+  14 November once the assistant and the computer's two columns were built: (d) a line over the label until step 2 is
+  answered, with *Go to step 2* (mock-up A of two: B covered the label, in the way of those who know what they want), and
+  (e) *Clear the answers* under step 2's questions, *Choose a symbol yourself* saying the answers are kept*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;

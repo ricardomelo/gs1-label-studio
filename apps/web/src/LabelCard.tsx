@@ -147,6 +147,11 @@ export type FileKind = "svg" | "png" | "pdf" | "eps" | "zip";
 const REDUCTIONS = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05];
 
 interface Props {
+  /**
+   * Until step 2 is answered, a line over the label saying the symbol is the default one and leading to step 2 (backlog
+   * 6.3 d, mock-up A of two: B covered the label until then).
+   */
+  byDefault?: string;
   /** Shown below the options: the EPC and signature sections ("More" on a phone or a tablet). */
   children?: React.ReactNode;
   /** Below the options too, but with the exports on a phone or a tablet: the printer profiles. */
@@ -227,7 +232,7 @@ function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; h
   );
 }
 
-export function LabelCard({ children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, fileError, rows }: Props) {
+export function LabelCard({ byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
   const aiList = (() => {
@@ -308,6 +313,14 @@ export function LabelCard({ children, generate, printer, settings: s, onChange, 
           <h2 id="label-title" data-pane="label" data-beside="">
             <span className="n">3</span> {t("Label")} <span className="badge">{t("updates as you type")}</span>
           </h2>
+          {byDefault && (
+            <p className="by-default" data-pane="label" data-beside="">
+              <span>{byDefault}</span>
+              <a className="link" href="#scan-title">
+                {t("Go to step 2")}
+              </a>
+            </p>
+          )}
           {rows && (
             <div className="row-nav" data-pane="label" data-beside="">
               <button type="button" aria-label={t("Previous row")} disabled={rows.index === 0} onClick={() => rows.onMove(rows.index - 1)}>

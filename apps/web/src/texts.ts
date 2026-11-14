@@ -263,6 +263,8 @@ export const GUIDE_TEXTS = {
   oneSymbol: "For now the label lays out a symbol in addition beside an EAN/UPC only.",
   expert: "You are choosing the symbol and the scanning environment yourself, in step 3.",
   expertOffer: "every symbol, with the key's scanning environments.",
+  kept: "Your answers are kept and come back with Back to the guided choice.",
+  byDefault: "The symbol by default: {symbol}. Answer step 2, Where is it scanned?, for the one the GS1 General Specifications recommend for this data.",
 } as const;
 
 /** What the key answers in the decision tree, by question and answer. */

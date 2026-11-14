@@ -335,6 +335,57 @@ test("on a phone each choice of step 2 shows its symbol, drawn from the data and
   expect(errors).toEqual([]);
 });
 
+// Until step 2 is answered, a line over the label says the symbol is the default one and leads to step 2 (backlog 6.3 d,
+// mock-up A of two); step 2 says plainly how to start its answers again, and that choosing the symbol yourself keeps
+// them (6.3 e).
+test("until step 2 is answered the label says its symbol is the default one; step 2's answers cleared or kept", async ({ page }) => {
+  const step = page.locator("section[aria-labelledby='scan-title']");
+  const line = page.locator(".by-default");
+  await on(page, "label");
+  await expect(line).toBeVisible();
+  await expect(line).toContainText("The symbol by default: QR code (GS1 Digital Link). Answer step 2, Where is it scanned?");
+  await line.getByRole("link", { name: "Go to step 2" }).click();
+  await expect(page.locator("#scan-title")).toBeInViewport();
+  await expect(step.getByRole("button", { name: "Clear the answers" })).toHaveCount(0);
+  await expect(step).not.toContainText("Your answers are kept");
+
+  await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+  await answer(page, "Is it scanned in general distribution?", "No");
+  await expect(step.getByRole("radio", { checked: true })).toContainText("EAN-13, with a QR code (GS1 Digital Link) beside it");
+  await expect(line).toHaveCount(0);
+  await expect(step).toContainText("Your answers are kept and come back with Back to the guided choice.");
+
+  // Choosing the symbol yourself sets the answers aside, and the label's line stays away; back, they are there again
+  await step.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await expect(line).toHaveCount(0);
+  await step.getByRole("button", { name: "Back to the guided choice" }).click();
+  await expect(step.locator(".table-box")).toContainText("Symbol specification table 1");
+
+  // Cleared: the first question again, no table, no choice, and the line over the label back
+  await step.getByRole("button", { name: "Clear the answers" }).click();
+  await expect(step.locator(".table-box")).toHaveCount(0);
+  await expect(step.getByRole("radio")).toHaveCount(0);
+  await expect(step.getByRole("group", { name: "Is it scanned at a general retail point of sale?" }).getByRole("button", { pressed: true })).toHaveCount(0);
+  await expect(step.getByRole("button", { name: "Clear the answers" })).toHaveCount(0);
+  await on(page, "label");
+  await expect(line).toBeVisible();
+  // The symbol chosen by hand before any answer: no line either
+  await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+  await step.getByRole("button", { name: "Clear the answers" }).click();
+  await step.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await expect(page.locator("#label-title")).toBeVisible();
+  await expect(line).toHaveCount(0);
+  await on(page, "scan");
+  await step.getByRole("button", { name: "Back to the guided choice" }).click();
+  await on(page, "label");
+  await expect(line).toBeVisible();
+  // A label of one's own sizes its barcodes itself: no line over it
+  await labelKind(page, "designer");
+  await expect(line).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test("an SSCC in distribution: GS1-128 at table 5's sizes and bar height", async ({ page }) => {
   await page.fill("#paste", "https://id.gs1.org/00/106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();

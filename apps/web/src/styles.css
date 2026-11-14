@@ -176,6 +176,11 @@ details.epc summary, details.sign summary, details.printer summary { font-weight
 .pick.selected .dot { background: radial-gradient(var(--navy) 45%, transparent 50%); }
 .pick .name { font-weight: 600; font-size: 14px; }
 .pick .meta { grid-column: 2; color: var(--muted); font-size: 12px; }
+/* Until step 2 is answered, a line over the label leading to it (backlog 6.3 d); step 2's own way to start again (e) */
+.by-default { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: #fff7e0; border: 1px solid #e0b84c; border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 13px; color: #4a3b00; }
+.by-default .link { flex: none; font-weight: 600; border: 1px solid var(--navy); border-radius: 6px; padding: 4px 10px; background: #fff; color: var(--navy); text-decoration: none; white-space: nowrap; }
+.clear-answers { margin: 6px 0 0; text-align: right; font-size: 13px; }
+.clear-answers .link { font-weight: 600; }
 /* On a phone, a small picture of each choice at the right (backlog 6.3 c) */
 .pick.pictured { grid-template-columns: 20px 1fr 76px; }
 .pick .pic { grid-column: 3; grid-row: 1 / span 2; align-self: start; justify-self: end; max-width: 76px; max-height: 56px; width: auto; height: auto; background: #fff; border-radius: 4px; padding: 3px; }
@@ -410,6 +415,8 @@ footer.about .hint { margin-top: 12px; }
   .stage, .side { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 20px; min-width: 0; }
   .stage { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 16px; }
   .label-card .canvas { max-height: max(200px, calc(100vh - 340px)); --fit: clamp(240px, calc(100vh - 420px), 420px); }
+  /* The line over the label until step 2 is answered (6.3 d) takes its height from the canvas, so the exports still fit */
+  .stage:has(.by-default) .canvas { max-height: max(200px, calc(100vh - 410px)); --fit: clamp(240px, calc(100vh - 490px), 420px); }
 }
 /* A tablet held horizontally: a navigation rail, the destination on the left, the label always on the right. */
 @media (min-width: 901px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse) {
@@ -585,6 +592,8 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
   :root:not([data-theme="light"]) .assistant-found .chip { background: #23402c; color: #81c995; }
   :root:not([data-theme="light"]) .assistant-todo, :root:not([data-theme="light"]) .example-note { color: #f0c674; }
   :root:not([data-theme="light"]) input.example { border-color: #f0c674; background: #2a2416; box-shadow: 0 0 0 2px rgba(240, 198, 116, 0.25); }
+  :root:not([data-theme="light"]) .by-default { background: #2a2416; border-color: #f0c674; color: #f0c674; }
+  :root:not([data-theme="light"]) .by-default .link { background: var(--card); }
 }
 @media (max-width: 600px) {
   dialog.assistant { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; padding: 18px 16px 0; }

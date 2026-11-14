@@ -137,6 +137,8 @@ interface Props {
   onPick: (choice: Choice) => void;
   expert: boolean;
   onExpert: (expert: boolean) => void;
+  /** Every answer of the tree cleared (backlog 6.3 e). */
+  onClear: () => void;
   /** On a phone, a small picture of each choice by its key (choicePictures.ts, backlog 6.3 c). */
   pictures?: Readonly<Record<string, string>>;
 }
@@ -154,7 +156,7 @@ function YesNo({ question, value, onAnswer }: { question: QuestionId; value?: bo
   );
 }
 
-export function ScanCard({ identifierKey, walked, guide, dataError, answers, onAnswer, choice, onPick, expert, onExpert, pictures }: Props) {
+export function ScanCard({ identifierKey, walked, guide, dataError, answers, onAnswer, choice, onPick, expert, onExpert, onClear, pictures }: Props) {
   const byKey = walked.steps.filter((s) => s.byKey).map((s) => BY_KEY[`${s.question}:${s.answer}`]).filter(Boolean).map((text) => t(text!));
   const asked = walked.steps.filter((s) => !s.byKey).map((s) => s.question as QuestionId);
   const short = KEY_TEXTS[identifierKey]?.short ?? t("key");
@@ -194,6 +196,15 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
               </div>
             ))}
           </div>
+          {/* How to start the answers again, said plainly (backlog 6.3 e) */}
+          {asked.length > 0 && (
+            <p className="clear-answers">
+              <button type="button" className="link" onClick={onClear}>
+                <span aria-hidden="true">↺ </span>
+                {t("Clear the answers")}
+              </button>
+            </p>
+          )}
           {walked.next && <p className="hint">{t(GUIDE_TEXTS.answer)}</p>}
           {walked.leaf && table && (
             <div className="table-box">
@@ -261,6 +272,7 @@ export function ScanCard({ identifierKey, walked, guide, dataError, answers, onA
               {t("Choose a symbol yourself")}
             </button>{" "}
             — {t(GUIDE_TEXTS.expertOffer)}
+            {asked.length > 0 && ` ${t(GUIDE_TEXTS.kept)}`}
           </p>
         </>
       )}

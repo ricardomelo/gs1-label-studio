@@ -1061,6 +1061,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             onPick={setPicked}
             expert={settings.expert}
             pictures={pictures}
+            onClear={() => {
+              setAnswers({});
+              setPicked(null);
+            }}
             onExpert={(expert) =>
               // Choosing it yourself starts from the guided choice.
               setSettings(expert ? { ...settings, expert, symbology, linear: linearChoice, environment: environment ?? settings.environment } : { ...settings, expert })
@@ -1075,6 +1079,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             setFileError(null);
           }}
           view={view}
+          byDefault={!walked.leaf && !settings.expert && !settings.designer && !logisticOn
+            ? t(GUIDE_TEXTS.byDefault, { symbol: tm(SYMBOLOGIES[symbology].name) })
+            : undefined}
           onDownload={(kind) => void downloadFile(kind)}
           onPrinter={openPrinter}
           onOpenWork={() => openInput.current?.click()}

@@ -278,8 +278,11 @@ picture of its symbol at the right, drawn from your data, so you see what you ch
 <img src="images/guide/phone-use.png" alt="On a phone: Use, step 2's choices, each with a small picture of its symbol at the right" width="200"> At a till, GS1 DataBar Expanded carries everything only for a variable measure
 item (a count or a measure that varies, AIs 30, 31nn, 32nn, 35nn, 36nn); otherwise it carries the GTIN alone.
 
+Until step 2 is answered, a line over the label says that its symbol is the default one, with **Go to step 2**. Once a
+question is answered, **Clear the answers** under the questions starts them again.
+
 **Choose a symbol yourself** offers every symbol with the key's scanning environments instead, starting from the
-guided choice; **Change in step 2** goes back.
+guided choice; your answers are kept, and **Back to the guided choice** (or **Change in step 2**) brings them back.
 
 ## 5. Step 3 — the label
 
