@@ -396,6 +396,18 @@ footer.about .hint { margin-top: 12px; }
   @media (max-width: 600px) { footer.about { margin: 0 12px 12px; } }
 }
 
+/* A computer takes the tablet's layout (backlog 6.3 c, mock-up A of the usability study): steps 1 and 2 and the label's
+   options on the left, the label with its exports on the right, kept in view as the page scrolls, so that step 2 and
+   the options are answered with the label in sight. The tablet's block below places steps and options alike. */
+@media (min-width: 901px) {
+  main.editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .label-card, .label-card > .panel { display: contents; }
+  .steps { grid-column: 1; grid-row: 1; }
+  .side { grid-column: 1; grid-row: 2; }
+  .stage, .side { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); padding: 20px; min-width: 0; }
+  .stage { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 16px; }
+  .label-card .canvas { max-height: max(200px, calc(100vh - 340px)); --fit: clamp(240px, calc(100vh - 420px), 420px); }
+}
 /* A tablet held horizontally: a navigation rail, the destination on the left, the label always on the right. */
 @media (min-width: 901px) and (max-width: 1366px) and (orientation: landscape) and (pointer: coarse) {
   .app { padding-left: 88px; }

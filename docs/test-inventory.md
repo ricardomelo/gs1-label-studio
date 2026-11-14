@@ -1449,7 +1449,7 @@ Every unit test ran and passed in the run that wrote this file, the ZPL printed 
 - in bulk: pasted rows, a value for every row, and the columns remembered for the same headers
 - in bulk: the validation report, a cell fixed in place, rows skipped, the report and the corrected rows
 - AI choices read (AI) abbreviation name, in the GS1 order of the AI
-- the label in its own area across step 3, exports below it, options below them
+- on a computer the label beside steps 1 and 2 and the options, kept in view as the page scrolls
 - zoom in and out on the label's canvas, back to 100 % on a click or a change of view
 - the caption counts the modules and the characters encoded, FNC1 and group separators included
 - the Made-to-Order GTIN (03): its own group, its batch and serial, drawn in GS1 DataMatrix, never in a URI

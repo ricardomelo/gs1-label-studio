@@ -60,7 +60,7 @@ English.
 
 ## 2. The screen at a glance
 
-![The editor: what the code identifies on the left, the label on the right](images/guide/editor.png)
+![The editor: steps 1 and 2 and the options on the left, the label on the right](images/guide/editor.png)
 
 - The header: the name, with the version under it (the commit the page was built from and its date, which opens
   About), **One code** or **In bulk** (section 13), **Assistant** (below), **Language**, **Open…** and **Save** (the work kept as a file
@@ -73,7 +73,9 @@ English.
   GS1 Digital Link URI and the element string, and the sections *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)*, *RFID and NFC (EPC)* and *Digital
   signature (GS1, JWS)*.
 
-On a computer the page takes the screen's whole width, as above. At its foot, **About GS1 Label Studio**: the
+On a computer the page takes the screen's whole width, as above: steps 1 and 2 and the label's options on the left, the
+label with its tools and the **Export** bar on the right, which stays in view as the page scrolls, so step 2's answers
+and the options change the label in sight (as on a tablet). At its foot, **About GS1 Label Studio**: the
 repository on GitHub, the licence (Apache 2.0), links to this guide and the printing guide, the version published (the
 commit it was built from, with its date — the way to tell whether the page shows the latest work), and the software it
 is made with, each linked to its repository; the GS1 Barcode Syntax Engine with the release that checks the data and the

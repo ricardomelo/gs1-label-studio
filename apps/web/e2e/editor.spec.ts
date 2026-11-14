@@ -1053,22 +1053,36 @@ test("AI choices read (AI) abbreviation name, in the GS1 order of the AI", async
   await expect(page.locator("#map-0 optgroup[label='Qualifiers'] option").first()).toHaveText("(10) Batch/lot");
 });
 
-// The label's area across step 3, its exports below it and the options below them; the page the whole width
-// (mock-up B of 30 October 2026; backlog 1.10 a).
-test("the label in its own area across step 3, exports below it, options below them", async ({ page }) => {
+// The label's area: the canvas with its tools over it, the exports below it; the page the whole width (mock-up B of
+// 30 October 2026; backlog 1.10 a). On a computer the tablet's layout (backlog 6.3 c, mock-up A of the usability
+// study): steps 1 and 2 and the options on the left, the label on the right, still in view while step 2 and the options
+// are answered further down.
+test("on a computer the label beside steps 1 and 2 and the options, kept in view as the page scrolls", async ({ page }) => {
   test.skip(await page.locator("nav.tabs").isVisible(), "a phone and a tablet show them in destinations of their own");
-  const card = (await page.locator(".label-card").boundingBox())!;
-  const canvas = (await page.locator(".canvas").boundingBox())!;
-  const exports = (await page.locator(".exportbar").boundingBox())!;
-  const options = (await page.locator("#opt-size").boundingBox())!;
-  expect(canvas.width).toBeGreaterThan(card.width * 0.85);
+  const box = async (selector: string) => (await page.locator(selector).boundingBox())!;
+  const [stage, canvas, exports, steps, options] = [await box(".stage"), await box(".canvas"), await box(".exportbar"), await box(".steps"), await box("#opt-size")];
+  expect(canvas.width).toBeGreaterThan(stage.width * 0.85);
   expect(exports.y).toBeGreaterThan(canvas.y + canvas.height - 1);
-  expect(options.y).toBeGreaterThan(exports.y + exports.height - 1);
-  if (page.viewportSize()!.width > 900) {
-    await page.setViewportSize({ width: 1920, height: 1000 });
-    const main = (await page.locator("main.editor").boundingBox())!;
-    expect(main.width).toBeGreaterThan(1900); // no longer stopped at 1 400 pixels
+  expect(stage.x).toBeGreaterThan(steps.x + steps.width - 1); // on the right
+  expect(options.x + options.width).toBeLessThan(stage.x); // the options on the left
+  expect(options.y).toBeGreaterThan(steps.y + steps.height - 1); // under steps 1 and 2
+  expect(stage.width).toBeGreaterThan(page.viewportSize()!.width * 0.4); // the label as wide as the steps
+  // Step 2's questions, then the options, answered with the label and its exports in view
+  for (const selector of ["#scan-title", "#opt-size", ".uri"]) {
+    await page.locator(selector).scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 200));
+    await expect(page.locator(".canvas .preview")).toBeInViewport({ ratio: 1 });
+    await expect(page.locator(".exportbar")).toBeInViewport({ ratio: 1 });
   }
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(600); // the page did scroll
+  // A laptop's short screen: the label, whole, and the exports still fit beside the options
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.locator("#opt-size").scrollIntoViewIfNeeded();
+  await expect(page.locator(".canvas .preview")).toBeInViewport({ ratio: 1 });
+  await expect(page.locator(".exportbar")).toBeInViewport({ ratio: 1 });
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  const main = (await page.locator("main.editor").boundingBox())!;
+  expect(main.width).toBeGreaterThan(1900); // no longer stopped at 1 400 pixels
 });
 
 // Zoom at the canvas's corner (the owner, 30 October 2026): of the fitted label, or of the real size.
