@@ -131,7 +131,7 @@ bar at the bottom, as phone apps do:
 | Tab | What it shows |
 |---|---|
 | **Data** | step 1 (or the rows, in bulk), with a small live preview at the top: tap it to open the label |
-| **Scan** | step 2, where the code is scanned |
+| **Use** (a shop front) | step 2, where and how the code is used and scanned |
 | **Label** | the label, its tools and its options |
 | **Export** | the downloads, *Generate in bulk* and *Printer (ZPL, TSPL, EPL2, DPL, PPLA, PPLB)* |
 | **More** | **Language**, **Install the app**, *RFID and NFC (EPC)*, *Digital signature* and About |

@@ -29,7 +29,7 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(bar).toBeVisible();
   const box = (await bar.boundingBox())!;
   expect(box.y + box.height).toBeCloseTo(page.viewportSize()!.height, 0); // at the bottom
-  await expect(bar.getByRole("button")).toHaveText(["Data", "Scan", "Label", "Export", "More"]);
+  await expect(bar.getByRole("button")).toHaveText(["Data", "Use", "Label", "Export", "More"]);
   await expect(bar.getByRole("button", { name: "Data" })).toHaveAttribute("aria-current", "page");
   // Data: step 1 alone, with the live preview above it
   await expect(page.locator("#identify-title")).toBeVisible();
@@ -51,12 +51,12 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(page.locator(".exportbar")).toBeHidden();
   await expect(page.locator(".mini")).toBeHidden();
   // A link to step 2 from the label's options opens Scan
-  await bar.getByRole("button", { name: "Scan" }).click();
+  await bar.getByRole("button", { name: "Use" }).click();
   await page.getByRole("group", { name: "Is it scanned at a general retail point of sale?" }).getByRole("button", { name: "Yes" }).click();
   await page.getByRole("group", { name: "Is it scanned in general distribution?" }).getByRole("button", { name: "No" }).click();
   await bar.getByRole("button", { name: "Label" }).click();
   await page.getByRole("link", { name: "Change in step 2" }).click();
-  await expect(bar.getByRole("button", { name: "Scan" })).toHaveAttribute("aria-current", "page");
+  await expect(bar.getByRole("button", { name: "Use" })).toHaveAttribute("aria-current", "page");
   await expect(page.locator("#scan-title")).toBeInViewport();
   // Export: the downloads in two columns, the printer profiles below them
   await bar.getByRole("button", { name: "Export" }).click();
@@ -72,7 +72,7 @@ test("a phone shows one destination at a time, chosen in the tab bar at the bott
   await expect(page.locator("details.epc")).toBeVisible();
   await expect(page.locator("footer.about")).toBeVisible();
   // Nothing wider than the screen, in any destination
-  for (const name of ["Data", "Scan", "Label", "Export", "More"]) {
+  for (const name of ["Data", "Use", "Label", "Export", "More"]) {
     await bar.getByRole("button", { name }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
   }
@@ -99,7 +99,7 @@ test("a tablet held horizontally: a rail on the left, the destination beside it,
   expect(box.x).toBe(0);
   expect(box.height).toBeCloseTo(page.viewportSize()!.height, 0);
   const label = page.locator(".canvas .preview");
-  for (const [name, shown] of [["Data", "#identify-title"], ["Scan", "#scan-title"], ["Label", "#opt-logistic"], ["Export", "details.printer"], ["More", "details.epc"]] as const) {
+  for (const [name, shown] of [["Data", "#identify-title"], ["Use", "#scan-title"], ["Label", "#opt-logistic"], ["Export", "details.printer"], ["More", "details.epc"]] as const) {
     await rail.getByRole("button", { name }).click();
     await expect(page.locator(shown)).toBeVisible();
     await expect(label).toBeVisible();
