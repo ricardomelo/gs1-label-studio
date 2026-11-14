@@ -5041,6 +5041,15 @@
      ]
     },
     {
+     "name": "on a phone each choice of step 2 shows its symbol, drawn from the data and read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "an SSCC in distribution: GS1-128 at table 5's sizes and bar height",
      "status": "listed",
      "projects": [

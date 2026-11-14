@@ -220,6 +220,16 @@ test.describe("on a phone", () => {
   test("one destination at a time, chosen in the tab bar", async ({ page }) => {
     const bar = page.getByRole("navigation", { name: "Sections" });
     await shot(page, "phone-data");
+    // Use: step 2, each choice with a small picture of its symbol (backlog 6.3 c)
+    await bar.getByRole("button", { name: "Use" }).click();
+    await answer(page, "Is it scanned at a general retail point of sale?", "Yes");
+    await answer(page, "Is it scanned in general distribution?", "No");
+    await expect(scan(page).locator("img.pic").first()).toBeVisible();
+    await page.evaluate(() => {
+      const group = document.querySelector(".pick-group")!;
+      window.scrollTo(0, group.getBoundingClientRect().top + window.scrollY - 200);
+    });
+    await shot(page, "phone-use");
     await bar.getByRole("button", { name: "Label" }).click();
     await shot(page, "phone-label");
     await bar.getByRole("button", { name: "Export" }).click();
