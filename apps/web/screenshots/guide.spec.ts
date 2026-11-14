@@ -51,6 +51,14 @@ test("the assistant: a question, and the summary", async ({ page }) => {
   await shot(page, "assistant-summary");
 });
 
+test("the tour: step 2 pointed out", async ({ page }) => {
+  await page.getByRole("button", { name: "Tour", exact: true }).click();
+  await page.locator(".tour-card").getByRole("button", { name: "Next" }).click();
+  await expect(page.locator(".tour-card")).toHaveAttribute("data-stop", "scan");
+  await page.waitForTimeout(400); // the ring's move
+  await shot(page, "tour");
+});
+
 test("step 1: what the code identifies", async ({ page }) => {
   await paste(page, "]d2010950600013435210ABC123{GS}17271200");
   await expect(page.locator(".status")).toContainText("day 00");

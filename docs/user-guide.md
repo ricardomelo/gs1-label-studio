@@ -127,6 +127,8 @@ value is replaced with yours*.
 
 ### The tour
 
+![The tour at its second stop: step 2 ringed in amber, the rest of the page dimmed, a card beside it](images/guide/tour.png)
+
 The **Tour** button in the header (on a phone or a tablet, **Take the tour** in *More*) points out the steps and the main
 buttons one at a time: the rest of the page is dimmed, the part shown is ringed in amber, and a card beside it says what
 it is for, with *1 of 9*, **Skip the tour**, **Back** and **Next** (**Done** at the last). On a computer it shows step 1,
