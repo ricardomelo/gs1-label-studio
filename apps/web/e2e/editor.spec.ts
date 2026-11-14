@@ -3806,7 +3806,6 @@ test("the assistant opens by itself on a first visit only; the owner's sentence 
 // screen's way out is a button as large as Continue (the owner, 14 November 2026: the link was too discreet on a phone).
 test("the assistant's example values are marked in step 1 until replaced; its way to the editor is a button", async ({ page }, info) => {
   const dialog = page.getByRole("dialog");
-  await on(page, "more");
   await page.getByRole("button", { name: "Assistant", exact: true }).click();
   const skip = dialog.getByRole("button", { name: "I know what I want: go to the editor" });
   await expect(skip).toHaveClass(/\bbtn\b/);
@@ -3861,7 +3860,6 @@ test("the assistant's example values are marked in step 1 until replaced; its wa
 test("the assistant from its button: a sentence it does not know leaves the cards; a pallet gets a GS1 Logistic Label; Escape changes nothing", async ({ page }) => {
   const dialog = page.getByRole("dialog");
   const open = async () => {
-    await on(page, "more");
     await page.getByRole("button", { name: "Assistant", exact: true }).click();
     await expect(dialog.getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
   };
@@ -3894,6 +3892,27 @@ test("the assistant from its button: a sentence it does not know leaves the card
   await expect(page.locator("#opt-logistic")).toHaveValue("4x6");
   await expect(page.locator("#printer")).toHaveAttribute("open", "");
   expect(errors).toEqual([]);
+});
+
+// The assistant's button beside One code and In bulk on every device (the owner, 14 November 2026: on a phone it was
+// only under More, and on a computer it should stand by the mode): on a phone the mode and the assistant take a row of
+// their own under the name, the header no wider than the screen.
+test("the assistant's button stands beside One code and In bulk, on every destination of a phone too", async ({ page }) => {
+  const mode = page.getByRole("group", { name: "Mode" });
+  const button = page.locator("header.top").getByRole("button", { name: "Assistant", exact: true });
+  for (const pane of PANES) {
+    await on(page, pane);
+    await expect(button).toBeVisible();
+  }
+  const modeBox = (await mode.boundingBox())!;
+  const box = (await button.boundingBox())!;
+  expect(box.x).toBeGreaterThan(modeBox.x + modeBox.width - 1);
+  expect(box.x - (modeBox.x + modeBox.width)).toBeLessThan(32); // beside it, not across the header
+  expect(Math.abs(box.y + box.height / 2 - (modeBox.y + modeBox.height / 2))).toBeLessThan(4); // on the same row
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await button.click();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
 });
 
 // Backlog 6.3 (b), mock-up B of the usability study (13 November 2026): the label's options grouped by what they do,

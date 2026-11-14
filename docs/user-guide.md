@@ -90,7 +90,7 @@ in this browser — Continue it*); × leaves it for the next visit. Nothing is r
 ![The assistant's first question, a need written in one's own words already read](images/guide/assistant.png)
 
 For a first barcode, the **Assistant** sets the steps up from a few simple questions (it opens by itself on a first
-visit; afterwards from the **Assistant** button in the header, or under **More** on a phone). Each screen asks one
+visit; afterwards from the **Assistant** button beside *One code* and *In bulk* in the header, on a phone too). Each screen asks one
 thing, with large cards to choose from and a *Why we ask* that says the rule behind it:
 
 1. **What do you want to identify?** A product I sell; a medicine or a medical device; a case of several units; a
@@ -138,7 +138,7 @@ bar at the bottom, as phone apps do:
 
 Each tab keeps where it was scrolled to. A link to another part — *Change in step 2* under the label's options, or the
 live preview — opens its tab. A red dot on **Data** says the data has an error; on **Label**, that the label cannot be
-drawn. The header keeps the name and **One code / In bulk**; **Start over** is the round reload icon at the right of the
+drawn. The header keeps the name and, on a row of their own under it, **One code / In bulk** and **Assistant**; **Start over** is the round reload icon at the right of the
 live preview's bar.
 
 **Install the app** puts the studio on the home screen, where it opens without the browser's bars and works offline, under

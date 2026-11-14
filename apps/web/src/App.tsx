@@ -821,7 +821,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const examples = useMemo(() => (assisted ? new Map(exampleValues(assisted.outcome)) : undefined), [assisted]);
   const left = assisted ? examplesLeft(assisted.outcome, id) : [];
   const assistantButton = (
-    <button type="button" className={phone ? "btn" : "start-over assistant-open"} onClick={() => setAssistant({ atSummary: false })}>
+    <button type="button" className="start-over assistant-open" onClick={() => setAssistant({ atSummary: false })}>
       {t("Assistant")}
     </button>
   );
@@ -853,7 +853,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             {t("In bulk")}
           </button>
         </span>
-        {!phone && assistantButton}
+        {assistantButton}
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
         {/* On a phone the language is in "More" and Start over beside the live preview, leaving the header to the
             name and the mode */}
@@ -1122,7 +1122,6 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         >
           {tabbed && (
             <div className="settings">
-              {phone && assistantButton}
               {phone && languageMenu}
               {phone && workButtons}
               <InstallApp />

@@ -555,7 +555,15 @@ input.example { border-color: #c98a1b; box-shadow: 0 0 0 2px rgba(201, 138, 27, 
 .assisted b { color: var(--navy); }
 .assisted .acts { display: flex; gap: 10px; flex-wrap: wrap; margin: 0; }
 .assisted .acts .link { padding: 0; font-size: 13px; }
-header.top .assistant-open { background: #fff; color: #002c6c; border-color: #fff; font-weight: 700; }
+/* The assistant beside the mode, on every device (the owner, 14 November 2026: it was missing on a phone); a phone
+   gives the mode and the assistant a row of their own under the name, as one row has no room for the three */
+header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c; border-color: #fff; font-weight: 700; }
+@media (max-width: 900px) {
+  header.top { flex-wrap: wrap; row-gap: 8px; }
+  header.top .brand { flex: 1 1 100%; }
+  header.top .mode { margin-left: 0; flex: 1 1 auto; }
+  header.top .mode button { flex: 1; padding: 8px 12px; }
+  header.top .assistant-open { margin-left: 0; padding: 8px 16px; }
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .assistant-found .chip { background: #23402c; color: #81c995; }
