@@ -5140,6 +5140,15 @@
      ]
     },
     {
+     "name": "every option of the label has a ? that says what it is for",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "crop marks around the label in the PDF, the EPS and the zip, and around every label in bulk",
      "status": "listed",
      "projects": [

@@ -630,6 +630,8 @@ test("every option of the label has a ? that says what it is for", async ({ page
     // A sheet from the bottom of the screen, never over the field it explains
     const box = (await note.boundingBox())!;
     expect(box.y + box.height).toBeGreaterThan(page.viewportSize()!.height - 2);
+    expect(box.x).toBeLessThan(1);
+    expect(box.width).toBeGreaterThan(page.viewportSize()!.width - 2);
   }
   await page.keyboard.press("Escape");
   await expect(note).toHaveCount(0);
