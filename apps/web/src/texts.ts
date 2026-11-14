@@ -226,7 +226,8 @@ export type LinearChoice = keyof typeof LINEAR_CHOICES;
 // What each of the label's options is for, said by the ? beside its name (backlog 6.3 a, mock-up A of the usability study,
 // 13 November 2026): what it does, then a tip.
 export const OPTION_HELP = {
-  label: "The symbol alone, for artwork; a label of your own, with barcodes and text placed freely; or the GS1 Logistic Label, for a pallet's or a parcel's SSCC, in its standard sizes.",
+  label: "The barcode only, for artwork; or a label: the GS1 Logistic Label, for a pallet's or a parcel's SSCC, in its standard sizes; a label of your own, with barcodes and text placed freely; or a work you saved.",
+  logisticSize: "The GS1 General Specifications' sizes (6.6.4.5): A6 or 4 × 6 inches for an SSCC and a little more data, A5 or 6 × 8 inches for more.",
   logisticTwoD: "A 2D symbol carrying the label's data, for scanners that read 2D symbols. The GS1-128 barcodes stay, for every other scanner.",
   logisticSecond: "Each data title in English and in a second language, for a receiver who reads that language.",
   from: "Who sends it, printed in the label's top section: a name and an address.",

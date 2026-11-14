@@ -27,6 +27,14 @@ async function on(page: Page, pane: (typeof PANES)[number]) {
   if (await bar.isVisible()) await bar.locator("button").nth(PANES.indexOf(pane)).click();
 }
 
+/** A kind of label (backlog 6.3 g): "A label", then its card; a GS1 Logistic Label's size in the list under them. */
+async function labelKind(page: Page, kind: "designer" | "a6" | "a5" | "4x6" | "6x8") {
+  // By position and kind rather than by name: some tests run in another language
+  await page.locator("#opt-label [role=radio]").nth(1).click();
+  await page.locator(`.kinds [data-kind="${kind === "designer" ? "designer" : "logistic"}"]`).click();
+  if (kind !== "designer") await page.selectOption("#opt-logistic", kind);
+}
+
 /** The printer's section opened by its title when it is folded (a print file's download may have opened it already). */
 async function openPrinter(page: Page) {
   const section = page.locator("details.printer");
@@ -661,7 +669,7 @@ test("every option of the label has a ? that says what it is for", async ({ page
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a6");
+  await labelKind(page, "a6");
   expect(await withoutHelp()).toEqual([]);
   await option(page, "#opt-logistic-second");
   await page.getByRole("button", { name: "What is Data titles also in?" }).click();
@@ -776,7 +784,7 @@ test("a label of one's own in bulk: a {column} field shows each row's cell, on t
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-x", "48");
@@ -912,7 +920,7 @@ test("in bulk: a date's time kept for the AIs that carry one, from a workbook an
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   await page.getByRole("button", { name: "+ Text" }).click();
   await expect(page.locator('#el-field option[value="{7003:DD/MM/YYYY hh:mm}"]')).toHaveText("{7003:DD/MM/YYYY hh:mm} — 31/12/2027 15:30");
@@ -946,7 +954,7 @@ test("in bulk: a time with AM or PM, (7007)'s harvest period, and a workbook's t
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   await page.getByRole("button", { name: "+ Text" }).click();
   await expect(page.locator("#el-field option[value='{Packed at}']")).toHaveText("{Packed at} — 15:30");
@@ -1655,13 +1663,12 @@ test("printer languages: PPLA and PPLB profiles write DPL's and EPL2's commands,
 
 // Item 4.1 (mock-up A of two, 31 October 2026): the GS1 Logistic Label for an SSCC (General Specifications 6.6).
 test("the GS1 Logistic Label: free text, data titles, GS1-128 with the SSCC lowest, each symbol read back", async ({ page }) => {
-  await expect(page.locator('#opt-logistic option[value="a6"]')).toHaveCount(0); // a GTIN: no logistic label
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a6");
+  await labelKind(page, "a6");
   await expect(page.locator(".preview .error")).toContainText("the A6 label is 148 mm high");
-  await page.selectOption("#opt-logistic", "a5");
+  await labelKind(page, "a5");
   await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.\nVia Roma 1, Milano");
   await (await option(page, "#opt-to")).fill("Supermarket DC 12");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols");
@@ -1700,7 +1707,7 @@ test("the GS1 Logistic Label: the data titles also in Portuguese, Spanish, Frenc
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.");
   await expect(page.locator(".preview .error")).toHaveCount(0);
   await expect(page.locator("#opt-logistic-second")).toHaveValue("none");
@@ -1761,7 +1768,7 @@ test("the GS1 Logistic Label: From and To wrapped within their columns, smaller 
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Distribuidora de Alimentos Dal Giardino Ltda.\nAvenida Engenheiro Luís Carlos Berrini 1748, São Paulo SP");
   await (await option(page, "#opt-to")).fill("Supermercados Exemplo S.A. — Centro de Distribuição 12\nRodovia Anhanguera km 26, Cajamar SP");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
@@ -1789,7 +1796,7 @@ test("the GS1 Logistic Label: a word too long for its column broken after a hyph
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Hortifrutigranjeira-Cooperativa\nRua Augusta,1500,Consolação\nCEP 01305-100");
   await (await option(page, "#opt-to")).fill("Armazém/Recebimento");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
@@ -1805,7 +1812,7 @@ test("the GS1 Logistic Label: two marks in a row kept together, no line starting
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a5");
+  await labelKind(page, "a5");
   await (await option(page, "#opt-from")).fill("Cooperativa Supermercados,-Agroindustrial");
   await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5");
@@ -1826,7 +1833,7 @@ test("the GS1 Logistic Label: a postcode with a space kept whole, no line starti
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Avenida Paulista 1578 CEP 01310 200\nPedido 450001234567891-0000012345");
   await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
@@ -1842,7 +1849,7 @@ test("the GS1 Logistic Label: the marks a word starts with kept with it", async 
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Doca 3 --Hortifrutigranjeira\nCooperativa ,-Agroindustrial\nSetor --Superintendência-Administrativa");
   await (await option(page, "#opt-to")).fill("");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
@@ -1857,7 +1864,7 @@ test("the GS1 Logistic Label of an SSCC alone in TSPL and DPL", async ({ page })
   await page.fill("#paste", "(00)106141411234567897");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "4x6");
+  await labelKind(page, "4x6");
   await (await option(page, "#opt-from")).fill("Dal Giardino S.p.A.");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label 4 × 6 in · 1 GS1-128 symbol");
   await on(page, "export");
@@ -1882,7 +1889,7 @@ test("the GS1 Logistic Label with a QR code beside its data, read back, and in Z
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a5");
+  await labelKind(page, "a5");
   await expect(page.locator("#opt-logistic-2d")).toHaveValue("none");
   await (await option(page, "#opt-logistic-2d")).selectOption("dl-qrcode");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A5 · 2 GS1-128 symbols · QR code (GS1 Digital Link) · 33 × 33 = 1,089 modules");
@@ -1987,7 +1994,7 @@ test("a browser in German, French or Italian opens the studio in its language, a
     await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
     await page.getByRole("button", { name: fill }).click();
     await page.getByRole("button", { name: own }).click();
-    await page.selectOption("#opt-logistic", "designer");
+    await labelKind(page, "designer");
     await page.getByRole("button", { name: text, exact: true }).click();
     await page.fill("#el-text", "EXP {17:DD MMM YYYY}");
     await expect(page.locator("#el-months")).toHaveValue(months);
@@ -2012,7 +2019,7 @@ test("a label of one's own in Portuguese: a new text block writes its months in 
   await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Preencher" }).click();
   await page.getByRole("button", { name: "Escolher o símbolo você mesmo" }).click();
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Texto" }).click();
   await page.fill("#el-text", "VAL {17:MMM YYYY}");
   await expect(page.locator("#el-months")).toHaveValue("pt");
@@ -2029,7 +2036,7 @@ test("a label of one's own: barcodes and text placed and moved, read back, expor
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   await expect(page.locator(".caption")).toHaveText("A label of my own 100 × 60 mm · QR code (GS1 Digital Link)");
   await page.fill("#page-width", "150");
@@ -2142,7 +2149,7 @@ test("a label of one's own: shapes added, changed, sized, named, and written in 
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   // The QR code at the top left
   await page.locator(".design-list button", { hasText: "QR code" }).press("Enter"); // under a phone's tab bar
   await page.fill("#el-x", "5");
@@ -2204,7 +2211,7 @@ test("the work saved and opened again, from its file or from the ZPL; a ZPL made
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
   await page.fill("#el-x", "5");
   await page.fill("#el-y", "5");
@@ -2260,7 +2267,7 @@ test("a label of one's own: a date's time in hh and mm, in the drawing and the Z
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await expect(page.locator(".designer .hint", { hasText: "A date with a time" })).toHaveText(
     "A date with a time, such as {7003:DD/MM/YYYY hh:mm}, takes hh, mm and ss in lower case, so that MM stays the month.");
@@ -2294,7 +2301,7 @@ test("a label of one's own: a date of birth, YYYYMMDD, in its century, and (7251
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
   await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix"); // smaller than the GSRN's DataBar Expanded
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   // (7250) offers its date's five formats, its year as given (by the rule for YYMMDD, 60 would be 2060), no time
   await expect(page.locator('#el-field option[value^="{7250:"]')).toHaveCount(5);
@@ -2347,7 +2354,7 @@ test("in bulk: a patient list's columns guessed, names with accents encoded for 
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
   await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-y", "52");
   await expect(page.locator('#el-field option[value="{7254}"]')).toHaveText("{7254} — Maria José");
@@ -2396,7 +2403,7 @@ test("one code: a name typed with spaces and accents written as %XX in the code,
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
   await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-y", "52");
   await expect(page.locator('#el-field option[value="{7254}"]')).toHaveText("{7254} — Maria José");
@@ -2426,7 +2433,7 @@ test("the GS1 Logistic Label: a ship-to name as people read it in the middle blo
   await expect(row.locator(".hint")).toContainText("→ In the code: (4300) Caf%C3%A9+Rio");
   await expect(page.locator(".status")).toContainText("✓");
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a5");
+  await labelKind(page, "a5");
   const svg = page.locator(".preview .symbol svg");
   await expect(svg.locator('[aria-label="SHIP TO COMP"]')).toHaveCount(1);
   await expect(svg.locator('[aria-label="Café Rio"]')).toHaveCount(1);
@@ -2503,7 +2510,7 @@ test("the last work kept in this browser and offered on the next visit; Start an
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByRole("button", { name: "+ Text" }).click();
   await page.fill("#el-text", "LOTE {10}");
   await expect.poll(async () => (await keptWorkText(page))?.includes("LOTE {10}") ?? false).toBe(true);
@@ -2560,7 +2567,7 @@ test("a label of one's own: an image added, sized, refused when not an image, pr
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await expect(page.getByRole("button", { name: "+ Image" })).toBeVisible();
   const drawing = () => page.locator(".preview .symbol svg").evaluate((svg) => svg.outerHTML.length);
   const before = await drawing();
@@ -2641,7 +2648,7 @@ test("a label of one's own: an image's darkness changed by its slider, printed a
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByTestId("image-file").setInputFiles(shades);
   await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image shades");
   await page.fill("#el-x", "50");
@@ -2725,7 +2732,7 @@ test("a label of one's own: an image's greys as dots for a photo, at its darknes
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.getByTestId("image-file").setInputFiles(photo);
   await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▨ Image photo");
   await page.fill("#el-x", "40");
@@ -2806,7 +2813,7 @@ test("a label of one's own: an element resized by dragging its corner, its top l
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const handle = page.getByTestId("resize-handle");
   const overlay = page.locator(".design-overlay");
   await expect(handle).toHaveCount(0);
@@ -2902,7 +2909,7 @@ test("a label of one's own: the handle of an element past the label's edge held 
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const handle = page.getByTestId("resize-handle");
   const overlay = page.locator(".design-overlay");
   /** The handle's centre, the label's box and the chosen element's outline, in pixels on the screen. */
@@ -2971,7 +2978,7 @@ test("a label of one's own: an element resized from the keyboard, by the arrow k
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   const handle = page.getByTestId("resize-handle");
   // Chosen from the list with Enter, then back with Shift and Tab to its handle on the label, before the list
@@ -3054,7 +3061,7 @@ test("a label of one's own: an element moved from the keyboard, by the arrow key
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const outline = page.getByTestId("move-outline");
   const handle = page.getByTestId("resize-handle");
   await expect(outline).toHaveCount(0);
@@ -3142,7 +3149,7 @@ test("a label of one's own: an element dragged held within the label, never furt
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   const overlay = page.locator(".design-overlay");
   const handle = page.getByTestId("resize-handle");
@@ -3236,7 +3243,7 @@ test("a label of one's own: an element resized held within the label, never furt
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   const overlay = page.locator(".design-overlay");
   const handle = page.getByTestId("resize-handle");
@@ -3352,7 +3359,7 @@ test("a label of one's own: what an arrow key did, in the hint and to a screen r
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   const outline = page.getByTestId("move-outline");
   const handle = page.getByTestId("resize-handle");
@@ -3442,7 +3449,7 @@ test("a label of one's own: from the list to the chosen element's outline on the
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const outline = page.getByTestId("move-outline");
   const handle = page.getByTestId("resize-handle");
   const toLabel = page.getByTestId("to-label");
@@ -3521,7 +3528,7 @@ test("a label of one's own: a barcode and a text turned, printed in ZPL, EPL2, T
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.fill("#page-height", "110");
   await page.selectOption("#page-env", "distribution");
   await page.locator(".design-list button").first().click();
@@ -3610,7 +3617,7 @@ test("a label of one's own: each new element a step right and down from one alre
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const corner = async () => [await page.locator("#el-x").inputValue(), await page.locator("#el-y").inputValue()];
   for (const expected of [["4", "4"], ["9", "9"], ["14", "14"]]) {
     await page.getByRole("button", { name: "+ Text" }).click();
@@ -3632,7 +3639,7 @@ test("a label of one's own: the Delete key removes the chosen element, never whi
   await on(page, "scan");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   const list = page.locator(".design-list button[aria-pressed]");
   const removed = page.getByTestId("design-removed");
   for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "+ Text" }).click();
@@ -3675,7 +3682,7 @@ test("a label of one's own: a grid and rulers turned on and off, kept for the ne
     await on(page, "scan");
     await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
     await on(page, "label");
-    await page.selectOption("#opt-logistic", "designer");
+    await labelKind(page, "designer");
   };
   await open();
   const toggle = page.getByRole("button", { name: "Grid and rulers" });
@@ -3976,8 +3983,67 @@ test("the label's options in groups by what they do, folded with a line of what 
   await page.fill("#paste", "(00)106141411234567897(02)09506000134376(37)24");
   await page.getByRole("button", { name: "Fill in" }).click();
   await on(page, "label");
-  await page.selectOption("#opt-logistic", "a6");
+  await labelKind(page, "a6");
   await expect(names.first()).toHaveText("The GS1 Logistic Label");
   await (await option(page, "#opt-to")).fill("Supermarket DC 12\nCajamar");
   await expect(page.locator(".options .group:has(#opt-to) .group-summary")).toHaveText("No 2D symbol · English only · to Supermarket DC 12");
+});
+
+// Backlog 6.3 (g), the study's mock-up: a switch between the barcode only and a label, the kinds of label as cards
+// under it; the GS1 Logistic Label greyed with its reason until the key is an SSCC; a work saved opens a file.
+test("the barcode only or a label, the kinds of label as cards, one that does not fit saying why", async ({ page }, info) => {
+  await on(page, "label");
+  const label = page.getByRole("radiogroup", { name: "Label", exact: true });
+  const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
+  const card = (name: RegExp) => kinds.getByRole("radio", { name });
+  await expect(label.getByRole("radio", { name: "The barcode only" })).toHaveAttribute("aria-checked", "true");
+  await expect(kinds).toHaveCount(0);
+  // A label: three cards, none chosen yet, the barcode still drawn alone
+  await label.getByRole("radio", { name: "A label", exact: true }).click();
+  await expect(kinds.getByRole("radio")).toHaveCount(3);
+  await expect(kinds.getByRole("radio", { checked: true })).toHaveCount(0);
+  await expect(page.getByText("Choose a kind of label; until then the barcode is drawn alone.")).toBeVisible();
+  await expect(page.locator(".caption")).toContainText("QR code version 4");
+  // A GTIN: the GS1 Logistic Label says why it cannot be chosen, and a press does nothing
+  const logistic = card(/^GS1 Logistic Label/);
+  await expect(logistic).toHaveAttribute("aria-disabled", "true");
+  await expect(logistic).toContainText("Needs an SSCC, (00), as the key in step 1");
+  await logistic.click({ force: true });
+  await expect(logistic).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator("#opt-logistic")).toHaveCount(0);
+  // The cards in a row on a computer and a tablet, one under another on a phone, never wider than the screen
+  const boxes = await Promise.all((await kinds.getByRole("radio").all()).map(async (one) => (await one.boundingBox())!));
+  if (info.project.name === "phone") {
+    expect(boxes[1]!.y).toBeGreaterThan(boxes[0]!.y + boxes[0]!.height - 1);
+    expect(boxes[2]!.y).toBeGreaterThan(boxes[1]!.y + boxes[1]!.height - 1);
+    for (const box of boxes) expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  } else {
+    expect(Math.abs(boxes[2]!.y - boxes[0]!.y)).toBeLessThan(2);
+    expect(boxes[1]!.x).toBeGreaterThan(boxes[0]!.x + boxes[0]!.width - 1);
+  }
+  // A label of one's own: chosen, its designer shown
+  await card(/^A label of my own/).click();
+  await expect(card(/^A label of my own/)).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator(".designer")).toBeVisible();
+  await expect(page.getByText("Choose a kind of label; until then the barcode is drawn alone.")).toHaveCount(0);
+  // A work saved: the file chooser of Open…
+  const [chooser] = await Promise.all([page.waitForEvent("filechooser"), card(/^A work saved/).click()]);
+  expect(chooser.isMultiple()).toBe(false);
+  // The barcode only: the cards and the designer gone, the symbol drawn alone again
+  await label.getByRole("radio", { name: "The barcode only" }).click();
+  await expect(kinds).toHaveCount(0);
+  await expect(page.locator(".designer")).toHaveCount(0);
+  await expect(page.locator(".caption")).toContainText("QR code version 4");
+  // An SSCC: the GS1 Logistic Label can be chosen, A6 at first, its size in the list under the cards
+  await on(page, "data");
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await label.getByRole("radio", { name: "A label", exact: true }).click();
+  await expect(logistic).not.toHaveAttribute("aria-disabled", "true");
+  await expect(logistic).toContainText("A6, A5, 4 × 6 or 6 × 8 in");
+  await logistic.click();
+  await expect(logistic).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator("#opt-logistic")).toHaveValue("a6");
+  await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A6");
 });

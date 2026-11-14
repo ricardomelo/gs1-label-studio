@@ -581,3 +581,15 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
   .assistant-foot:has(.assistant-skip) .assistant-buttons { width: 100%; }
   .assistant-foot:has(.assistant-skip) .assistant-buttons .btn { flex: 1; }
 }
+/* The kinds of label as cards under "A label" (backlog 6.3 g): three in a row, one under another on a narrow screen;
+   the one chosen framed in navy, one that does not fit the data greyed with its reason. */
+.kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.kinds .kind { display: flex; flex-direction: column; gap: 4px; text-align: left; font: inherit; font-size: 13px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; cursor: pointer; min-height: 44px; }
+.kinds .kind b { color: var(--navy); font-size: 14px; }
+.kinds .kind span { color: var(--muted); }
+.kinds .kind[aria-checked="true"] { border: 2px solid var(--navy); padding: 9px 13px; }
+.kinds .kind[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; border-style: dashed; }
+@media (hover: hover) { .kinds .kind:not([aria-disabled="true"]):hover { border-color: var(--navy); } }
+.kinds .kind:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offset: 2px; }
+.options > .seg-field:first-child { margin-bottom: 4px; }
+@media (max-width: 700px) { .kinds { grid-template-columns: 1fr; } }

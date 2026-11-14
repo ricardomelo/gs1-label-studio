@@ -16,6 +16,14 @@ async function shot(target: Locator | Page, name: string) {
   await (target as Page).screenshot({ path: out(name), animations: "disabled" });
 }
 
+/** A kind of label (backlog 6.3 g): "A label", then its card; a GS1 Logistic Label's size in the list under them. */
+async function labelKind(page: Page, kind: "designer" | "a6" | "a5" | "4x6" | "6x8") {
+  // By position and kind rather than by name: some tests run in another language
+  await page.locator("#opt-label [role=radio]").nth(1).click();
+  await page.locator(`.kinds [data-kind="${kind === "designer" ? "designer" : "logistic"}"]`).click();
+  if (kind !== "designer") await page.selectOption("#opt-logistic", kind);
+}
+
 async function paste(page: Page, data: string) {
   await page.fill("#paste", data);
   await page.getByRole("button", { name: "Fill in" }).click();
@@ -107,7 +115,7 @@ test("step 3: symbols laid out by their table", async ({ page }) => {
 test("step 3: a label of one's own", async ({ page }) => {
   await paste(page, "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
-  await page.selectOption("#opt-logistic", "designer");
+  await labelKind(page, "designer");
   await page.selectOption("#page-env", "distribution");
   await page.fill("#page-width", "150");
   await page.fill("#page-height", "90");
@@ -159,7 +167,7 @@ test("step 3: a label of one's own", async ({ page }) => {
 
 test("step 3: the GS1 Logistic Label", async ({ page }) => {
   await paste(page, "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
-  await page.selectOption("#opt-logistic", "a5");
+  await labelKind(page, "a5");
   await page.fill("#opt-from", "Dal Giardino S.p.A.\nVia Roma 1, Milano");
   await page.fill("#opt-to", "Supermarket DC 12");
   await page.selectOption("#opt-logistic-2d", "dl-qrcode");

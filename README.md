@@ -679,7 +679,9 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   folded on a phone with a line saying what is set; the phone's Scan renamed Use, with a shop front; with them the
   assistant's button beside One code and In bulk on every device (the owner, 14 November: it was missing on a phone);
   then the phone's Start over moved from the live preview's bar to the header, at the right of the name, so that the
-  Label tab has it too (the owner, 14 November; mock-up A of two)*
+  Label tab has it too (the owner, 14 November; mock-up A of two); (g) on 14 November: the switch *The barcode only* or
+  *A label*, the kinds of label as cards (the GS1 Logistic Label greyed with its reason until the key is an SSCC; a
+  label of one's own; a work saved, opening a file)*
   It covers the owner's points (a) to (j), which bear on one another:
   (a) a ? beside each option of the label, opening a short help with what it does and a tip, written in the six
   languages;

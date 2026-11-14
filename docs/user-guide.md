@@ -309,8 +309,8 @@ choose; **Automatic** goes back.
 
 ### A label of one's own: barcodes, text, lines, boxes and images placed freely
 
-Every place has its own label, so the studio has an editor rather than ready-made ones. In **Label**, choose *A label
-of my own (barcodes and text placed freely)*:
+Every place has its own label, so the studio has an editor rather than ready-made ones. In **Label**, choose **A label**,
+then the card *A label of my own*:
 
 ![A label of one's own: a QR code, a GS1-128, text blocks, a logo, a frame, a rule and a line read upwards on a 150 × 90 mm page](images/guide/designer.png)
 
@@ -456,7 +456,7 @@ screen on a phone; Escape, the **?** again or a press elsewhere closes it.
 | Bar width reduction | In the same group, for every linear symbol: 0.010 to 0.050 mm taken off every bar, half on each side, each value with its share of the X (*0.020 mm less on every bar (6 % of X 0.330 mm)*); the symbol's size and the 2D symbol do not change, the spaces widen. The **?** beside its name says what it is for: a press spreads the ink, so take off what the printer asks for, and none for a label, laser or inkjet printer |
 | Crop marks | Two buttons: None, or In the PDF and EPS, marks at the label's corners in the PDF and EPS, on a page 10 mm larger on every side, for a label cut from a larger sheet (the [printing guide](printing-guide.md#2-artwork-and-prepress-svg-pdf-eps)) |
 | Domain in the GS1 Digital Link URI | `https://id.gs1.org` by default; your resolver's domain |
-| Label | For an SSCC: the symbol alone, or the GS1 Logistic Label (section 9) |
+| Label | At the top of the options, two buttons: **The barcode only**, or **A label**, which shows the kinds of label as cards: *GS1 Logistic Label* (section 9; greyed, saying it needs an SSCC, until the key is one), *A label of my own* (section 5) and *A work saved*, which opens a work file as **Open…** does (section 8). Until a card is chosen the barcode is drawn alone |
 
 The hint under the options says the table and its section, and how many dots a module takes at the printer's resolution
 (section 10).
@@ -522,8 +522,8 @@ correctly is refused with the reason, never printed wrong (section 17). How to u
 
 ## 9. The GS1 Logistic Label
 
-For an SSCC, **Label** offers the GS1 Logistic Label (General Specifications 6.6) in A6 (105 × 148 mm), 4 × 6 in, A5
-(148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it. **2D symbol beside the data** adds
+For an SSCC, **Label** → **A label** offers the card *GS1 Logistic Label* (General Specifications 6.6); **Label size**
+under the cards gives A6 (105 × 148 mm, at first), 4 × 6 in, A5 (148 × 210 mm) or 6 × 8 in. **From** and **To** take who sends and who receives it. **2D symbol beside the data** adds
 a QR code or a Data Matrix with the GS1 Digital Link URI, or a GS1 DataMatrix with the element string, to the right of
 the middle block (6.6.4.1.1). **Data titles also in** adds Portuguese, Spanish, French, German or Italian to the English data titles (6.6.4.2:
 English unless the trading partners agree on another language, and a second one at the labeller's discretion).

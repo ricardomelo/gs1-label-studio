@@ -1068,6 +1068,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           view={view}
           onDownload={(kind) => void downloadFile(kind)}
           onPrinter={openPrinter}
+          onOpenWork={() => openInput.current?.click()}
           rows={bulk && rows.length
             ? {
                 index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2,

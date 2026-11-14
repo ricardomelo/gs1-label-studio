@@ -5840,6 +5840,15 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "the barcode only or a label, the kinds of label as cards, one that does not fit saying why",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
