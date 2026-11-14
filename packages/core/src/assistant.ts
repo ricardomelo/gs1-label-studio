@@ -1,6 +1,6 @@
 import { checkDigit } from "./checkDigit.ts";
 import type { Answers } from "./guide.ts";
-import type { Identification } from "./identify.ts";
+import { rowsOf, type Identification } from "./identify.ts";
 import type { LogisticSize } from "./logistic.ts";
 import type { SymbologyId } from "./symbologies.ts";
 
@@ -368,6 +368,28 @@ export function assistantOutcome(a: AssistantAnswers): AssistantOutcome | null {
   }
   rules.push(print === "artwork" ? RULES.artwork : print === "label-printer" ? RULES.labelPrinter : RULES.sheets, RULES.scanTest);
   return { ...outcome, print, rules };
+}
+
+/**
+ * The example values the assistant set in step 1, by AI (the key's included), in the order it gives them: what the
+ * person still has to replace with their own (backlog 6.10, mock-up A7).
+ */
+export function exampleValues(outcome: AssistantOutcome): [ai: string, value: string][] {
+  const id = outcome.identification;
+  const given = new Map<string, string>([[id.key, id.value], ...rowsOf(id)]);
+  return outcome.examples.filter((ai) => given.has(ai)).map((ai) => [ai, given.get(ai)!]);
+}
+
+/**
+ * The AIs whose example values are still in step 1: the key while it is the same key with the example's value, a
+ * qualifier or an attribute while a row of that AI holds the example's value. Empty once every one is replaced or
+ * removed.
+ */
+export function examplesLeft(outcome: AssistantOutcome, id: Identification): string[] {
+  const rows = rowsOf(id);
+  return exampleValues(outcome)
+    .filter(([ai, value]) => (ai === id.key ? id.value.trim() === value : rows.some(([a, v]) => a === ai && v.trim() === value)))
+    .map(([ai]) => ai);
 }
 
 /** "minhamarca.com.br", "https://www.minhamarca.com.br/" → "https://minhamarca.com.br", "https://www.minhamarca.com.br". */

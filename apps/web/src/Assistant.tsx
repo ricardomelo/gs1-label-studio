@@ -25,11 +25,12 @@ const ICONS: Record<string, ReactNode> = {
   other: <path d="M3 12V4h8l10 10-8 8zM7.5 7.5h.01" />,
 };
 
-/** What the person still has to type: the key's example and the data's. */
-export function examplesText(outcome: AssistantOutcome, answers: AssistantAnswers): string {
-  const key = KEY_TEXTS[outcome.identification.key];
-  const data = assistantQuestion("data", answers).options.filter((o) => outcome.examples.includes(o.value)).map((o) => tm(o.text));
-  return [key ? t(key.short) : outcome.identification.key, ...data].join(", ");
+/** What the person still has to type: the key's example and the data's, all of them or those left (`ais`). */
+export function examplesText(outcome: AssistantOutcome, answers: AssistantAnswers, ais: readonly string[] = outcome.examples): string {
+  const keyAi = outcome.identification.key;
+  const key = KEY_TEXTS[keyAi];
+  const data = assistantQuestion("data", answers).options.filter((o) => ais.includes(o.value)).map((o) => tm(o.text));
+  return [...(ais.includes(keyAi) ? [key ? t(key.short) : keyAi] : []), ...data].join(", ");
 }
 
 /** The answers in a line, each as its option reads: "A product I sell · In shops · Batch or lot · No · …". */
@@ -234,7 +235,8 @@ export function Assistant({ initial, atSummary, symbolsOf, onApply, onClose }: P
           )}
           <div className="assistant-foot">
             {index === 0 ? (
-              <button type="button" className="link" onClick={onClose}>
+              // A button as plain as Continue, not a link (the owner, 14 November 2026: too discreet on a phone)
+              <button type="button" className="btn assistant-skip" onClick={onClose}>
                 {t("I know what I want: go to the editor")}
               </button>
             ) : (

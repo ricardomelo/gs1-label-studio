@@ -98,7 +98,8 @@ thing, with large cards to choose from and a *Why we ask* that says the rule beh
    relationship). Or type the need in your own words — *a QR code with my website on the product I sell in shops* —
    and the assistant chooses the card and answers what it can (*A product I sell · In shops · Yes, my website*), to
    check on the next screens. The words are read here, in the browser, by keywords in the six languages: a sentence
-   with no word it knows leaves the choice to the cards.
+   with no word it knows leaves the choice to the cards. **I know what I want: go to the editor**, beside **Continue**
+   (under it on a phone), closes the assistant and leaves the editor as it is.
 2. Two to four questions that depend on it: where a product is sold; the lot, the dates or the serial number printed
    on each unit; whether a phone's camera should open the brand's own website (then its domain), a page through GS1,
    or nothing; whether a medicine goes to pharmacies or hospitals; whether a case is itself sold at a till; for
@@ -116,6 +117,11 @@ rules that apply, each with its section of the General Specifications: the two b
 Label for a pallet, the printer's section opened for a label printer); a card above step 1 says what was set up, with
 **See the rules again** and **Start the answers again**. The symbol always comes from step 2's table: the assistant
 answers its questions, it never picks a symbol of its own.
+
+In step 1, each field still holding an example value is outlined in amber, with *Example value: replace it with yours*
+under it, and the card above step 1 names the ones left (*Replace them with yours: Batch or lot, Expiry date*). A field
+loses its mark as soon as its value is yours, or its row is removed; once none is left the card says *✓ Every example
+value is replaced with yours*.
 
 ### On a phone
 

@@ -200,6 +200,10 @@
      "status": "passed"
     },
     {
+     "name": "the assistant's scenarios › says which example values are still in step 1, until each is replaced or removed (mock-up A7)",
+     "status": "passed"
+    },
+    {
      "name": "the assistant's scenarios › the data offered depends on the scenario; every question has options",
      "status": "passed"
     },
@@ -5785,6 +5789,15 @@
     },
     {
      "name": "the assistant opens by itself on a first visit only; the owner's sentence sets up an EAN-13 with a QR code to the brand's website",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the assistant's example values are marked in step 1 until replaced; its way to the editor is a button",
      "status": "listed",
      "projects": [
       "desktop",

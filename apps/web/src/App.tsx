@@ -65,6 +65,8 @@ import {
   SIZES,
   specSizesFor,
   walk,
+  exampleValues,
+  examplesLeft,
   type Answers,
   type AssistantAnswers,
   type AssistantOutcome,
@@ -815,6 +817,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     showPane("data");
     window.scrollTo(0, 0);
   }
+  // The assistant's example values still in step 1 (mock-up A7): marked in their fields, named in its card
+  const examples = useMemo(() => (assisted ? new Map(exampleValues(assisted.outcome)) : undefined), [assisted]);
+  const left = assisted ? examplesLeft(assisted.outcome, id) : [];
   const assistantButton = (
     <button type="button" className={phone ? "btn" : "start-over assistant-open"} onClick={() => setAssistant({ atSummary: false })}>
       {t("Assistant")}
@@ -991,9 +996,13 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               <p>
                 <b>{t("Set up by the assistant:")}</b> {answersText(assisted.answers)}.
               </p>
-              <p className="assistant-todo">
-                {t("The example values are only for trying the studio. Replace them with yours: {fields}.", { fields: examplesText(assisted.outcome, assisted.answers) })}
-              </p>
+              {left.length ? (
+                <p className="assistant-todo">
+                  {t("The example values are only for trying the studio. Replace them with yours: {fields}.", { fields: examplesText(assisted.outcome, assisted.answers, left) })}
+                </p>
+              ) : (
+                <p className="assistant-done">{t("✓ Every example value is replaced with yours.")}</p>
+              )}
               <p className="acts">
                 <button type="button" className="link" onClick={() => setAssistant({ atSummary: true })}>
                   {t("See the rules again")}
@@ -1010,6 +1019,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           <IdentifyCard
             key={opened}
             id={id}
+            {...(examples ? { examples } : {})}
             onChange={(next) => {
               setId(next);
               setFileError(null);

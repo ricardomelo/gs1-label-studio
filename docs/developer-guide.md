@@ -280,7 +280,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | File | What it tests | Tests |
 |---|---|---:|
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
-| `assistant` | the assistant's scenarios reaching step 2's table and symbol, read back by ZXing; a need read by keywords | 37 |
+| `assistant` | the assistant's scenarios reaching step 2's table and symbol, read back by ZXing; a need read by keywords | 38 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
 | `batch` | label sheets, several-page PDF, file names, generating every row | 17 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |
@@ -324,7 +324,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `resize` | an element resized by dragging its corner on a label of one's own, a barcode by its modules to the sizes allowed, its handle held at the label's edge, the arrow keys on its handle, resizing held within the label (apps/web/test) | 27 |
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 98 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 99 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |

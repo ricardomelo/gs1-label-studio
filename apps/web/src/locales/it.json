@@ -727,5 +727,7 @@
  "e.g. a QR code with my website on the product I sell in shops": "es. un codice QR con il mio sito sul prodotto che vendo in negozio",
  "no lot, date or serial number": "nessun lotto, data o numero di serie",
  "or describe it in your own words": "oppure lo descriva con parole sue",
- "{symbols} on a GS1 Logistic Label": "{symbols} su un’etichetta logistica GS1"
+ "{symbols} on a GS1 Logistic Label": "{symbols} su un’etichetta logistica GS1",
+ "Example value: replace it with yours.": "Valore di esempio: lo sostituisca con il suo.",
+ "✓ Every example value is replaced with yours.": "✓ Tutti i valori di esempio sono sostituiti con i suoi."
 }

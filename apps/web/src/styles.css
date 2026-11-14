@@ -534,6 +534,12 @@ dialog.assistant .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; 
 .assistant-summary cite { color: var(--muted); font-style: normal; font-size: 12px; }
 .assistant-summary p { font-size: 13.5px; margin: 0 0 8px; }
 .assistant-todo { color: #7a5a1b; font-weight: 600; }
+.assisted .assistant-done { color: var(--ok); font-weight: 600; }
+/* "I know what I want": a button as large as Continue (the owner, 14 November 2026: the link was too discreet) */
+.assistant-foot .assistant-skip { font-size: 15px; padding: 10px 18px; white-space: normal; text-align: center; }
+/* A field still holding the assistant's example value (mock-up A7): an amber outline and a line under it */
+input.example { border-color: #c98a1b; box-shadow: 0 0 0 2px rgba(201, 138, 27, 0.25); background: #fffaf0; }
+.example-note { color: #7a5a1b; font-weight: 600; }
 .assisted { border: 2px solid var(--navy); background: var(--indicator); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 13.5px; }
 .assisted p { margin: 0 0 6px; }
 .assisted b { color: var(--navy); }
@@ -542,11 +548,16 @@ dialog.assistant .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; 
 header.top .assistant-open { background: #fff; color: #002c6c; border-color: #fff; font-weight: 700; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .assistant-found .chip { background: #23402c; color: #81c995; }
-  :root:not([data-theme="light"]) .assistant-todo { color: #f0c674; }
+  :root:not([data-theme="light"]) .assistant-todo, :root:not([data-theme="light"]) .example-note { color: #f0c674; }
+  :root:not([data-theme="light"]) input.example { border-color: #f0c674; background: #2a2416; box-shadow: 0 0 0 2px rgba(240, 198, 116, 0.25); }
 }
 @media (max-width: 600px) {
   dialog.assistant { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; padding: 18px 16px 0; }
   dialog.assistant h3 { font-size: 20px; }
   .assistant-cards, .assistant-summary { grid-template-columns: 1fr; }
   .assistant-foot { position: sticky; bottom: 0; background: var(--card); padding: 10px 0 16px; margin-top: 12px; }
+  /* On a phone the first screen's two buttons fill the width, Continue above */
+  .assistant-foot .assistant-skip { order: 2; width: 100%; }
+  .assistant-foot:has(.assistant-skip) .assistant-buttons { width: 100%; }
+  .assistant-foot:has(.assistant-skip) .assistant-buttons .btn { flex: 1; }
 }

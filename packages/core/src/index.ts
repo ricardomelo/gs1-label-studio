@@ -100,6 +100,8 @@ export {
   assistantQuestion,
   assistantSteps,
   EXAMPLE_VALUES,
+  exampleValues,
+  examplesLeft,
   nextAssistantStep,
   normaliseNeed,
   readNeed,

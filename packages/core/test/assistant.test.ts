@@ -8,6 +8,8 @@ import {
   assistantQuestion,
   assistantSteps,
   encode,
+  examplesLeft,
+  exampleValues,
   guidance,
   identify,
   nextAssistantStep,
@@ -147,6 +149,27 @@ describe("the assistant's scenarios", () => {
     expect(nextAssistantStep({ scenario: "product", sold: "online", data: [] })).toBe("web");
     expect(assistantOutcome({ scenario: "product", sold: "online", data: [] })).toBeNull();
     expect(assistantSteps({ scenario: "other", other: "8004", dpm: "no" }).join(" ")).toBe("scenario other-key dpm print");
+  });
+
+  it("says which example values are still in step 1, until each is replaced or removed (mock-up A7)", () => {
+    const outcome = assistantOutcome({ scenario: "product", sold: "shops", data: ["10", "17"], web: "no", print: "artwork" })!;
+    expect(exampleValues(outcome)).toEqual([["01", "09506000134352"], ["10", "ABC123"], ["17", "291231"]]);
+    const id = outcome.identification;
+    expect(examplesLeft(outcome, id)).toEqual(["01", "10", "17"]);
+    // A space typed around the value is still the example; the GTIN replaced, the lot changed, the date removed
+    expect(examplesLeft(outcome, { ...id, value: " 09506000134352 ", qualifiers: { 10: "ABC123 " } })).toEqual(["01", "10", "17"]);
+    expect(examplesLeft(outcome, { ...id, value: "04012345000016" })).toEqual(["10", "17"]);
+    expect(examplesLeft(outcome, { ...id, qualifiers: { 10: "L42" } })).toEqual(["01", "17"]);
+    expect(examplesLeft(outcome, { ...id, attributes: [] })).toEqual(["01", "10"]);
+    // Another key with the same digits is not the example; the lot moved to an attribute of its own still is
+    expect(examplesLeft(outcome, { key: "02", value: "09506000134352", qualifiers: {}, attributes: [["10", "ABC123"]] })).toEqual(["10"]);
+    // The date's example value in the lot's row is not the date's example
+    expect(examplesLeft(outcome, { ...id, qualifiers: { 10: "291231" }, attributes: [] })).toEqual(["01"]);
+    // An AI named an example but not set in step 1 has no value to replace
+    expect(exampleValues({ ...outcome, examples: ["01", "21"] })).toEqual([["01", "09506000134352"]]);
+    const pallet = assistantOutcome({ scenario: "pallet", print: "sheets" })!;
+    expect(examplesLeft(pallet, pallet.identification)).toEqual(["00"]);
+    expect(examplesLeft(pallet, { ...pallet.identification, value: "" })).toEqual([]);
   });
 
   it("the data offered depends on the scenario; every question has options", () => {

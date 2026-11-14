@@ -3729,6 +3729,62 @@ test("the assistant opens by itself on a first visit only; the owner's sentence 
   await context.close();
 });
 
+// Backlog 6.10, mock-up A7: the fields still holding the assistant's examples are marked until replaced; and the first
+// screen's way out is a button as large as Continue (the owner, 14 November 2026: the link was too discreet on a phone).
+test("the assistant's example values are marked in step 1 until replaced; its way to the editor is a button", async ({ page }, info) => {
+  const dialog = page.getByRole("dialog");
+  await on(page, "more");
+  await page.getByRole("button", { name: "Assistant", exact: true }).click();
+  const skip = dialog.getByRole("button", { name: "I know what I want: go to the editor" });
+  await expect(skip).toHaveClass(/\bbtn\b/);
+  const continueBox = (await dialog.getByRole("button", { name: "Continue" }).boundingBox())!;
+  const skipBox = (await skip.boundingBox())!;
+  expect(skipBox.height).toBeGreaterThanOrEqual(continueBox.height - 1);
+  if (info.project.name.includes("phone")) {
+    // The whole width, under Continue
+    const dialogBox = (await dialog.boundingBox())!;
+    expect(skipBox.width).toBeGreaterThan(dialogBox.width * 0.8);
+    expect(skipBox.y).toBeGreaterThan(continueBox.y);
+  }
+  await dialog.getByRole("radio", { name: /A product I sell/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /^Online only/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("checkbox", { name: /Batch or lot/ }).click();
+  await dialog.getByRole("checkbox", { name: /Expiry date/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /No, the barcode alone/ }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await dialog.getByRole("radio", { name: /On label sheets/ }).click();
+  await dialog.getByRole("button", { name: "See the result" }).click();
+  await dialog.getByRole("button", { name: "Fill in my data" }).click();
+  await on(page, "data");
+  const card = page.getByRole("region", { name: "Set up by the assistant" });
+  const key = page.locator("#key-value");
+  const lot = page.getByLabel("(10) BATCH/LOT value");
+  await expect(key).toHaveClass(/\bexample\b/);
+  await expect(key).toHaveAccessibleDescription(/Example value: replace it with yours\./);
+  await expect(lot).toHaveClass(/\bexample\b/);
+  await expect(page.locator(".example-note")).toHaveCount(3);
+  await expect(card.locator(".assistant-todo")).toHaveText("The example values are only for trying the studio. Replace them with yours: GTIN, Batch or lot, Expiry date.");
+  // The GTIN replaced: its mark goes, the card names what is left
+  await key.fill("04012345000016");
+  await expect(key).not.toHaveClass(/\bexample\b/);
+  await expect(page.locator(".example-note")).toHaveCount(2);
+  await expect(card.locator(".assistant-todo")).toHaveText("The example values are only for trying the studio. Replace them with yours: Batch or lot, Expiry date.");
+  // The lot changed and the date removed: nothing is left
+  await lot.fill("L42");
+  await page.getByRole("button", { name: "Remove attribute" }).click();
+  await expect(page.locator("input.example")).toHaveCount(0);
+  await expect(card.locator(".assistant-todo")).toHaveCount(0);
+  await expect(card).toContainText("✓ Every example value is replaced with yours.");
+  // Typed back, the example is marked again
+  await lot.fill("ABC123");
+  await expect(lot).toHaveClass(/\bexample\b/);
+  await expect(card.locator(".assistant-todo")).toHaveText("The example values are only for trying the studio. Replace them with yours: Batch or lot.");
+  expect(errors).toEqual([]);
+});
+
 test("the assistant from its button: a sentence it does not know leaves the cards; a pallet gets a GS1 Logistic Label; Escape changes nothing", async ({ page }) => {
   const dialog = page.getByRole("dialog");
   const open = async () => {

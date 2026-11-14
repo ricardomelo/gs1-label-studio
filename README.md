@@ -751,8 +751,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   its scenarios, the tour (6.4) follows it. Mock-ups (A recommended, B) in a doc for the owner, 13 November, its link
   in the handover. Deliveries: the core's scenarios, questions and keywords; the dialog on three devices; cases,
   pallets, healthcare and the other keys; the documents — *the core and the dialog done 14 November (every scenario,
-  cases, pallets, healthcare and the other keys included; the owner's three examples read as meant); next: the fields
-  still to type marked in step 1, then 6.4 and 6.5 on it*
+  cases, pallets, healthcare and the other keys included; the owner's three examples read as meant); the fields still
+  to type marked in step 1 (mock-up A7: an amber outline and a line under each example value, the card naming those
+  left) and the first screen's *I know what I want* as a button (the owner, 14 November 2026: the link was too discreet
+  on a phone) done 14 November; next: 6.4 and 6.5 on it*
 
 
 ## Licence

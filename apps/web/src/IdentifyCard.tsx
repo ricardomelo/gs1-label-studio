@@ -38,6 +38,20 @@ interface Props {
   onPaste: (text: string) => Identification;
   /** The checked result: an error to show, or how many element strings were checked. */
   status: { error?: string; markup?: string; count?: number };
+  /**
+   * The example values the assistant set, by AI (backlog 6.10, mock-up A7): a field still holding its example is marked
+   * until it is replaced.
+   */
+  examples?: ReadonlyMap<string, string>;
+}
+
+/** The line under a field that still holds the assistant's example. */
+function ExampleNote({ id }: { id?: string }) {
+  return (
+    <div className="hint example-note" {...(id ? { id } : {})}>
+      {t("Example value: replace it with yours.")}
+    </div>
+  );
 }
 
 /** "(17) USE BY or EXPIRY", "17", "(17)" → "17"; "(310n) NET WEIGHT (kg)" → "310n" */
@@ -67,7 +81,7 @@ function Markup({ text }: { text: string }) {
   );
 }
 
-export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
+export function IdentifyCard({ id, onChange, onPaste, status, examples }: Props) {
   const [pasted, setPasted] = useState("");
   const [pasteError, setPasteError] = useState<string | null>(null);
   // The rows of qualifiers and attributes, in the order shown, with their AI fields as typed, so that a half-typed AI
@@ -76,6 +90,8 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
 
   const keyText = KEY_TEXTS[id.key];
   const keyProblem = id.value ? checkKeyValue(id.key, normaliseKeyValue(id.key, id.value)) : null;
+  const isExample = (ai: string, value: string) => Boolean(ai) && examples?.get(ai) === value.trim();
+  const keyExample = isExample(id.key, id.value);
   const ownQualifiers = qualifiersOf(id.key);
   const used = new Set(rows.map((row) => row.ai));
   // The AIs a row offers: the key's qualifiers not given on another row first, then every attribute. The row's own AI
@@ -174,17 +190,18 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
       <label htmlFor="key-value">{keyText ? t(keyText.label) : tm(aiEntry(id.key)?.title ?? "")}</label>
       <input
         id="key-value"
-        className="mono"
+        className={keyExample ? "mono example" : "mono"}
         value={id.value}
         placeholder={keyText ? t(keyText.placeholder) : undefined}
         onChange={(event) => onChange({ ...id, value: event.target.value })}
         spellCheck={false}
         aria-invalid={Boolean(keyProblem)}
-        aria-describedby="key-hint"
+        aria-describedby={keyExample ? "key-hint key-example" : "key-hint"}
       />
       <div id="key-hint" className={keyProblem ? "hint error" : id.value ? "hint ok" : "hint"}>
         {keyProblem ? tm(keyProblem) : id.value ? t("✓ Valid identifier.") : keyText ? t(keyText.hint) : null}
       </div>
+      {keyExample && <ExampleNote id="key-example" />}
 
       <h3>
         {t("Qualifiers and data attributes")} <span className="opt">{t("— batch, serial, expiry, weight, price…")}</span>
@@ -256,7 +273,7 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               {qualifier ? t("qualifier · in the URI's path") : !ai ? "" : isKey(ai) ? t("another key · in the URI's query string") : t("data attribute · in the query string")}
             </span>
             <input
-              className="mono"
+              className={isExample(ai, value) ? "mono example" : "mono"}
               {...(qualifier ? { id: `q-${ai}` } : {})}
               aria-label={qualifier ? t("{qualifier} value", { qualifier: label(ai) }) : t("Attribute value")}
               placeholder={t("Value")}
@@ -268,8 +285,10 @@ export function IdentifyCard({ id, onChange, onPaste, status }: Props) {
               }}
               spellCheck={false}
               aria-invalid={Boolean(problem)}
+              {...(isExample(ai, value) ? { "aria-describedby": `example-${index}` } : {})}
             />
             <div className={problem ? "hint error" : "hint"}>{hint}</div>
+            {isExample(ai, value) && <ExampleNote id={`example-${index}`} />}
           </div>
         );
       })}
