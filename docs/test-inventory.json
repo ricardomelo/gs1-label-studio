@@ -1159,6 +1159,26 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "designSymbol",
+   "file": "packages/core/test/designSymbol.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a barcode on a label of one's own with the options of the symbol alone › draws each barcode as the symbol alone with the same options, and every one reads back",
+     "status": "passed"
+    },
+    {
+     "name": "a barcode on a label of one's own with the options of the symbol alone › takes the label's options where the barcode has none of its own, and leaves out what does not apply to it",
+     "status": "passed"
+    },
+    {
+     "name": "a barcode on a label of one's own with the options of the symbol alone › writes each barcode's level, text place and height and bearer bars in ZPL; a QR code's one mode is refused as alone",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "docs",
    "file": "packages/core/test/docs.test.ts",
    "kind": "unit",
@@ -2449,6 +2469,10 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: its image printed dot for dot by ^GF",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own whose barcodes have options of their own: every symbol read back",
      "status": "passed"
     },
     {
@@ -6049,6 +6073,15 @@
     },
     {
      "name": "the human readable text's format: the AI, data titles, both or one's own, in the label and the print file",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a barcode on a label of one's own takes the options of the symbol alone",
      "status": "listed",
      "projects": [
       "desktop",

@@ -416,6 +416,28 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     expect(bitmap.dark.reduce((a, b) => a + b, 0)).toBeGreaterThan(1000);
   });
 
+  // A barcode on a label of one's own with the options of the symbol alone (backlog 6.6): a GS1 DataMatrix's text above
+  // it at 3 mm, a QR code at level H, ITF-14 with bearer bars top and bottom; every symbol printed and read back
+  it("a label of one's own whose barcodes have options of their own: every symbol read back", { timeout: 60000 }, async () => {
+    const engine = await syntaxEngine();
+    const page: DesignPage = {
+      widthMm: 150, heightMm: 110, elements: [
+        { id: "dm", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: true, xMm: 2, yMm: 2, hriPosition: "above", hriHeightMm: 3 },
+        { id: "qr", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 80, yMm: 2, error: "h" },
+        { id: "itf", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, xMm: 2, yMm: 60, bearer: "bars" },
+      ],
+    };
+    const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42(17)271231") as Identified, hriFont(), { environment: "distribution" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, 203);
+    const zpl = zplPage(printed);
+    expect(zpl).toContain("^FDHA,");
+    const png = await labelaryPng(zpl, 203, printed.widthDots, printed.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true, maxNumberOfSymbols: 4 });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(designed.expected);
+    expect(results.find((r) => r.symbologyIdentifier === "]Q1")?.ecLevel).toBe("H");
+  });
+
   it("a label of one's own with an image larger than one graphic field: its stripes meet, every dot printed", { timeout: 60000 }, async () => {
     const page: DesignPage = { widthMm: 100, heightMm: 100, elements: [{ id: "big", kind: "image", name: "big", picture: logo(600, 600), widthMm: 96, xMm: 2, yMm: 2 }] };
     const designed = designLabel(page, { elements: [] } as unknown as Identified, hriFont(), { environment: "distribution" });

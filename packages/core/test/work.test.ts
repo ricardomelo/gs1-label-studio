@@ -19,8 +19,10 @@ const WORK: Work = {
     elements: [
       ...GRAPHICS.elements,
       { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 8, yMm: 8 },
-      { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, rotation: 90, xMm: 4, yMm: 4 },
+      { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, hriPosition: "split", hriHeightMm: 3, reduction: 0.02, rotation: 90, xMm: 4, yMm: 4 },
       { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180, threshold: 160, dither: true },
+      { id: "r", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, error: "h", qrMode: "byte", xMm: 40, yMm: 4 },
+      { id: "b", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, bearer: "bars", xMm: 4, yMm: 40 },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },
@@ -101,6 +103,10 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(changed((c) => { (c.settings as Record<string, unknown>).size = { percent: 100 }; })).toBe(at("the label's settings"));
     expect(element(0, { kind: "circle" })).toBe(at("element 1 of the label's page"));
     expect(element(5, { symbology: "aztec" })).toBe(at("element 6 of the label's page"));
+    // A barcode's options of the symbol alone (backlog 6.6): only those the studio offers
+    for (const change of [{ hriPosition: "middle" }, { hriHeightMm: 1 }, { hriHeightMm: "3" }, { reduction: -0.01 }, { error: "x" }, { qrMode: "kanji" }, { bearer: "plates" }]) {
+      expect(element(5, change), JSON.stringify(change)).toBe(at("element 6 of the label's page"));
+    }
     expect(element(6, { months: "nl" })).toBe(at("element 7 of the label's page"));
     for (const months of ["fr", "de", "it"]) expect(() => readWork(JSON.stringify({ ...saved, page: { ...page, elements: page.elements.map((e, i) => (i === 6 ? { ...e, months } : e)) } }))).not.toThrow();
     expect(element(1, { thicknessMm: "0.5" })).toBe(at("element 2 of the label's page"));

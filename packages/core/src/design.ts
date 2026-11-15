@@ -4,7 +4,8 @@ import type { HriFont } from "./hri.ts";
 import type { HriFormat } from "./hriFormat.ts";
 import { inUriOrder, type Identified } from "./identify.ts";
 import { formatDate, TIME_TOKENS, type DateOptions, type MonthLanguage } from "./dates.ts";
-import { BARS, layoutLabel, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
+import { BARS, layoutLabel, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
+import type { QrMode } from "./encode.ts";
 import { bitmapRects, pictureBitmap, turnedPicture, type Picture } from "./picture.ts";
 import { expectedReads } from "./scan.ts";
 import { specificationFor, type SpecSymbol } from "./specifications.ts";
@@ -28,6 +29,17 @@ export interface DesignSymbol {
   size: number;
   /** Its human readable text below it. */
   hri: boolean;
+  /**
+   * The options of the symbol alone (backlog 6.6), each as the label's options have it when not given: the text's place
+   * and height (1.16), a QR code's or Data Matrix's error correction level and a QR code's encoding mode (1.14), the bar
+   * width reduction of a linear symbol (prepress), and ITF-14's bearer bars.
+   */
+  hriPosition?: HriPosition;
+  hriHeightMm?: number;
+  error?: ErrorLevel;
+  qrMode?: QrMode;
+  reduction?: number;
+  bearer?: Bearer;
   /** Turned clockwise about its box (backlog 4.2): upright when not given. */
   rotation?: Rotation;
   /** The top left corner of the symbol with its quiet zones (of its box as turned), in mm from the page's. */
@@ -281,7 +293,12 @@ function symbolOptions(element: DesignSymbol, identified: Identified, options: D
   return {
     symbology, data, showHri: element.hri,
     hriLines: (SYMBOLOGIES[symbology].data === "uri" ? inUriOrder(carried.elements) : carried.elements).map((e) => `(${e.ai})${e.value}`),
-    size: element.size, environment: options.environment, error: options.error ?? "m", version: null,
+    size: element.size, environment: options.environment, error: element.error ?? options.error ?? "m", version: null,
+    ...(element.hriPosition && element.hriPosition !== "below" ? { hriPosition: element.hriPosition } : {}),
+    ...(element.hriHeightMm ? { hriHeightMm: element.hriHeightMm } : {}),
+    ...(element.qrMode && symbology === "dl-qrcode" ? { qrMode: element.qrMode } : {}),
+    ...(element.reduction && SYMBOLOGIES[symbology].kind !== "matrix" ? { barWidthReduction: element.reduction } : {}),
+    ...(element.bearer && symbology === "itf14" ? { bearer: element.bearer } : {}),
     ...(options.hriFormat ? { hriFormat: options.hriFormat } : {}),
     ...(spec ? { spec, table } : {}),
   };

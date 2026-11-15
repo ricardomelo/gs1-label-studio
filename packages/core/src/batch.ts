@@ -186,6 +186,11 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
       ...(options.environment ? { environment: options.environment } : {}), size: options.size ?? 100, linear: "none", linearSize: null,
       ...(spec ? { spec, table: options.table } : {}), bearer: options.bearer ?? "frame", reduction: 0,
       ...(options.hriFormat ? { hriFormat: options.hriFormat } : {}),
+      // The options of the symbol alone that a printer language writes (backlog 6.6): the text's place and height, the
+      // QR code's mode; the bar width reduction is prepress, for the files, as for the symbol alone
+      ...(options.hriPosition ? { hriPosition: options.hriPosition } : {}),
+      ...(options.hriHeightMm ? { hriHeightMm: options.hriHeightMm } : {}),
+      ...(options.qrMode ? { qrMode: options.qrMode } : {}),
     };
     const geometry = geometryOf(options, layout);
     const { widthDots: boxWidth, heightDots: _, ...placement } = zplOptionsFor({ data, options, layout, geometry }, alone, dpi, d);

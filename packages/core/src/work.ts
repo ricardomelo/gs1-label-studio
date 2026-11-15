@@ -6,6 +6,8 @@ import { PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, type Pictu
 import type { PrinterProfile } from "./printer.ts";
 import { PRINTER_LANGUAGES, type PrinterLanguage } from "./printFile.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
+import { QR_MODES, type QrMode } from "./encode.ts";
+import { ERROR_LEVELS, HRI_MAX_MM, HRI_MIN_MM, HRI_POSITIONS, type Bearer, type ErrorLevel, type HriPosition } from "./layout.ts";
 import { InputError } from "./syntax.ts";
 
 // The work saved on one's own computer and opened again (backlog 4.3, mock-up A of two, 3 November 2026): what was
@@ -131,6 +133,26 @@ function identification(value: unknown): Identification {
 
 const isSymbology = (value: unknown): value is SymbologyId => isString(value) && Object.hasOwn(SYMBOLOGIES, value);
 
+/**
+ * A barcode's options of the symbol alone (backlog 6.6), each read when it is there and one the studio knows: the text's
+ * place and height, the error correction level, the QR code's mode, the bar width reduction, ITF-14's bearer bars.
+ */
+function symbolOptions(value: Record<string, unknown>, at: string): Partial<DesignElement & { kind: "symbol" }> {
+  const known = <T>(list: readonly T[], v: unknown): v is T => v === undefined || list.includes(v as T);
+  if (!known(HRI_POSITIONS, value.hriPosition) || !known(ERROR_LEVELS, value.error) || !known(QR_MODES, value.qrMode)
+    || !known(["frame", "bars"], value.bearer)
+    || (value.hriHeightMm !== undefined && !(isNumber(value.hriHeightMm) && value.hriHeightMm >= HRI_MIN_MM && value.hriHeightMm <= HRI_MAX_MM))
+    || (value.reduction !== undefined && !(isNumber(value.reduction) && value.reduction >= 0 && value.reduction < 1))) damaged(at);
+  return {
+    ...(value.hriPosition ? { hriPosition: value.hriPosition as HriPosition } : {}),
+    ...(value.hriHeightMm ? { hriHeightMm: value.hriHeightMm as number } : {}),
+    ...(value.error ? { error: value.error as ErrorLevel } : {}),
+    ...(value.qrMode ? { qrMode: value.qrMode as QrMode } : {}),
+    ...(value.reduction ? { reduction: value.reduction as number } : {}),
+    ...(value.bearer ? { bearer: value.bearer as Bearer } : {}),
+  };
+}
+
 function element(value: unknown, at: string): DesignElement {
   if (!isRecord(value) || !isString(value.id) || !isNumber(value.xMm) || !isNumber(value.yMm)) damaged(at);
   const { id, xMm, yMm } = value as { id: string; xMm: number; yMm: number };
@@ -142,7 +164,7 @@ function element(value: unknown, at: string): DesignElement {
     case "symbol":
       if (!isSymbology(value.symbology) || !(value.ais === null || (Array.isArray(value.ais) && value.ais.every(isString)))
         || !isNumber(value.size) || typeof value.hri !== "boolean") damaged(at);
-      return { id, kind: "symbol", symbology: value.symbology, ais: value.ais === null ? null : [...(value.ais as string[])], size: value.size as number, hri: value.hri as boolean, ...rotation, xMm, yMm };
+      return { id, kind: "symbol", symbology: value.symbology, ais: value.ais === null ? null : [...(value.ais as string[])], size: value.size as number, hri: value.hri as boolean, ...symbolOptions(value, at), ...rotation, xMm, yMm };
     case "text":
       if (!isString(value.text) || !isNumber(value.heightMm) || (value.months !== undefined && !MONTHS.includes(value.months as MonthLanguage))) damaged(at);
       return { id, kind: "text", text: value.text, heightMm: value.heightMm as number, ...(value.months ? { months: value.months as MonthLanguage } : {}), ...rotation, xMm, yMm };
