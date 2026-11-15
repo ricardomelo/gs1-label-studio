@@ -8,6 +8,7 @@ import { formatDate, TIME_TOKENS, type DateOptions, type MonthLanguage } from ".
 import { BARS, layoutLabel, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import type { QrMode } from "./encode.ts";
 import { bitmapRects, pictureBitmap, turnedPicture, type Picture } from "./picture.ts";
+import { PICTOGRAMS, pictogramContours, type Contour, type PictogramName } from "./pictograms.ts";
 import { expectedReads } from "./scan.ts";
 import { specificationFor, type SpecSymbol } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
@@ -125,26 +126,13 @@ export interface DesignImage {
   yMm: number;
 }
 
-/**
- * A pictogram of ISO 15223-1:2021 drawn as letters in a frame (backlog 6.5, the owner, 15 November 2026): the unique
- * device identifier's UDI (symbol 5.7.10), beside the barcode that carries it on a medical device's label as the EU MDR
- * (2017/745, Annex I 23.2 (h)) asks, and the medical device's MD (5.7.7).
- */
-export type PictogramName = "udi" | "md";
-
-/** Each pictogram's letters, name and source. */
-export const PICTOGRAMS: Readonly<Record<PictogramName, { letters: string; name: string; source: string }>> = {
-  udi: { letters: "UDI", name: "Unique device identifier", source: "ISO 15223-1:2021, symbol 5.7.10" },
-  md: { letters: "MD", name: "Medical device", source: "ISO 15223-1:2021, symbol 5.7.7" },
-};
-
-/** The pictograms in the order the editor offers them. */
-export const PICTOGRAM_NAMES: readonly PictogramName[] = ["udi", "md"];
+export { PICTOGRAM_NAMES, PICTOGRAM_SEGMENTS, PICTOGRAMS, pictogramContours, pictogramLabel, type Contour, type Pictogram, type PictogramName, type PictogramSegment } from "./pictograms.ts";
 
 /**
- * A pictogram (backlog 6.5): its frame `heightMm` high, its letters half as high and centred in it, the frame as wide
- * as the letters with a margin of `PICTOGRAM_MARGIN` heights each side and its outline `PICTOGRAM_OUTLINE` heights
- * thick. The printers draw it as a box and a line of text, as they draw those.
+ * A pictogram (backlog 6.5, 6.13): letters in a frame or a drawing (pictograms.ts), `heightMm` high. Letters: their
+ * capitals half the frame's height and centred in their cell, each cell as wide as its letters with a margin of
+ * `PICTOGRAM_MARGIN` heights each side, the frame and the rules between cells `PICTOGRAM_OUTLINE` heights thick; the
+ * printers draw them as boxes and lines of text. A drawing: as wide as its aspect, drawn as contours.
  */
 export interface DesignPictogram {
   id: string;
@@ -162,11 +150,14 @@ export const PICTOGRAM_LETTERS = 0.5; // the letters' capitals, as a share of th
 export const PICTOGRAM_MARGIN = 0.3; // the room left and right of the letters, in the frame's heights
 export const PICTOGRAM_OUTLINE = 1 / 16; // the frame's thickness, in its heights
 
-/** A pictogram's frame, upright: its width and height in mm, and its letters' width. */
-export function pictogramSize(element: Pick<DesignPictogram, "pictogram" | "heightMm">, font: HriFont): { widthMm: number; heightMm: number; lettersMm: number } {
-  const capMm = element.heightMm * PICTOGRAM_LETTERS;
-  const lettersMm = (font.textWidth(PICTOGRAMS[element.pictogram].letters, font.unitsPerEm) * capMm) / font.capHeight;
-  return { widthMm: lettersMm + 2 * PICTOGRAM_MARGIN * element.heightMm, heightMm: element.heightMm, lettersMm };
+/** A pictogram's box, upright: its width and height in mm, and each cell's letters' width (none for a drawing). */
+export function pictogramSize(element: Pick<DesignPictogram, "pictogram" | "heightMm">, font: HriFont): { widthMm: number; heightMm: number; lettersMm: number[] } {
+  const pictogram = PICTOGRAMS[element.pictogram];
+  const h = element.heightMm;
+  if (!pictogram.cells) return { widthMm: pictogram.drawing!.aspect * h, heightMm: h, lettersMm: [] };
+  const capMm = h * PICTOGRAM_LETTERS;
+  const lettersMm = pictogram.cells.map((letters) => (font.textWidth(letters, font.unitsPerEm) * capMm) / font.capHeight);
+  return { widthMm: lettersMm.reduce((sum, w) => sum + w + 2 * PICTOGRAM_MARGIN * h, 0), heightMm: h, lettersMm };
 }
 
 export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox | DesignImage | DesignPictogram;
@@ -241,7 +232,7 @@ export interface DesignedLabel {
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
    * corner, height and width in the HRI font, in mm, each with how far it is turned; each line and box as a box with its
    * outline's thickness (a line, and a filled box, as thick as their narrower side); each image with its corner, size
-   * and picture, turned already.
+   * and picture, turned already; each pictogram's drawing as its contours (a printer language draws it as an image).
    */
   printer: {
     /** Its box's top left corner as turned, and its own layout, upright. */
@@ -250,6 +241,8 @@ export interface DesignedLabel {
     texts: { text: string; xMm: number; yMm: number; heightMm: number; widthMm: number; rotation: Rotation }[];
     boxes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; thicknessMm: number }[];
     images: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; picture: Picture; dither?: true }[];
+    /** Each pictogram's drawing (backlog 6.13): its box as turned, and its contours on the page in mm, turned already. */
+    shapes: { id: string; xMm: number; yMm: number; widthMm: number; heightMm: number; contours: Contour[] }[];
   };
 }
 
@@ -428,7 +421,9 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   const rects: Layout["rects"] = [];
   const texts: LabelText[] = [];
   const placed: PlacedElement[] = [];
-  const printer: DesignedLabel["printer"] = { symbols: [], texts: [], boxes: [], images: [] };
+  const printer: DesignedLabel["printer"] = { symbols: [], texts: [], boxes: [], images: [], shapes: [] };
+  // The pictograms' drawings, in the layout's units
+  const shapes: Contour[] = [];
   // The rules, boxes and images after the symbols' rectangles, so that `symbolRects` counts the symbols' alone
   const graphics: Layout["rects"] = [];
   // Each element's dark rectangles in mm where they are not its whole box (a box's outline): what overlaps a symbol
@@ -476,18 +471,38 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       const rotation = element.rotation ?? 0;
       const { widthMm: w, heightMm: h, lettersMm } = pictogramSize(element, font);
       const [, , widthMm, heightMm] = turnedRect([0, 0, w, h], 0, 0, rotation);
-      const frame = { widthMm, heightMm, thicknessMm: h * PICTOGRAM_OUTLINE };
-      for (const [x, y, rw, rh] of boxRects(frame)) graphics.push([u(element.xMm + x), u(element.yMm + y), u(rw), u(rh)]);
-      printer.boxes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, ...frame });
-      // Its letters, centred: their capitals from a quarter of the frame's height to three quarters
-      const capMm = h * PICTOGRAM_LETTERS;
-      const left = (w - lettersMm) / 2;
-      const top = (h - capMm) / 2;
-      const letters = PICTOGRAMS[element.pictogram].letters;
-      const [x, baseline] = turnedPoint(left, top + capMm, w, h, rotation, element.xMm, element.yMm);
-      texts.push({ text: letters, x: u(x), baseline: u(baseline), em: (u(capMm) * font.unitsPerEm) / font.capHeight, linear: false, ...turnOf(rotation) });
-      const [xMm, yMm] = turnedRect([left, top, lettersMm, capMm], w, h, rotation, element.xMm, element.yMm);
-      printer.texts.push({ text: letters, xMm, yMm, heightMm: capMm, widthMm: lettersMm, rotation });
+      const cells = PICTOGRAMS[element.pictogram].cells;
+      if (cells) {
+        const thicknessMm = h * PICTOGRAM_OUTLINE;
+        const frame = { widthMm, heightMm, thicknessMm };
+        for (const [x, y, rw, rh] of boxRects(frame)) graphics.push([u(element.xMm + x), u(element.yMm + y), u(rw), u(rh)]);
+        printer.boxes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, ...frame });
+        // Each cell's letters, centred: their capitals from a quarter of the frame's height to three quarters; a rule
+        // between cells, as thick as the frame and centred on their border
+        const capMm = h * PICTOGRAM_LETTERS;
+        const top = (h - capMm) / 2;
+        let cellLeft = 0;
+        cells.forEach((letters, i) => {
+          if (i > 0) {
+            const [rx, ry, rw, rh] = turnedRect([cellLeft - thicknessMm / 2, 0, thicknessMm, h], w, h, rotation, element.xMm, element.yMm);
+            graphics.push([u(rx), u(ry), u(rw), u(rh)]);
+            printer.boxes.push({ id: element.id, xMm: rx, yMm: ry, widthMm: rw, heightMm: rh, thicknessMm: Math.min(rw, rh) });
+          }
+          const left = cellLeft + PICTOGRAM_MARGIN * h;
+          const [x, baseline] = turnedPoint(left, top + capMm, w, h, rotation, element.xMm, element.yMm);
+          texts.push({ text: letters, x: u(x), baseline: u(baseline), em: (u(capMm) * font.unitsPerEm) / font.capHeight, linear: false, ...turnOf(rotation) });
+          const [xMm, yMm] = turnedRect([left, top, lettersMm[i]!, capMm], w, h, rotation, element.xMm, element.yMm);
+          printer.texts.push({ text: letters, xMm, yMm, heightMm: capMm, widthMm: lettersMm[i]!, rotation });
+          cellLeft += lettersMm[i]! + 2 * PICTOGRAM_MARGIN * h;
+        });
+      } else {
+        // A drawing: its contours scaled to the height, turned with its box, on the page in mm
+        const contours = pictogramContours(element.pictogram).map((contour) =>
+          contour.map(([x, y]) => turnedPoint(x * h, y * h, w, h, rotation, element.xMm, element.yMm)),
+        );
+        shapes.push(...contours.map((contour) => contour.map(([x, y]): [number, number] => [u(x), u(y)])));
+        printer.shapes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm, contours });
+      }
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;
@@ -548,7 +563,7 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
   const names = symbols.map((s) => SYMBOLOGIES[s.element.symbology].name);
   const description = `A label of one's own, ${page.widthMm} × ${page.heightMm} mm` + (names.length ? `: ${names.join(", ")}` : "");
   return {
-    layout: { width: u(page.widthMm), height: u(page.heightMm), rects, symbolRects, texts, xMm: unit, modules: 0, version: null },
+    layout: { width: u(page.widthMm), height: u(page.heightMm), rects, symbolRects, texts, xMm: unit, modules: 0, version: null, ...(shapes.length ? { shapes } : {}) },
     options: { symbology: symbols[0]?.options.symbology ?? "gs1-128", data: identified.elementString, showHri: false, hriLines: [], description },
     placed,
     expected: symbols.flatMap((s) => (s.layout.parts ? s.layout.parts.map((part) => `]C1 ${part}`) : expectedReads(s.options))).sort(),

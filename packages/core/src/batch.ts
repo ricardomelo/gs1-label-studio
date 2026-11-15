@@ -11,7 +11,7 @@ import { dataFor, InputError } from "./syntax.ts";
 import { utf8 } from "./deflate.ts";
 import { labelEps } from "./eps.ts";
 import { labelPdf, pdfContent, pdfDocument } from "./pdf.ts";
-import { labelPng, pngAt } from "./png.ts";
+import { fillOutlines, labelPng, pngAt } from "./png.ts";
 import { toDelimited } from "./report.ts";
 import { fitsSheet, sheetPages, type LabelSheet } from "./sheets.ts";
 import { fileName, zipArchive } from "./zip.ts";
@@ -165,8 +165,9 @@ function leadingSpace(geometry: SymbolGeometry): [number, number] {
  * A label of one's own in dots at `dpi` (backlog 4.2): each barcode placed and sized as the editor's symbol alone is
  * in a print file (`zplOptionsFor`), at the whole dots a module within its table's row nearest to the layout's (the
  * nearest when no row sizes it), its bars' top left corner where the page's layout puts them; each line of text at its
- * capitals' corner and height; each line and box with its edges at the nearest dots. A barcode whose bars, or a line or
- * box, would run past the label's edge is refused.
+ * capitals' corner and height; each line and box with its edges at the nearest dots; each image dot for dot, and each
+ * pictogram's drawing as an image filled at those dots. A barcode whose bars, or a line, box, image or drawing, would
+ * run past the label's edge is refused.
  */
 export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
   const dots = (mm: number) => Math.round((mm / MM_PER_INCH) * dpi);
@@ -232,7 +233,7 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
   });
   // Each image at the dots its edges round to, as a line or box is, each dot the picture's pixel under its centre; a
   // dithered one dithered again at the printer's dots
-  const images = designed.printer.images.map((image) => {
+  const images: NonNullable<PrintPage["images"]> = designed.printer.images.map((image) => {
     const [x, y] = [dots(image.xMm), dots(image.yMm)];
     const [width, height] = [Math.max(1, dots(image.xMm + image.widthMm) - x), Math.max(1, dots(image.yMm + image.heightMm) - y)];
     if (x < 0 || y < 0 || x + width > widthDots || y + height > heightDots) {
@@ -240,6 +241,19 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
     }
     return { x, y, bitmap: (image.dither ? redithered : resample)(pictureBitmap(image.picture), width, height) };
   });
+  // Each pictogram's drawing (backlog 6.13) as an image, its contours filled at the printer's own dots: each dot dark
+  // where the drawing covers at least half of it
+  for (const shape of designed.printer.shapes) {
+    const [x, y] = [dots(shape.xMm), dots(shape.yMm)];
+    const [width, height] = [Math.max(1, dots(shape.xMm + shape.widthMm) - x), Math.max(1, dots(shape.yMm + shape.heightMm) - y)];
+    if (x < 0 || y < 0 || x + width > widthDots || y + height > heightDots) {
+      throw new PrinterUnsupportedError("A pictogram runs past the label's edge: move it inside the label.");
+    }
+    const grey = new Uint8Array(width * height).fill(255);
+    const at = (mm: number, from: number) => (mm / MM_PER_INCH) * dpi - from;
+    fillOutlines(grey, width, height, shape.contours.map((contour) => contour.map(([cx, cy]) => [at(cx, x), at(cy, y)])));
+    images.push({ x, y, bitmap: { width, height, dark: grey.map((level) => (level < 128 ? 1 : 0)) }, drawing: true });
+  }
   return { widthDots, heightDots, dpi, symbols, texts, boxes, images };
 }
 

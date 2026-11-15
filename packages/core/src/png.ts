@@ -47,7 +47,7 @@ const SUBSCANLINES = 8;
  * Fills outlines with the non-zero rule (TrueType's) onto a grey image, anti-aliased: per pixel row, SUBSCANLINES
  * sample lines, each span's horizontal coverage exact.
  */
-function fillOutlines(grey: Uint8Array, width: number, height: number, contours: [number, number][][]): void {
+export function fillOutlines(grey: Uint8Array, width: number, height: number, contours: [number, number][][]): void {
   const edges: Edge[] = [];
   for (const contour of contours) {
     for (let i = 0; i < contour.length; i++) {
@@ -131,6 +131,8 @@ export function labelPixels(layout: Layout, font: HriFont, pixelsPerModule = PNG
       grey.fill(0, row * width + Math.max(0, left), row * width + Math.min(width, right));
     }
   }
+  // The pictograms' drawings (backlog 6.13)
+  if (layout.shapes?.length) fillOutlines(grey, width, height, layout.shapes.map((contour) => contour.map(([x, y]) => [x * pixelsPerModule, y * pixelsPerModule])));
   // As Pillow placed it: a whole-pixel font size, the baseline's left end on a whole pixel.
   for (const t of layout.texts) {
     const em = Math.max(1, pyRound(t.em * pixelsPerModule));

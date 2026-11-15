@@ -7,6 +7,12 @@ import {
   checkRows,
   columnCell,
   pictogramSize,
+  pictogramContours,
+  pictogramLabel,
+  PICTOGRAM_NAMES,
+  PICTOGRAM_SEGMENTS,
+  PICTOGRAMS,
+  fillOutlines,
   designLabel,
   POS_RADIUS_MM,
   dplPage,
@@ -40,6 +46,7 @@ import {
   labelSvg,
   syntaxEngine,
   xDimension,
+  type DesignElement,
   type DesignPage,
   type DesignSymbol,
   type DesignText,
@@ -49,6 +56,7 @@ import {
 import { bitmapRects, graphicFields, labelPixels, labelPng, PICTURE_THRESHOLD, pictureBitmap, pictureFromGrey, redithered, resample, turnedPicture, turnedRect } from "../src/index.ts";
 import { WITH_LOGO } from "./fixtures/graphics.ts";
 import { drawPdf, textFile, unzip } from "./files.ts";
+import { decodePng } from "./png.ts";
 import { hriFont } from "./font.ts";
 
 // A label of one's own (backlog 4.2): barcodes and text blocks placed on a page in millimetres, one Layout drawn by the
@@ -308,8 +316,8 @@ describe("a label of one's own", () => {
     const udi = pictogramSize({ pictogram: "udi", heightMm: 4 }, font);
     const md = pictogramSize({ pictogram: "md", heightMm: 5 }, font);
     // The frame as wide as the letters and 0.3 of its height each side; turned, its width and height change places
-    expect(udi.widthMm).toBeCloseTo(udi.lettersMm + 2.4, 9);
-    expect(udi.lettersMm).toBeCloseTo((font.textWidth("UDI", font.unitsPerEm) * 2) / font.capHeight, 9);
+    expect(udi.widthMm).toBeCloseTo(udi.lettersMm[0]! + 2.4, 9);
+    expect(udi.lettersMm[0]).toBeCloseTo((font.textWidth("UDI", font.unitsPerEm) * 2) / font.capHeight, 9);
     expect(label.placed.find((p) => p.id === "udi")).toEqual({ id: "udi", xMm: 2, yMm: 2, widthMm: udi.widthMm, heightMm: 4 });
     expect(label.placed.find((p) => p.id === "md")).toEqual({ id: "md", xMm: 40, yMm: 10, widthMm: 5, heightMm: md.widthMm });
     // The frames' outlines, a sixteenth of their height, after the symbol's rectangles
@@ -329,8 +337,8 @@ describe("a label of one's own", () => {
     expect(letters[1]!.x * layout.xMm).toBeCloseTo(40 + 1.25, 6);
     expect(letters[1]!.baseline * layout.xMm).toBeCloseTo(10 + 1.5, 6);
     expect(label.printer.texts).toEqual([
-      { text: "UDI", xMm: 3.2, yMm: 3, heightMm: 2, widthMm: udi.lettersMm, rotation: 0 },
-      { text: "MD", xMm: 41.25, yMm: 11.5, heightMm: 2.5, widthMm: md.lettersMm, rotation: 90 },
+      { text: "UDI", xMm: 3.2, yMm: 3, heightMm: 2, widthMm: udi.lettersMm[0], rotation: 0 },
+      { text: "MD", xMm: 41.25, yMm: 11.5, heightMm: 2.5, widthMm: md.lettersMm[0], rotation: 90 },
     ].map((t) => ({ ...t, xMm: expect.closeTo(t.xMm, 9), yMm: expect.closeTo(t.yMm, 9) })));
     expect(label.printer.boxes).toEqual([
       { id: "udi", xMm: 2, yMm: 2, widthMm: udi.widthMm, heightMm: 4, thicknessMm: 0.25 },
@@ -352,6 +360,146 @@ describe("a label of one's own", () => {
     expect(designLabel(over, data, font, { environment: "healthcare" }).problems).toEqual([{ kind: "overlap", ids: ["dm", "x"] }]);
     const flat: DesignPage = { ...pictograms, elements: [{ id: "x", kind: "pictogram", pictogram: "md", heightMm: 0, xMm: 3, yMm: 9 }] };
     expect(() => designLabel(flat, data, font, { environment: "healthcare" })).toThrow(/A pictogram needs a height greater than 0 mm/);
+  }, SLOW);
+
+  it("offers the pictograms by segment, each letters in a frame or a drawing within its box", () => {
+    // Backlog 6.13 (the owner, 15 November 2026): + Pictogram's arrow lists them by segment, each segment's together
+    expect(PICTOGRAM_NAMES).toEqual(Object.keys(PICTOGRAMS));
+    const segments = PICTOGRAM_NAMES.map((name) => PICTOGRAMS[name].segment).filter((segment, i, all) => segment !== all[i - 1]);
+    expect(segments).toEqual(PICTOGRAM_SEGMENTS.map((s) => s.segment));
+    expect(PICTOGRAM_NAMES.filter((name) => PICTOGRAMS[name].segment === "healthcare")).toHaveLength(13);
+    for (const name of PICTOGRAM_NAMES) {
+      const pictogram = PICTOGRAMS[name];
+      expect([!!pictogram.cells, !!pictogram.drawing], name).toEqual(pictogram.cells ? [true, false] : [false, true]);
+      expect(pictogram.source, name).toMatch(/^(ISO 15223-1:2021, symbol 5\.\d+\.\d+|ISO 7000-\d{4} \(ISO 780\)|Directive 76\/211\/EEC)/);
+      expect(pictogram.heightMm, name).toBeGreaterThan(0);
+      if (!pictogram.drawing) continue;
+      // A drawing's contours inside its box, filling some of it but not all: measured at 200 pixels a unit
+      const { aspect } = pictogram.drawing;
+      const contours = pictogramContours(name);
+      expect(contours.length, name).toBeGreaterThan(0);
+      for (const contour of contours) {
+        expect(contour.length, name).toBeGreaterThanOrEqual(3);
+        for (const [x, y] of contour) {
+          expect(x, name).toBeGreaterThanOrEqual(0);
+          expect(x, name).toBeLessThanOrEqual(aspect);
+          expect(y, name).toBeGreaterThanOrEqual(0);
+          expect(y, name).toBeLessThanOrEqual(1);
+        }
+      }
+      const [w, h] = [Math.round(aspect * 200), 200];
+      const grey = new Uint8Array(w * h).fill(255);
+      fillOutlines(grey, w, h, contours.map((contour) => contour.map(([x, y]) => [x * 200, y * 200])));
+      const covered = grey.filter((level) => level < 128).length / (w * h);
+      expect(covered, name).toBeGreaterThan(0.1);
+      expect(covered, name).toBeLessThan(0.7);
+    }
+    expect(pictogramLabel("sterile-eo")).toBe("STERILE EO");
+    expect(pictogramLabel("use-by")).toBe("Use-by date");
+    // Every drawing different from the others
+    const drawings = PICTOGRAM_NAMES.filter((name) => PICTOGRAMS[name].drawing).map((name) => JSON.stringify(pictogramContours(name)));
+    expect(new Set(drawings).size).toBe(drawings.length);
+  });
+
+  it("draws STERILE EO as two cells with a rule between, and a drawing as contours in every file and as an image at the printer's dots", async () => {
+    // Backlog 6.13: letters in cells, as ISO 15223-1 draws STERILE EO; the hourglass (use-by date, turned) and the
+    // fragile glass as contours: SVG, PNG and PDF agree, the symbol beside them is still read, and each printer
+    // language but DPL prints a drawing as an image filled at its own dots
+    const page: DesignPage = {
+      widthMm: 60, heightMm: 30,
+      elements: [
+        { id: "dm", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 1, yMm: 8 },
+        { id: "eo", kind: "pictogram", pictogram: "sterile-eo", heightMm: 4, xMm: 2, yMm: 2 },
+        { id: "use", kind: "pictogram", pictogram: "use-by", heightMm: 6, rotation: 90, xMm: 40, yMm: 4 },
+        { id: "glass", kind: "pictogram", pictogram: "fragile", heightMm: 10, xMm: 50, yMm: 15 },
+      ],
+    };
+    const label = designLabel(page, data, font, { environment: "healthcare" });
+    const { layout } = label;
+    expect(label.problems).toEqual([]);
+    // Two cells: each as wide as its letters and 0.3 heights each side, a rule a sixteenth thick on their border
+    const eo = pictogramSize({ pictogram: "sterile-eo", heightMm: 4 }, font);
+    const [sterile, oxide] = eo.lettersMm as [number, number];
+    expect(eo.widthMm).toBeCloseTo(sterile + oxide + 4.8, 9);
+    expect(label.placed.find((p) => p.id === "eo")).toEqual({ id: "eo", xMm: 2, yMm: 2, widthMm: eo.widthMm, heightMm: 4 });
+    expect(label.printer.boxes).toEqual([
+      { id: "eo", xMm: 2, yMm: 2, widthMm: eo.widthMm, heightMm: 4, thicknessMm: 0.25 },
+      { id: "eo", xMm: expect.closeTo(2 + sterile + 2.4 - 0.125, 9), yMm: 2, widthMm: 0.25, heightMm: 4, thicknessMm: 0.25 },
+    ]);
+    expect(label.printer.texts).toEqual([
+      { text: "STERILE", xMm: expect.closeTo(3.2, 9), yMm: 3, heightMm: 2, widthMm: sterile, rotation: 0 },
+      { text: "EO", xMm: expect.closeTo(2 + sterile + 2.4 + 1.2, 9), yMm: 3, heightMm: 2, widthMm: oxide, rotation: 0 },
+    ]);
+    // The drawings: as wide as their aspect, turned with their box; no rectangle, no text, each contour in its box
+    expect(label.placed.find((p) => p.id === "use")).toEqual({ id: "use", xMm: 40, yMm: 4, widthMm: 6, heightMm: expect.closeTo(4.2, 9) });
+    expect(label.placed.find((p) => p.id === "glass")).toEqual({ id: "glass", xMm: 50, yMm: 15, widthMm: expect.closeTo(6.2, 9), heightMm: 10 });
+    expect(layout.shapes).toHaveLength(pictogramContours("use-by").length + pictogramContours("fragile").length);
+    expect(layout.texts.map((t) => t.text)).toEqual(["STERILE", "EO"]);
+    const mm = (contour: [number, number][]) => contour.map(([x, y]) => [x * layout.xMm, y * layout.xMm]);
+    // The hourglass's upper plate's first corner, (0.04, 0.03) of a 4.2 × 6 mm box, turned a quarter: 6 − 0.18 mm in
+    const [first] = mm(layout.shapes![0]!);
+    expect(first![0]).toBeCloseTo(40 + 6 - 0.18, 9);
+    expect(first![1]).toBeCloseTo(4 + 0.24, 9);
+    for (const [id, contours] of [["use", layout.shapes!.slice(0, pictogramContours("use-by").length)], ["glass", layout.shapes!.slice(pictogramContours("use-by").length)]] as const) {
+      const box = label.placed.find((p) => p.id === id)!;
+      for (const [x, y] of contours.flatMap(mm)) {
+        expect(x).toBeGreaterThanOrEqual(box.xMm - 1e-9);
+        expect(x).toBeLessThanOrEqual(box.xMm + box.widthMm + 1e-9);
+        expect(y).toBeGreaterThanOrEqual(box.yMm - 1e-9);
+        expect(y).toBeLessThanOrEqual(box.yMm + box.heightMm + 1e-9);
+      }
+    }
+    expect(label.printer.shapes.map((s) => [s.id, s.widthMm, s.heightMm])).toEqual([["use", 6, expect.closeTo(4.2, 9)], ["glass", expect.closeTo(6.2, 9), 10]]);
+    // The same drawing in the SVG, the PNG and the PDF, at 20 pixels a millimetre: as dark within each drawing's box
+    const svg = labelSvg(label.options, layout, font);
+    expect(svg).toContain('<path fill="#000" fill-rule="nonzero" d="M');
+    const perMm = 20;
+    const fromSvg = decodePng(new Resvg(svg, { fitTo: { mode: "width", value: 60 * perMm }, background: "#fff" }).render().asPng());
+    const own = labelPixels(layout, font, perMm * layout.xMm);
+    const fromPdf = decodePng(drawPdf(await labelPdf(label.options, layout, font), 25.4 * perMm));
+    const dark = (image: { width: number; grey: ArrayLike<number> }, [x, y, w, h]: number[]) => {
+      let count = 0;
+      for (let row = Math.round(y! * perMm); row < Math.round((y! + h!) * perMm); row++) {
+        for (let col = Math.round(x! * perMm); col < Math.round((x! + w!) * perMm); col++) if (image.grey[row * image.width + col]! < 128) count++;
+      }
+      return count / (Math.round(w! * perMm) * Math.round(h! * perMm));
+    };
+    for (const id of ["use", "glass"]) {
+      const { xMm, yMm, widthMm, heightMm } = label.placed.find((p) => p.id === id)!;
+      const box = [xMm, yMm, widthMm, heightMm];
+      const reference = dark(own, box);
+      expect(reference, id).toBeGreaterThan(0.1);
+      expect(Math.abs(dark(fromSvg, box) - reference), id).toBeLessThan(0.02);
+      expect(Math.abs(dark(fromPdf, box) - reference), id).toBeLessThan(0.02);
+    }
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 6 }, background: "#fff" }).render().asPng())).toEqual(label.expected);
+    // At the printer's dots: each drawing an image in its box, as dark as the PNG draws it; the letters as text
+    for (const dpi of [203, 300]) {
+      const dots = (v: number) => Math.round((v / 25.4) * dpi);
+      const print = printPageFor(label, dpi);
+      expect(print.images).toHaveLength(2);
+      for (const [image, id] of [[print.images![0]!, "use"], [print.images![1]!, "glass"]] as const) {
+        const { xMm, yMm, widthMm, heightMm } = label.placed.find((p) => p.id === id)!;
+        expect([image.x, image.y, image.bitmap.width, image.bitmap.height, image.drawing]).toEqual([dots(xMm), dots(yMm), dots(xMm + widthMm) - dots(xMm), dots(yMm + heightMm) - dots(yMm), true]);
+        const share = image.bitmap.dark.reduce((sum, d) => sum + d, 0) / image.bitmap.dark.length;
+        expect(Math.abs(share - dark(own, [xMm, yMm, widthMm, heightMm])), `${id} at ${dpi} dpi`).toBeLessThan(0.03);
+      }
+      const zpl = zplPage(print);
+      for (const image of print.images!) expect(zpl).toContain(graphicFields(image.bitmap, image.x, image.y).join("\n"));
+      expect(zpl).toContain("^FDSTERILE^FS");
+      expect(zpl).toContain("^FDEO^FS");
+      const shapes = { ...print, symbols: [] }; // EPL2 has no GS1 DataMatrix
+      expect(new TextDecoder("latin1").decode(eplPage(shapes) as Uint8Array)).toMatch(/GW\d+,\d+,\d+,\d+,[\s\S]*GW\d+,\d+,\d+,\d+,/);
+      expect(new TextDecoder("latin1").decode(tsplPage(shapes) as Uint8Array)).toMatch(/BITMAP \d+,\d+,\d+,\d+,0,[\s\S]*BITMAP /);
+      // DPL refuses a drawing with its own reason, and prints the letters
+      expect(() => dplPage(shapes)).toThrow(/a drawn pictogram is not offered in DPL yet/);
+      expect(dplPage({ ...shapes, images: [] })).toMatch(/STERILE[\s\S]*EO/);
+    }
+    // A drawing past the label's edge: named on the page, refused by a printer language
+    const past: DesignPage = { ...page, elements: [...page.elements.slice(0, 3), { ...page.elements[3]!, xMm: 55 } as DesignElement] };
+    const outside = designLabel(past, data, font, { environment: "healthcare" });
+    expect(outside.problems).toEqual([{ kind: "edge", id: "glass" }]);
+    expect(() => printPageFor(outside, 203)).toThrow(/A pictogram runs past the label's edge/);
   }, SLOW);
 
   // An image (backlog 4.2, step d): a logo as a one-bit picture, drawn where the page puts it in every output and sent

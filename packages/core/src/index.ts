@@ -259,7 +259,7 @@ export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";
 export { crc32, deflate } from "./deflate.ts";
 export { CMYK_BLACK, CMYK_BLACK_STROKE, CMYK_WHITE, CROP_MARKS, labelPdf, pdfContent, pdfDocument, type PdfPage } from "./pdf.ts";
 export { labelEps } from "./eps.ts";
-export { labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
+export { fillOutlines, labelPixels, labelPng, PNG_PIXELS_PER_MODULE, pngAt, pngDpi } from "./png.ts";
 export { fileName, labelReadme, labelZip, zipArchive } from "./zip.ts";
 export { expectedReads } from "./scan.ts";
 export { excelDate, excelNumber, excelTimeOfDay, parseDelimited, parseTableFile, parseXlsx, TableError, unzip, type ExcelTime, type Table } from "./table.ts";
@@ -345,7 +345,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, type DesignPictogram, PICTOGRAMS, PICTOGRAM_NAMES, type PictogramName, pictogramSize, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, type DesignPictogram, PICTOGRAMS, PICTOGRAM_NAMES, PICTOGRAM_SEGMENTS, pictogramContours, pictogramLabel, type Contour, type Pictogram, type PictogramName, type PictogramSegment, pictogramSize, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement, POS_RADIUS_MM,
 } from "./design.ts";
 export {

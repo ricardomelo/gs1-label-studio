@@ -24,6 +24,9 @@ const WORK: Work = {
       { id: "r", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, error: "h", qrMode: "byte", linear: "upce", linearSize: 120, xMm: 40, yMm: 4 },
       { id: "b", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, bearer: "bars", xMm: 4, yMm: 40 },
       { id: "p", kind: "pictogram", pictogram: "udi", heightMm: 4, rotation: 270, xMm: 60, yMm: 40 },
+      // The pictograms by segment (backlog 6.13): letters in two cells, and a drawing
+      { id: "s", kind: "pictogram", pictogram: "sterile-eo", heightMm: 4, xMm: 4, yMm: 60 },
+      { id: "u", kind: "pictogram", pictogram: "keep-dry", heightMm: 15, rotation: 90, xMm: 30, yMm: 60 },
     ],
   },
   printer: { profile: { id: "own-1", name: "Zebra ZD421", dpi: 300, widthMm: 104, language: "zpl" }, moduleDots: 4 },

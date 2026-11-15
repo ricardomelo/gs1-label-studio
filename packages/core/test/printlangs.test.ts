@@ -26,6 +26,8 @@ import {
   tsplTestLabel,
   TsplUnsupportedError,
   designLabel,
+  PICTOGRAM_NAMES,
+  PICTOGRAMS,
   eplPage,
   tsplPage,
   printPageFor,
@@ -637,6 +639,37 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     if (dpi === 203) expect(spare).toBeGreaterThan(0);
     for (let row = 0; row < bitmap.height; row++) {
       for (let dot = 0; dot < spare; dot++) expect(grey[(y + row) * width + x + bitmap.width + dot]!).toBeGreaterThanOrEqual(128);
+    }
+  });
+
+  // The pictograms' drawings (backlog 6.13): EPL2 and TSPL print each as an image, dot for dot where the page puts it;
+  // the lettered ones as boxes and text; the symbol beside them read back (a GS1-128 in EPL2, which has no GS1
+  // DataMatrix; a GS1 DataMatrix in TSPL, whose GS1-128 is an SSCC's alone)
+  it.each([["epl", 203], ["tspl", 300]] as const)("%s: a label of one's own at %i dpi, its pictograms' drawings printed dot for dot", { timeout: 60000 }, async (language, dpi) => {
+    const engine = await syntaxEngine();
+    const drawings = PICTOGRAM_NAMES.filter((name) => PICTOGRAMS[name].drawing);
+    const page: DesignPage = {
+      widthMm: 170, heightMm: 100, elements: [
+        { id: "bars", kind: "symbol", symbology: language === "epl" ? "gs1-128" : "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 2, yMm: 2 },
+        { id: "lot", kind: "pictogram", pictogram: "lot", heightMm: 5, xMm: 2, yMm: 45 },
+        ...drawings.map((name, i) => ({ id: name, kind: "pictogram" as const, pictogram: name, heightMm: 10, xMm: 2 + (i % 4) * 24, yMm: 55 + Math.floor(i / 4) * 16, ...(i === 2 ? { rotation: 180 as const } : {}) })),
+      ],
+    };
+    const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42") as Identified, hriFont(), { environment: "distribution" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    const file = PAGES[language](printed);
+    const png = render(language, file, printed.widthDots, printed.heightDots, dpi);
+    expect(await reads(png)).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    expect(printed.images).toHaveLength(drawings.length);
+    for (const { x, y, bitmap } of printed.images!) {
+      let differ = 0;
+      for (let i = 0; i < bitmap.width * bitmap.height; i++) {
+        const dark = grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width)]! < 128;
+        if (Number(dark) !== bitmap.dark[i]) differ++;
+      }
+      expect(differ).toBe(0);
     }
   });
 

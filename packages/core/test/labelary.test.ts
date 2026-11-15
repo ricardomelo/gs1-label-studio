@@ -27,6 +27,8 @@ import {
   PICTURE_THRESHOLD,
   pictureFromGrey,
   designLabel,
+  PICTOGRAM_NAMES,
+  PICTOGRAMS,
   printPageFor,
   syntaxEngine,
   zplPage,
@@ -419,6 +421,40 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       Number(grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width) + offset]! < 128));
     expect(drawn.filter((d, i) => d !== bitmap.dark[i]).length).toBe(0);
     expect(bitmap.dark.reduce((a, b) => a + b, 0)).toBeGreaterThan(1000);
+  });
+
+  // The pictograms' drawings (backlog 6.13): each printed by ^GF at the printer's dots, dot for dot, the lettered ones
+  // as boxes and text, the GS1 DataMatrix beside them still read back
+  it.each([203, 300])("a label of one's own at %i dpi: every pictogram's drawing printed dot for dot", { timeout: 60000 }, async (dpi) => {
+    const engine = await syntaxEngine();
+    const drawings = PICTOGRAM_NAMES.filter((name) => PICTOGRAMS[name].drawing);
+    const page: DesignPage = {
+      widthMm: 100, heightMm: 60, elements: [
+        { id: "dm", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 2, yMm: 2 },
+        { id: "eo", kind: "pictogram", pictogram: "sterile-eo", heightMm: 5, xMm: 30, yMm: 2 },
+        ...drawings.map((name, i) => ({ id: name, kind: "pictogram" as const, pictogram: name, heightMm: 10, xMm: 2 + (i % 4) * 24, yMm: 26 + Math.floor(i / 4) * 16, ...(i === 1 ? { rotation: 90 as const } : {}) })),
+      ],
+    };
+    const designed = designLabel(page, engine.parse("(01)09506000134376(10)B42(17)271231") as Identified, hriFont(), { environment: "healthcare" });
+    expect(designed.problems).toEqual([]);
+    const printed = printPageFor(designed, dpi);
+    expect(printed.images).toHaveLength(drawings.length);
+    const zpl = zplPage(printed);
+    expect(zpl).toContain("^FDSTERILE^FS");
+    const png = await labelaryPng(zpl, dpi, printed.widthDots, printed.heightDots);
+    const results = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(results.map((r) => `${r.symbologyIdentifier} ${r.text}`).sort()).toEqual(designed.expected);
+    const { grey, width } = decodePng(png);
+    const offset = Math.floor((width - printed.widthDots) / 2);
+    for (const { x, y, bitmap } of printed.images!) {
+      let differ = 0;
+      for (let i = 0; i < bitmap.width * bitmap.height; i++) {
+        const dark = grey[(y + Math.floor(i / bitmap.width)) * width + x + (i % bitmap.width) + offset]! < 128;
+        if (Number(dark) !== bitmap.dark[i]) differ++;
+      }
+      expect(differ).toBe(0);
+      expect(bitmap.dark.reduce((a, b) => a + b, 0)).toBeGreaterThan(200);
+    }
   });
 
   // A barcode on a label of one's own with the options of the symbol alone (backlog 6.6): a GS1 DataMatrix's text above

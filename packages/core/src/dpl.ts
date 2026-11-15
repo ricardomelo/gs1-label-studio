@@ -52,6 +52,11 @@ const MESSAGES = {
     "DPL prints an image stored in the printer's memory first (<STX>I, then a Y record), which Labelize, the emulator the " +
     "tests print DPL with, does not draw, so no test has seen one: an image is not offered in DPL yet. ZPL, EPL2, TSPL " +
     "or the PDF print it.",
+  drawing:
+    "DPL would print a pictogram's drawing (the factory, the hourglass, the glass, the arrows, the umbrella, the ℮) as an " +
+    "image stored in the printer's memory first, which Labelize, the emulator the tests print DPL with, does not draw: " +
+    "a drawn pictogram is not offered in DPL yet. Its lettered pictograms print in DPL; ZPL, EPL2, TSPL or the PDF " +
+    "print the drawing.",
   turnedMatrix:
     "DPL's Data Matrix is printed upright only for now: Labelize, the emulator the tests print DPL with, does not turn it " +
     "(W1c). Turn it back to 0°, or print it in ZPL or TSPL.",
@@ -182,14 +187,15 @@ export function dplTestLabel(symbology: SymbologyId, value: string, options: Pri
  * records of a symbol alone where the page puts it; each line of text in the internal font whose capitals come nearest
  * its height and that keeps it within the width the page gives it; each line and filled box as an X record's line `l`,
  * each outlined box as its box `b`. Rows count up from the label's bottom, in tenths of a millimetre, a rectangle's
- * position and size each within half a tenth of the page's. An image is refused: DPL prints one stored in the
- * printer's memory first (`<STX>I`, then a Y record), which Labelize, the emulator the tests print DPL with, does not
- * draw. A turned barcode or line of text with its record's rotation, its bottom left corner turned with its box
+ * position and size each within half a tenth of the page's. An image, or a pictogram's drawing, is refused: DPL prints
+ * one stored in the printer's memory first (`<STX>I`, then a Y record), which Labelize, the emulator the tests print
+ * DPL with, does not draw. A turned barcode or line of text with its record's rotation, its bottom left corner turned with its box
  * (`rotation`); lines and boxes turned as rectangles; a turned Data Matrix or QR code is refused (Labelize does not
  * turn W1c or W1D). With `notes`, a test label (backlog 3.1).
  */
 export function dplPage(page: PrintPage, options: { notes?: readonly string[] } = {}): string {
-  if (page.images?.length) throw new DplUnsupportedError(MESSAGES.image);
+  if (page.images?.some((image) => !image.drawing)) throw new DplUnsupportedError(MESSAGES.image);
+  if (page.images?.length) throw new DplUnsupportedError(MESSAGES.drawing);
   for (const { symbology, options: o } of page.symbols) {
     if (o.turned && (symbology === "dl-datamatrix" || symbology === "dl-qrcode")) throw new DplUnsupportedError(symbology === "dl-qrcode" ? MESSAGES.turnedQr : MESSAGES.turnedMatrix);
   }

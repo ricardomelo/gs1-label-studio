@@ -107,8 +107,11 @@ export interface PrintPage {
   texts: { x: number; y: number; heightDots: number; widthDots: number; text: string; rotation?: 90 | 180 | 270 }[];
   /** The page's lines and boxes: each a box's top left corner and outer size, its outline as thick as its narrower side when filled. */
   boxes: { x: number; y: number; width: number; height: number; thickness: number }[];
-  /** The page's images (a logo): each its top left corner and its picture at the printer's dots. */
-  images?: { x: number; y: number; bitmap: Bitmap }[];
+  /**
+   * The page's images (a logo): each its top left corner and its picture at the printer's dots; `drawing` for a
+   * pictogram's drawing (backlog 6.13), filled at those dots.
+   */
+  images?: { x: number; y: number; bitmap: Bitmap; drawing?: true }[];
 }
 
 /**

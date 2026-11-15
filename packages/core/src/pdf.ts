@@ -64,7 +64,10 @@ export function pdfContent(layout: Layout, font: HriFont, cropMarks = false): Pd
   };
 }
 
-/** The label's operators: white page, black rectangles, then each line of text as outlines (quadratic curves as cubic). */
+/**
+ * The label's operators: white page, black rectangles, the pictograms' drawings, then each line of text as outlines
+ * (quadratic curves as cubic).
+ */
 function labelContent(layout: Layout, font: HriFont): PdfPage {
   const scale = (layout.xMm * 72) / MM_PER_INCH; // points per unit
   const pageW = layout.width * scale;
@@ -74,6 +77,14 @@ function labelContent(layout: Layout, font: HriFont): PdfPage {
   const ops = [CMYK_WHITE, `0 0 ${f(pageW)} ${f(pageH)} re f`, CMYK_BLACK];
   for (const [x, y, w, h] of layout.rects) ops.push(`${point(x, y + h)} ${f(w * scale)} ${f(h * scale)} re`);
   ops.push("f");
+  // The pictograms' drawings (backlog 6.13): each contour a closed path, filled by the nonzero rule
+  if (layout.shapes?.length) {
+    for (const contour of layout.shapes) {
+      contour.forEach(([x, y], i) => ops.push(`${point(x, y)} ${i ? "l" : "m"}`));
+      ops.push("h");
+    }
+    ops.push("f");
+  }
   for (const t of layout.texts) {
     // fontTools' BasePen: a quadratic segment becomes the cubic with control points two thirds of the way to its own.
     let cx = 0;

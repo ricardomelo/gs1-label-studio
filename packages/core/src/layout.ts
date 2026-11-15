@@ -145,6 +145,11 @@ export interface Layout {
   barRects?: readonly [number, number];
   /** GS1-128 over several symbols: the element string each symbol carries, from the top. */
   parts?: string[];
+  /**
+   * A label of one's own: its pictograms' drawings (backlog 6.13), closed contours of [x, y] in the label's units,
+   * filled black by the nonzero rule, drawn after the rectangles.
+   */
+  shapes?: [number, number][][];
 }
 
 /** The data does not fit the QR version chosen at the level chosen. */
@@ -660,6 +665,10 @@ export function labelSvg(options: LabelOptions, layout: Layout, font: HriFont, h
     `<rect width="${pyFixed(layout.width, 4)}" height="${pyFixed(layout.height, 4)}" fill="#fff"/>`,
     `<path fill="#000" shape-rendering="crispEdges" d="${path}"/>`,
   ];
+  if (layout.shapes?.length) {
+    const d = layout.shapes.map((contour) => contour.map(([x, y], i) => `${i ? "L" : "M"}${g(x)},${g(y)}`).join("") + "z").join("");
+    parts.push(`<path fill="#000" fill-rule="nonzero" d="${d}"/>`);
+  }
   for (const t of layout.texts) {
     if (hriText) {
       const turn = t.turn ? ` transform="rotate(${t.turn * 90} ${pyFixed(t.x, 4)} ${pyFixed(t.baseline, 4)})"` : "";
