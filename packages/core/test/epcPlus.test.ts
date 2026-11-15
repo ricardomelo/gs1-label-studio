@@ -239,6 +239,9 @@ describe("+AIDC data after the EPC", async () => {
     expect(refused("8008", "271231235960")).toBe("epc.aidcValue"); // 60 seconds
     expect(refused("10", "ABC#")).toBe("epc.aidcValue");
     expect(refused("21", "S2")).toBe("epc.aidcTwice");
+    // Only the EPC's own qualifier counts as carried, wherever it comes among the elements given
+    expect(encodeEpcPlus([["01", "09506000134352"], ["10", "L1"], ["21", "S1001"]], { form: "+", filter: 1, aidc: [["10", "L1"]] }).hex)
+      .toBe(encodeEpcPlus(sgtin, { form: "+", filter: 1, aidc: [["10", "L1"]] }).hex);
     expect(refused("17", "271231", { date: ["17", "271231"] })).toBe("epc.aidcTwice");
     // A reserved header (A to F in either digit) is not read as an AI
     expect(() => decodeEpcPlus(withBits("1010 0000 0000 0000"))).toThrow();

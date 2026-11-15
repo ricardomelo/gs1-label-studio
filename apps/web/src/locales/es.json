@@ -850,5 +850,10 @@
  "Expiration date (17)": "Fecha de caducidad (17)",
  "First freeze date (7006)": "Fecha de primera congelación (7006)",
  "Harvest date (7007)": "Fecha de cosecha (7007)",
- "GS1 Digital Link URI it carries": "URI GS1 Digital Link que lleva"
+ "GS1 Digital Link URI it carries": "URI GS1 Digital Link que lleva",
+ "The data's other element strings after the EPC (+AIDC data)": "Los demás element strings de los datos después del EPC (datos +AIDC)",
+ "After the EPC: {ais}.": "Después del EPC: {ais}.",
+ "{bits} bits, {words} words of the tag's EPC memory": "{bits} bits, {words} palabras de la memoria EPC de la etiqueta",
+ "More than the 496 bits (31 words) an EPC memory can hold.": "Más que los 496 bits (31 palabras) que caben en una memoria EPC.",
+ "Length": "Longitud"
 }

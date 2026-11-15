@@ -6,6 +6,7 @@ import {
   encodeEpc,
   encodeEpcPlus,
   EpcError,
+  EPC_QUALIFIERS,
   epcMissing,
   epcSchemes,
   GcpError,
@@ -58,6 +59,8 @@ interface Props {
   onGcp: (table: GcpTable | null) => void;
   /** The label's GS1 Digital Link URI, for an NFC tag (backlog 1.19). */
   uri?: string;
+  /** The data's element strings as the barcode carries them, for +AIDC data after an EPC+ (backlog 6.7 B). */
+  elements?: [string, string][];
   download: (name: string, content: Uint8Array<ArrayBuffer>, type: string) => void;
 }
 
@@ -72,13 +75,14 @@ function Copyable({ text }: { text: string }) {
   );
 }
 
-export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
+export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download }: Props) {
   const [schemes, setSchemes] = useState<Record<string, EpcScheme> | null>(null);
   const [open, setOpen] = useState(true);
   const [prefixChoice, setPrefixChoice] = useState<number | null>(null);
   const [filterChoice, setFilterChoice] = useState<number | null>(null);
   const [form, setForm] = useState<Form>("classic");
   const [dateChoice, setDateChoice] = useState("");
+  const [withData, setWithData] = useState(false);
   const [gcpMessage, setGcpMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,10 +113,25 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
     if (form !== "classic") {
       if (!(id.key in PLUS_KEYS)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
       try {
-        const plus = encodeEpcPlus([[id.key, value], ...(Object.entries(qualifiers) as [string, string][])], {
+        const options = {
           form, filter, ...(form === "++" ? { hostname } : {}), ...(date ? { date: [date[0], date[1].trim()] as [string, string] } : {}),
-        });
-        return { plus, link: decodeEpcPlus(plus.hex)?.digitalLink ?? "" };
+        };
+        const own: [string, string][] = [[id.key, value], ...(Object.entries(qualifiers) as [string, string][])];
+        const plain = encodeEpcPlus(own, options);
+        // +AIDC data: the data's other element strings, each that table F can write; the others said
+        const carried = new Set([id.key, ...EPC_QUALIFIERS, ...(date ? [date[0]] : [])]);
+        const after: [string, string][] = [];
+        const left: string[] = [];
+        for (const element of elements.filter(([ai]) => !carried.has(ai))) {
+          try {
+            encodeEpcPlus(own, { ...options, aidc: [element] });
+            after.push(element);
+          } catch (error) {
+            left.push(tm(error instanceof EpcError ? error.message : String(error)));
+          }
+        }
+        const plus = withData && after.length ? encodeEpcPlus(own, { ...options, aidc: after }) : plain;
+        return { plus, link: decodeEpcPlus(plus.hex)?.digitalLink ?? "", after, left };
       } catch (error) {
         return { message: tm(error instanceof EpcError ? error.message : String(error)) };
       }
@@ -139,7 +158,7 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
     } catch (error) {
       return { message: tm(error instanceof EpcError ? error.message : String(error)) };
     }
-  }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, form, hostname, date?.[0], date?.[1], locale()]);
+  }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, form, hostname, date?.[0], date?.[1], withData, JSON.stringify(elements), locale()]);
 
   async function load(file: File | undefined) {
     if (!file) return;
@@ -243,10 +262,29 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
           )}
         </div>
       </div>}
+      {result.plus && (result.after?.length || result.left?.length) ? (
+        <div className="epc-aidc">
+          <label className="check">
+            <input type="checkbox" checked={withData} disabled={!result.after?.length} onChange={(e) => setWithData(e.target.checked)} />{" "}
+            {t("The data's other element strings after the EPC (+AIDC data)")}
+          </label>
+          <div className="hint">
+            {result.after?.length
+              ? t("After the EPC: {ais}.", { ais: result.after.map(([ai]) => `(${ai})`).join(" ") })
+              : null}
+            {result.left?.map((message) => <div key={message}>{message}</div>)}
+          </div>
+        </div>
+      ) : null}
       {result.plus ? (
         <div className="kv">
           <span>{t("Scheme")}</span>
           <code>{result.plus.scheme}</code>
+          <span>{t("Length")}</span>
+          <span>
+            {t("{bits} bits, {words} words of the tag's EPC memory", { bits: result.plus.bits, words: Math.ceil(result.plus.bits / 16) })}
+            {result.plus.bits > 496 && <span className="error"> {t("More than the 496 bits (31 words) an EPC memory can hold.")}</span>}
+          </span>
           <span>{t("EPC (hexadecimal, as on the tag)")}</span>
           <Copyable text={result.plus.hex} />
           <span>{t("GS1 Digital Link URI it carries")}</span>

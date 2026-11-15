@@ -155,6 +155,9 @@ details.epc summary, details.sign summary, details.printer summary { font-weight
 .kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 12px; font-size: 13px; margin-top: 10px; }
 .kv code { font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
 .epc-message { font-size: 13px; }
+.epc-aidc { margin-top: 10px; }
+.epc-aidc label.check { display: inline-flex; gap: 6px; align-items: center; font-weight: 400; margin: 0; }
+.epc-aidc label.check input { width: auto; }
 @media (max-width: 900px) { .kv { grid-template-columns: 1fr; } }
 /* Step 2, where the code is scanned (mock-up B of 29 October 2026). */
 .steps { display: grid; gap: 20px; min-width: 0; }

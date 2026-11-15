@@ -239,6 +239,41 @@ test("EPC+ and EPC++ need no prefix length, and a DSGTIN puts a date of the data
   await expect(page.locator("#epc-prefix")).toBeVisible();
 });
 
+test("the data's other element strings follow an EPC+ (+AIDC data) and come back when it is pasted", async ({ page }) => {
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134352(17)271231(10)ABC123(3103)000500(21)S1001");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "more");
+  const section = page.locator("details.epc");
+  const kv = section.locator(".kv");
+  await section.getByRole("radio", { name: "EPC+", exact: true }).click();
+  await expect(kv).toContainText("106 bits, 7 words of the tag's EPC memory");
+  // Offered for what table F can write and the EPC does not carry: the batch, the expiry and the weight, not the serial
+  await expect(section.locator(".epc-aidc .hint")).toHaveText("After the EPC: (17) (10) (3103).");
+  await section.getByLabel("The data's other element strings after the EPC (+AIDC data)").check();
+  await expect(kv).toContainText("206 bits, 13 words of the tag's EPC memory");
+  await expect(kv).toContainText("F7909506000134352654B5D34D45CDE7C409AAF048CC40C007D0");
+  await expect(kv).toContainText("https://id.gs1.org/01/09506000134352/10/ABC123/21/S1001?17=271231&3103=000500");
+  // As a DSGTIN the expiry goes into the EPC and no longer after it
+  await page.selectOption("#epc-date", "17");
+  await expect(section.locator(".epc-aidc .hint")).toHaveText("After the EPC: (10) (3103).");
+  // Past the 496 bits of the largest EPC memory, said
+  await on(page, "data");
+  await page.fill("#paste", `(01)09506000134352(21)S1001(91)${"a!".repeat(45)}`);
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "more");
+  await section.getByLabel("The data's other element strings after the EPC (+AIDC data)").check();
+  await expect(kv).toContainText("More than the 496 bits (31 words) an EPC memory can hold.");
+  // Pasted back in step 1, every element string returns
+  await on(page, "data");
+  await page.fill("#paste", "F7909506000134352654B5D34D45CDE7C409AAF048CC40C007D0");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await expect(page.locator("#key-value")).toHaveValue("09506000134352");
+  await expect(page.locator("#q-10")).toHaveValue("ABC123");
+  await expect(page.locator("#q-21")).toHaveValue("S1001");
+  await expect(page.locator(".attr")).toHaveCount(4);
+});
+
 test("an EPC pasted fills in the data, classic or new", async ({ page }) => {
   const paste = async (text: string) => {
     await page.fill("#paste", text);

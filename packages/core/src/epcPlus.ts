@@ -315,7 +315,7 @@ export function encodeEpcPlus(elements: EpcPlusElements, options: EpcPlusOptions
     bits += "variable" in layout.qualifier ? variable(q, layout.qualifier.variable) : numeric(q, layout.qualifier.numeric);
   }
   if (options.form === "++") bits += hostnameBits(options.hostname ?? "");
-  const carried = new Set([...elements.slice(0, layout.qualifier ? 2 : 1).map(([ai]) => ai), ...(scheme === "dsgtin" ? [options.date![0]] : [])]);
+  const carried = new Set([layout.key, ...(layout.qualifier ? [layout.qualifier.ai] : []), ...(scheme === "dsgtin" ? [options.date![0]] : [])]);
   for (const [ai, value] of aidc) {
     if (carried.has(ai)) throw new EpcError("epc.aidcTwice", { ai });
     carried.add(ai);

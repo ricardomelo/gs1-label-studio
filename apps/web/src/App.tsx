@@ -1298,7 +1298,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               <InstallApp />
             </div>
           )}
-          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
+          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} elements={checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? []} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
       </main>
