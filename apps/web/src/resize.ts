@@ -117,6 +117,7 @@ export function resized(element: DesignElement, placed: PlacedElement, xMm: numb
   const h = Math.max(grows.heightMm, 0.1);
   const scale = Math.max(0.01, ((w + dx) * w + (h + dy) * h) / (w * w + h * h));
   if (element.kind === "image") return { ...element, widthMm: step(element.widthMm * scale) };
+  if (element.kind === "pictogram") return { ...element, heightMm: step(element.heightMm * scale) };
   if (element.kind === "symbol") {
     const sizes = sizing?.sizes.length ? sizing.sizes : SIZES;
     return { ...element, size: nearest(sizes, element.size * scale) };
@@ -152,6 +153,8 @@ export function keyResized(element: DesignElement, placed: PlacedElement, key: R
   }
   if (element.kind === "line") return across === element.vertical ? element : { ...element, lengthMm: step(element.lengthMm + sign * mm) };
   if (element.kind === "image") return { ...element, widthMm: step(element.widthMm + sign * mm) };
+  // A pictogram by its frame's height, its width following its letters
+  if (element.kind === "pictogram") return { ...element, heightMm: step(element.heightMm + sign * mm) };
   const grows = element.kind === "symbol" && sizing ? sizing : placed;
   const side = Math.max(grows.widthMm, grows.heightMm, 0.1);
   const scale = Math.max(0.01, (side + sign * mm) / side);
@@ -171,7 +174,7 @@ export function boxAfter(element: DesignElement, next: DesignElement, placed: Pl
   if (next.kind === "box" || next.kind === "line") return boxOf(next);
   const scale = (ratio: number) => ({ widthMm: placed.widthMm * ratio, heightMm: placed.heightMm * ratio });
   if (element.kind === "image" && next.kind === "image") return scale(next.widthMm / element.widthMm);
-  if (element.kind === "text" && next.kind === "text") return scale(next.heightMm / element.heightMm);
+  if ((element.kind === "text" && next.kind === "text") || (element.kind === "pictogram" && next.kind === "pictogram")) return scale(next.heightMm / element.heightMm);
   if (element.kind === "symbol" && next.kind === "symbol") return sizing?.boxAt ? sizing.boxAt(next.size) : scale(next.size / element.size);
   return undefined;
 }
@@ -210,6 +213,11 @@ export function heldResize(element: DesignElement, next: DesignElement, placed: 
     // Its width at which its box reaches the first of the two edges
     const limit = Math.min(maxW * (element.widthMm / placed.widthMm), maxH * (element.widthMm / placed.heightMm));
     return { ...next, widthMm: Math.max(halfDown(limit), element.widthMm) };
+  }
+  if (element.kind === "pictogram" && next.kind === "pictogram") {
+    // Its height at which its box reaches the first of the two edges
+    const limit = Math.min(maxW * (element.heightMm / placed.widthMm), maxH * (element.heightMm / placed.heightMm));
+    return { ...next, heightMm: Math.max(halfDown(limit), element.heightMm) };
   }
   if (element.kind === "symbol" && next.kind === "symbol") {
     const sizes = sizing?.sizes.length ? sizing.sizes : SIZES;

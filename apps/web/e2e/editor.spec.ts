@@ -4368,7 +4368,7 @@ test("a template by segment opens its label of one's own, fills steps 1 and 2 wi
   await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
   const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
   const medicine = kinds.locator('[data-template="healthcare-pack"]');
-  await expect(kinds.locator('[data-segment="healthcare"] .kind')).toHaveCount(1);
+  await expect(kinds.locator('[data-segment="healthcare"] .kind')).toHaveCount(2);
   await expect(medicine).toContainText("Medicine or medical device");
   await expect(medicine).toContainText("60 × 18 mm");
   await medicine.click();
@@ -4421,6 +4421,48 @@ test("a template by segment opens its label of one's own, fills steps 1 and 2 wi
   await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134352(17)291231(10)ABC123(21)1001", { timeout: 30_000 });
   await on(page, "data");
   await expect(page.getByRole("region", { name: "Set up from a template" })).toContainText("Replace them with yours: (01) GTIN Product, (17) USE BY or EXPIRY, (10) Batch/lot, (21) Serial number.");
+});
+
+test("the medical device's UDI template shows the UDI's element strings under its pictogram, and + Pictogram places UDI or MD on any label", async ({ page }) => {
+  // Backlog 6.5 (the owner, 15 November 2026: let the UDI pictogram be placed): the template's GS1 DataMatrix, its
+  // element strings beside it, the UDI pictogram over it and MD; each pictogram one element, chosen, sized and printed
+  await on(page, "label");
+  await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
+  const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
+  const udi = kinds.locator('[data-template="healthcare-udi"]');
+  await expect(udi).toContainText("Medical device with its UDI");
+  await expect(udi).toContainText("46 × 21 mm");
+  await udi.click();
+  await expect(page.locator(".designer")).toBeVisible();
+  await expect(page.locator(".caption")).toContainText("A label of my own 46 × 21 mm · GS1 DataMatrix");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(17)271231(10)B42(21)1001", { timeout: 30_000 });
+  await on(page, "label");
+  const list = page.locator(".design-list button");
+  await expect(list).toHaveText(["▥ GS1 DataMatrix", "▭ Pictogram UDI", "T “(01){01}”", "▭ Pictogram MD"]);
+  // MD chosen: which pictogram, with its symbol's number in ISO 15223-1, and its frame's height
+  await list.nth(3).press("Enter");
+  await expect(page.locator("#el-pictogram")).toHaveValue("md");
+  await expect(page.locator(".designer")).toContainText("ISO 15223-1:2021, symbol 5.7.7: the letters in a frame, as the standard draws them.");
+  await expect(page.locator("#el-pictogram-height")).toHaveValue("4");
+  await page.locator("#el-pictogram-height").fill("3");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  // + Pictogram: a UDI pictogram, 4 mm high, made MD; on the GS1 DataMatrix's quiet zone it is named
+  await page.getByRole("button", { name: "+ Pictogram" }).click();
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▭ Pictogram UDI");
+  await page.selectOption("#el-pictogram", "md");
+  await expect(page.locator(".design-list button[aria-pressed=true]")).toHaveText("▭ Pictogram MD");
+  await page.fill("#el-x", "2");
+  await page.fill("#el-y", "8");
+  await expect(page.locator(".design-problems")).toContainText("Pictogram MD");
+  await page.getByRole("button", { name: "Delete" }).click();
+  await expect(list).toHaveCount(4);
+  // Printed as a box and its letters
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  expect(file).toContain("^FDUDI^FS");
+  expect(file).toContain("^FDMD^FS");
+  expect(file).toContain("^FD(01)09506000134376^FS");
 });
 
 // Backlog 6.11 (the owner, 15 November 2026; mock-up A of two): the human readable text's format chosen, the AI in

@@ -31,6 +31,7 @@ export function sizeSaid(element: DesignElement, placed: PlacedElement, page: De
     : element.kind === "image" ? t("Width {w} mm · height {h} mm", { w: mm(element.widthMm), h: mm(imageHeightMm(element)) })
     : element.kind === "line" ? t("Length {mm} mm", { mm: mm(element.lengthMm) })
     : element.kind === "symbol" ? t("Size {size} %", { size: element.size })
+    : element.kind === "pictogram" ? t("Height {mm} mm", { mm: mm(element.heightMm) })
     : t("Text height {mm} mm", { mm: mm(element.heightMm) });
   const parts = held && !past(placed, page) ? [size, t("at the label's edge")]
     : end < 0 ? [size, t("no smaller size")] : end > 0 ? [size, t("no larger size")] : [size];

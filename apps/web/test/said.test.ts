@@ -58,6 +58,8 @@ describe("what an arrow key on the handle says", () => {
     expect(sizeSaid(symbol, at(2, 2, 20, 30), page, 0)).toBe("Size 120 %");
     const text: DesignText = { id: "e1", kind: "text", text: "T", heightMm: 3.5, xMm: 4, yMm: 52 };
     expect(sizeSaid(text, at(4, 52, 3, 4), page, 0)).toBe("Text height 3.5 mm");
+    // A pictogram by its frame's height (backlog 6.5)
+    expect(sizeSaid({ id: "e1", kind: "pictogram", pictogram: "udi", heightMm: 4.5, xMm: 4, yMm: 4 }, at(4, 4, 7.9, 4.5), page, 0)).toBe("Height 4.5 mm");
     setLocale("pt-BR", false);
     expect(sizeSaid(box, at(2.5, 7, 40, 20.5), page, 0)).toBe("Largura 40 mm · altura 20,5 mm");
     expect(sizeSaid(text, at(4, 52, 3, 4), page, 0)).toBe("Altura do texto 3,5 mm");

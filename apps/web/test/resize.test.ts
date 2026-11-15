@@ -1,5 +1,5 @@
 import {
-  ENVIRONMENTS, HriFont, layoutLabel, SIZES, specificationFor, specSizesFor, type DesignBox, type DesignImage, type DesignLine,
+  ENVIRONMENTS, HriFont, layoutLabel, SIZES, specificationFor, specSizesFor, type DesignBox, type DesignImage, type DesignLine, type DesignPictogram,
   type DesignSymbol, type DesignText, type LabelOptions, type PlacedElement, type Rotation,
 } from "@gs1-label-studio/core";
 import { readFileSync } from "node:fs";
@@ -71,6 +71,42 @@ describe("resizing by dragging a corner", () => {
     expect(nearest(TEXT_HEIGHTS, 8.9)).toBe(8);
     expect(nearest(SIZES, 135)).toBe(150); // 120 and 150 meet at 134.2
     expect(nearest(SIZES, 134)).toBe(120);
+  });
+});
+
+describe("resizing a pictogram", () => {
+  // Backlog 6.5: by its frame's height, its width following its letters (here 1.75 times its height)
+  const udi: DesignPictogram = { id: "e1", kind: "pictogram", pictogram: "udi", heightMm: 4, xMm: 10, yMm: 10 };
+  const placed = at(10, 10, 7, 4);
+
+  it("follows the corner along its diagonal by half millimetres of its height, turned or not", () => {
+    expect(resized(udi, placed, 10 + 14, 10 + 8)).toEqual({ ...udi, heightMm: 8 });
+    expect(resized(udi, placed, 10 + 3.5, 10 + 2)).toEqual({ ...udi, heightMm: 2 });
+    // Any half millimetre, not only a text block's heights
+    expect(resized(udi, placed, 10 + 7.875, 10 + 4.5)).toEqual({ ...udi, heightMm: 4.5 });
+    expect(boxAfter(udi, { ...udi, heightMm: 8 }, placed)).toEqual({ widthMm: 14, heightMm: 8 });
+    const turned = { ...udi, rotation: 90 as const };
+    expect(resized(turned, at(10, 10, 4, 7), 10 + 8, 10 + 14)).toEqual({ ...turned, heightMm: 8 });
+  });
+
+  it("takes half a millimetre of height, or 5 mm with Shift, from the keyboard, never less than half a millimetre", () => {
+    expect(keyResized(udi, placed, "ArrowRight", false)).toEqual({ ...udi, heightMm: 4.5 });
+    expect(keyResized(udi, placed, "ArrowDown", true)).toEqual({ ...udi, heightMm: 9 });
+    expect(keyResized(udi, placed, "ArrowUp", false)).toEqual({ ...udi, heightMm: 3.5 });
+    expect(keyResized({ ...udi, heightMm: 0.5 }, at(10, 10, 0.875, 0.5), "ArrowLeft", true)).toEqual({ ...udi, heightMm: 0.5 });
+  });
+
+  it("is held on the last half millimetre of its height that keeps its whole frame on the label", () => {
+    const page = { widthMm: 30, heightMm: 30 };
+    // Across: 20 mm of room is 11.43 mm high, so 11
+    expect(heldResize(udi, { ...udi, heightMm: 20 }, placed, page)).toEqual({ ...udi, heightMm: 11 });
+    // From the left edge: 30 mm across is 17.14 mm high, within the 20 mm down, so 17
+    const narrow = { ...udi, xMm: 0 };
+    expect(heldResize(narrow, { ...narrow, heightMm: 40 }, at(0, 10, 7, 4), page)).toEqual({ ...narrow, heightMm: 17 });
+    // Near the foot: 5 mm down, so 5
+    const low = { ...udi, xMm: 0, yMm: 25 };
+    expect(heldResize(low, { ...low, heightMm: 12 }, at(0, 25, 7, 4), page)).toEqual({ ...low, heightMm: 5 });
+    expect(heldResize(udi, { ...udi, heightMm: 6 }, placed, page)).toEqual({ ...udi, heightMm: 6 });
   });
 });
 

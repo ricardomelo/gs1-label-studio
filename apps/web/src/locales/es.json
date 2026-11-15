@@ -855,5 +855,11 @@
  "After the EPC: {ais}.": "Después del EPC: {ais}.",
  "{bits} bits, {words} words of the tag's EPC memory": "{bits} bits, {words} palabras de la memoria EPC de la etiqueta",
  "More than the 496 bits (31 words) an EPC memory can hold.": "Más que los 496 bits (31 palabras) que caben en una memoria EPC.",
- "Length": "Longitud"
+ "Length": "Longitud",
+ "+ Pictogram": "+ Pictograma",
+ "Pictogram": "Pictograma",
+ "Pictogram {letters}": "Pictograma {letters}",
+ "The UDI or MD pictogram of ISO 15223-1, for a medical device's label": "El pictograma UDI o MD de la ISO 15223-1, para la etiqueta de un producto sanitario",
+ "{source}: the letters in a frame, as the standard draws them.": "{source}: las letras en un marco, como las dibuja la norma.",
+ "Height {mm} mm": "Altura {mm} mm"
 }

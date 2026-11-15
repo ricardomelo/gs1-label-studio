@@ -1,5 +1,5 @@
 import {
-  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type ErrorLevel, type PlacedElement, type SymbologyId,
+  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, type DesignPictogram, MONTH_NAMES, PICTOGRAM_NAMES, PICTOGRAMS, type PictogramName, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type ErrorLevel, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
@@ -87,6 +87,7 @@ export function elementName(element: DesignElement): string {
   if (element.kind === "symbol") return tm(SYMBOLOGIES[element.symbology].name);
   if (element.kind === "text") return `“${element.text.split("\n")[0] || t("Text")}”`;
   if (element.kind === "image") return t("Image {name}", { name: element.name });
+  if (element.kind === "pictogram") return t("Pictogram {letters}", { letters: PICTOGRAMS[element.pictogram].letters });
   if (element.kind === "line") {
     const mm = formatNumber(element.lengthMm);
     return element.vertical ? t("Line down {mm} mm", { mm }) : t("Line across {mm} mm", { mm });
@@ -100,6 +101,7 @@ function elementIcon(element: DesignElement): string {
   if (element.kind === "symbol") return "▥";
   if (element.kind === "text") return "T";
   if (element.kind === "image") return "▨";
+  if (element.kind === "pictogram") return "▭";
   return "◇";
 }
 
@@ -150,7 +152,10 @@ export function removesElement(event: Pick<KeyboardEvent, "key" | "ctrlKey" | "a
   return target.closest(".canvas-frame, .design-tools, .designer") !== null;
 }
 
-/** + Barcode, + Text, + Shape, + Image, the grid and rulers, and Delete, over the canvas. */
+/** A new pictogram's frame height, in mm (a medical device's label's UDI pictogram, beside its carrier). */
+const PICTOGRAM_HEIGHT_MM = 4;
+
+/** + Barcode, + Text, + Shape, + Pictogram, + Image, the grid and rulers, and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange, guides, onGuides }: ToolsProps) {
   const file = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -202,6 +207,14 @@ export function DesignerTools({ page, selected, symbology, onChange, guides, onG
       </button>
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
         {t("+ Shape")}
+      </button>
+      <button
+        type="button"
+        className="btn"
+        title={t("The UDI or MD pictogram of ISO 15223-1, for a medical device's label")}
+        onClick={() => add({ id: nextId(page), kind: "pictogram", pictogram: "udi", heightMm: PICTOGRAM_HEIGHT_MM, xMm: 4, yMm: 4 })}
+      >
+        {t("+ Pictogram")}
       </button>
       <button type="button" className="btn" onClick={() => file.current?.click()}>
         {t("+ Image")}
@@ -584,6 +597,32 @@ function ShapeFields({ element, onChange }: { element: DesignLine | DesignBox; o
 }
 
 /**
+ * A pictogram's properties (backlog 6.5): which of ISO 15223-1's, named and with its symbol's number, and its frame's
+ * height, its width following its letters.
+ */
+function PictogramFields({ element, onChange }: { element: DesignPictogram; onChange: (element: DesignPictogram) => void }) {
+  return (
+    <>
+      <div className="wide">
+        <label htmlFor="el-pictogram">{t("Pictogram")}</label>
+        <select id="el-pictogram" value={element.pictogram} onChange={(e) => onChange({ ...element, pictogram: e.target.value as PictogramName })}>
+          {PICTOGRAM_NAMES.map((name) => (
+            <option key={name} value={name}>
+              {`${PICTOGRAMS[name].letters} · ${tm(PICTOGRAMS[name].name)}`}
+            </option>
+          ))}
+        </select>
+        <p className="hint">{t("{source}: the letters in a frame, as the standard draws them.", { source: tm(PICTOGRAMS[element.pictogram].source) })}</p>
+      </div>
+      <div>
+        <label htmlFor="el-pictogram-height">{t("Height (mm)")}</label>
+        <input id="el-pictogram-height" type="number" min={STEP_MM} step={STEP_MM} value={element.heightMm} onChange={(e) => onChange({ ...element, heightMm: positive(e.target.value, element.heightMm) })} />
+      </div>
+    </>
+  );
+}
+
+/**
  * An image's properties (mock-up A): its file, replaced by another at the same place and width; its width, its height
  * following its proportions; a note that it prints in black and white.
  */
@@ -682,7 +721,7 @@ function DarknessField({ element, onChange }: { element: DesignImage; onChange: 
 }
 
 /** Rotation (mock-up A): four buttons, the element's turn pressed; none for a QR code, which stays upright. */
-function RotationField({ element, onChange }: { element: DesignSymbol | DesignText | DesignImage; onChange: (rotation: Rotation) => void }) {
+function RotationField({ element, onChange }: { element: DesignSymbol | DesignText | DesignImage | DesignPictogram; onChange: (rotation: Rotation) => void }) {
   if (element.kind === "symbol" && element.symbology === "dl-qrcode") {
     return <p className="hint wide">{t("A QR code reads in any direction, so it stays upright.")}</p>;
   }
@@ -891,6 +930,8 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                 </>
               ) : element.kind === "line" || element.kind === "box" ? (
                 <ShapeFields element={element} onChange={(shape) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? shape : e)) }, selected)} />
+              ) : element.kind === "pictogram" ? (
+                <PictogramFields element={element} onChange={(pictogram) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? pictogram : e)) }, selected)} />
               ) : element.kind === "image" ? (
                 <ImageFields element={element} onChange={(image) => onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? image : e)) }, selected)} />
               ) : (
@@ -937,7 +978,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                 <label htmlFor="el-y">{t("Top (mm)")}</label>
                 <input id="el-y" type="number" step={STEP_MM} value={element.yMm} onChange={(e) => update({ yMm: mm(e.target.value, element.yMm) })} />
               </div>
-              {(element.kind === "symbol" || element.kind === "text" || element.kind === "image") && (
+              {(element.kind === "symbol" || element.kind === "text" || element.kind === "image" || element.kind === "pictogram") && (
                 <RotationField element={element} onChange={(rotation) => update({ rotation })} />
               )}
             </div>
