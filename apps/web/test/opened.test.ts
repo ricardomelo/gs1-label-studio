@@ -14,7 +14,7 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
       ...START_SETTINGS, symbology: "gs1-128", environment: "distribution", size: 50, hri: "key", version: 7, error: "q",
       gs1128Starts: [0, 3], hriPosition: "split", hriHeightMm: 3, qrMode: "numeric", logistic: "4x6", logisticFrom: "A\nB",
       logisticTwoD: "dl-qrcode", logisticSecond: "es", designer: true, page: PAGE, selected: "t", expert: true, dpi: 300, bearer: "bars",
-      cropMarks: true, template: "healthcare-pack",
+      cropMarks: true, template: "healthcare-pack", hriFormat: "own", hriPattern: "{title}: {value:DD/MM/YYYY}", hriTitles: "pt-BR",
     };
     const saved = savedSettings(settings);
     expect(Object.keys(saved)).not.toContain("page");
@@ -38,5 +38,10 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
     expect(openedSettings({ template: "a-future-template" }, null, START_SETTINGS).template).toBeNull();
     expect(openedSettings({ template: 3 }, null, START_SETTINGS).template).toBeNull();
     for (const second of ["fr", "de", "it"]) expect(openedSettings({ logisticSecond: second }, null, START_SETTINGS).logisticSecond).toBe(second);
+    // The text's format (backlog 6.11): one of the four, the titles in English or one of the five languages
+    expect(START_SETTINGS.hriFormat).toBe("ai");
+    expect(openedSettings({ hriFormat: "both", hriTitles: "de", hriPattern: "{value}" }, null, START_SETTINGS))
+      .toEqual({ ...START_SETTINGS, hriFormat: "both", hriTitles: "de", hriPattern: "{value}" });
+    expect(openedSettings({ hriFormat: "fancy", hriTitles: "nl", hriPattern: 3 }, null, START_SETTINGS)).toEqual(START_SETTINGS);
   });
 });

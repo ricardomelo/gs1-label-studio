@@ -820,5 +820,20 @@
  "Leave it out": "Dejarlo fuera",
  "Leave them out": "Dejarlos fuera",
  "Set up from a template": "Preparado a partir de una plantilla",
- "Set up from the template {name}.": "Preparado a partir de la plantilla {name}."
+ "Set up from the template {name}.": "Preparado a partir de la plantilla {name}.",
+ "AI and data: {example}": "AI y datos: {example}",
+ "Data title and data: {example}": "Título de datos y datos: {example}",
+ "Both: {example}": "Ambos: {example}",
+ "A format of my own": "Un formato propio",
+ "AI and data": "AI y datos",
+ "Data titles": "Títulos de datos",
+ "Data titles and AIs": "Títulos de datos y AI",
+ "Data titles in": "Títulos de datos en",
+ "Example: {text}": "Ejemplo: {text}",
+ "Format of my own": "Formato propio",
+ "Text format": "Formato del texto",
+ "How each element string is written: the AI in parentheses and the data, as GS1 asks under a symbol; with its data title, such as BATCH/LOT, which people read more easily; or a format of your own.": "Cómo se escribe cada element string: el AI entre paréntesis y los datos, como pide GS1 bajo un símbolo; con su título de datos, como BATCH/LOT, que las personas leen con más facilidad; o un formato propio.",
+ "The language of the data titles. The General Specifications ask for English unless the trading partners agree on another.": "El idioma de los títulos de datos. Las Especificaciones Generales piden inglés, salvo que los socios comerciales acuerden otro.",
+ "{title} is the data title, {ai} the AI's number and {value} the data. After a date's {value}, a format such as DD/MM/YYYY or DD MMM YYYY.": "{title} es el título de datos, {ai} el número del AI y {value} los datos. Tras el {value} de una fecha, un formato como DD/MM/YYYY o DD MMM YYYY.",
+ "{title}, {ai} and {value}; a date in a format of its own, such as {value:DD MMM YYYY}, is written without its AI (GS1 General Specifications, figure 4-9).": "{title}, {ai} y {value}; una fecha en un formato propio, como {value:DD MMM YYYY}, se escribe sin su AI (Especificaciones Generales de GS1, figura 4-9)."
 }

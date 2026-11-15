@@ -1,7 +1,7 @@
 import {
   aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { gridLines, rulerTicks } from "./guides.ts";
@@ -512,7 +512,12 @@ interface PanelProps {
   onChange: (page: DesignPage, selected: string | null) => void;
   /** Whether the chosen element's outline is on the label (not in real size): "On the label" in the list goes to it. */
   outlined: boolean;
+  /** The human readable text's format (backlog 6.11), shared by every barcode of the label, under a barcode's text. */
+  hriFields?: ReactNode;
 }
+
+/** The symbols whose text is their digits, which no format writes: EAN/UPC and ITF-14. */
+const LINEAR_TEXT: readonly SymbologyId[] = ["ean13", "ean8", "upca", "upce", "itf14"];
 
 /**
  * From the chosen element's row in the list to its outline on the label (the keyboard's order, backlog 4.2): the outline
@@ -756,7 +761,7 @@ function FieldInsert({ elements, columns, months, onInsert }: {
 }
 
 /** The page's size, its elements and the selected one's properties, under the canvas. */
-export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange, outlined }: PanelProps) {
+export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange, outlined, hriFields }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
   const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
@@ -857,6 +862,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                       <input type="checkbox" checked={element.hri} onChange={(e) => update({ hri: e.target.checked })} /> {t("Human readable text")}
                     </label>
                   </div>
+                  {element.hri && !LINEAR_TEXT.includes(element.symbology) && hriFields}
                   <fieldset className="wide">
                     <legend>{t("Element strings it carries")}</legend>
                     {SYMBOLOGIES[element.symbology].data === "uri" ? (

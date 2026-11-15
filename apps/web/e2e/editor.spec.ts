@@ -4320,3 +4320,70 @@ test("a template by segment opens its label of one's own, fills steps 1 and 2 wi
   await on(page, "data");
   await expect(page.getByRole("region", { name: "Set up from a template" })).toContainText("Replace them with yours: (01) GTIN Product, (17) USE BY or EXPIRY, (10) Batch/lot, (21) Serial number.");
 });
+
+// Backlog 6.11 (the owner, 15 November 2026; mock-up A of two): the human readable text's format chosen, the AI in
+// parentheses, data titles, both (General Specifications 4.14.1, figure 4-8) or a format of one's own, each choice
+// showing the data as it writes it; the titles in six languages; in the label, the print file and a label of one's own.
+test("the human readable text's format: the AI, data titles, both or one's own, in the label and the print file", async ({ page }, info) => {
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134376(17)271231(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "scan");
+  await page.getByRole("button", { name: "Choose a symbol yourself" }).click();
+  await on(page, "label");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
+  const format = await option(page, "#opt-hri-format");
+  await expect(format).toHaveValue("ai");
+  await expect(format.locator("option")).toHaveText([
+    "AI and data: (17)271231", "Data title and data: USE BY or EXPIRY 271231", "Both: USE BY or EXPIRY (17) 271231", "A format of my own",
+  ]);
+  await expect(page.locator("#opt-hri-titles")).toHaveCount(0);
+  await format.selectOption("both");
+  await page.selectOption("#opt-hri-titles", "pt-BR");
+  await expect(format.locator("option").nth(2)).toHaveText(/^Both: \S.* \(17\) 271231$/);
+  const ptExpiry = (await format.locator("option").nth(1).textContent())!.replace(/^Data title and data: (.*) 271231$/, "$1");
+  expect(ptExpiry).not.toBe("USE BY or EXPIRY");
+  // The symbol is the same: it still reads as intended
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(17)271231(10)B42", { timeout: 30_000 });
+  // The print file writes the text so
+  const [download] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  const fields = [...readFileSync((await download.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(fields).toContain("GTIN (01) 09506000134376");
+  expect(fields).toContain(`${ptExpiry} (17) 271231`);
+  expect(fields).toContain("LOTE (10) B42");
+  // A format of one's own, its example as it is typed; a date in a format of its own without its AI (figure 4-9)
+  await on(page, "label");
+  await page.selectOption("#opt-hri-titles", "en");
+  await format.selectOption("own");
+  await expect(page.locator("#opt-hri-pattern")).toHaveValue("{title} ({ai}) {value:DD MMM YYYY}");
+  await expect(page.getByTestId("hri-example")).toHaveText("Example: USE BY or EXPIRY 31 DEC 2027");
+  await page.fill("#opt-hri-pattern", "{title}: {value:DD/MM/YYYY}");
+  await expect(page.getByTestId("hri-example")).toHaveText("Example: USE BY or EXPIRY: 31/12/2027");
+  // One that cannot write the text says why, beside it and in place of the label
+  await page.fill("#opt-hri-pattern", "{title}");
+  await expect(page.getByTestId("hri-example")).toHaveText("The text's format must show the data: put {value} in it.");
+  await expect(page.locator("#opt-hri-pattern")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator(".preview .error")).toContainText("put {value} in it");
+  await page.fill("#opt-hri-pattern", "{title} {value}");
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  // On a phone, the folded group's line names the format
+  const hriSummary = page.locator(".options .group:has(#opt-hri) .group-summary");
+  const phone = info.project.name.includes("phone");
+  if (phone) await expect(hriSummary).toContainText("A format of my own");
+  // Digits under ITF-14 and EAN/UPC are written as they are: no format there, nor in the group's line
+  await (await option(page, "#opt-symbol")).selectOption("ean13");
+  await expect(page.locator("#opt-hri-format")).toHaveCount(0);
+  if (phone) await expect(hriSummary).not.toContainText("A format of my own");
+  await (await option(page, "#opt-symbol")).selectOption("gs1-datamatrix");
+  // A label of one's own: the same format under a barcode's Human readable text, and on the page
+  await labelKind(page, "designer");
+  await page.locator(".design-list button", { hasText: "GS1 DataMatrix" }).press("Enter");
+  await expect(page.locator("#opt-hri-format")).toHaveValue("own");
+  await expect(page.locator("#opt-hri-pattern")).toHaveValue("{title} {value}");
+  await page.locator("#opt-hri-format").selectOption("title");
+  const [page2] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  const pageFields = [...readFileSync((await page2.path())!, "utf8").matchAll(/\^FD([^^]*)\^FS/g)].map((m) => m[1]);
+  expect(pageFields).toContain("BATCH/LOT B42");
+  expect(pageFields).toContain("USE BY or EXPIRY 271231");
+});

@@ -1,4 +1,5 @@
-import { HRI_POSITIONS, LABEL_TEMPLATES, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SECOND_LANGUAGES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
+import { HRI_POSITIONS, HRI_STYLES, LABEL_TEMPLATES, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SECOND_LANGUAGES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
+import { START_PATTERN } from "./HriFormatFields.tsx";
 import type { LabelSettings } from "./LabelCard.tsx";
 import { BEARER_CHOICES, ERROR_NAMES, HRI_CHOICES, LINEAR_CHOICES } from "./texts.ts";
 
@@ -15,6 +16,8 @@ const CHOICES: Partial<Record<Key, readonly string[]>> = {
   linear: Object.keys(LINEAR_CHOICES),
   bearer: Object.keys(BEARER_CHOICES),
   hriPosition: HRI_POSITIONS,
+  hriFormat: HRI_STYLES,
+  hriTitles: ["en", ...Object.keys(SECOND_LANGUAGES)],
   qrMode: ["auto", ...QR_MODES],
   logistic: ["none", ...Object.keys(LOGISTIC_SIZES)],
   logisticTwoD: ["none", ...LOGISTIC_TWO_D],
@@ -31,7 +34,7 @@ export const DEFAULT_STEM = "https://id.gs1.org";
 export const START_SETTINGS: LabelSettings = {
   symbology: "dl-qrcode", environment: "", size: 100, hri: "full", version: null, error: "m", linear: "none",
   linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, cropMarks: false, pngResolution: null,
-  hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
+  hriPosition: "below", hriHeightMm: null, hriFormat: "ai", hriPattern: START_PATTERN, hriTitles: "en", gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
   logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", logisticSecond: "none", designer: false, page: null, selected: null,
   template: null, expert: false,
 };

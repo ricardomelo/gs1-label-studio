@@ -781,7 +781,13 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   parentheses as today, *(17) 271231*; data titles, *EXPIRY 271231*; both, *EXPIRY (17) 271231* (General
   Specifications 4.14.1, figure 4-8); or a format of one's own. A date written otherwise, such as *20 Nov 2027*, takes
   its data title without the AI (figure 4-9). In the files and the four printer languages (ADR 0002: a native command
-  only once a test shows the same symbol); data titles in the six languages from `data_titles.json`
+  only once a test shows the same symbol); data titles in the six languages from `data_titles.json` — *done 15
+  November (mock-up A of two: a list whose choices show the data as each writes it; B, four buttons and a line of
+  example): Text format in the Human readable text group and under a barcode of a label of one's own, Data titles in
+  English or one of five languages, a format of one's own with {title}, {ai}, {value} and a date's {value:DD MMM YYYY}
+  and its example as typed; the text, not the symbol, changes, in the SVG, PDF, EPS, PNG and every printer language,
+  each element string sharing a line under a linear symbol joined by two spaces; the AI in parentheses stays the
+  default; not for EAN/UPC's and ITF-14's digits, nor the GS1 Logistic Label, whose rules are its own*
 
 
 ## Licence

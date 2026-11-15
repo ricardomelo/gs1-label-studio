@@ -113,6 +113,7 @@ import { IdentifyCard } from "./IdentifyCard.tsx";
 import { keep, kept } from "./keep.ts";
 import { symbolSizing } from "./resize.ts";
 import { elementName } from "./Designer.tsx";
+import { hriFormatOf } from "./HriFormatFields.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { choicePictures } from "./choicePictures.ts";
@@ -329,6 +330,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     : !spec && environment === null ? t("No scanning environment of this key allows {symbol}: choose it in step 2.", { symbol: tm(SYMBOLOGIES[symbology].name) })
     : null;
 
+  // The text's format (backlog 6.11), one object while its settings stay the same
+  const hriFormat = useMemo(() => hriFormatOf(settings), [settings.hriFormat, settings.hriPattern, settings.hriTitles]);
   // The label's design, the same for the code typed and for every row in bulk (backlog 2.4).
   const design = useMemo((): LabelDesign => ({
     symbology, hri: effective.hri, version: effective.version, error: effective.error, environment: environment ?? undefined,
@@ -337,6 +340,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     // Beside an EAN/UPC, a 2D symbol's text stays below or above it (backlog 1.16)
     hriPosition: effective.linear !== "none" && (effective.hriPosition === "left" || effective.hriPosition === "right") ? "below" : effective.hriPosition,
     ...(effective.hriHeightMm ? { hriHeightMm: effective.hriHeightMm } : {}),
+    ...(hriFormat && !logisticOn ? { hriFormat } : {}),
     ...(effective.gs1128Starts ? { gs1128Starts: effective.gs1128Starts } : {}),
     ...(effective.qrMode !== "auto" ? { qrMode: effective.qrMode } : {}),
     ...(effective.qrUpperDomain ? { qrUpperDomain: true } : {}),
@@ -351,7 +355,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       : {}),
     // A label of one's own (backlog 4.2): its page, the environment and table sizing its barcodes
     ...(settings.designer && settings.page ? { page: settings.page } : {}),
-  }), [settings.designer, settings.page, symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD, settings.logisticSecond]);
+  }), [settings.designer, settings.page, symbology, effective.hri, effective.version, effective.error, environment, size, effective.linear, effective.linearSize, spec, table, effective.bearer, effective.reduction, gtinOnly, effective.hriPosition, effective.hriHeightMm, hriFormat, effective.gs1128Starts, effective.qrMode, effective.qrUpperDomain, logisticOn, settings.logistic, settings.logisticFrom, settings.logisticTo, settings.logisticTwoD, settings.logisticSecond]);
 
   // What the files are drawn from: the label's options and layout (a symbol without a layout yet: the symbol alone).
   const label = useMemo((): {

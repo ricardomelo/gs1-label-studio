@@ -89,7 +89,7 @@ scan it before a production run.
 | GS1 DataMatrix | `^BX` quality 200 | FNC1 as `_1` with `_` declared as the escape character |
 | QR code and Data Matrix with a GS1 Digital Link URI | `^BQ` model 2, `^BX` | At the label's error correction level; `^BY1,3.0,1` before `^BQ`, which prints the symbol as far below `^FO` as `^BY`'s bar height |
 | GS1 DataBar | `^BR` | At its fixed heights; refused where the table asks for more |
-| Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height; every element string, the key's alone or none, as chosen for the label |
+| Human readable text | `^A0` with `^FB` | Below, above or split, its capitals at the label's height; every element string, the key's alone or none, as chosen for the label; written in the label's text format (the AI, data titles, both or one's own), as in every printer language |
 | A label of one's own | As the symbol alone, `^A0`, `^GB` | Each barcode with its own commands at the whole dots nearest to its X-dimension, its bars where the label puts them; each line of text at its capitals' height; each line and box with `^GB`, its edges at the nearest dots (in EPL2 `LO` and `X`, in TSPL `BAR` and `BOX`, in DPL an `X` record's line and box); each image (a logo) as `^GFA` at the printer's dots, in black and white and in ZPL's own compression (a photo's greys as dots, dithered again at the printer's dots) (in EPL2 `GW`, in TSPL `BITMAP`; not in DPL); a turned barcode or text with its field orientation (`R`, `I`, `B`; in EPL2 `A`'s and `B`'s rotation; in TSPL `BARCODE`'s, `TEXT`'s and `DMATRIX`'s; in DPL each record's rotation) |
 
 To see a ZPL file without a printer, paste it into Labelary's viewer (<https://labelary.com/viewer.html>) with the
@@ -102,7 +102,8 @@ printer's resolution (8 dpmm is 203 dpi, 12 dpmm is 300 dpi).
 template, replaces each placeholder with the row's value (escaping reserved characters as the comment says) and sends
 the result to the printer. The structure that depends on the data (FNC1 separators, code sets) is laid out so that any
 value of the AI's format fits. For GS1 DataBar, `{{01}}` is the GTIN's first 13 digits for the symbol and `{{GTIN}}` the
-whole GTIN for the text.
+whole GTIN for the text. The text under the symbol follows the label's text format, `BATCH/LOT (10) {{10}}`; a date
+written in a format of its own stays as encoded, with its AI, as the printer fills the value.
 
 ## 6. Checking a printed symbol
 

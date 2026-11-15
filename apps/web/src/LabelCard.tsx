@@ -28,6 +28,7 @@ import {
 } from "@gs1-label-studio/core";
 import { useState } from "react";
 import { Help } from "./Help.tsx";
+import { HriFormatFields, type HriFormatSettings } from "./HriFormatFields.tsx";
 import { OptionGroup } from "./OptionGroup.tsx";
 import { DesignerGuides, DesignerOverlay, DesignerPanel, DesignerTools, startingPage } from "./Designer.tsx";
 import { keepGuides, keptGuides } from "./guides.ts";
@@ -41,6 +42,7 @@ import {
   ENVIRONMENT_NAMES,
   ERROR_NAMES,
   HRI_CHOICES,
+  HRI_FORMAT_NAMES,
   HRI_HEIGHTS,
   HRI_POSITION_NAMES,
   QR_MODE_NAMES,
@@ -55,7 +57,7 @@ import { formatNumber, t, tm } from "./i18n.ts";
 // Step 3 of the editor, as the resolver's label panel (ADR 0004): the preview beside its options, updated as the
 // fields change; the GS1 Digital Link URI coloured by part; the downloads.
 
-export interface LabelSettings {
+export interface LabelSettings extends HriFormatSettings {
   symbology: SymbologyId;
   environment: string;
   size: number;
@@ -326,6 +328,10 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
   const snap = snapToDots(view.xMm, s.dpi);
   // The human readable text's place and height: not for EAN/UPC, whose digits section 5.2.5 places (backlog 1.16)
   const hriPlaced = s.hri !== "none" && !LINEAR_ALONE.includes(s.symbology);
+  // Its format (backlog 6.11): for element strings, not for ITF-14's digits nor the GS1 Logistic Label, whose rules are
+  // its own; an element string of the data as the example, an attribute rather than the key where there is one
+  const hriFormatted = hriPlaced && s.symbology !== "itf14" && s.logistic === "none";
+  const hriLine = (aiList[1] ?? aiList[0])?.text ?? "(17)271231";
   const target = view.sizeBase ?? (view.twoD ? ENVIRONMENTS[s.environment]?.["2d"][1] : ENVIRONMENTS[s.environment]?.linear?.[1]);
 
   return (
@@ -638,6 +644,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
                 guided={Boolean(view.guided)}
                 problems={view.designer?.problems ?? []}
                 onEnvironment={(environment) => set("environment", environment)}
+                hriFields={<HriFormatFields settings={s} onChange={(next) => onChange({ ...s, ...next })} line={hriLine} />}
                 onChange={(page, selected) => onChange({ ...s, page, selected })}
                 outlined={!real && Boolean(view.svg && view.designer)}
               />
@@ -829,6 +836,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
                 t(HRI_CHOICES[s.hri]),
                 hriPlaced ? t(HRI_POSITION_NAMES[s.hriPosition]) : null,
                 hriPlaced ? t(HRI_HEIGHTS.find(([mm]) => mm === (s.hriHeightMm ?? 2.2))?.[1] ?? "2.2 mm (default)") : null,
+                hriFormatted && s.hriFormat !== "ai" ? t(HRI_FORMAT_NAMES[s.hriFormat]) : null,
               )}
             >
               <div className="grid">
@@ -867,6 +875,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
                         ))}
                       </select>
                     </div>
+                    {hriFormatted && <HriFormatFields settings={s} onChange={(next) => onChange({ ...s, ...next })} line={hriLine} />}
                   </>
                 )}
               </div>

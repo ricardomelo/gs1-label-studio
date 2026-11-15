@@ -186,6 +186,9 @@ export const ENVIRONMENT_NAMES: Record<string, string> = {
 export const HRI_CHOICES = { full: "Full (every element)", key: "Identification key only", none: "None" } as const;
 export type HriChoice = keyof typeof HRI_CHOICES;
 
+// How the human readable text writes each element string (backlog 6.11), as the group's summary names it.
+export const HRI_FORMAT_NAMES = { ai: "AI and data", title: "Data titles", both: "Data titles and AIs", own: "A format of my own" } as const;
+
 // Where the human readable text goes and how high (GS1 General Specifications 4.14; backlog 1.16).
 export const HRI_POSITION_NAMES = {
   below: "Below the symbol",
@@ -237,6 +240,9 @@ export const OPTION_HELP = {
   size: "The symbol's size against its nominal size: it sets the X-dimension, the width of a narrow bar or of a module. The list holds only the sizes the table allows.",
   hri: "The data printed in characters with the barcode, for people when no scanner is at hand. Keep it on products and labels; the key alone is shorter.",
   hriPosition: "Under the symbol is usual. Above it, or the key below and the attributes above, where the label has no room under it.",
+  hriFormat: "How each element string is written: the AI in parentheses and the data, as GS1 asks under a symbol; with its data title, such as BATCH/LOT, which people read more easily; or a format of your own.",
+  hriTitles: "The language of the data titles. The General Specifications ask for English unless the trading partners agree on another.",
+  hriPattern: "{title} is the data title, {ai} the AI's number and {value} the data. After a date's {value}, a format such as DD/MM/YYYY or DD MMM YYYY.",
   hriHeight: "The characters' height. The General Specifications ask for at least 2 mm; the GS1 Logistic Label uses 3 mm.",
   bearer: "Bars around an ITF-14 stop a scanner from reading part of it as a shorter code. A frame also spreads a printing plate's pressure, so it is needed with plates.",
   version: "A QR code's size in modules. Automatic takes the smallest that holds the data; a fixed version keeps every label of a series the same size.",

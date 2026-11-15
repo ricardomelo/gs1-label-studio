@@ -820,5 +820,20 @@
  "Leave it out": "Weglassen",
  "Leave them out": "Weglassen",
  "Set up from a template": "Aus einer Vorlage eingerichtet",
- "Set up from the template {name}.": "Aus der Vorlage {name} eingerichtet."
+ "Set up from the template {name}.": "Aus der Vorlage {name} eingerichtet.",
+ "AI and data: {example}": "AI und Daten: {example}",
+ "Data title and data: {example}": "Datenbezeichner und Daten: {example}",
+ "Both: {example}": "Beides: {example}",
+ "A format of my own": "Ein eigenes Format",
+ "AI and data": "AI und Daten",
+ "Data titles": "Datenbezeichner",
+ "Data titles and AIs": "Datenbezeichner und AIs",
+ "Data titles in": "Datenbezeichner auf",
+ "Example: {text}": "Beispiel: {text}",
+ "Format of my own": "Eigenes Format",
+ "Text format": "Textformat",
+ "How each element string is written: the AI in parentheses and the data, as GS1 asks under a symbol; with its data title, such as BATCH/LOT, which people read more easily; or a format of your own.": "Wie jeder Element String geschrieben wird: der AI in Klammern und die Daten, wie GS1 es unter einem Symbol verlangt; mit seinem Datenbezeichner, etwa BATCH/LOT, den Menschen leichter lesen; oder ein eigenes Format.",
+ "The language of the data titles. The General Specifications ask for English unless the trading partners agree on another.": "Die Sprache der Datenbezeichner. Die General Specifications verlangen Englisch, sofern die Handelspartner nichts anderes vereinbaren.",
+ "{title} is the data title, {ai} the AI's number and {value} the data. After a date's {value}, a format such as DD/MM/YYYY or DD MMM YYYY.": "{title} ist der Datenbezeichner, {ai} die Nummer des AI und {value} die Daten. Nach dem {value} eines Datums ein Format wie DD/MM/YYYY oder DD MMM YYYY.",
+ "{title}, {ai} and {value}; a date in a format of its own, such as {value:DD MMM YYYY}, is written without its AI (GS1 General Specifications, figure 4-9).": "{title}, {ai} und {value}; ein Datum in einem eigenen Format, etwa {value:DD MMM YYYY}, wird ohne seinen AI geschrieben (GS1 General Specifications, Abbildung 4-9)."
 }

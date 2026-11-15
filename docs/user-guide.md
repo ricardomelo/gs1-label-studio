@@ -398,7 +398,8 @@ label**, then the card *A label of my own*:
    pointer goes through them to the elements. Press it again to hide them; the studio remembers the choice in this
    browser for the next visit. In **Real size** the label has its own rulers instead.
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
-   **Human readable text**, and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
+   **Human readable text** (with it, the label's **Text format**, as in the options of a barcode alone: the same for
+   every barcode of the label), and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,
    which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
    own data. A date, such as (17) or (11), is also offered in five formats, each shown with the date it gives:
@@ -494,6 +495,9 @@ screen on a phone; Escape, the **?** again or a press elsewhere closes it.
 | Human readable text | Full (every element string), the identification key only, or none |
 | Text position | Below the symbol (the default), above it, key below and attributes above, left or right of it (an element string a line, never broken); beside an EAN/UPC a 2D symbol's text goes below or above |
 | Text height | From 2.0 mm (the minimum) to 5.0 mm; 2.2 mm by default; 3.0 mm is what the GS1 Logistic Label asks |
+| Text format | How each element string is written, each choice showing your data: *AI and data*, `(17)271231` (the default); *Data title and data*, `USE BY or EXPIRY 271231`; *Both*, `USE BY or EXPIRY (17) 271231` (General Specifications 4.14.1, figure 4-8); or *A format of my own*. Not for the digits of an EAN/UPC or ITF-14, nor the GS1 Logistic Label |
+| Data titles in | With data titles: English (the default, as the General Specifications ask unless trading partners agree on another), Português, Español, Français, Deutsch or Italiano |
+| Format of my own | `{title}` the data title, `{ai}` the AI's number, `{value}` the data, e.g. `{title}: {value}`; after a date's value a format, `{value:DD MMM YYYY}`, writes it as people read it and leaves its AI out (figure 4-9: the AI goes only with the data as encoded). An example from your data shows under it as you type; a format without `{value}`, or with another name in braces, is refused, saying why |
 | QR code version | Automatic (the smallest that fits) or 1 to 40; refused when the data does not fit |
 | Encoding mode | QR code: automatic (modes mixed, the smallest symbol), or numeric, alphanumeric or byte for the whole data; a character the mode cannot take is named |
 | Scheme and domain | Two buttons: As typed, or In capitals (`HTTPS://ID.GS1.ORG`), which lets alphanumeric mode encode the URI's start; the path and the query stay as typed |
