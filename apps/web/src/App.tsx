@@ -17,6 +17,10 @@ import {
   expectedReads,
   ENVIRONMENTS,
   environmentsFor,
+  decodeEpc,
+  decodeEpcPlus,
+  EpcError,
+  epcSchemes,
   fieldsOf,
   fieldColumns,
   fileName,
@@ -1150,11 +1154,34 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             }}
             onPaste={(text) => {
               if (!engine) throw new Error(t("The GS1 Barcode Syntax Engine is still loading."));
-              // The URI's own parameters, which the engine leaves out (backlog 1.17)
-              const parameters = uriParameters(text);
-              const fields = { ...fieldsOf(engine.parse(text)), ...(parameters.length ? { parameters } : {}) };
-              setId(fields);
-              return fields;
+              const take = (input: string) => {
+                // The URI's own parameters, which the engine leaves out (backlog 1.17)
+                const parameters = uriParameters(input);
+                const fields = { ...fieldsOf(engine.parse(input)), ...(parameters.length ? { parameters } : {}) };
+                setId(fields);
+                return fields;
+              };
+              // An EPC's hexadecimal, as an RFID reader gives it (backlog 6.7): its GS1 Digital Link URI fills the data.
+              // Read as data first, so that digits that are an element string stay one.
+              const hex = text.replace(/\s+/g, "");
+              if (!/^[0-9A-Fa-f]{24,}$/.test(hex)) return take(text);
+              try {
+                return take(text);
+              } catch (error) {
+                const plus = (() => {
+                  try {
+                    return decodeEpcPlus(hex);
+                  } catch {
+                    throw new Error(new EpcError("epc.notDecodable").message);
+                  }
+                })();
+                if (plus) return take(plus.digitalLink);
+                return epcSchemes().then((schemes) => {
+                  const classic = decodeEpc(schemes, hex);
+                  if (!classic) throw new Error(new EpcError("epc.notDecodable").message);
+                  return take(classic.digitalLink);
+                });
+              }
             }}
             status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
           />

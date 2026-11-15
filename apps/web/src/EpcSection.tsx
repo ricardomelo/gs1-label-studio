@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   companyPart,
+  decodeEpcPlus,
   defaultFilter,
   encodeEpc,
+  encodeEpcPlus,
   EpcError,
   epcMissing,
   epcSchemes,
@@ -12,17 +14,31 @@ import {
   normaliseKeyValue,
   PARTITION_LENGTHS,
   parseGcpTable,
+  PLUS_KEYS,
+  PRIORITISED_DATES,
   type EpcScheme,
   type GcpTable,
   type Identification,
 } from "@gs1-label-studio/core";
 import { fileText, keep } from "./keep.ts";
 import { NfcWriter } from "./NfcWriter.tsx";
+import { Segmented } from "./Segmented.tsx";
 import { en, formatNumber, locale, t, tm } from "./i18n.ts";
 
 // RFID and NFC (EPC), as the resolver's label panel had it (ADR 0004; item 1.8): the key's EPC as the EPC Tag Data
 // Standard encodes it, and the compressed GS1 Digital Link an NFC tag emits. The company prefix's length: the person's
-// choice, or GS1's GCP length table, which the person loads once and this browser keeps.
+// choice, or GS1's GCP length table, which the person loads once and this browser keeps. The schemes new to TDS 2.x,
+// EPC+ and EPC++ (backlog 6.7, mock-up A of two: buttons at the top of the card, B a list beside the filter), need no
+// prefix length; EPC++ carries the GS1 Digital Link URI's hostname, a DSGTIN a date of the data before its GTIN.
+
+type Form = "classic" | "+" | "++";
+
+/** The dates a DSGTIN can put first, by their AI (TDS 14.5.3). */
+const DATE_NAMES: Record<string, string> = {
+  "11": en("Production date (11)"), "13": en("Packaging date (13)"), "15": en("Best before date (15)"),
+  "16": en("Sell by date (16)"), "17": en("Expiration date (17)"), "7006": en("First freeze date (7006)"),
+  "7007": en("Harvest date (7007)"),
+};
 
 const FILTERS = [
   en("All others"),
@@ -61,6 +77,8 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
   const [open, setOpen] = useState(true);
   const [prefixChoice, setPrefixChoice] = useState<number | null>(null);
   const [filterChoice, setFilterChoice] = useState<number | null>(null);
+  const [form, setForm] = useState<Form>("classic");
+  const [dateChoice, setDateChoice] = useState("");
   const [gcpMessage, setGcpMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,6 +88,16 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
   const value = normaliseKeyValue(id.key, id.value);
   const filter = filterChoice ?? defaultFilter(id.key);
   const base = (stem.trim() || "https://id.gs1.org").replace(/\/$/, "");
+  const hostname = (() => {
+    try {
+      return new URL(base).hostname;
+    } catch {
+      return "";
+    }
+  })();
+  // A DSGTIN's dates: those of the data a DSGTIN can carry, as six digits
+  const dates = id.key === "01" ? id.attributes.filter(([ai, v]) => (PRIORITISED_DATES as readonly string[]).includes(ai) && /^\d{6}$/.test(v.trim())) : [];
+  const date = dates.find(([ai]) => ai === dateChoice);
 
   const result = useMemo(() => {
     if (!(id.key in KEY_SCHEMES)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
@@ -78,6 +106,17 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
     // What the key lacks comes first, as the resolver's route checked it: no prefix length would help.
     const need = epcMissing(id.key, value, qualifiers);
     if (need) return { message: tm(new EpcError(need.qualifier ? "epc.needsQualifier" : "epc.needsSerial", need as Record<string, string | number>).message) };
+    if (form !== "classic") {
+      if (!(id.key in PLUS_KEYS)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
+      try {
+        const plus = encodeEpcPlus([[id.key, value], ...(Object.entries(qualifiers) as [string, string][])], {
+          form, filter, ...(form === "++" ? { hostname } : {}), ...(date ? { date: [date[0], date[1].trim()] as [string, string] } : {}),
+        });
+        return { plus, link: decodeEpcPlus(plus.hex)?.digitalLink ?? "" };
+      } catch (error) {
+        return { message: tm(error instanceof EpcError ? error.message : String(error)) };
+      }
+    }
     let length = prefixChoice;
     let source = "";
     if (length === null) {
@@ -100,7 +139,7 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
     } catch (error) {
       return { message: tm(error instanceof EpcError ? error.message : String(error)) };
     }
-  }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, locale()]);
+  }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, form, hostname, date?.[0], date?.[1], locale()]);
 
   async function load(file: File | undefined) {
     if (!file) return;
@@ -123,8 +162,23 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
       <div className="hint">
         {t("The key's EPC as the EPC Tag Data Standard encodes it (SGTIN, SSCC, SGLN, GRAI, GIAI…), for RFID and NFC tags, and the compressed GS1 Digital Link an NFC tag emits.")}
       </div>
+      <Segmented<Form>
+        id="epc-form"
+        label={t("Scheme")}
+        value={form}
+        options={[
+          { value: "classic", text: t("Classic"), detail: t("SGTIN-96, SGTIN-198, SSCC-96…, which every RFID reader knows, with the tag URI.") },
+          { value: "+", text: "EPC+", detail: t("EPC Tag Data Standard 2.0: no company prefix length needed. Older readers may not know it.") },
+          {
+            value: "++",
+            text: "EPC++",
+            detail: t("EPC Tag Data Standard 2.3: EPC+ with the GS1 Digital Link URI's hostname, {host}. Older readers may not know it.", { host: hostname }),
+          },
+        ]}
+        onChange={setForm}
+      />
       <div className="grid">
-        <div>
+        {form === "classic" && <div>
           <label htmlFor="epc-prefix">{t("Company prefix length")}</label>
           <select
             id="epc-prefix"
@@ -138,7 +192,20 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
               </option>
             ))}
           </select>
-        </div>
+        </div>}
+        {form !== "classic" && dates.length > 0 && (
+          <div>
+            <label htmlFor="epc-date">{t("Date in the EPC")}</label>
+            <select id="epc-date" value={date?.[0] ?? ""} onChange={(e) => setDateChoice(e.target.value)}>
+              <option value="">{t("None (SGTIN)")}</option>
+              {dates.map(([ai]) => (
+                <option key={ai} value={ai}>
+                  {t(DATE_NAMES[ai]!)} — DSGTIN
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label htmlFor="epc-filter">{t("Filter")}</label>
           <select id="epc-filter" value={filter} onChange={(e) => setFilterChoice(Number(e.target.value))}>
@@ -150,7 +217,7 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
           </select>
         </div>
       </div>
-      <div className="gcp">
+      {form === "classic" && <div className="gcp">
         <label htmlFor="gcp-file">{t("GS1's GCP length table (GCPPrefixFormatList.xml)")}</label>
         <input id="gcp-file" type="file" accept=".xml,.gz,application/xml,text/xml" onChange={(e) => void load(e.target.files?.[0])} />
         <div className="hint">
@@ -175,8 +242,17 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, download }: Props) {
             </>
           )}
         </div>
-      </div>
-      {result.epc ? (
+      </div>}
+      {result.plus ? (
+        <div className="kv">
+          <span>{t("Scheme")}</span>
+          <code>{result.plus.scheme}</code>
+          <span>{t("EPC (hexadecimal, as on the tag)")}</span>
+          <Copyable text={result.plus.hex} />
+          <span>{t("GS1 Digital Link URI it carries")}</span>
+          <Copyable text={result.link} />
+        </div>
+      ) : result.epc ? (
         <>
           {result.source && <div className="hint">{result.source}</div>}
           <div className="kv">

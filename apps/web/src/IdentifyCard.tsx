@@ -34,8 +34,8 @@ import { t, tm } from "./i18n.ts";
 interface Props {
   id: Identification;
   onChange: (id: Identification) => void;
-  /** Recognises pasted text and returns its fields, or throws with the reason. */
-  onPaste: (text: string) => Identification;
+  /** Recognises pasted text and returns its fields (later, for an EPC whose schemes load first), or throws with the reason. */
+  onPaste: (text: string) => Identification | Promise<Identification>;
   /** The checked result: an error to show, or how many element strings were checked. */
   status: { error?: string; markup?: string; count?: number };
   /**
@@ -130,13 +130,18 @@ export function IdentifyCard({ id, onChange, onPaste, status, examples }: Props)
   };
 
   function fill() {
-    try {
-      const fields = onPaste(pasted);
+    const done = (fields: Identification) => {
       setRows(rowsFor(fields));
       setPasteError(null);
       setPasted("");
+    };
+    const failed = (error: unknown) => setPasteError(tm(error instanceof Error ? error.message : String(error)));
+    try {
+      const fields = onPaste(pasted);
+      if (fields instanceof Promise) fields.then(done, failed);
+      else done(fields);
     } catch (error) {
-      setPasteError(tm(error instanceof Error ? error.message : String(error)));
+      failed(error);
     }
   }
 
@@ -155,7 +160,7 @@ export function IdentifyCard({ id, onChange, onPaste, status, examples }: Props)
             value={pasted}
             onChange={(event) => setPasted(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && fill()}
-            placeholder={t("A GTIN, (01)…(10)…, a GS1 Digital Link URI or a scanner's output")}
+            placeholder={t("A GTIN, (01)…(10)…, a GS1 Digital Link URI, an EPC or a scanner's output")}
             spellCheck={false}
           />
           <button type="button" className="btn" onClick={fill} disabled={!pasted.trim()}>

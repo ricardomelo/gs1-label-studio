@@ -206,6 +206,64 @@ test("the EPC asks for a serial number, then writes every format", async ({ page
   await expect(kv).toContainText("https://id.gs1.org/exNjZEM0ANH2mxYMGIAAAAAAAAAAAAAAAAA");
 });
 
+test("EPC+ and EPC++ need no prefix length, and a DSGTIN puts a date of the data first", async ({ page }) => {
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134352(17)271231(21)S1001");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "more");
+  const section = page.locator("details.epc");
+  const kv = section.locator(".kv");
+  // Classic, as before: the prefix's length is needed, the list of dates is not offered
+  await expect(section.locator(".epc-message")).toHaveText("Choose the company prefix length, or load GS1's GCP length table.");
+  await expect(page.locator("#epc-date")).toHaveCount(0);
+  await section.getByRole("radio", { name: "EPC+", exact: true }).click();
+  await expect(page.locator("#epc-prefix")).toHaveCount(0);
+  await expect(page.locator("#gcp-file")).toHaveCount(0);
+  await expect(kv).toContainText("SGTIN+");
+  await expect(kv).toContainText("F7109506000134352654B5D34D40");
+  await expect(kv).toContainText("https://id.gs1.org/01/09506000134352/21/S1001");
+  await expect(kv).not.toContainText("urn:epc");
+  await section.getByRole("radio", { name: "EPC++" }).click();
+  await expect(section).toContainText("EPC+ with the GS1 Digital Link URI's hostname, id.gs1.org.");
+  await expect(kv).toContainText("SGTIN++");
+  await expect(kv).toContainText("FD109506000134352654B5D34D62A0CFCD8DC000");
+  // The expiry date of the data, before the GTIN: a DSGTIN, and its URI carries the date
+  await expect(page.locator("#epc-date option")).toHaveText(["None (SGTIN)", "Expiration date (17) — DSGTIN"]);
+  await page.selectOption("#epc-date", "17");
+  await expect(kv).toContainText("DSGTIN++");
+  await expect(kv).toContainText("FC14379F09506000134352654B5D34D62A0CFCD8DC00");
+  await expect(kv).toContainText("https://id.gs1.org/01/09506000134352/21/S1001?17=271231");
+  // The NFC tag is offered the URI only: the compressed link is for the classic schemes
+  await expect(section).not.toContainText("The link for NFC (EPC, hexadecimal)");
+  await section.getByRole("radio", { name: "Classic" }).click();
+  await expect(page.locator("#epc-prefix")).toBeVisible();
+});
+
+test("an EPC pasted fills in the data, classic or new", async ({ page }) => {
+  const paste = async (text: string) => {
+    await page.fill("#paste", text);
+    await page.getByRole("button", { name: "Fill in" }).click();
+  };
+  // TDS E.1's SGTIN-96, as an RFID reader gives it
+  await paste("3074257BF7194E4000001A85");
+  await expect(page.locator("#key-value")).toHaveValue("80614141123458");
+  await expect(page.locator("#q-21")).toHaveValue("6789");
+  await expect(page.locator("#paste")).toHaveValue("");
+  // A DSGTIN++: the date comes back as data
+  await paste("FC14379F09506000134352654B5D34D62A0CFCD8DC00");
+  await expect(page.locator("#key-value")).toHaveValue("09506000134352");
+  await expect(page.locator("#q-21")).toHaveValue("S1001");
+  await expect(page.locator(".attr").nth(1).getByRole("combobox")).toHaveValue("(17) USE BY or EXPIRY");
+  // An SSCC-96 in lower case with spaces
+  await paste("3114 257b f442 f697 1500 0000");
+  await expect(page.locator("#key")).toHaveValue("00");
+  await expect(page.locator("#key-value")).toHaveValue("106141411234567897");
+  // Hexadecimal that is no EPC
+  await paste("FF00000000000000000000000000");
+  await expect(page.locator(".paste .hint")).toHaveText("This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.");
+  await expect(page.locator("#paste")).toHaveValue("FF00000000000000000000000000");
+});
+
 test("GS1's GCP length table gives the prefix's length and stays in the browser", async ({ page }) => {
   await qualifier(page, "21", "S1001");
   await expect(page.locator("details.epc .epc-message")).toHaveText(
