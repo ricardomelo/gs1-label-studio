@@ -731,7 +731,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   a label of one's own; the works saved; then retail, healthcare and patients as the owner chooses them, one at a
   time, each from the General Specifications or GS1's guidelines). Choosing one sets step 1 to its key, qualifiers
   and attributes; data that the template has no place for is named first, with *Keep it* and *Leave it out*. The
-  owner to say which segments and templates come first
+  owner to say which segments and templates come first — *first templates done 15 November (mock-up A of two: the
+  cards under A label grouped by segment, Logistics, Retail, Healthcare and Your own; B put the templates behind a
+  fourth card, in a dialog; retail then healthcare, the recommended order): Product with lot and expiry (EAN-13 and a
+  QR code), Fresh food sold by weight (GS1 DataBar Expanded Stacked), Medicine or medical device (GS1 DataMatrix with
+  its data written beside it); next: more templates, patients (GSRN), as the owner chooses*
 - 6.6 A barcode on a label of one's own with the options of the symbol alone (M): today its symbol, size, human
   readable text and element strings; then the human readable text's place and height (1.16), error correction and
   the QR code's encoding modes (1.14), the bar width reduction, ITF-14's bearer bars, and a linear symbol beside a

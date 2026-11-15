@@ -67,6 +67,15 @@ import {
   walk,
   exampleValues,
   examplesLeft,
+  examplesStillIn,
+  aiEntry,
+  attributeByCode,
+  leaveOut,
+  templateById,
+  templateFit,
+  type LabelTemplate,
+  type TemplateFit,
+  type DesignPage,
   type Answers,
   type AssistantAnswers,
   type AssistantOutcome,
@@ -107,7 +116,7 @@ import { elementName } from "./Designer.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { choicePictures } from "./choicePictures.ts";
-import { BULK_TEXTS, GUIDE_TEXTS } from "./texts.ts";
+import { aiText, BULK_TEXTS, GUIDE_TEXTS, KEY_TEXTS } from "./texts.ts";
 import { TabBar } from "./TabBar.tsx";
 import { InstallApp } from "./InstallApp.tsx";
 import { onUpdateReady, updateReady } from "./update.ts";
@@ -201,6 +210,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // The tour of the studio (backlog 6.4): open or not
   const [touring, setTouring] = useState(false);
   const [assisted, setAssisted] = useState<{ answers: AssistantAnswers; outcome: AssistantOutcome } | null>(null);
+  // A template by segment (backlog 6.5): what it asks before it is applied, and the example values it set in step 1
+  const [templateAsk, setTemplateAsk] = useState<{ template: LabelTemplate; fit: TemplateFit } | null>(null);
+  const [templated, setTemplated] = useState<{ id: string; examples: [string, string][] } | null>(null);
   const firstVisit = useRef(true);
   useEffect(() => {
     if (offer === "reading" || !firstVisit.current) return;
@@ -683,6 +695,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   /** A work opened from a file or from this browser: the data, the answers, the label, the printer and the columns. */
   function takeWork(work: Work) {
     setOffer(null);
+    setTemplated(null);
+    setTemplateAsk(null);
     setMode(work.mode);
     setId(work.identification);
     setOpened(opened + 1);
@@ -826,13 +840,75 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     setFileError(null);
     if (outcome.print === "label-printer") setPrinterOpen(true);
     setAssisted({ answers: answersGiven, outcome });
+    setTemplated(null);
+    setTemplateAsk(null);
     setAssistant(null);
     showPane("data");
     window.scrollTo(0, 0);
   }
-  // The assistant's example values still in step 1 (mock-up A7): marked in their fields, named in its card
-  const examples = useMemo(() => (assisted ? new Map(exampleValues(assisted.outcome)) : undefined), [assisted]);
+  /**
+   * A template chosen (backlog 6.5): applied at once when step 1's data fits it; otherwise it first names the data it
+   * has no place for (Keep it, Leave it out) or says that step 1's key gives way to its example.
+   */
+  function chooseTemplate(templateId: string) {
+    const template = templateById(templateId);
+    if (!template) return;
+    const fit = templateFit(template, id);
+    if (mode === "one" && (fit.replaced || fit.extra.length)) setTemplateAsk({ template, fit });
+    else applyTemplate(template, fit, false);
+  }
+  /** The template's page as a label of one's own, step 2's answers and, with one code, step 1's data as it fits. */
+  function applyTemplate(template: LabelTemplate, fit: TemplateFit, leave: boolean) {
+    setTemplateAsk(null);
+    if (mode === "one") {
+      setId(leave ? leaveOut(fit.identification, fit.extra) : fit.identification);
+      setOpened(opened + 1);
+      setAssisted(null);
+      setTemplated(fit.examples.length ? { id: template.id, examples: fit.examples } : null);
+    }
+    setAnswers(template.answers);
+    setPicked(template.picked);
+    setSettings({ ...settings, expert: false, designer: true, logistic: "none", template: template.id, page: structuredClone(template.page) as DesignPage, selected: null });
+    setFileError(null);
+  }
+  /** An AI as step 1's lists name it. */
+  const aiLabel = (ai: string) => aiText(ai, attributeByCode(ai)?.title ?? aiEntry(ai)?.title);
+  const templateQuestion = templateAsk && (() => {
+    const { template, fit } = templateAsk;
+    const name = tm(template.name);
+    const key = KEY_TEXTS[template.identification.key];
+    return (
+      <div className="template-ask" role="region" aria-label={t("Before the template")}>
+        {fit.replaced ? (
+          <p>{t("The template {name} is for a {key}: step 1's data gives way to its example values, for you to replace.", { name, key: key ? `${key.short}, (${template.identification.key})` : `(${template.identification.key})` })}</p>
+        ) : (
+          <>
+            <p>{t("The template {name} has no place for: {fields}.", { name, fields: fit.extra.map(aiLabel).join(", ") })}</p>
+            <p className="hint">{t("Kept, it stays in step 1 and in the symbols that carry all the data, but no text on the label shows it.")}</p>
+          </>
+        )}
+        <p className="acts">
+          {fit.replaced ? (
+            <button type="button" className="btn primary" onClick={() => applyTemplate(template, fit, false)}>{t("Use the template")}</button>
+          ) : (
+            <>
+              <button type="button" className="btn primary" onClick={() => applyTemplate(template, fit, false)}>{fit.extra.length > 1 ? t("Keep them") : t("Keep it")}</button>
+              <button type="button" className="btn" onClick={() => applyTemplate(template, fit, true)}>{fit.extra.length > 1 ? t("Leave them out") : t("Leave it out")}</button>
+            </>
+          )}
+          <button type="button" className="link" onClick={() => setTemplateAsk(null)}>{t("Cancel")}</button>
+        </p>
+      </div>
+    );
+  })();
+  // The example values still in step 1 (mock-up A7), the assistant's or a template's: marked in their fields, named in
+  // the card above step 1
+  const examples = useMemo(
+    () => (assisted ? new Map(exampleValues(assisted.outcome)) : templated ? new Map(templated.examples) : undefined),
+    [assisted, templated],
+  );
   const left = assisted ? examplesLeft(assisted.outcome, id) : [];
+  const templateLeft = templated && !assisted ? examplesStillIn(templated.examples, id) : [];
   const assistantButton = (
     <button type="button" className="start-over assistant-open" data-tour="assistant" onClick={() => setAssistant({ atSummary: false })}>
       {t("Assistant")}
@@ -1041,6 +1117,25 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               </p>
             </div>
           )}
+          {templated && !assisted && (
+            <div className="assisted" role="region" aria-label={t("Set up from a template")}>
+              <p>
+                <b>{t("Set up from the template {name}.", { name: tm(templateById(templated.id)?.name ?? "") })}</b>
+              </p>
+              {templateLeft.length ? (
+                <p className="assistant-todo">
+                  {t("The example values are only for trying the studio. Replace them with yours: {fields}.", { fields: templateLeft.map(aiLabel).join(", ") })}
+                </p>
+              ) : (
+                <p className="assistant-done">{t("✓ Every example value is replaced with yours.")}</p>
+              )}
+              <p className="acts">
+                <button type="button" className="link" onClick={() => setTemplated(null)}>
+                  {t("Close")}
+                </button>
+              </p>
+            </div>
+          )}
           <IdentifyCard
             key={opened}
             id={id}
@@ -1101,6 +1196,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           onDownload={(kind) => void downloadFile(kind)}
           onPrinter={openPrinter}
           onOpenWork={() => openInput.current?.click()}
+          onTemplate={chooseTemplate}
+          templateQuestion={templateQuestion}
           rows={bulk && rows.length
             ? {
                 index: Math.min(rowIndex, rows.length - 1), count: rows.length, row: current?.row ?? 2,

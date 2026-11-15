@@ -804,5 +804,21 @@
  "This button shows the tour again. Esc or Skip the tour closes it at any step.": "Ce bouton montre à nouveau la visite. Échap ou Passer la visite la ferme à tout moment.",
  "Tour": "Visite guidée",
  "Use: where is it scanned?": "Usage : où est-il lu ?",
- "Your work": "Votre travail"
+ "Your work": "Votre travail",
+ "Logistics": "Logistique",
+ "Retail": "Commerce de détail",
+ "Healthcare": "Santé",
+ "Your own": "Les vôtres",
+ "{line} · {w} × {h} mm": "{line} · {w} × {h} mm",
+ "Before the template": "Avant le modèle",
+ "The template {name} is for a {key}: step 1's data gives way to its example values, for you to replace.": "Le modèle {name} est pour un {key} : les données de l'étape 1 laissent place à ses valeurs d'exemple, à remplacer par les vôtres.",
+ "The template {name} has no place for: {fields}.": "Le modèle {name} n'a pas de place pour : {fields}.",
+ "Kept, it stays in step 1 and in the symbols that carry all the data, but no text on the label shows it.": "Conservé, il reste à l'étape 1 et dans les symboles qui portent toutes les données, mais aucun texte de l'étiquette ne l'affiche.",
+ "Use the template": "Utiliser le modèle",
+ "Keep it": "Le garder",
+ "Keep them": "Les garder",
+ "Leave it out": "Le retirer",
+ "Leave them out": "Les retirer",
+ "Set up from a template": "Préparé à partir d'un modèle",
+ "Set up from the template {name}.": "Préparé à partir du modèle {name}."
 }

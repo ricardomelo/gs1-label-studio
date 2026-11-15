@@ -683,5 +683,11 @@
  "Both, in shops and online": "Nos dois, lojas físicas e internet",
  "A till, and a marketplace or my online shop.": "Um caixa, e um marketplace ou a minha loja online.",
  "No, the barcode alone": "Não, só o código de barras",
- "Without a QR code.": "Sem QR Code."
+ "Without a QR code.": "Sem QR Code.",
+ "Product with lot and expiry": "Produto com lote e validade",
+ "EAN-13 and a QR code, the lot and expiry date under them": "EAN-13 e um QR code, o lote e a validade abaixo",
+ "Fresh food sold by weight": "Alimento vendido por peso",
+ "GS1 DataBar Expanded Stacked with the weight and price": "GS1 DataBar Expanded Stacked com o peso e o preço",
+ "Medicine or medical device": "Medicamento ou dispositivo médico",
+ "GS1 DataMatrix, the GTIN, expiry, lot and serial number beside it": "GS1 DataMatrix, com GTIN, validade, lote e número de série ao lado"
 }

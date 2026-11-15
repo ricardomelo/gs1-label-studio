@@ -1,5 +1,8 @@
 import {
   ENVIRONMENTS,
+  LABEL_TEMPLATES,
+  TEMPLATE_SEGMENTS,
+  type TemplateSegment,
   ERROR_LEVELS,
   LOGISTIC_SIZES,
   LOGISTIC_TWO_D,
@@ -90,6 +93,8 @@ export interface LabelSettings {
   designer: boolean;
   page: DesignPage | null;
   selected: string | null;
+  /** The template a label of one's own started from (backlog 6.5), its card shown as chosen; null: none. */
+  template: string | null;
   /** The PNG's resolution; null: the one at which it prints at the label's size. */
   pngResolution: number | null;
   /** The symbol chosen here rather than in step 2. */
@@ -166,6 +171,9 @@ interface Props {
   onPrinter: () => void;
   /** Opens a work saved as a file: the third kind of label (backlog 6.3 g). */
   onOpenWork: () => void;
+  /** Chooses a template by segment (backlog 6.5); what it asks first, if anything, shows under the cards. */
+  onTemplate: (id: string) => void;
+  templateQuestion?: React.ReactNode;
   fileError: string | null;
   /** In bulk: the row shown among the data rows, and a way to show another. */
   rows?: { index: number; count: number; row: number; status: RowStatus; onMove: (index: number) => void };
@@ -232,7 +240,7 @@ function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; h
   );
 }
 
-export function LabelCard({ byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, fileError, rows }: Props) {
+export function LabelCard({ byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, onTemplate, templateQuestion, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
   const aiList = (() => {
@@ -245,24 +253,42 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
   // A label asked for before its kind is chosen: the cards are shown, the barcode still drawn alone (backlog 6.3 g)
   const [labelAsked, setLabelAsked] = useState(false);
   const isLabel = labelAsked || s.designer || s.logistic !== "none";
-  const kinds = [
-    {
-      id: "logistic",
-      name: t("GS1 Logistic Label"),
-      line: t("A6, A5, 4 × 6 or 6 × 8 in · From, To and the data titles"),
-      why: view.logisticPossible ? null : t("Needs an SSCC, (00), as the key in step 1"),
-      chosen: s.logistic !== "none",
-      pick: () => onChange({ ...s, designer: false, logistic: s.logistic !== "none" ? s.logistic : "a6" }),
-    },
+  type Kind = { id: string; template?: string; name: string; line: string; why: string | null; chosen: boolean; pick: () => void };
+  const logistic: Kind = {
+    id: "logistic",
+    name: t("GS1 Logistic Label"),
+    line: t("A6, A5, 4 × 6 or 6 × 8 in · From, To and the data titles"),
+    why: view.logisticPossible ? null : t("Needs an SSCC, (00), as the key in step 1"),
+    chosen: s.logistic !== "none",
+    pick: () => onChange({ ...s, designer: false, template: null, logistic: s.logistic !== "none" ? s.logistic : "a6" }),
+  };
+  const own: Kind[] = [
     {
       id: "designer",
       name: t("A label of my own"),
       line: t("Barcodes, texts, shapes and pictures wherever you like"),
       why: null,
-      chosen: s.designer,
-      pick: () => onChange({ ...s, designer: true, logistic: "none", page: s.page ?? startingPage(s.symbology, aiList[0]?.ai), selected: s.selected }),
+      chosen: s.designer && !s.template,
+      pick: () => onChange({ ...s, designer: true, logistic: "none", template: null, page: s.page ?? startingPage(s.symbology, aiList[0]?.ai), selected: s.selected }),
     },
     { id: "work", name: t("A work saved"), line: t("Opens a work saved as a file (.json)"), why: null, chosen: false, pick: onOpenWork },
+  ];
+  // The kinds of label by segment (backlog 6.5, mock-up A of two: B put the templates behind a fourth card, in a
+  // dialog): logistics, the templates of each segment, then one's own
+  const templates = (segment: TemplateSegment): Kind[] => LABEL_TEMPLATES.filter((tpl) => tpl.segment === segment).map((tpl) => ({
+    id: "template",
+    template: tpl.id,
+    name: tm(tpl.name),
+    line: t("{line} · {w} × {h} mm", { line: tm(tpl.line), w: formatNumber(tpl.page.widthMm), h: formatNumber(tpl.page.heightMm) }),
+    why: null,
+    chosen: s.designer && s.template === tpl.id,
+    pick: () => onTemplate(tpl.id),
+  }));
+  const SEGMENT_NAMES: Record<TemplateSegment, string> = { retail: t("Retail"), healthcare: t("Healthcare") };
+  const segments: { id: string; name: string; kinds: Kind[] }[] = [
+    { id: "logistics", name: t("Logistics"), kinds: [logistic] },
+    ...TEMPLATE_SEGMENTS.map((segment) => ({ id: segment, name: SEGMENT_NAMES[segment], kinds: templates(segment) })),
+    { id: "own", name: t("Your own"), kinds: own },
   ];
   const [real, setReal] = useState(false);
   // The canvas's zoom (the owner, 30 October 2026): of the fitted label, or of the real size; back to 100 % when the
@@ -504,7 +530,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
           <div className="options" data-pane="label" data-tour="options">
             {/* The barcode only or a label, then the kinds of label as cards (backlog 6.3 g, the study's mock-up):
                 the label was the first entry of a list that held both, and easily missed. A kind that does not fit
-                the data says why; a work saved is the third card, where the templates of 6.5 will go. */}
+                the data says why. Grouped by segment (backlog 6.5): logistics, the templates of retail and healthcare, one's own. */}
             <Segmented
               id="opt-label"
               label={t("Label")}
@@ -516,28 +542,37 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
               ]}
               onChange={(value) => {
                 setLabelAsked(value === "label");
-                if (value === "symbol" && (s.designer || s.logistic !== "none")) onChange({ ...s, designer: false, logistic: "none" });
+                if (value === "symbol" && (s.designer || s.logistic !== "none")) onChange({ ...s, designer: false, logistic: "none", template: null });
               }}
             />
             {isLabel && (
-              <div className="kinds" role="radiogroup" aria-label={t("Kind of label")}>
-                {kinds.map((kind) => (
-                  <button
-                    key={kind.id}
-                    type="button"
-                    role="radio"
-                    className="kind"
-                    data-kind={kind.id}
-                    aria-checked={kind.chosen}
-                    aria-disabled={kind.why ? true : undefined}
-                    onClick={() => !kind.why && kind.pick()}
-                  >
-                    <b>{kind.name}</b>
-                    <span>{kind.why ?? kind.line}</span>
-                  </button>
+              <div className="segments" role="radiogroup" aria-label={t("Kind of label")}>
+                {segments.map((segment) => (
+                  <div key={segment.id} className="segment" data-segment={segment.id}>
+                    <h4 id={`segment-${segment.id}`}>{segment.name}</h4>
+                    <div className="kinds" role="group" aria-labelledby={`segment-${segment.id}`}>
+                      {segment.kinds.map((kind) => (
+                        <button
+                          key={kind.template ?? kind.id}
+                          type="button"
+                          role="radio"
+                          className="kind"
+                          data-kind={kind.id}
+                          {...(kind.template ? { "data-template": kind.template } : {})}
+                          aria-checked={kind.chosen}
+                          aria-disabled={kind.why ? true : undefined}
+                          onClick={() => !kind.why && kind.pick()}
+                        >
+                          <b>{kind.name}</b>
+                          <span>{kind.why ?? kind.line}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
+            {isLabel && templateQuestion}
             {isLabel && !s.designer && s.logistic === "none" && <p className="hint">{t("Choose a kind of label; until then the barcode is drawn alone.")}</p>}
             {s.logistic !== "none" && (
               <div className="grid logistic">

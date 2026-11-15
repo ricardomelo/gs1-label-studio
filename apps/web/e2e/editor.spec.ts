@@ -4202,9 +4202,10 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
   const card = (name: RegExp) => kinds.getByRole("radio", { name });
   await expect(label.getByRole("radio", { name: "The barcode only" })).toHaveAttribute("aria-checked", "true");
   await expect(kinds).toHaveCount(0);
-  // A label: three cards, none chosen yet, the barcode still drawn alone
+  // A label: six cards by segment (backlog 6.5), none chosen yet, the barcode still drawn alone
   await label.getByRole("radio", { name: "A label", exact: true }).click();
-  await expect(kinds.getByRole("radio")).toHaveCount(3);
+  await expect(kinds.locator(".segment h4")).toHaveText(["Logistics", "Retail", "Healthcare", "Your own"]);
+  await expect(kinds.getByRole("radio")).toHaveCount(6);
   await expect(kinds.getByRole("radio", { checked: true })).toHaveCount(0);
   await expect(page.getByText("Choose a kind of label; until then the barcode is drawn alone.")).toBeVisible();
   await expect(page.locator(".caption")).toContainText("QR code version 4");
@@ -4215,15 +4216,21 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
   await logistic.click({ force: true });
   await expect(logistic).toHaveAttribute("aria-checked", "false");
   await expect(page.locator("#opt-logistic")).toHaveCount(0);
-  // The cards in a row on a computer and a tablet, one under another on a phone, never wider than the screen
+  // A segment's cards in a row on a computer and a tablet, the segments one under another; every card under the one
+  // before on a phone, never wider than the screen
   const boxes = await Promise.all((await kinds.getByRole("radio").all()).map(async (one) => (await one.boundingBox())!));
+  const under = (a: number, b: number) => expect(boxes[b]!.y).toBeGreaterThan(boxes[a]!.y + boxes[a]!.height - 1);
   if (info.project.name === "phone") {
-    expect(boxes[1]!.y).toBeGreaterThan(boxes[0]!.y + boxes[0]!.height - 1);
-    expect(boxes[2]!.y).toBeGreaterThan(boxes[1]!.y + boxes[1]!.height - 1);
+    for (let i = 1; i < boxes.length; i++) under(i - 1, i);
     for (const box of boxes) expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   } else {
-    expect(Math.abs(boxes[2]!.y - boxes[0]!.y)).toBeLessThan(2);
-    expect(boxes[1]!.x).toBeGreaterThan(boxes[0]!.x + boxes[0]!.width - 1);
+    for (const [a, b] of [[1, 2], [4, 5]] as const) {
+      expect(Math.abs(boxes[b]!.y - boxes[a]!.y)).toBeLessThan(2);
+      expect(boxes[b]!.x).toBeGreaterThan(boxes[a]!.x + boxes[a]!.width - 1);
+    }
+    under(0, 1);
+    under(2, 3);
+    under(3, 4);
   }
   // A label of one's own: chosen, its designer shown
   await card(/^A label of my own/).click();
@@ -4250,4 +4257,66 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
   await expect(logistic).toHaveAttribute("aria-checked", "true");
   await expect(page.locator("#opt-logistic")).toHaveValue("a6");
   await expect(page.locator(".caption")).toContainText("GS1 Logistic Label A6");
+});
+
+test("a template by segment opens its label of one's own, fills steps 1 and 2 with examples to replace, and asks about data it has no place for", async ({ page }) => {
+  // Backlog 6.5: the templates under A label, by segment. The start's data, (01)(10)(17), fits the medicine's
+  // template: its serial number added as an example, nothing asked
+  await on(page, "label");
+  await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
+  const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
+  const medicine = kinds.locator('[data-template="healthcare-pack"]');
+  await expect(kinds.locator('[data-segment="healthcare"] .kind')).toHaveCount(1);
+  await expect(medicine).toContainText("Medicine or medical device");
+  await expect(medicine).toContainText("60 × 18 mm");
+  await medicine.click();
+  await expect(page.locator(".template-ask")).toHaveCount(0);
+  await expect(medicine).toHaveAttribute("aria-checked", "true");
+  await expect(kinds.locator('[data-kind="designer"]')).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator(".designer")).toBeVisible();
+  await expect(page.locator("#page-width")).toHaveValue("60");
+  // Step 2 answered for hospitals, so the table of healthcare (table 6) sizes the GS1 DataMatrix; read back
+  await expect(page.locator(".caption")).toContainText("A label of my own 60 × 18 mm · GS1 DataMatrix");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134376(17)271231(10)B42(21)1001", { timeout: 30_000 });
+  // Step 1: the serial number is the template's example, marked and named until it is replaced
+  await on(page, "data");
+  const card = page.getByRole("region", { name: "Set up from a template" });
+  await expect(card).toContainText("Set up from the template Medicine or medical device.");
+  await expect(card).toContainText("Replace them with yours: (21) Serial number.");
+  await expect(page.locator("input.example")).toHaveCount(1);
+  await qualifier(page, "21", "S77");
+  await expect(card).toContainText("✓ Every example value is replaced with yours.");
+  await expect(page.locator("input.example")).toHaveCount(0);
+  await on(page, "scan");
+  await expect(page.locator("#scan-title")).toBeVisible();
+  // Data the template has no place for: named first; Keep it leaves it in step 1, Leave it out takes it out
+  await on(page, "label");
+  const lotExpiry = kinds.locator('[data-template="retail-lot-expiry"]');
+  await kinds.locator('[data-template="retail-weight"]').click();
+  const ask = page.getByRole("region", { name: "Before the template" });
+  await expect(ask).toContainText("The template Fresh food sold by weight has no place for: (17) USE BY or EXPIRY, (10) Batch/lot, (21) Serial number.");
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  await expect(ask).toHaveCount(0);
+  await expect(medicine).toHaveAttribute("aria-checked", "true");
+  await lotExpiry.click();
+  await expect(ask).toContainText("has no place for: (21) Serial number.");
+  await ask.getByRole("button", { name: "Leave it out" }).click();
+  await expect(lotExpiry).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText(
+    "✓ Read as intended: ]E0 9506000134376 and ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 },
+  );
+  // Another key: step 1 gives way to the template's example, after saying so
+  await on(page, "data");
+  await page.fill("#paste", "(00)106141411234567897");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await medicine.click();
+  await expect(ask).toContainText("The template Medicine or medical device is for a GTIN, (01): step 1's data gives way to its example values, for you to replace.");
+  await ask.getByRole("button", { name: "Use the template" }).click();
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]d2 (01)09506000134352(17)291231(10)ABC123(21)1001", { timeout: 30_000 });
+  await on(page, "data");
+  await expect(page.getByRole("region", { name: "Set up from a template" })).toContainText("Replace them with yours: (01) GTIN Product, (17) USE BY or EXPIRY, (10) Batch/lot, (21) Serial number.");
 });

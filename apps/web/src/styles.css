@@ -595,6 +595,7 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
   :root:not([data-theme="light"]) input.example { border-color: #f0c674; background: #2a2416; box-shadow: 0 0 0 2px rgba(240, 198, 116, 0.25); }
   :root:not([data-theme="light"]) .by-default { background: #2a2416; border-color: #f0c674; color: #f0c674; }
   :root:not([data-theme="light"]) .by-default .link { background: var(--card); }
+  :root:not([data-theme="light"]) .template-ask { background: #2a2416; border-color: #f0c674; color: #f0c674; }
 }
 @media (max-width: 600px) {
   dialog.assistant { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; padding: 18px 16px 0; }
@@ -609,6 +610,13 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
 /* The kinds of label as cards under "A label" (backlog 6.3 g): three in a row, one under another on a narrow screen;
    the one chosen framed in navy, one that does not fit the data greyed with its reason. */
 .kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 10px 0 14px; }
+/* The kinds of label by segment (backlog 6.5, mock-up A of two) */
+.segments { margin: 4px 0 10px; }
+.segment h4 { margin: 10px 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.segment .kinds { margin: 6px 0 4px; }
+.template-ask { border: 1px solid #e0b84c; background: #fff7e0; color: #4a3b00; border-radius: 8px; padding: 10px 14px; margin: 6px 0 12px; }
+.template-ask p { margin: 0 0 6px; }
+.template-ask .acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
 .kinds .kind { display: flex; flex-direction: column; gap: 4px; text-align: left; font: inherit; font-size: 13px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; cursor: pointer; min-height: 44px; }
 .kinds .kind b { color: var(--navy); font-size: 14px; }
 .kinds .kind span { color: var(--muted); }

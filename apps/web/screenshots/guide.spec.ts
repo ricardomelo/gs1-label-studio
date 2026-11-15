@@ -173,6 +173,14 @@ test("step 3: a label of one's own", async ({ page }) => {
   await shot(label(page).locator(".stage"), "designer");
 });
 
+test("step 3: a template by segment", async ({ page }) => {
+  await page.locator("#opt-label [role=radio]").nth(1).click();
+  await page.locator('[data-template="healthcare-pack"]').click();
+  await page.locator(".segments").evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await expect(page.locator('[data-kind="logistic"]')).toBeInViewport();
+  await shot(page, "templates");
+});
+
 test("step 3: the GS1 Logistic Label", async ({ page }) => {
   await paste(page, "(00)106141411234567897(02)09506000134376(37)24(10)ABC123");
   await labelKind(page, "a5");

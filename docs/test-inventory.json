@@ -1,5 +1,5 @@
 {
- "date": "2026-11-14",
+ "date": "2026-11-15",
  "skipped": 0,
  "programs": [
   {
@@ -4823,6 +4823,50 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "templates",
+   "file": "packages/core/test/templates.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "labels by segment › lists retail, then healthcare, each template with a unique id",
+     "status": "passed"
+    },
+    {
+     "name": "labels by segment › retail-lot-expiry: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
+     "name": "labels by segment › retail-weight: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
+     "name": "labels by segment › healthcare-pack: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
+     "name": "labels by segment › shows each element string the template holds: the lot and expiry under the barcodes, the GTIN, expiry, lot and serial beside the GS1 DataMatrix",
+     "status": "passed"
+    },
+    {
+     "name": "choosing a template with step 1's data › keeps the key's value and the data that fits, adds the template's examples and names the data it has no place for",
+     "status": "passed"
+    },
+    {
+     "name": "choosing a template with step 1's data › gives way to the template's example when step 1 has another key or no value",
+     "status": "passed"
+    },
+    {
+     "name": "choosing a template with step 1's data › gives a variable measure template its own GTIN when step 1's lacks the indicator digit 9",
+     "status": "passed"
+    },
+    {
+     "name": "choosing a template with step 1's data › takes the template's order of the data when step 1 has none, and adds to step 1's own",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "tour",
    "file": "apps/web/test/tour.test.ts",
    "kind": "unit",
@@ -5919,6 +5963,15 @@
     },
     {
      "name": "the barcode only or a label, the kinds of label as cards, one that does not fit saying why",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a template by segment opens its label of one's own, fills steps 1 and 2 with examples to replace, and asks about data it has no place for",
      "status": "listed",
      "projects": [
       "desktop",

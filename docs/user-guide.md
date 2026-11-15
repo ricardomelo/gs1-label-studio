@@ -327,10 +327,38 @@ zone apart, each with its own text:
 The box **GS1-128 symbols** under the options lists the element strings: tick *new symbol* to start a symbol where you
 choose; **Automatic** goes back.
 
+### Templates by segment
+
+In **Label**, **A label** shows the kinds of label grouped by segment: *Logistics* (the GS1 Logistic Label, section 9),
+*Retail*, *Healthcare* and *Your own* (a label of one's own, below, and a work saved, section 8).
+
+![The kinds of label by segment, the medicine's template chosen: a GS1 DataMatrix with the GTIN, expiry date, lot and serial number written beside it](images/guide/templates.png)
+
+| Segment | Template | What it holds |
+|---|---|---|
+| Retail | *Product with lot and expiry*, 66 × 38 mm | An EAN-13 and a QR code (GS1 Digital Link) side by side, their quiet zones kept, *LOT (10)* and *EXPIRY (17)* under them (General Specifications 4.15.1, 6.3.3.1) |
+| Retail | *Fresh food sold by weight*, 60 × 54 mm | A GS1 DataBar Expanded Stacked with a variable measure GTIN (its first digit 9), the net weight (310n) and the price (392n), as a scale prints them (2.1.12) |
+| Healthcare | *Medicine or medical device*, 60 × 18 mm | A GS1 DataMatrix with *GTIN (01)*, *EXPIRY (17)*, *LOT (10)* and *SERIAL (21)* written beside it (4.14.1, figure 4-8), its element strings in the order (01), (17), (10), (21), for hospitals (table 6) |
+
+Choosing one:
+
+1. Opens it as a label of one's own, which you change as any other (below), and answers step 2 for it.
+2. Keeps step 1's GTIN and the data the template shows; what it shows that step 1 lacks is added with an example value,
+   outlined in amber in step 1 and named in a card above it until you replace it (*Fresh food sold by weight* also puts
+   its example GTIN in place of one that does not start with 9).
+3. Names first the data of step 1 the template has no place for: **Keep it** leaves it in step 1 and in the symbols that
+   carry all the data, without a text on the label; **Leave it out** removes it; **Cancel** keeps everything as it was.
+4. With another key in step 1, such as an SSCC, says that step 1 gives way to the template's examples: **Use the
+   template** or **Cancel**.
+
+The texts on the label stay in English, for you to rewrite: each data title with its AI and the data exactly as the
+barcode carries it, as section 4.14.1 of the General Specifications asks when they are the same (a date written another
+way, such as *20 Nov 2027*, takes its data title without the AI). More segments and templates come one at a time.
+
 ### A label of one's own: barcodes, text, lines, boxes and images placed freely
 
-Every place has its own label, so the studio has an editor rather than ready-made ones. In **Label**, choose **A label**,
-then the card *A label of my own*:
+Every place has its own label, so the studio has an editor rather than only ready-made ones. In **Label**, choose **A
+label**, then the card *A label of my own*:
 
 ![A label of one's own: a QR code, a GS1-128, text blocks, a logo, a frame, a rule and a line read upwards on a 150 × 90 mm page](images/guide/designer.png)
 

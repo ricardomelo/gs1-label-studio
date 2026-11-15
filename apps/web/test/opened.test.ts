@@ -14,7 +14,7 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
       ...START_SETTINGS, symbology: "gs1-128", environment: "distribution", size: 50, hri: "key", version: 7, error: "q",
       gs1128Starts: [0, 3], hriPosition: "split", hriHeightMm: 3, qrMode: "numeric", logistic: "4x6", logisticFrom: "A\nB",
       logisticTwoD: "dl-qrcode", logisticSecond: "es", designer: true, page: PAGE, selected: "t", expert: true, dpi: 300, bearer: "bars",
-      cropMarks: true,
+      cropMarks: true, template: "healthcare-pack",
     };
     const saved = savedSettings(settings);
     expect(Object.keys(saved)).not.toContain("page");
@@ -33,6 +33,10 @@ describe("the label's settings of a work opened (backlog 4.3)", () => {
     expect(Object.keys(opened)).not.toContain("futureSetting");
     expect(openedSettings({ version: null, linearSize: 120, pngResolution: 600 }, null, { ...START_SETTINGS, version: 4 }))
       .toEqual({ ...START_SETTINGS, version: null, linearSize: 120, pngResolution: 600 });
+    // The template a label started from (backlog 6.5): one this studio has, or none
+    expect(openedSettings({ template: "retail-weight" }, null, START_SETTINGS).template).toBe("retail-weight");
+    expect(openedSettings({ template: "a-future-template" }, null, START_SETTINGS).template).toBeNull();
+    expect(openedSettings({ template: 3 }, null, START_SETTINGS).template).toBeNull();
     for (const second of ["fr", "de", "it"]) expect(openedSettings({ logisticSecond: second }, null, START_SETTINGS).logisticSecond).toBe(second);
   });
 });

@@ -1,4 +1,4 @@
-import { HRI_POSITIONS, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SECOND_LANGUAGES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
+import { HRI_POSITIONS, LABEL_TEMPLATES, LOGISTIC_SIZES, LOGISTIC_TWO_D, QR_MODES, SECOND_LANGUAGES, SYMBOLOGIES, type DesignPage, type WorkValue } from "@gs1-label-studio/core";
 import type { LabelSettings } from "./LabelCard.tsx";
 import { BEARER_CHOICES, ERROR_NAMES, HRI_CHOICES, LINEAR_CHOICES } from "./texts.ts";
 
@@ -33,7 +33,7 @@ export const START_SETTINGS: LabelSettings = {
   linearSize: null, hriAsText: false, dpi: 203, stem: DEFAULT_STEM, bearer: "frame", reduction: 0, cropMarks: false, pngResolution: null,
   hriPosition: "below", hriHeightMm: null, gs1128Starts: null, qrMode: "auto", qrUpperDomain: false,
   logistic: "none", logisticFrom: "", logisticTo: "", logisticTwoD: "none", logisticSecond: "none", designer: false, page: null, selected: null,
-  expert: false,
+  template: null, expert: false,
 };
 
 /** What a work file keeps of the label's settings: all but its page (saved apart) and the element chosen on it. */
@@ -46,6 +46,7 @@ function fits(key: Key, value: WorkValue, start: LabelSettings[Key]): boolean {
   if (choices) return typeof value === "string" && choices.includes(value);
   if (NUMBER_OR_NULL.includes(key)) return value === null || typeof value === "number";
   if (key === "gs1128Starts") return value === null || Array.isArray(value);
+  if (key === "template") return value === null || LABEL_TEMPLATES.some((template) => template.id === value);
   return value !== null && !Array.isArray(value) && typeof value === typeof start;
 }
 
