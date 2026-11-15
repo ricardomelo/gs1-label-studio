@@ -1730,6 +1730,214 @@
     {
      "name": "EPC read back by an independent decoder (epc-tds) › (255) 9506000134376123 {}, prefix of 7 digits",
      "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 6 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 8 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 10 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 11 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"12345\"}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"S1001\"}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"012\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"274877906943\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"274877906944\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"ABCDEFGHIJKLMNOPQRST\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"21\":\"a/b%c&d\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (01) 09506000134376 {\"10\":\"B42\",\"21\":\"7\",\"22\":\"V1\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 6 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 6 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 8 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 8 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 10 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 10 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 11 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 11 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (00) 106141411234567897 {}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (414) 9506000134376 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (414) 9506000134376 {}, prefix of 9 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (414) 9506000134376 {\"254\":\"123\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (414) 9506000134376 {\"254\":\"A-1\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8003) 09506000134376123 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8003) 09506000134376123 {}, prefix of 12 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8003) 09506000134376ABC {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8004) 950600012345 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8004) 9506000ABC-12 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8018) 950600013437612342 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8017) 950600013437612342 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (253) 9506000134376123 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (253) 9506000134376ABC {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (255) 9506000134376123 {}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8010) 9506000ABC-1 {\"8011\":\"123\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8006) 095060001343760102 {\"21\":\"1\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › (8006) 095060001343760102 {\"21\":\"XY\"}, prefix of 7 digits",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › refuses what no scheme's header and partition take",
+     "status": "passed"
+    },
+    {
+     "name": "a classic EPC read back from its hexadecimal or its URIs › reads TDS's own examples",
+     "status": "passed"
     }
    ],
    "area": "RFID, NFC and digital signatures"
@@ -5325,6 +5533,24 @@
     },
     {
      "name": "the EPC asks for a serial number, then writes every format",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "EPC+ and EPC++ need no prefix length, and a DSGTIN puts a date of the data first",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "an EPC pasted fills in the data, classic or new",
      "status": "listed",
      "projects": [
       "desktop",

@@ -766,7 +766,7 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   begin with the '+' header, F9 and F3, instead of EF and ED: the tests follow the header table, 14.2). B: A and the
   +AIDC data after the EPC (batch, expiry and the other AIs of TDS table F, each with its own encoding): its own item
   after A. C: decoding only. epc-tds 1.4.1 (July 2024) has the classic schemes only, so the tests rest on the
-  standard's examples. Next: A, the core first, then mock-ups of the card*
+  standard's examples. Next: A, the core first, then mock-ups of the card; done 15 November (sessions 68 and 69): the core encodes and decodes the 24 schemes, and reads a classic EPC back from its hexadecimal, tag URI or pure identity URI; the EPC card offers Classic, EPC+ or EPC++ as buttons (mock-up A of two; B a list beside the filter), with a DSGTIN's date of the data and the GS1 Digital Link URI the EPC carries; step 1 takes an EPC pasted, classic or new — A done; B (+AIDC data) its own item when the owner wants it*
 - 6.8 GS1 DotCode — *left as it is for now (the owner, 11 November 2026: option C)*: it is not offered because no independent decoder reads it back (ZXing does not), and
   every symbol is read back before it is offered (CLAUDE.md; 1.3). Options: (A, recommended) a decoder of our own,
   written from the DotCode specification (ISO/IEC 21471, or AIM's DotCode specification), that reads the dots from

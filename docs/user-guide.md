@@ -662,11 +662,20 @@ opens this section and brings it into view.
 
 ![The EPC of a GTIN with a serial number](images/guide/epc.png)
 
-- **Company prefix length**: chosen, or *Automatic* from GS1's GCP length table (`GCPPrefixFormatList.xml`, which GS1
-  gives on request): load it once, it is read here and kept in this browser.
+- **Scheme**: **Classic** (SGTIN-96, SGTIN-198, SSCC-96…, which every RFID reader knows), **EPC+** (TDS 2.0) or
+  **EPC++** (TDS 2.3, EPC+ with the hostname of your GS1 Digital Link URI's domain, from the settings). EPC+ and EPC++
+  need no company prefix length, so its list and GS1's table are not shown; older readers may not know them.
+- **Date in the EPC** (EPC+ and EPC++ of a GTIN whose data has a production, packaging, best before, sell by, expiry,
+  first freeze or harvest date): *None* gives an SGTIN+, a date a DSGTIN+, which puts it before the GTIN.
+- **Company prefix length** (classic): chosen, or *Automatic* from GS1's GCP length table (`GCPPrefixFormatList.xml`,
+  which GS1 gives on request): load it once, it is read here and kept in this browser.
 - **Filter**: the EPC filter value (1 for a point-of-sale trade item…).
-- The scheme, the EPC in hexadecimal as on the tag (filled to 16-bit words), in base 64, the tag URI, the pure identity
-  URI and the links for NFC (`/eh…` and `/ex…` on your domain), each with **Copy**.
+- Classic: the scheme, the EPC in hexadecimal as on the tag (filled to 16-bit words), in base 64, the tag URI, the pure
+  identity URI and the links for NFC (`/eh…` and `/ex…` on your domain), each with **Copy**.
+- EPC+ and EPC++: the scheme (*SGTIN+*, *DSGTIN++*…), the EPC in hexadecimal and the GS1 Digital Link URI it carries,
+  read back from the hexadecimal; they have no tag URI.
+- The other way round: an EPC pasted in step 1, its hexadecimal (classic or new) or its tag URI, fills in the data
+  (section 16).
 - A key that needs a qualifier for its EPC says so (*This key's EPC needs its qualifier (21), such as the serial
   number.*).
 
@@ -815,9 +824,8 @@ showing to someone new to the tool.
 | Headers in any of the six languages, or GS1 data titles: *Lote*, *Validade*, *Verfallsdatum*, *DOB* | a bulk table's header row | Each column goes to its AI; dates such as `31/12/2027` become `271231` |
 | A header written `?utm_source` or `lang=` | the same | The column becomes one of the URI's own parameters, named `utm_source` or `lang` |
 | The Delete or Backspace key, an element chosen | a label of one's own, outside its fields | Removes the element, as the **Delete** button does (section 5) |
-
-Not yet: pasting an EPC read from an RFID tag (its hexadecimal or its tag URI) to fill in the fields. The studio
-writes a key's EPC (section 11) but does not read one back.
+| An EPC read from an RFID tag, in hexadecimal: `3074257BF7194E4000001A85` (SGTIN-96), `FC14379F09506000134352654B5D34D62A0CFCD8DC00` (DSGTIN++), spaces and lower case allowed | **Have the data already? Paste it** | Fills in the key, its serial or other qualifier, and a DSGTIN's date (section 11) |
+| An EPC's tag URI or pure identity URI: `urn:epc:tag:sgtin-198:1.9506000.013437.S1001`, `urn:epc:id:sgln:9506000.13437.7` | the same | The same, from the URI |
 
 ## 17. Messages and what to do
 
