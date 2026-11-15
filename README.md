@@ -743,8 +743,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   symbol) — *all but the linear symbol beside a 2D one done 15 November (mock-up A of two: a group of its own under the
   barcode's fields, framed on a computer and folded on a phone; B left them loose): the text's place and height, a QR
   code's level (the label's until changed) and mode, a linear symbol's bar width reduction and ITF-14's bearer bars,
-  each the barcode's own, in the files, the printer languages (Labelary reads them back) and the work file; next: the
-  linear symbol beside a 2D one*
+  each the barcode's own, in the files, the printer languages (Labelary reads them back) and the work file; the linear
+  symbol beside a 2D one done the same day (mock-up A of two: in the same group; B gave it a group of its own): an
+  EAN/UPC beside a QR code or Data Matrix, at the 2D symbol's size or its own, drawn as the symbol alone draws the
+  pair, printed as two symbols with the printer's own commands (Labelary and Labelize read both back) — item done*
 - 6.7 EPC+ and EPC++ (assessment first, then M to L): the Tag Data Standard's newer schemes (`sgtin+`, `sscc+`,
   `dsgtin+`…), which carry an alphanumeric serial and further data, and their `++` forms, which also carry the GS1
   Digital Link URI's domain; from TDS and TDT 2.3 (in the owner's Drive), tested against their examples and, where it

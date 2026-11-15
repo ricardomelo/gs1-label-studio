@@ -289,7 +289,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
-| `designSymbol` | a barcode on a label of one's own with the options of the symbol alone, read back and in ZPL | 3 |
+| `designSymbol` | a barcode on a label of one's own with the options of the symbol alone, read back and in ZPL | 7 |
 | `dots` | the printer's dot grid | 3 |
 | `environments` | the resolver's scanning environments, its 2,970 answers | 4 |
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 113 |
@@ -299,7 +299,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 24 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 72 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 73 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 13 |
@@ -331,9 +331,9 @@ that say what is true; together they are the [inventory of features](test-invent
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
 | `tour` | the tour of the studio: its card beside what it points at and whole within the window, its ring within the window, its stops on a computer and on a phone or a tablet (apps/web/test) | 8 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 110 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 111 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
-| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
+| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 128 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after
