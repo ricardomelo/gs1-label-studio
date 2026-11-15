@@ -849,7 +849,9 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   handover): the reading (camera, image, NFC, a scanner in keyboard mode, pasted), the reading context, a catalogue of
   faults with where, why and how to correct each, several carriers on one pack checked for coherence, a simple and an
   expert view with the raw data, history, export, reports and sharing by e-mail and WhatsApp (also for the
-  generators), and items 7.1 a to m to execute; twelve open questions for the owner*
+  generators), and items 7.1 a to m to execute; twelve open questions for the owner; 7.1 a done the same day, the
+  engine first as the project's Q2 recommends (ADR 0007): the reading record (`reading.ts`) and what ZXing reads of
+  each carrier, measured (`docs/conformance.md`, 3.1: DotCode not read, a Composite's 2D part left out)*
 
 
 ## Licence

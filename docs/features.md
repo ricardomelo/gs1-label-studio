@@ -113,6 +113,7 @@ Which standard each follows: [conformance](conformance.md).
 | Real size | 1:1 between rulers in millimetres | `fafb40f` | `editor`: at real size the label is drawn between rulers |
 | Screen calibration | Against a bank card's short side, the slider within the room, − and + by half a pixel; kept in the browser | `31ef92a` | `editor`: at the screen's calibration |
 | Scan test | The label drawn and read by ZXing in the browser, each symbol compared with what it should carry; nothing leaves the browser | `ac0629b`, `fafb40f` | `editor`: the scan test reads the label back as intended |
+| A code read to be checked (the Check Studio's engine; no screen yet) | Backlog 7.1 a, ADR 0007: any reading — a symbol decoded from the camera or an image, a scanner's or pasted text, an NFC tag's NDEF message, an RFID tag's EPC — as one record keeping the symbol's bytes and symbology identifier as decoded (parentheses really encoded stay bytes 28 and 29), a scanner's identifier and group separators however written, a tag's URI or EPC; what ZXing reads of every carrier measured in `docs/conformance.md`, section 3.1 (DotCode not read, a Composite's 2D part left out) | `6d0b5a8` | `reading`: the table says what was measured, row by row · `reading`: keeps the bytes as decoded · `reading`: makes every written form of the group separator byte 29 · `reading`: an NFC tag · `reading`: an RFID tag's EPC |
 
 ## Exports and prepress
 

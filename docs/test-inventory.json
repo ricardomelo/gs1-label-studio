@@ -8391,6 +8391,150 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "reading",
+   "file": "packages/core/test/reading.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › covers every symbology the studio makes",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › EAN-13",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › UPC-A",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › EAN-8",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › UPC-E",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › ITF-14",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1-128",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataMatrix",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 QR Code",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › QR code (GS1 Digital Link)",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › Data Matrix (GS1 Digital Link)",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Omnidirectional",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Truncated",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Stacked",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Stacked Omnidirectional",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Limited",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Expanded",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DataBar Expanded Stacked",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › Code 128 (not GS1-128)",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › Data Matrix with the parentheses encoded",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › QR code with element strings, no FNC1",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1 DotCode",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › EAN-13 with a Composite Component",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › GS1-128 with a Composite Component",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › the table says what was measured, row by row",
+     "status": "passed"
+    },
+    {
+     "name": "what ZXing reads of each carrier (docs/conformance.md) › keeps the bytes as decoded: parentheses really encoded are bytes 28 and 29, a separator is 1D",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a decoder's result › takes the symbol's identifier, bytes and what the decoder reports, the corners as points",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a scanner's or pasted text › takes a symbology identifier at the start, and says when there is none",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a scanner's or pasted text › makes every written form of the group separator byte 29",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a scanner's or pasted text › leaves everything else as it is: parentheses, spaces, a line ending only at the end",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a tag › an NFC tag: its NDEF message's URI, the tag's serial number",
+     "status": "passed"
+    },
+    {
+     "name": "a reading from a tag › an RFID tag's EPC: its hexadecimal as the memory's bytes, or a URI as text",
+     "status": "passed"
+    },
+    {
+     "name": "the bytes' forms › as text: UTF-8 when valid, else a character a byte",
+     "status": "passed"
+    },
+    {
+     "name": "the bytes' forms › as hexadecimal pairs, and control characters as pictures",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "render",
    "file": "packages/core/test/render.test.ts",
    "kind": "unit",

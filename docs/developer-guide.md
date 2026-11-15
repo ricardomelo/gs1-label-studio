@@ -315,6 +315,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `printer` | the module in whole dots, profiles, the test label | 6 |
 | `pyformat` | Python's fixed-point rounding | 2 |
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |
+| `reading` | The Check Studio's reading record: what ZXing reads of every carrier, measured and held to `docs/conformance.md`; a scanner's text, an NFC tag, an EPC | 34 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
 | `report` | the validation report and its CSVs | 11 |
 | `roundtrip` | every symbology encoded, rasterised and read back; SVG; graphic fields | 25 |
