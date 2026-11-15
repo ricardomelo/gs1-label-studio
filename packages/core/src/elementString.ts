@@ -30,3 +30,8 @@ const PREDEFINED_LENGTH: Record<string, number> = {
 export function hasPredefinedLength(ai: string): boolean {
   return ai.slice(0, 2) in PREDEFINED_LENGTH;
 }
+
+/** The length of an element string of predefined length, AI and value together (16 for (01)); undefined for the others. */
+export function predefinedLength(ai: string): number | undefined {
+  return PREDEFINED_LENGTH[ai.slice(0, 2)];
+}

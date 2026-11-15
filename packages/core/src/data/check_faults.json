@@ -1,0 +1,1310 @@
+{
+ "source": "The Check Studio project (backlog 7.1), sections 4 and 5.4: the faults' codes, severities and English texts, paraphrasing the GS1 General Specifications release 26.0 (January 2026), whose section numbers they cite.",
+ "groups": {
+  "A": "The carrier: is it a GS1 symbol at all?",
+  "B": "Structure of the element strings",
+  "C": "The identification key",
+  "D": "Dates and other values",
+  "E": "Combinations of AIs",
+  "F": "The symbol against the reading context",
+  "G": "GS1 Digital Link URIs",
+  "H": "What a picture can and cannot say",
+  "I": "Tags",
+  "J": "Several carriers together"
+ },
+ "faults": [
+  {
+   "code": "A1",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "5.6.3.3",
+    "5.9",
+    "5.1.3",
+    "7.8"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Data Matrix used instead of GS1 DataMatrix",
+    "where": "The identifier chip and position 0, where FNC1 should be",
+    "why": "GS1 DataMatrix is a Data Matrix with FNC1 first, which a reader reports as ]d2 (5.6.3.3). Plain Data Matrix carries only a GS1 Digital Link URI (5.9; table 5-2 in 5.1.3). A scanner following 7.8 will not treat this as GS1 data.",
+    "fix": "Set the encoder to GS1 mode (\"GS1 DataMatrix\", \"FNC1 in first position\"), not a typed character. Offer: make this symbol correctly (opens the generator with the data)."
+   },
+   "detectedBy": "Identifier ]d1 (not ]d2); the data is not a URI, and parses as element strings once FNC1 is assumed"
+  },
+  {
+   "code": "A2",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "5.7",
+    "5.10"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "QR Code without FNC1 carrying element strings",
+    "where": "As A1",
+    "why": "GS1 QR Code is reported as ]Q3 (5.7, table 5-2); plain QR Code carries only a GS1 Digital Link URI (5.10).",
+    "fix": "GS1 QR Code mode (FNC1 in first position), or re-make as a Digital Link URI."
+   },
+   "detectedBy": "Identifier ]Q1 (or ]Q0), data not a URI, parses as element strings"
+  },
+  {
+   "code": "A3",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "7.8.5",
+    "5.4.7.4",
+    "5.12.5.10.4"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Code 128 instead of GS1-128",
+    "where": "As A1",
+    "why": "FNC1 after the start character is what distinguishes GS1-128 (7.8.5, 5.4.7.4); it is the first feature to check (5.12.5.10.4).",
+    "fix": "GS1-128 mode in the software or printer command."
+   },
+   "detectedBy": "Identifier ]C0, data parses as element strings"
+  },
+  {
+   "code": "A4",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "5.1.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "The flag typed as text",
+    "where": "Those bytes",
+    "why": "The symbology identifier is produced by the reader, never encoded (5.1.3); FNC1 is a function character, not letters.",
+    "fix": "Remove the text; switch GS1 mode on."
+   },
+   "detectedBy": "Data begins with the characters FNC1, ]d2, ]C1, ]Q3, <F1>, ~1, \\F or byte 232"
+  },
+  {
+   "code": "A5",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "5.6.3.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "A separator in place of the leading FNC1",
+    "where": "Byte 0",
+    "why": "Only FNC1 in the first position flags GS1 data (5.6.3.3).",
+    "fix": "As A1."
+   },
+   "detectedBy": "]d1 or ]Q1 and first byte is 29 (<GS>)"
+  },
+  {
+   "code": "A6",
+   "group": "A",
+   "severity": "error",
+   "sections": [
+    "5.1.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "A GS1 Digital Link URI inside a GS1 DataMatrix or GS1 QR Code",
+    "where": "The identifier chip",
+    "why": "FNC1 mode announces element strings (table 5-2); a URI belongs in the plain symbol.",
+    "fix": "Encode the URI in a plain QR Code or Data Matrix, or encode the element strings."
+   },
+   "detectedBy": "]d2 or ]Q3 and the data starts with http"
+  },
+  {
+   "code": "A7",
+   "group": "A",
+   "severity": "error",
+   "severityNote": "Error (length); Note (]I0)",
+   "sections": [
+    "7.2.6",
+    "7.2.7"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "ITF that is not ITF-14, or check digit not verified by the reader",
+    "where": "Whole data",
+    "why": "ITF is not exclusive to GS1: check for 14 digits (7.2.6). With ]I0 the check digit must be verified separately (7.2.7); the studio does it.",
+    "fix": "Encode 14 digits; pad a GTIN-13 with a leading zero."
+   },
+   "detectedBy": "]I0/]I1 with a length other than 14; or ]I0"
+  },
+  {
+   "code": "A8",
+   "group": "A",
+   "severity": "note",
+   "sections": [
+    "5.1.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Not a GS1 carrier or not GS1 data",
+    "where": "Identifier chip",
+    "why": "Outside the GS1 system. Not a fault of the symbol: it is counted as \"non-GS1\" in surveys.",
+    "fix": "None; if GS1 data was intended, see the generator."
+   },
+   "detectedBy": "Any other identifier or format (Code 39, PDF417, Aztec, HIBC +…), or data that no repair makes valid"
+  },
+  {
+   "code": "A9",
+   "group": "A",
+   "severity": "not-assessed",
+   "sections": [],
+   "references": [
+    "docs/conformance.md, section 3.1 (what the decoder reads)"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "A symbol type the studio cannot read",
+    "where": "Banner",
+    "why": "The decoder has no GS1 DotCode decoder and leaves out a Composite Component's 2D part (measured in docs/conformance.md, section 3.1).",
+    "fix": "Use a scanner in keyboard mode."
+   },
+   "detectedBy": "The decoder finds a pattern but no data, or the user says so"
+  },
+  {
+   "code": "B1",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "4.14",
+    "1.4.2",
+    "5.12.5.10.4"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "The AIs' parentheses are encoded",
+    "where": "Each parenthesis",
+    "why": "Parentheses are for people; they are not encoded in the barcode (4.14; 1.4.2; \"absence of encoded parentheses\" in 5.12.5.10.4).",
+    "fix": "Give the software the data without parentheses, or use its GS1 input mode that strips them."
+   },
+   "detectedBy": "Bytes ( and ) around digits at AI positions; valid once removed. Engine otherwise says No known AI is a prefix of…"
+  },
+  {
+   "code": "B2",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "7.8.1",
+    "7.11"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Spaces, line breaks or printed titles encoded (EXP, LOT, GTIN:)",
+    "where": "Those bytes",
+    "why": "Only the AI and its data field are encoded (7.8.1); a space is not in the GS1 character set (7.11).",
+    "fix": "Encode the data, print the text separately."
+   },
+   "detectedBy": "Bytes 32, 10, 13 or letters between element strings; valid once removed"
+  },
+  {
+   "code": "B3",
+   "group": "B",
+   "severity": "error",
+   "severityNote": "Error when the engine rejects; Warning when only the heuristic fires",
+   "sections": [
+    "7.8.3",
+    "7.8.4"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Separator missing after a variable-length AI",
+    "where": "The join",
+    "why": "Every element string not in table 7-6 must be followed by a separator when another follows (7.8.3, 7.8.4).",
+    "fix": "Insert FNC1 (or <GS>) after the variable-length field; or move that field to the end."
+   },
+   "detectedBy": "Engine: data is too long or a bad character; or the value ends in what parses as further AIs (heuristic), and inserting <GS> yields a valid message"
+  },
+  {
+   "code": "B4",
+   "group": "B",
+   "severity": "warning",
+   "sections": [
+    "7.8.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Separator after a predefined-length AI",
+    "where": "That byte",
+    "why": "SHOULD NOT be used (7.8.3): wastes space; some receiving systems mis-split.",
+    "fix": "Remove it."
+   },
+   "detectedBy": "<GS> after an AI of table 7-6"
+  },
+  {
+   "code": "B5",
+   "group": "B",
+   "severity": "warning",
+   "sections": [
+    "7.8.3"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Separator at the end of the data",
+    "where": "Last byte",
+    "why": "SHOULD NOT be used at the end of the last element string (7.8.3).",
+    "fix": "Remove it."
+   },
+   "detectedBy": "Last byte is 29"
+  },
+  {
+   "code": "B6",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "7.8.4"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Wrong separator character",
+    "where": "Those bytes",
+    "why": "The separator is FNC1 or <GS>; % only in GS1 QR Code (7.8.4).",
+    "fix": "Use the encoder's FNC1; do not type a stand-in."
+   },
+   "detectedBy": "A visible stand-in between element strings: the text <GS>, {GS}, ^, ~, pipe, or % outside GS1 QR Code"
+  },
+  {
+   "code": "B7",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "3.2"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Unknown AI",
+    "where": "The AI",
+    "why": "Not in the list of AIs (3.2). Often a symptom of B3 or of a wrong length before it.",
+    "fix": "Check the AI; check the field before it."
+   },
+   "detectedBy": "Engine: Unrecognised AI / No known AI is a prefix"
+  },
+  {
+   "code": "B8",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "3.3.2"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Wrong length for a fixed-length field",
+    "where": "The field",
+    "why": "E.g. a GTIN-13 under AI (01), which is 14 digits (3.3.2).",
+    "fix": "Pad a GTIN to 14 digits with leading zeros; correct the field."
+   },
+   "detectedBy": "Engine: data has incorrect length, too short, too long"
+  },
+  {
+   "code": "B9",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "7.11"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Characters outside the allowed set",
+    "where": "The character",
+    "why": "Numeric fields take digits; alphanumeric fields take the GS1 subset of ISO/IEC 646 (7.11). Accented letters and most symbols are out.",
+    "fix": "Replace the character; never transliterate silently."
+   },
+   "detectedBy": "Engine linter: non-digit character, non-CSET 82 / 39 / 64 character"
+  },
+  {
+   "code": "B10",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "4.13"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "The same AI twice with different values",
+    "where": "Both fields",
+    "why": "An element string appears once per message (4.13).",
+    "fix": "Remove one."
+   },
+   "detectedBy": "Engine: Multiple instances of AI have different values"
+  },
+  {
+   "code": "B11",
+   "group": "B",
+   "severity": "note",
+   "sections": [
+    "5.12.5.10.4"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "Predefined-length AIs after variable-length ones",
+    "where": "The order",
+    "why": "Recommended sequencing (5.12.5.10.4); costs a separator and symbol space.",
+    "fix": "Put the key and fixed fields first."
+   },
+   "detectedBy": "Own rule on the order"
+  },
+  {
+   "code": "B12",
+   "group": "B",
+   "severity": "error",
+   "sections": [
+    "5.4.7.2"
+   ],
+   "item": "7.1 b",
+   "texts": {
+    "what": "More data than GS1-128 allows",
+    "where": "Counter",
+    "why": "GS1-128 is limited to 48 data characters (5.4.7.2).",
+    "fix": "Split into two symbols or use a 2D symbol."
+   },
+   "detectedBy": "gs1128DataCharacters() > 48 on a ]C1 reading"
+  },
+  {
+   "code": "C1",
+   "group": "C",
+   "severity": "error",
+   "sections": [
+    "7.9.1",
+    "7.2.7"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Wrong check digit (GTIN, SSCC, GLN, GRAI, GSRN, GDTI…)",
+    "where": "The last digit of the key",
+    "why": "Standard check digit (7.9.1). 2D and GS1-128 readers do not verify it; the application must (7.2.7).",
+    "fix": "The studio shows the digit that would be right, and says that a wrong check digit usually means another digit was mistyped: confirm the number against the licence, do not just replace the last digit."
+   },
+   "detectedBy": "checkDigit(); engine linter The numeric check digit is incorrect"
+  },
+  {
+   "code": "C2",
+   "group": "C",
+   "severity": "error",
+   "sections": [
+    "7.9.5"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Wrong check character pair (GMN, AI 8013)",
+    "where": "The pair",
+    "why": "7.9.5.",
+    "fix": "Recompute from the model number."
+   },
+   "detectedBy": "Engine linter check-character pair"
+  },
+  {
+   "code": "C3",
+   "group": "C",
+   "severity": "error",
+   "sections": [
+    "2.1.10",
+    "4.13.2"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "GTIN-14 indicator 9 without a measure",
+    "where": "The indicator",
+    "why": "Indicator 9 means a variable measure trade item (2.1.10), which requires its quantity or measure (4.13.2).",
+    "fix": "Add the measure, or use the fixed-measure GTIN."
+   },
+   "detectedBy": "First digit 9 and no AI (30), (31nn)–(36nn) or (8001); engine: Required AIs not satisfied"
+  },
+  {
+   "code": "C4",
+   "group": "C",
+   "severity": "warning",
+   "sections": [
+    "2.1.7.2"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "GTIN-14 with indicator 1–8 in a retail point-of-sale context",
+    "where": "The indicator",
+    "why": "Indicators 1–8 identify trade item groupings (2.1.7.2), which are not what a till sells; EAN/UPC cannot carry them.",
+    "fix": "Check that the pack-level GTIN was not put on the consumer unit."
+   },
+   "detectedBy": "First digit 1–8, context retail"
+  },
+  {
+   "code": "C5",
+   "group": "C",
+   "severity": "error",
+   "severityNote": "Error (as B8)",
+   "sections": [
+    "3.3.2"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "A GTIN-13, GTIN-12 or GTIN-8 not padded, or over-padded",
+    "where": "The field",
+    "why": "AI (01) is always 14 digits (3.3.2).",
+    "fix": "Pad with leading zeros."
+   },
+   "detectedBy": "Length checks before the engine"
+  },
+  {
+   "code": "C6",
+   "group": "C",
+   "severity": "note",
+   "severityNote": "Note; Warning outside retail",
+   "sections": [
+    "1.2.3.1",
+    "2.1.11"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Restricted circulation or special prefix",
+    "where": "The prefix",
+    "why": "Valid only inside a company or territory (1.2.3.1; 2.1.11): will not work in open trade.",
+    "fix": "Use a licensed GTIN for open supply chains."
+   },
+   "detectedBy": "GS1 Prefix 02, 04, 20–29 (restricted), 05, 98x, 99 (coupons), 978–979 (books), 977 (serials)"
+  },
+  {
+   "code": "C7",
+   "group": "C",
+   "severity": "warning",
+   "sections": [
+    "1.2.3.1"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "An example number",
+    "where": "The prefix",
+    "why": "Reserved for demonstrations and examples (1.2.3.1).",
+    "fix": "Replace before printing for real."
+   },
+   "detectedBy": "GS1 Prefix 952"
+  },
+  {
+   "code": "C8",
+   "group": "C",
+   "severity": "warning",
+   "severityNote": "Warning; Not assessed without the table",
+   "sections": [],
+   "references": [
+    "The GS1 Company Prefix licence, from the GS1 member organisation"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Company prefix not in the GCP table",
+    "where": "The prefix",
+    "why": "No licence found for that range.",
+    "fix": "Check the number with the GS1 member organisation."
+   },
+   "detectedBy": "gcpLengthOf() when the user has loaded the table; engine linter The GS1 Company Prefix is invalid"
+  },
+  {
+   "code": "C9",
+   "group": "C",
+   "severity": "error",
+   "severityNote": "Error alone; resolved in a group",
+   "sections": [
+    "4.13.2"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "No key at all",
+    "where": "Verdict",
+    "why": "Attributes need their key (4.13.2). When several carriers are read as one item, a companion symbol may carry it: then not a fault.",
+    "fix": "Encode the key with its attributes in one symbol where possible (4.15.1 rule 9)."
+   },
+   "detectedBy": "Attributes only"
+  },
+  {
+   "code": "D1",
+   "group": "D",
+   "severity": "error",
+   "sections": [
+    "3.4",
+    "7.2.7"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Impossible date",
+    "where": "The two digits",
+    "why": "Dates are YYMMDD (3.4); range checks are recommended to every system (7.2.7).",
+    "fix": "Correct the date; check the order was not DDMMYY."
+   },
+   "detectedBy": "Engine linter illegal month, illegal day (31 April, 29 February of a common year, month 13)"
+  },
+  {
+   "code": "D2",
+   "group": "D",
+   "severity": "note",
+   "sections": [
+    "3.4.7"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Day 00",
+    "where": "The day",
+    "why": "Allowed where the AI permits: it means the last day of the month (3.4.7 note). The simple view shows the date it stands for.",
+    "fix": "None, unless D3 applies."
+   },
+   "detectedBy": "Value ends in 00"
+  },
+  {
+   "code": "D3",
+   "group": "D",
+   "severity": "error",
+   "sections": [
+    "3.4.7"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Day 00 on a regulated healthcare item",
+    "where": "The day",
+    "why": "From 1 January 2025 the day SHALL NOT be two zeros for regulated healthcare products (3.4.7 note).",
+    "fix": "Encode the real last day."
+   },
+   "detectedBy": "D2 in a pharmacy, pharmacy-gd or healthcare context"
+  },
+  {
+   "code": "D4",
+   "group": "D",
+   "severity": "error",
+   "severityNote": "Error (with D1)",
+   "sections": [
+    "3.4"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Date order looks swapped",
+    "where": "The field",
+    "why": "3.4: the order is fixed.",
+    "fix": "Re-order."
+   },
+   "detectedBy": "Invalid as YYMMDD but valid as DDMMYY or MMDDYY"
+  },
+  {
+   "code": "D5",
+   "group": "D",
+   "severity": "warning",
+   "sections": [
+    "7.2.7",
+    "7.12"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Implausible dates",
+    "where": "Both fields",
+    "why": "Not a syntax rule: a plausibility test (7.2.7). The full year is computed by the century rule (7.12) and shown.",
+    "fix": "Check the source data."
+   },
+   "detectedBy": "Expiry before production; expiry already past; production in the future; more than 30 years away"
+  },
+  {
+   "code": "D6",
+   "group": "D",
+   "severity": "error",
+   "sections": [
+    "3.4.1",
+    "7.11"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Lot or serial with forbidden characters, or too long",
+    "where": "The character",
+    "why": "AI (10) and (21): up to 20 characters of the GS1 set (3.4.1; 7.11).",
+    "fix": "Replace; agree the format with whoever assigns it."
+   },
+   "detectedBy": "Engine linter; length > 20"
+  },
+  {
+   "code": "D7",
+   "group": "D",
+   "severity": "note",
+   "sections": [
+    "7.11"
+   ],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Lot or serial likely to be mis-keyed",
+    "where": "The character",
+    "why": "Valid. A risk in manual entry and in URIs (/ must be percent-encoded).",
+    "fix": "Prefer letters and digits."
+   },
+   "detectedBy": "Leading or trailing characters such as -, /, .; mixed O/0, I/1"
+  },
+  {
+   "code": "D8",
+   "group": "D",
+   "severity": "warning",
+   "sections": [
+    "7.8.7"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Measure of zero or implausible",
+    "where": "The field",
+    "why": "Implied decimal position from the AI's fourth digit (7.8.7); the decoded value is shown with its unit.",
+    "fix": "Check."
+   },
+   "detectedBy": "AI (31nn)–(36nn), (30), (37) with value 0"
+  },
+  {
+   "code": "D9",
+   "group": "D",
+   "severity": "error",
+   "sections": [
+    "3"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Other typed fields",
+    "where": "The component",
+    "why": "The AI's definition in section 3.",
+    "fix": "Per message."
+   },
+   "detectedBy": "Engine linters: country (ISO 3166), currency (ISO 4217), IBAN, coupon structure, latitude and longitude, piece of total"
+  },
+  {
+   "code": "E1",
+   "group": "E",
+   "severity": "error",
+   "sections": [
+    "4.13.2"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "A required companion AI is missing",
+    "where": "The AI that lacks its companion",
+    "why": "Mandatory association of element strings (4.13.2): e.g. (17) or (10) need (01) or (02); (02) needs (00) and (37).",
+    "fix": "Add the companion; in a group reading, the companion may be in another symbol (C9)."
+   },
+   "detectedBy": "Engine: Required AIs for AI (x) are not satisfied (on by default)"
+  },
+  {
+   "code": "E2",
+   "group": "E",
+   "severity": "error",
+   "sections": [
+    "4.13.1"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Two AIs that may not appear together",
+    "where": "Both AIs",
+    "why": "Invalid pairs of element strings (4.13.1): e.g. (01) with (02); (420) with (421).",
+    "fix": "Remove one."
+   },
+   "detectedBy": "Engine: It is invalid to pair AI (x) with AI (y)"
+  },
+  {
+   "code": "E3",
+   "group": "E",
+   "severity": "error",
+   "sections": [
+    "3"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Serial missing where the scheme needs it",
+    "where": "The key",
+    "why": "The AI's own rule.",
+    "fix": "Add the serial."
+   },
+   "detectedBy": "Engine: Serial component must be present…"
+  },
+  {
+   "code": "F1",
+   "group": "F",
+   "severity": "error",
+   "sections": [
+    "5.12.3",
+    "2.1",
+    "2.7"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "A symbol the context's table does not list",
+    "where": "Context chip",
+    "why": "Symbol specification tables (5.12.3) and the application standards of section 2.1 with the summary in 2.7.",
+    "fix": "The studio lists the symbols the table allows for this data (guidance()), recommended first."
+   },
+   "detectedBy": "specificationsFor(table, symbol) empty for the reading context. Typical: EAN/UPC or ITF-14 on a logistic unit (table 5), EAN/UPC as a direct part mark (table 7), ITF-14 at a retail till (table 1), a QR Code on a regulated healthcare item (tables 6, 8, 10 name Data Matrix)"
+  },
+  {
+   "code": "F2",
+   "group": "F",
+   "severity": "note",
+   "sections": [
+    "5.1.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "EAN/UPC asked to carry more than a GTIN",
+    "where": "Verdict",
+    "why": "EAN/UPC carries 13 digits (table 5-2).",
+    "fix": "Add a 2D symbol or GS1 DataBar Expanded."
+   },
+   "detectedBy": "Not a reading fault: shown when the user says attributes were expected"
+  },
+  {
+   "code": "F3",
+   "group": "F",
+   "severity": "warning",
+   "sections": [
+    "4.15.4"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "A 2D symbol alone at a retail point of sale",
+    "where": "Verdict",
+    "why": "During the migration a 2D symbol SHALL be used in addition to EAN/UPC or GS1 DataBar (4.15.4 rule 1).",
+    "fix": "Scan the linear symbol too (group reading), or add one."
+   },
+   "detectedBy": "Context retail, one reading, 2D"
+  },
+  {
+   "code": "F4",
+   "group": "F",
+   "severity": "note",
+   "sections": [
+    "5.1.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Add-on symbol",
+    "where": "Identifier chip",
+    "why": "Valid for periodicals and books; many tills ignore it.",
+    "fix": "None."
+   },
+   "detectedBy": "]E1, ]E2, ]E3"
+  },
+  {
+   "code": "F5",
+   "group": "F",
+   "severity": "not-assessed",
+   "sections": [],
+   "references": [
+    "The Check Studio project, section 3.6 (the reading context)"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Context not given",
+    "where": "Verdict",
+    "why": "Groups F and H need it.",
+    "fix": "Choose the context."
+   },
+   "detectedBy": "The user chose \"I do not know\""
+  },
+  {
+   "code": "G1",
+   "group": "G",
+   "severity": "note",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "A web address with no GS1 key",
+    "where": "The path",
+    "why": "An ordinary link: nothing a till or a resolver can identify.",
+    "fix": "Not a fault if no GS1 code was intended; else rebuild as https://example.com/01/{gtin}."
+   },
+   "detectedBy": "Engine: No GS1 DL keys found in path info"
+  },
+  {
+   "code": "G2",
+   "group": "G",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Qualifiers in the wrong order, or not belonging to the key",
+    "where": "The path segment",
+    "why": "The path is the key, then its qualifiers in the fixed order (for a GTIN: 22, 10, 21). inUriOrder() gives it.",
+    "fix": "The studio shows the re-ordered URI."
+   },
+   "detectedBy": "Engine: The AIs in the path are not a valid key-qualifier sequence for the key"
+  },
+  {
+   "code": "G3",
+   "group": "G",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "An attribute in the path, or a qualifier in the query",
+    "where": "The segment",
+    "why": "Attributes (dates, weights) go in the query string.",
+    "fix": "Move it."
+   },
+   "detectedBy": "Engine, as G2; own rule for the query"
+  },
+  {
+   "code": "G4",
+   "group": "G",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Unknown AI in the query",
+    "where": "The parameter",
+    "why": "Numeric keys in the query are AIs and must exist; other parameters are allowed and ignored.",
+    "fix": "Correct the AI or rename the parameter."
+   },
+   "detectedBy": "Engine: Unknown AI (x) in query parameters"
+  },
+  {
+   "code": "G5",
+   "group": "G",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "An AI a URI cannot carry",
+    "where": "The parameter",
+    "why": "The standard's list of data attributes.",
+    "fix": "Remove it."
+   },
+   "detectedBy": "Engine: AI (x) is not a valid DL URI data attribute"
+  },
+  {
+   "code": "G6",
+   "group": "G",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Bad percent-encoding, or a reserved character left raw",
+    "where": "The character",
+    "why": "A lot AB/12 must be AB%2F12; raw, the URI ends at the slash.",
+    "fix": "percentEncode(); the corrected URI is shown."
+   },
+   "detectedBy": "Engine linter invalid percent hex-encoding; own rule: /, ?, #, %, & inside a value cut the URI short"
+  },
+  {
+   "code": "G7",
+   "group": "G",
+   "severity": "note",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Not canonical, though valid",
+    "where": "The differing part",
+    "why": "Valid on a custom domain. The canonical form on id.gs1.org is shown beside it as what the URI means.",
+    "fix": "None needed."
+   },
+   "detectedBy": "Compared with digitalLinkUri of the parse: GTIN not 14 digits, extra path before the key, upper-case host, trailing slash, fragment"
+  },
+  {
+   "code": "G8",
+   "group": "G",
+   "severity": "warning",
+   "severityNote": "Warning (http); Error (other)",
+   "sections": [
+    "4.15.3"
+   ],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "http:// instead of https://; a non-web scheme",
+    "where": "The scheme",
+    "why": "Browsers and phones increasingly refuse plain HTTP; NFC requires https (4.15.3).",
+    "fix": "Use https://."
+   },
+   "detectedBy": "Engine: Scheme must be http:// or https://; own rule for http"
+  },
+  {
+   "code": "G9",
+   "group": "G",
+   "severity": "warning",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "Short names in the path (/gtin/ for /01/)",
+    "where": "The segment",
+    "why": "Removed from the current standard; many parsers reject them (to be confirmed against the engine).",
+    "fix": "Use the numeric AI."
+   },
+   "detectedBy": "Own rule"
+  },
+  {
+   "code": "G10",
+   "group": "G",
+   "severity": "note",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "A compressed Digital Link URI",
+    "where": "The path",
+    "why": "Valid, but few scanners decode it. Decoding it is open question Q8.",
+    "fix": "Prefer the uncompressed form."
+   },
+   "detectedBy": "Own rule: a single opaque path segment of the compression alphabet"
+  },
+  {
+   "code": "G11",
+   "group": "G",
+   "severity": "error",
+   "severityNote": "As there",
+   "sections": [
+    "1.4.4"
+   ],
+   "item": "7.1 c",
+   "texts": {
+    "what": "The key's check digit, dates and values inside the URI",
+    "where": "As there",
+    "why": "Same rules; the URI is another syntax for the same data (1.4.4).",
+    "fix": "As there."
+   },
+   "detectedBy": "Groups C, D, E on the URI's elements"
+  },
+  {
+   "code": "H1",
+   "group": "H",
+   "severity": "warning",
+   "severityNote": "Warning; Not assessed without a scale",
+   "sections": [
+    "5.12.3"
+   ],
+   "item": "7.1 m",
+   "texts": {
+    "what": "X-dimension outside the context's range",
+    "where": "Outline on the picture; value with its tolerance",
+    "why": "Symbol specification tables (5.12.3).",
+    "fix": "Re-make at the target X; the generator link carries the context."
+   },
+   "detectedBy": "The symbol's corners (ZXing position), its module count, and a scale the user gives: the symbol's printed width in mm, or a reference of known size in the picture. Compared with specificationFor(table, symbol).x"
+  },
+  {
+   "code": "H2",
+   "group": "H",
+   "severity": "warning",
+   "sections": [
+    "5.2.3.4"
+   ],
+   "item": "7.1 m",
+   "texts": {
+    "what": "Quiet zone too small",
+    "where": "Margin on the picture",
+    "why": "Readers need the quiet zone (5.2.3.4 for EAN/UPC; the tables).",
+    "fix": "Clear the area."
+   },
+   "detectedBy": "Light margin around the outline, in modules, against the table's quiet zone"
+  },
+  {
+   "code": "H3",
+   "group": "H",
+   "severity": "warning",
+   "sections": [
+    "5.12.2.2"
+   ],
+   "item": "7.1 m",
+   "texts": {
+    "what": "Bars truncated",
+    "where": "Outline",
+    "why": "EAN/UPC is read omnidirectionally only at full height (5.12.2.2).",
+    "fix": "Restore the height."
+   },
+   "detectedBy": "Height to width ratio against minimumBarHeight()"
+  },
+  {
+   "code": "H4",
+   "group": "H",
+   "severity": "warning",
+   "severityNote": "Warning; Note in dpm",
+   "sections": [],
+   "references": [
+    "The decoder (ZXing): isInverted, isMirrored"
+   ],
+   "item": "7.1 m",
+   "texts": {
+    "what": "Light on dark, or mirrored",
+    "where": "Banner",
+    "why": "Many scanners do not read reversed or mirrored symbols; expected only in direct part marking.",
+    "fix": "Print dark on light, unmirrored."
+   },
+   "detectedBy": "ZXing isInverted, isMirrored"
+  },
+  {
+   "code": "H5",
+   "group": "H",
+   "severity": "not-assessed",
+   "sections": [
+    "4.14",
+    "5.12.5.1"
+   ],
+   "item": "7.1 m",
+   "texts": {
+    "what": "Human readable text does not match the data",
+    "where": "Report",
+    "why": "HRI rules (4.14); even a verifier does not check this (5.12.5.1).",
+    "fix": "Correct the text."
+   },
+   "detectedBy": "Not automated: the report has a manual tick \"the text under the symbol matches\" with the expected HRI printed beside it"
+  },
+  {
+   "code": "I1",
+   "group": "I",
+   "severity": "note",
+   "severityNote": "Note (non-GS1 tag) or Error (a GS1 header, malformed)",
+   "sections": [],
+   "references": [
+    "EPC Tag Data Standard 2.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Not an EPC, or an unknown header",
+    "where": "Header bits",
+    "why": "EPC Tag Data Standard 2.3, the header table.",
+    "fix": "Check the tag was encoded with a GS1 scheme."
+   },
+   "detectedBy": "decodeEpc() and decodeEpcPlus() return null"
+  },
+  {
+   "code": "I2",
+   "group": "I",
+   "severity": "error",
+   "sections": [],
+   "references": [
+    "EPC Tag Data Standard 2.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "EPC fields inconsistent",
+    "where": "The field",
+    "why": "TDS 2.3 coding tables.",
+    "fix": "Re-encode; the RFID Studio (6.12) makes it."
+   },
+   "detectedBy": "Partition against the company prefix length (gcpLengthOf()), filter value, check digit of the key rebuilt from the EPC"
+  },
+  {
+   "code": "I3",
+   "group": "I",
+   "severity": "error",
+   "sections": [
+    "4.15.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "NFC: the URI is not the first record, not a URI record, or not https",
+    "where": "Record list",
+    "why": "The GS1 Digital Link URI SHALL be the first record, a Well-Known Type URI record, with https:// or https://www. (4.15.3).",
+    "fix": "Re-write the tag (NfcWriter)."
+   },
+   "detectedBy": "The NDEF records of the reading"
+  },
+  {
+   "code": "I4",
+   "group": "I",
+   "severity": "error",
+   "severityNote": "As G",
+   "sections": [],
+   "references": [
+    "GS1 Digital Link: URI Syntax"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "NFC: the URI itself",
+    "where": "As G",
+    "why": "As G.",
+    "fix": "As G."
+   },
+   "detectedBy": "Group G"
+  },
+  {
+   "code": "J1",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "4.15.1"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Different GTINs (or other keys) on one item",
+    "where": "The group's matrix",
+    "why": "All carriers used for the same application on an entity SHALL encode the same GS1 identifier (4.15.1 rule 2; rule 8 for a supplemental carrier beside EAN/UPC or ITF-14).",
+    "fix": "Correct the odd one out. If they are different packaging levels, they are different items: split the group."
+   },
+   "detectedBy": "The key row of the matrix"
+  },
+  {
+   "code": "J2",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "4.15.1"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Same attribute, different values (batch, expiry, serial, weight)",
+    "where": "The group's matrix",
+    "why": "Attribute values in several carriers SHALL be the same (4.15.1 rule 3).",
+    "fix": "One source of data for all symbols of a print run."
+   },
+   "detectedBy": "Attribute rows"
+  },
+  {
+   "code": "J3",
+   "group": "J",
+   "severity": "warning",
+   "severityNote": "Warning (GS1-128); Error (GS1 DataBar, 2D)",
+   "sections": [
+    "4.15.5",
+    "4.15.1",
+    "4.15.4"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Attributes in one symbol, their GTIN only in another",
+    "where": "The group's matrix",
+    "why": "Accepted for some healthcare scenarios (4.15.5, table 4-6), but GS1-128 SHOULD carry the GTIN with its attributes in one symbol (4.15.1 rule 9; 4.15.5 rule 3), and with GS1 DataBar or 2D they SHALL be in one symbol (4.15.4 note).",
+    "fix": "Concatenate key and attributes in one symbol."
+   },
+   "detectedBy": "A reading with C9 or E1 whose companion carries the key"
+  },
+  {
+   "code": "J4",
+   "group": "J",
+   "severity": "warning",
+   "sections": [
+    "4.15.4"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "Retail pack with a 2D symbol and no EAN/UPC or GS1 DataBar",
+    "where": "The group's matrix",
+    "why": "4.15.4 rule 1. Resolves F3 when the linear symbol is in the group.",
+    "fix": "Add the linear symbol, or scan it."
+   },
+   "detectedBy": "Group of kind consumer pack, context retail, no linear reading"
+  },
+  {
+   "code": "J5",
+   "group": "J",
+   "severity": "warning",
+   "severityNote": "Warning; Not assessed without a scale",
+   "sections": [
+    "6.3.3.1"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "The 2D symbol is far from the linear one",
+    "where": "The group's matrix",
+    "why": "For retail POS the whole 2D symbol SHOULD lie within a 50 mm radius of the centre of the linear symbol, or the till may not relate them (6.3.3.1). An estimate, as group H.",
+    "fix": "Move the 2D symbol; or, if it serves another application, keep it away on purpose (4.15.1 rule 6)."
+   },
+   "detectedBy": "One picture with a scale: distance from the centre of the linear symbol to the farthest edge of the 2D symbol and its quiet zone, against 50 mm"
+  },
+  {
+   "code": "J6",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "4.15.1"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "A supplemental 2D symbol missing data of the GS1-128",
+    "where": "The group's matrix",
+    "why": "In general distribution the GS1-128's element strings SHALL at a minimum be in the supplemental 2D symbol (4.15.1 rule 10).",
+    "fix": "Add them."
+   },
+   "detectedBy": "Case or logistic label group: element strings in the GS1-128 absent from the 2D symbol"
+  },
+  {
+   "code": "J7",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "4.15.2"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "EPC and barcode disagree",
+    "where": "The group's matrix",
+    "why": "With a GTIN barcode the tag SHALL be an SGTIN; if the barcode has AI (21) it SHALL be the same serial, no character changed, no leading zero added or removed (4.15.2 a). The same for ITIP, GRAI, GLN with extension, GDTI (4.15.2 b to e). The studio also says when the barcode's serial cannot fit the tag's scheme (SGTIN-96 holds digits without leading zeros only).",
+    "fix": "Re-encode the tag (SGTIN-198 or SGTIN+ for such serials), or change the serial policy."
+   },
+   "detectedBy": "Key and serial rows, EPC column"
+  },
+  {
+   "code": "J8",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "4.15.3"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "NFC tag and 2D symbol disagree",
+    "where": "The group's matrix",
+    "why": "The NFC tag SHALL carry the same hostname and identifier values as the 2D symbol, the same extra data elements, and the same protocol (4.15.3).",
+    "fix": "Re-write the tag with the symbol's URI."
+   },
+   "detectedBy": "URI rows: host, scheme, key, each data element"
+  },
+  {
+   "code": "J9",
+   "group": "J",
+   "severity": "error",
+   "sections": [
+    "2.2",
+    "6.6",
+    "4.13.2"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "A logistic label that contradicts itself",
+    "where": "The group's matrix",
+    "why": "One logistic unit, one SSCC (2.2; label design 6.6); mandatory associations hold across the label's symbols (4.13.2).",
+    "fix": "Correct the label; the Label Studio's GS1 Logistic Label makes it."
+   },
+   "detectedBy": "Logistic label group: more than one SSCC, or the same AI with different values across its GS1-128 symbols; (02) without (37) or without the SSCC anywhere on the label"
+  },
+  {
+   "code": "J10",
+   "group": "J",
+   "severity": "note",
+   "sections": [
+    "4.15.1"
+   ],
+   "item": "7.1 d",
+   "texts": {
+    "what": "A non-GS1 symbol on the pack",
+    "where": "The group's matrix",
+    "why": "A symbol for production control SHOULD be as obscure as possible or obstructed (4.15.1 rule 7). Scanners must tell it apart by symbology identifier (rule 1).",
+    "fix": "Hide it or move it."
+   },
+   "detectedBy": "A8 inside a group"
+  }
+ ]
+}

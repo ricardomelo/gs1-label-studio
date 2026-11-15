@@ -5,7 +5,7 @@ export { COMMON_DPI, dotsWithin, MM_PER_INCH, snapToDots, type DotSnap } from ".
 export { rasterize, type Bitmap, type RasterOptions } from "./raster.ts";
 export { bitmapRects, dithered, greyLevels, PICTURE_MAX_SIDE, PICTURE_THRESHOLD, PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, pictureFromGrey, pictureOf, redithered, resample, toned, turnedPicture, type Picture } from "./picture.ts";
 export { toSvg, type SvgOptions } from "./svg.ts";
-export { hasPredefinedLength, parseElementString, type Element } from "./elementString.ts";
+export { hasPredefinedLength, parseElementString, predefinedLength, type Element } from "./elementString.ts";
 export {
   bitmapToGraphicField,
   fillTemplate,
@@ -44,6 +44,7 @@ export {
   SyntaxEngine,
   zeroSuppress,
   type InputKind,
+  type EngineFault,
   type ParsedElement,
   type ParsedInput,
 } from "./syntax.ts";
@@ -356,3 +357,6 @@ export {
   LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, logisticPage, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
 } from "./logistic.ts";
 export { readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work, type WorkValue } from "./work.ts";
+export { FAULT_GROUPS, FAULTS, fault, SEVERITY_RANK, type Fault, type FaultGroup, type FaultTexts, type Severity } from "./faults.ts";
+export { REPAIR_PROVES, type RepairName } from "./repair.ts";
+export { check, faultOfEngineMessage, type CheckedElement, type CheckResult, type Finding, type Verdict } from "./check.ts";

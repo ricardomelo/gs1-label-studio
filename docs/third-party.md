@@ -40,6 +40,7 @@ themselves decide.
 | `packages/core/src/data/epc_schemes.json` | Derived from GS1's EPC Tag Data Translation artefacts, through the resolver | Apache 2.0 with the resolver; the standard itself is GS1's |
 | `packages/core/src/data/epc_hostname.json` | The hostname optimisation tables (A, B1 to B4) of the EPC Tag Data Standard 2.3, section 14.5.16, two codes of table B3 corrected (see the file) | The values are the standard's facts, written as data; the standard itself is GS1's |
 | `packages/core/src/data/epc_aidc.json` | Table F of the EPC Tag Data Standard 2.3 (section 15.3): each AI's encoding after the EPC (+AIDC data), read from the standard's text and checked against the GS1 dictionary; table K's first two digits are in `epcPlus.ts`, (30) added, which the table leaves out | The values are the standard's facts, written as data; the standard itself is GS1's |
+| `packages/core/src/data/check_faults.json` | The Check Studio's catalogue of faults, from the project (backlog 7.1): paraphrases citing sections of the GS1 General Specifications 26.0, no text of the standard | The project's own text; the standard is GS1's |
 | The symbol specification tables in `specifications.ts`, the decision tree in `guide.ts` | Facts taken from the GS1 General Specifications 26.0, cited by section | The standard is GS1's; the code is the project's |
 | GS1's GCP length table | Loaded by the user, kept in their browser, never in the repository | GS1's terms |
 

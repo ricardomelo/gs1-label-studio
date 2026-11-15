@@ -124,9 +124,49 @@ export class SyntaxEngine {
     return { kind, elementString, elements, digitalLinkUri, ...(digitalLinkError ? { digitalLinkError } : {}), dataStr };
   }
 
+  /**
+   * The Check Studio's questions (backlog 7.1 b), which leave `parse()` as the generators use it: whether one element
+   * string is valid alone, its AI's format, linters and check digit, without the associations between AIs (a batch
+   * needs its GTIN only in the whole message); null when it is, else the engine's message and its markup ("(17)27|13|00").
+   */
+  checkElementString(ai: string, value: string): EngineFault | null {
+    const gs = this.encoder;
+    const requisite = GS1encoder.validation.RequisiteAIs;
+    const before = gs.getValidationEnabled(requisite);
+    gs.setValidationEnabled(requisite, false);
+    try {
+      return this.fault(() => (gs.dataStr = `^${ai}${value}`));
+    } finally {
+      gs.setValidationEnabled(requisite, before);
+    }
+  }
+
+  /**
+   * Whether a whole message is valid, associations between AIs included: `dataStr` in the engine's notation ("^" for
+   * FNC1 first and for each separator), or a GS1 Digital Link URI. Null when it is, else the engine's first fault.
+   */
+  checkMessage(dataStr: string): EngineFault | null {
+    return this.fault(() => (this.encoder.dataStr = dataStr));
+  }
+
+  private fault(set: () => void): EngineFault | null {
+    try {
+      set();
+      return null;
+    } catch (error) {
+      return { message: error instanceof Error ? error.message : String(error), markup: this.encoder.errMarkup };
+    }
+  }
+
   free(): void {
     this.encoder.free();
   }
+}
+
+/** What the engine says of data it refuses: its message, in English, and the data with the offending part between "|". */
+export interface EngineFault {
+  message: string;
+  markup: string;
 }
 
 let shared: Promise<SyntaxEngine> | undefined;

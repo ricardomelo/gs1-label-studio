@@ -201,8 +201,11 @@ Each module, in the order of the flow above.
 | `epc.ts` | Every EPC scheme for a key (the resolver's `epc.py`, schemes loaded lazily, BigInt), hexadecimal in 16-bit words, base 64, tag and pure identity URIs, NFC links |
 | `epcPlus.ts` | `encodeEpcPlus`, `decodeEpcPlus`: the '+' and '++' EPC schemes of TDS 2.x (backlog 6.7), the key four bits a digit (no company prefix length), six encodings for a serial, the DSGTIN's date, the '++' hostname with TDS's optimisation tables (`data/epc_hostname.json`); hexadecimal in 16-bit words |
 | `gcp.ts` | `GcpTable`: GS1's GCP length table read without a DOM, kept compact |
+| `check.ts` | `check`, `faultOfEngineMessage`: the Check Studio's check of one reading (backlog 7.1 b, ADR 0007): the carrier (group A), the named repairs, every element string through the Syntax Engine alone and then the whole message, the structure (group B); each finding with its code, severity, the reading's bytes, the AI, the engine's message and the data made right |
+| `faults.ts` | `FAULTS`, `FAULT_GROUPS`, `fault`, `SEVERITY_RANK`: the Check Studio's catalogue of 77 faults in ten groups (`data/check_faults.json`), each with its severity, sections of the General Specifications, the backlog item that finds it and four English texts (what, where, why, how to fix) |
 | `ndef.ts` | `ndefUriMessage`, `ndefUri`: the NFC Forum URI record |
 | `reading.ts` | `readingFromDecoder`, `readingFromText`, `readingFromNdef`, `readingFromEpc`, `bytesToText`, `bytesToHex`, `withControlPictures`: the Check Studio's reading record (backlog 7.1 a, ADR 0007), the symbol's bytes and symbology identifier as decoded, a scanner's text with its identifier and group separators, an NFC tag's URI, an EPC |
+| `repair.ts` | `REPAIR_PROVES` and the named repairs (strip a flag typed as text, assume the FNC1, strip spaces and titles, a stand-in made a separator, the split into element strings bracketed or not), each character keeping the offset of the byte it came from |
 | `sign.ts` | `signedPayload`, `signJws`, `verifyJws`, `hideAuthenticationCode`, `keyCredential`, `productDataCredential`, `signCredential` (Web Crypto, ES256) |
 
 ## 6. The web application (`apps/web`)
@@ -315,6 +318,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `printer` | the module in whole dots, profiles, the test label | 6 |
 | `pyformat` | Python's fixed-point rounding | 2 |
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |
+| `check` | The Check Studio's check of one reading: each fault of groups A and B drawn in a symbol by bwip-js, read back by ZXing and found at its bytes; every symbol the studio makes found clean; the project's worked example; several faults in one symbol; the repairs | 66 |
+| `faults` | The Check Studio's catalogue: the project's 77 codes and no other, each with its severity, four texts and a source | 8 |
 | `reading` | The Check Studio's reading record: what ZXing reads of every carrier, measured and held to `docs/conformance.md`; a scanner's text, an NFC tag, an EPC | 34 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
 | `report` | the validation report and its CSVs | 11 |

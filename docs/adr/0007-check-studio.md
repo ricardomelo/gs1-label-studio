@@ -46,6 +46,16 @@ to put it right.
    without metadata.
 6. **Built in the project's order:** the engine first (7.1 a to d, no screen), then the start page and the screens,
    then keeping and sending, then the estimates (the project's Q2, recommended).
+7. **A repair is kept only when it leaves fewer faults** (7.1 b). The check never guesses: it tries a named repair
+   (assume the FNC1, strip the parentheses, strip spaces and titles, make a stand-in a separator, insert a separator),
+   splits the data into element strings again and keeps the repair when fewer element strings are refused; the repair
+   names the fault and gives the data made right. Each element string goes through the Syntax Engine alone, its
+   associations switched off, so that every fault of a symbol is reported, not only the engine's first; the whole
+   message is checked once each element string is valid. Every finding points at the reading's own bytes.
+8. **The catalogue is data, in English, until a screen shows it** (7.1 b). The 77 faults are
+   `packages/core/src/data/check_faults.json`, with the project's texts, which cite the General Specifications and
+   are written for an expert; the simple view's wording (the project's section 6.1) and the translations into the
+   five other languages come with the result screen (7.1 f), so that no text is translated twice.
 
 ## 3. Consequences
 
@@ -53,6 +63,7 @@ to put it right.
   `expectedReads()`, where parentheses are the convention, not data.
 - A new carrier the studio makes needs a row in `docs/conformance.md`, section 3.1, or the test that holds the table
   to the measure fails.
-- The faults, their texts in six languages and the checks follow in item 7.1 b; the open questions (the studio's
+- The faults and the check of groups A and B are item 7.1 b; groups C to E, their own rules and the mapping of every
+  engine message, item 7.1 c; the texts in six languages, item 7.1 f. The open questions (the studio's
   name, what a phone opens on, the report's language, a survey mode, regulatory profiles, a shared link with the
   reading) are the owner's to answer, in the project.
