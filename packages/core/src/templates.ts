@@ -110,6 +110,33 @@ export const LABEL_TEMPLATES: readonly LabelTemplate[] = [
     },
     section: "4.15, 2.1.4",
   },
+  {
+    // A medical device's UDI label (backlog 6.5, mock-up A of two, 15 November 2026): the UDI's human readable text as
+    // its element strings, an AI in parentheses before each value and no data titles, a line each, as the UDI rules
+    // (FDA, EU MDR) take a GS1 carrier's human readable interpretation; the ISO 15223-1 pictograms UDI beside the carrier
+    // and MD (the owner: let the UDI pictogram be placed).
+    id: "healthcare-udi",
+    segment: "healthcare",
+    name: "Medical device with its UDI",
+    line: "GS1 DataMatrix under the UDI pictogram, the UDI's element strings beside it",
+    identification: {
+      key: "01", value: EXAMPLE_VALUES["01"]!, qualifiers: { "10": EXAMPLE_VALUES["10"]!, "21": EXAMPLE_VALUES["21"]! },
+      attributes: [["17", EXAMPLE_VALUES["17"]!]], order: ["17", "10", "21"],
+    },
+    answers: { retail: false, "healthcare-retail": false, distribution: false, healthcare: true, dpm: false },
+    picked: { symbol: "gs1-datamatrix" },
+    page: {
+      widthMm: 46,
+      heightMm: 21,
+      elements: [
+        { id: "e1", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 1, yMm: 6.5 },
+        { id: "e2", kind: "pictogram", pictogram: "udi", heightMm: 4, xMm: 2.5, yMm: 1.5 },
+        { id: "e3", kind: "text", text: lines("(01){01}", "(17){17}", "(10){10}", "(21){21}"), heightMm: 2, xMm: 16, yMm: 7.5 },
+        { id: "e4", kind: "pictogram", pictogram: "md", heightMm: 4, xMm: 38, yMm: 1.5 },
+      ],
+    },
+    section: "2.1.4, 4.15; ISO 15223-1",
+  },
 ];
 
 /** The template by its id, or undefined. */

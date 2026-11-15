@@ -1,5 +1,5 @@
 import type { ColumnMapping, FixedValue } from "./bulk.ts";
-import { ROTATIONS, type DesignElement, type DesignPage, type MonthLanguage, type Rotation } from "./design.ts";
+import { PICTOGRAM_NAMES, ROTATIONS, type DesignElement, type DesignPage, type MonthLanguage, type PictogramName, type Rotation } from "./design.ts";
 import type { Answers } from "./guide.ts";
 import type { Identification } from "./identify.ts";
 import { PICTURE_THRESHOLD_MAX, PICTURE_THRESHOLD_MIN, pictureBitmap, type Picture } from "./picture.ts";
@@ -161,8 +161,8 @@ function symbolOptions(value: Record<string, unknown>, at: string): Partial<Desi
 function element(value: unknown, at: string): DesignElement {
   if (!isRecord(value) || !isString(value.id) || !isNumber(value.xMm) || !isNumber(value.yMm)) damaged(at);
   const { id, xMm, yMm } = value as { id: string; xMm: number; yMm: number };
-  // A barcode, a text block or an image may be turned (backlog 4.2); a line or box is not
-  const turns = value.kind === "symbol" || value.kind === "text" || value.kind === "image";
+  // A barcode, a text block, an image or a pictogram may be turned (backlog 4.2); a line or box is not
+  const turns = value.kind === "symbol" || value.kind === "text" || value.kind === "image" || value.kind === "pictogram";
   if (value.rotation !== undefined && !(turns && ROTATIONS.includes(value.rotation as Rotation))) damaged(at);
   const rotation = value.rotation ? { rotation: value.rotation as Rotation } : {};
   switch (value.kind) {
@@ -179,6 +179,9 @@ function element(value: unknown, at: string): DesignElement {
     case "box":
       if (!isNumber(value.widthMm) || !isNumber(value.heightMm) || !isNumber(value.thicknessMm) || typeof value.filled !== "boolean") damaged(at);
       return { id, kind: "box", widthMm: value.widthMm as number, heightMm: value.heightMm as number, thicknessMm: value.thicknessMm as number, filled: value.filled as boolean, xMm, yMm };
+    case "pictogram":
+      if (!PICTOGRAM_NAMES.includes(value.pictogram as PictogramName) || !isNumber(value.heightMm)) damaged(at);
+      return { id, kind: "pictogram", pictogram: value.pictogram as PictogramName, heightMm: value.heightMm as number, ...rotation, xMm, yMm };
     case "image": {
       const picture = value.picture;
       if (!isString(value.name) || !isNumber(value.widthMm) || !isRecord(picture) || !isNumber(picture.width)

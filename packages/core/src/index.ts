@@ -345,7 +345,7 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, type DesignPictogram, PICTOGRAMS, PICTOGRAM_NAMES, type PictogramName, pictogramSize, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {

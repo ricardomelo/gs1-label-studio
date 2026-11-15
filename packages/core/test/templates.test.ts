@@ -46,7 +46,7 @@ const STEM = "https://id.gs1.org";
 describe("labels by segment", () => {
   it("lists retail, then healthcare, each template with a unique id", () => {
     expect(TEMPLATE_SEGMENTS).toEqual(["retail", "healthcare"]);
-    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "healthcare"]);
+    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "healthcare", "healthcare"]);
     expect(new Set(LABEL_TEMPLATES.map((t) => t.id)).size).toBe(LABEL_TEMPLATES.length);
     expect(templateById("healthcare-pack")?.name).toBe("Medicine or medical device");
     expect(templateById("nothing")).toBeUndefined();

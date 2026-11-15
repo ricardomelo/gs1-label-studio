@@ -125,7 +125,51 @@ export interface DesignImage {
   yMm: number;
 }
 
-export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox | DesignImage;
+/**
+ * A pictogram of ISO 15223-1:2021 drawn as letters in a frame (backlog 6.5, the owner, 15 November 2026): the unique
+ * device identifier's UDI (symbol 5.7.10), beside the barcode that carries it on a medical device's label as the EU MDR
+ * (2017/745, Annex I 23.2 (h)) asks, and the medical device's MD (5.7.7).
+ */
+export type PictogramName = "udi" | "md";
+
+/** Each pictogram's letters, name and source. */
+export const PICTOGRAMS: Readonly<Record<PictogramName, { letters: string; name: string; source: string }>> = {
+  udi: { letters: "UDI", name: "Unique device identifier", source: "ISO 15223-1:2021, symbol 5.7.10" },
+  md: { letters: "MD", name: "Medical device", source: "ISO 15223-1:2021, symbol 5.7.7" },
+};
+
+/** The pictograms in the order the editor offers them. */
+export const PICTOGRAM_NAMES: readonly PictogramName[] = ["udi", "md"];
+
+/**
+ * A pictogram (backlog 6.5): its frame `heightMm` high, its letters half as high and centred in it, the frame as wide
+ * as the letters with a margin of `PICTOGRAM_MARGIN` heights each side and its outline `PICTOGRAM_OUTLINE` heights
+ * thick. The printers draw it as a box and a line of text, as they draw those.
+ */
+export interface DesignPictogram {
+  id: string;
+  kind: "pictogram";
+  pictogram: PictogramName;
+  heightMm: number;
+  /** Turned clockwise about its box (backlog 4.2): upright when not given. */
+  rotation?: Rotation;
+  /** The top left corner of its frame (as turned), in mm. */
+  xMm: number;
+  yMm: number;
+}
+
+export const PICTOGRAM_LETTERS = 0.5; // the letters' capitals, as a share of the frame's height
+export const PICTOGRAM_MARGIN = 0.3; // the room left and right of the letters, in the frame's heights
+export const PICTOGRAM_OUTLINE = 1 / 16; // the frame's thickness, in its heights
+
+/** A pictogram's frame, upright: its width and height in mm, and its letters' width. */
+export function pictogramSize(element: Pick<DesignPictogram, "pictogram" | "heightMm">, font: HriFont): { widthMm: number; heightMm: number; lettersMm: number } {
+  const capMm = element.heightMm * PICTOGRAM_LETTERS;
+  const lettersMm = (font.textWidth(PICTOGRAMS[element.pictogram].letters, font.unitsPerEm) * capMm) / font.capHeight;
+  return { widthMm: lettersMm + 2 * PICTOGRAM_MARGIN * element.heightMm, heightMm: element.heightMm, lettersMm };
+}
+
+export type DesignElement = DesignSymbol | DesignText | DesignLine | DesignBox | DesignImage | DesignPictogram;
 
 /**
  * How far a barcode, a text block or an image is turned clockwise (backlog 4.2): a quarter turn reads downwards, a half
@@ -416,6 +460,24 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
       }
       const [widthMm, heightMm] = [picture.width * pixel, picture.height * pixel];
       printer.images.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm, picture, ...(element.dither ? { dither: true as const } : {}) });
+      placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
+    } else if (element.kind === "pictogram") {
+      if (!(element.heightMm > 0)) throw new InputError("A pictogram needs a height greater than 0 mm.");
+      const rotation = element.rotation ?? 0;
+      const { widthMm: w, heightMm: h, lettersMm } = pictogramSize(element, font);
+      const [, , widthMm, heightMm] = turnedRect([0, 0, w, h], 0, 0, rotation);
+      const frame = { widthMm, heightMm, thicknessMm: h * PICTOGRAM_OUTLINE };
+      for (const [x, y, rw, rh] of boxRects(frame)) graphics.push([u(element.xMm + x), u(element.yMm + y), u(rw), u(rh)]);
+      printer.boxes.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, ...frame });
+      // Its letters, centred: their capitals from a quarter of the frame's height to three quarters
+      const capMm = h * PICTOGRAM_LETTERS;
+      const left = (w - lettersMm) / 2;
+      const top = (h - capMm) / 2;
+      const letters = PICTOGRAMS[element.pictogram].letters;
+      const [x, baseline] = turnedPoint(left, top + capMm, w, h, rotation, element.xMm, element.yMm);
+      texts.push({ text: letters, x: u(x), baseline: u(baseline), em: (u(capMm) * font.unitsPerEm) / font.capHeight, linear: false, ...turnOf(rotation) });
+      const [xMm, yMm] = turnedRect([left, top, lettersMm, capMm], w, h, rotation, element.xMm, element.yMm);
+      printer.texts.push({ text: letters, xMm, yMm, heightMm: capMm, widthMm: lettersMm, rotation });
       placed.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, widthMm, heightMm });
     } else {
       const em = (u(element.heightMm) * font.unitsPerEm) / font.capHeight;

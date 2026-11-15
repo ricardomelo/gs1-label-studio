@@ -6,6 +6,7 @@ import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
   checkRows,
   columnCell,
+  pictogramSize,
   designLabel,
   dplPage,
   encode,
@@ -289,6 +290,67 @@ describe("a label of one's own", () => {
     // A line or box without a size or thickness is refused, naming what it needs
     const flat: DesignPage = { ...graphics, elements: [...graphics.elements.slice(0, 1), { id: "z", kind: "line", vertical: false, lengthMm: 0, thicknessMm: 0.5, xMm: 5, yMm: 35 }] };
     expect(() => designLabel(flat, data, font, { environment: "distribution" })).toThrow(/A line or box needs a length, a width and a thickness greater than 0 mm/);
+  }, SLOW);
+
+  it("draws a pictogram of ISO 15223-1 as its letters centred in a frame, turned or not, and prints it as a box and a line of text", async () => {
+    // Backlog 6.5 (the owner, 15 November 2026): the UDI pictogram beside the carrier of a medical device's UDI
+    const pictograms: DesignPage = {
+      widthMm: 60, heightMm: 30,
+      elements: [
+        { id: "dm", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 1, yMm: 8 },
+        { id: "udi", kind: "pictogram", pictogram: "udi", heightMm: 4, xMm: 2, yMm: 2 },
+        { id: "md", kind: "pictogram", pictogram: "md", heightMm: 5, rotation: 90, xMm: 40, yMm: 10 },
+      ],
+    };
+    const label = designLabel(pictograms, data, font, { environment: "healthcare" });
+    expect(label.problems).toEqual([]);
+    const udi = pictogramSize({ pictogram: "udi", heightMm: 4 }, font);
+    const md = pictogramSize({ pictogram: "md", heightMm: 5 }, font);
+    // The frame as wide as the letters and 0.3 of its height each side; turned, its width and height change places
+    expect(udi.widthMm).toBeCloseTo(udi.lettersMm + 2.4, 9);
+    expect(udi.lettersMm).toBeCloseTo((font.textWidth("UDI", font.unitsPerEm) * 2) / font.capHeight, 9);
+    expect(label.placed.find((p) => p.id === "udi")).toEqual({ id: "udi", xMm: 2, yMm: 2, widthMm: udi.widthMm, heightMm: 4 });
+    expect(label.placed.find((p) => p.id === "md")).toEqual({ id: "md", xMm: 40, yMm: 10, widthMm: 5, heightMm: md.widthMm });
+    // The frames' outlines, a sixteenth of their height, after the symbol's rectangles
+    const { layout } = label;
+    const mm = layout.rects.slice(layout.symbolRects).map((r) => r.map((v) => Math.round(v * layout.xMm * 1000) / 1000));
+    const r3 = (v: number) => Math.round(v * 1000) / 1000;
+    expect(mm).toEqual([
+      [2, 2, r3(udi.widthMm), 0.25], [2, 5.75, r3(udi.widthMm), 0.25], [2, 2.25, 0.25, 3.5], [r3(2 + udi.widthMm - 0.25), 2.25, 0.25, 3.5],
+      [40, 10, 5, 0.313], [40, r3(10 + md.widthMm - 0.3125), 5, 0.313], [40, 10.313, 0.313, r3(md.widthMm - 0.625)], [44.688, 10.313, 0.313, r3(md.widthMm - 0.625)],
+    ].map((r) => r.map(r3)));
+    // The letters: half the frame's height, centred; MD read downwards
+    const letters = layout.texts.filter((t) => t.text === "UDI" || t.text === "MD");
+    expect(letters.map((t) => [t.text, t.turn])).toEqual([["UDI", undefined], ["MD", 1]]);
+    expect(letters[0]!.x * layout.xMm).toBeCloseTo(2 + 1.2, 6);
+    expect(letters[0]!.baseline * layout.xMm).toBeCloseTo(2 + 3, 6);
+    // Turned a quarter, the baseline runs down at the frame's left: 5 − 1.25 − 2.5 mm in, from 1.5 mm below its top
+    expect(letters[1]!.x * layout.xMm).toBeCloseTo(40 + 1.25, 6);
+    expect(letters[1]!.baseline * layout.xMm).toBeCloseTo(10 + 1.5, 6);
+    expect(label.printer.texts).toEqual([
+      { text: "UDI", xMm: 3.2, yMm: 3, heightMm: 2, widthMm: udi.lettersMm, rotation: 0 },
+      { text: "MD", xMm: 41.25, yMm: 11.5, heightMm: 2.5, widthMm: md.lettersMm, rotation: 90 },
+    ].map((t) => ({ ...t, xMm: expect.closeTo(t.xMm, 9), yMm: expect.closeTo(t.yMm, 9) })));
+    expect(label.printer.boxes).toEqual([
+      { id: "udi", xMm: 2, yMm: 2, widthMm: udi.widthMm, heightMm: 4, thicknessMm: 0.25 },
+      { id: "md", xMm: 40, yMm: 10, widthMm: 5, heightMm: md.widthMm, thicknessMm: 0.3125 },
+    ]);
+    // The symbol still read back beside them
+    const svg = labelSvg(label.options, layout, font);
+    expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 6 }, background: "#fff" }).render().asPng())).toEqual(label.expected);
+    // Each printer language writes the frame as a box and the letters as text
+    const page = printPageFor(label, 300);
+    const zpl = zplPage(page);
+    expect(zpl).toMatch(/\^GB\d+,\d+,\d+\^FS[\s\S]*\^GB\d+,\d+,\d+\^FS/);
+    expect(zpl).toContain("^FDUDI^FS");
+    expect(zpl).toMatch(/\^A0R,[^\n]*\^FDMD\^FS/);
+    const shapes = { ...page, symbols: [] }; // EPL2 has no GS1 DataMatrix
+    for (const file of [textFile(eplPage(shapes)), tsplPage(shapes), dplPage(shapes)]) expect(file).toMatch(/UDI[\s\S]*MD/);
+    // Over the symbol's quiet zone, an overlap; no height, refused
+    const over: DesignPage = { ...pictograms, elements: [...pictograms.elements, { id: "x", kind: "pictogram", pictogram: "udi", heightMm: 4, xMm: 3, yMm: 9 }] };
+    expect(designLabel(over, data, font, { environment: "healthcare" }).problems).toEqual([{ kind: "overlap", ids: ["dm", "x"] }]);
+    const flat: DesignPage = { ...pictograms, elements: [{ id: "x", kind: "pictogram", pictogram: "md", heightMm: 0, xMm: 3, yMm: 9 }] };
+    expect(() => designLabel(flat, data, font, { environment: "healthcare" })).toThrow(/A pictogram needs a height greater than 0 mm/);
   }, SLOW);
 
   // An image (backlog 4.2, step d): a logo as a one-bit picture, drawn where the page puts it in every output and sent

@@ -701,5 +701,12 @@
  "Only {value} takes a date format, not {whole}.": "Solo {value} accetta un formato di data, non {whole}.",
  "The text's format must show the data: put {value} in it.": "Il formato del testo deve mostrare i dati: inserisca {value}.",
  "{title} {value}": "{title} {value}",
- "{title} ({ai}) {value}": "{title} ({ai}) {value}"
+ "{title} ({ai}) {value}": "{title} ({ai}) {value}",
+ "A pictogram needs a height greater than 0 mm.": "Un pittogramma richiede un’altezza maggiore di 0 mm.",
+ "Medical device with its UDI": "Dispositivo medico con il suo UDI",
+ "GS1 DataMatrix under the UDI pictogram, the UDI's element strings beside it": "GS1 DataMatrix sotto il pittogramma UDI, con le stringhe di elementi dell’UDI accanto",
+ "Unique device identifier": "Identificativo unico del dispositivo",
+ "Medical device": "Dispositivo medico",
+ "ISO 15223-1:2021, symbol 5.7.10": "ISO 15223-1:2021, simbolo 5.7.10",
+ "ISO 15223-1:2021, symbol 5.7.7": "ISO 15223-1:2021, simbolo 5.7.7"
 }
