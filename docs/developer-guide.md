@@ -294,7 +294,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `dots` | the printer's dot grid | 3 |
 | `environments` | the resolver's scanning environments, its 2,970 answers | 4 |
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 165 |
-| `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 28 |
+| `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 1,108 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriFormat` | the human readable text's format: AI, data titles, both, one's own; in the SVG and every printer language, still read | 14 |
@@ -333,7 +333,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
 | `tour` | the tour of the studio: its card beside what it points at and whole within the window, its ring within the window, its stops on a computer and on a phone or a tablet (apps/web/test) | 8 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 113 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 114 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 128 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |

@@ -672,8 +672,13 @@ opens this section and brings it into view.
 - **Filter**: the EPC filter value (1 for a point-of-sale trade item…).
 - Classic: the scheme, the EPC in hexadecimal as on the tag (filled to 16-bit words), in base 64, the tag URI, the pure
   identity URI and the links for NFC (`/eh…` and `/ex…` on your domain), each with **Copy**.
-- EPC+ and EPC++: the scheme (*SGTIN+*, *DSGTIN++*…), the EPC in hexadecimal and the GS1 Digital Link URI it carries,
-  read back from the hexadecimal; they have no tag URI.
+- EPC+ and EPC++: the scheme (*SGTIN+*, *DSGTIN++*…), its length in bits and in 16-bit words of the tag's EPC memory,
+  the EPC in hexadecimal and the GS1 Digital Link URI it carries, read back from the hexadecimal; they have no tag URI.
+- **The data's other element strings after the EPC (+AIDC data)** (EPC+ and EPC++): the batch, dates, weights and the
+  other element strings of step 1 that the EPC does not carry follow it in the tag's EPC memory, each as the EPC Tag Data
+  Standard's table F encodes it. The line under the box says which (*After the EPC: (17) (10) (3103).*) and why any
+  cannot (an AI newer than the standard, or a value longer than its table allows). Past 496 bits (31 words), the most an
+  EPC memory can hold, the length says so.
 - The other way round: an EPC pasted in step 1, its hexadecimal (classic or new) or its tag URI, fills in the data
   (section 16).
 - A key that needs a qualifier for its EPC says so (*This key's EPC needs its qualifier (21), such as the serial
@@ -824,7 +829,7 @@ showing to someone new to the tool.
 | Headers in any of the six languages, or GS1 data titles: *Lote*, *Validade*, *Verfallsdatum*, *DOB* | a bulk table's header row | Each column goes to its AI; dates such as `31/12/2027` become `271231` |
 | A header written `?utm_source` or `lang=` | the same | The column becomes one of the URI's own parameters, named `utm_source` or `lang` |
 | The Delete or Backspace key, an element chosen | a label of one's own, outside its fields | Removes the element, as the **Delete** button does (section 5) |
-| An EPC read from an RFID tag, in hexadecimal: `3074257BF7194E4000001A85` (SGTIN-96), `FC14379F09506000134352654B5D34D62A0CFCD8DC00` (DSGTIN++), spaces and lower case allowed | **Have the data already? Paste it** | Fills in the key, its serial or other qualifier, and a DSGTIN's date (section 11) |
+| An EPC read from an RFID tag, in hexadecimal: `3074257BF7194E4000001A85` (SGTIN-96), `FC14379F09506000134352654B5D34D62A0CFCD8DC00` (DSGTIN++), spaces and lower case allowed | **Have the data already? Paste it** | Fills in the key, its serial or other qualifier, a DSGTIN's date and any element strings after the EPC (section 11) |
 | An EPC's tag URI or pure identity URI: `urn:epc:tag:sgtin-198:1.9506000.013437.S1001`, `urn:epc:id:sgln:9506000.13437.7` | the same | The same, from the URI |
 
 ## 17. Messages and what to do
