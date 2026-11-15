@@ -644,6 +644,7 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
                 guided={Boolean(view.guided)}
                 problems={view.designer?.problems ?? []}
                 onEnvironment={(environment) => set("environment", environment)}
+                labelError={s.error}
                 hriFields={<HriFormatFields settings={s} onChange={(next) => onChange({ ...s, ...next })} line={hriLine} />}
                 onChange={(page, selected) => onChange({ ...s, page, selected })}
                 outlined={!real && Boolean(view.svg && view.designer)}

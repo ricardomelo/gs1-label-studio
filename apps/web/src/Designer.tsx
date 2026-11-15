@@ -1,5 +1,5 @@
 import {
-  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type PlacedElement, type SymbologyId,
+  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, MONTH_NAMES, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type ErrorLevel, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { formatNumber, locale, t, tm } from "./i18n.ts";
@@ -9,6 +9,7 @@ import { freeCorner, heldMove, keyMoved, MOVE_KEYS, type MoveKey } from "./place
 import { handleAt, heldResize, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, type ResizeKey, type SymbolSizing } from "./resize.ts";
 import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
+import { DesignerSymbolOptions } from "./DesignerSymbolOptions.tsx";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
 // canvas with its barcodes and text blocks, each selected by a click and moved by dragging it; "+ Barcode" and
@@ -514,6 +515,8 @@ interface PanelProps {
   outlined: boolean;
   /** The human readable text's format (backlog 6.11), shared by every barcode of the label, under a barcode's text. */
   hriFields?: ReactNode;
+  /** The label's error correction level, a QR code's until it has its own (backlog 6.6). */
+  labelError: ErrorLevel;
 }
 
 /** The symbols whose text is their digits, which no format writes: EAN/UPC and ITF-14. */
@@ -761,7 +764,7 @@ function FieldInsert({ elements, columns, months, onInsert }: {
 }
 
 /** The page's size, its elements and the selected one's properties, under the canvas. */
-export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange, outlined, hriFields }: PanelProps) {
+export function DesignerPanel({ page, selected, elements, columns, environments, environment, guided, problems, onEnvironment, onChange, outlined, hriFields, labelError }: PanelProps) {
   const element = page.elements.find((e) => e.id === selected) ?? null;
   const update = (patch: Partial<DesignSymbol> | Partial<DesignText> | Partial<DesignImage>) =>
     onChange({ ...page, elements: page.elements.map((e) => (e.id === selected ? ({ ...e, ...patch } as DesignElement) : e)) }, selected);
@@ -863,6 +866,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                     </label>
                   </div>
                   {element.hri && !LINEAR_TEXT.includes(element.symbology) && hriFields}
+                  <DesignerSymbolOptions element={element} labelError={labelError} onChange={update} />
                   <fieldset className="wide">
                     <legend>{t("Element strings it carries")}</legend>
                     {SYMBOLOGIES[element.symbology].data === "uri" ? (

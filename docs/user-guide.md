@@ -400,6 +400,12 @@ label**, then the card *A label of my own*:
 4. A barcode: its **Symbol**, **Size** (a percentage of the environment's target X-dimension, or of its table's row),
    **Human readable text** (with it, the label's **Text format**, as in the options of a barcode alone: the same for
    every barcode of the label), and the **Element strings it carries** (a GS1 Digital Link URI carries them all).
+   Under them, **This barcode's options** (folded on a phone, a line saying what is set) gives it the options of the
+   symbol alone, its own whatever the other barcodes have: **Text position** and **Text height** (not for an EAN/UPC,
+   whose digits stay where the standard puts them; not split for ITF-14), a QR code's **Error correction** (the label's
+   until changed) and **Encoding mode**, a linear symbol's **Bar width reduction** (prepress: the files, not the print
+   files, as for the symbol alone) and ITF-14's **Bearer bars**. They are saved with the work; a printer language that
+   cannot write one says so, as for the symbol alone (ZPL refuses one mode for a QR code's whole data).
 5. A text block: its **Text** (a line a line), **Text height** (its capitals'), and **Insert a field from the data**,
    which adds `{10}`, `{17}`… — each replaced by that element string's value, so in bulk every row's label shows its
    own data. A date, such as (17) or (11), is also offered in five formats, each shown with the date it gives:

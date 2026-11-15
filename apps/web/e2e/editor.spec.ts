@@ -4387,3 +4387,54 @@ test("the human readable text's format: the AI, data titles, both or one's own, 
   expect(pageFields).toContain("BATCH/LOT B42");
   expect(pageFields).toContain("USE BY or EXPIRY 271231");
 });
+
+// Backlog 6.6 (mock-up A of two): a barcode on a label of one's own with the options of the symbol alone, in a group of
+// its own (folded on a phone): the text's place and height, a QR code's level and mode, the bar width reduction of a
+// linear symbol, ITF-14's bearer bars; each shown only where it applies, on the label and in the print file.
+test("a barcode on a label of one's own takes the options of the symbol alone", async ({ page }) => {
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134376(17)271231(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await labelKind(page, "designer");
+  await page.selectOption("#page-env", "distribution"); // where ITF-14 and GS1-128 are allowed too
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  // A QR code: the text's place and height, its level (the label's until changed) and mode; no reduction, no bearer bars
+  await expect(await option(page, "#el-ecl")).toHaveValue("m");
+  await expect(page.locator("#el-reduction")).toHaveCount(0);
+  await expect(page.locator("#el-bearer")).toHaveCount(0);
+  await page.selectOption("#el-hri-position", "above");
+  await page.selectOption("#el-hri-height", "3");
+  await page.selectOption("#el-ecl", "h");
+  await expect(page.locator("#el-hri-position")).toHaveValue("above");
+  await expect(page.locator("#el-hri-height")).toHaveValue("3");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231", { timeout: 30_000 });
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  expect(readFileSync((await zpl.path())!, "utf8")).toContain("^FDHA,https://id.gs1.org/01/09506000134376/10/B42?17=271231^FS");
+  // One mode for the whole data, the barcode's own: numeric cannot take a URI, which the label says; automatic again
+  await on(page, "label");
+  await (await option(page, "#el-qr-mode")).selectOption("numeric");
+  await expect(page.locator(".preview .error")).toBeVisible();
+  await page.selectOption("#el-qr-mode", "auto");
+  await expect(page.locator(".preview .symbol svg")).toBeAttached();
+  // ITF-14: bearer bars, its text not split; no level
+  await page.selectOption("#el-symbol", "itf14");
+  await expect(await option(page, "#el-bearer")).toHaveValue("frame");
+  await expect(page.locator("#el-hri-position option[value=split]")).toHaveCount(0);
+  await expect(page.locator("#el-ecl")).toHaveCount(0);
+  await page.selectOption("#el-bearer", "bars");
+  // GS1-128: the bar width reduction, no bearer bars (the page widened for its three element strings)
+  await page.fill("#page-width", "180");
+  await page.locator(".design-list button", { hasText: "ITF-14" }).press("Enter");
+  await page.selectOption("#el-symbol", "gs1-128");
+  await expect(page.locator("#el-bearer")).toHaveCount(0);
+  await (await option(page, "#el-reduction")).selectOption("0.02");
+  await expect(page.locator("#el-reduction")).toHaveValue("0.02");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]C1 (01)09506000134376(17)271231(10)B42", { timeout: 30_000 });
+  // An EAN-13's digits stay where the standard puts them: no place or height to choose
+  await page.selectOption("#el-symbol", "ean13");
+  await expect(page.locator("#el-hri-position")).toHaveCount(0);
+  await expect(await option(page, "#el-reduction")).toBeVisible();
+});

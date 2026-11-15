@@ -740,7 +740,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   readable text and element strings; then the human readable text's place and height (1.16), error correction and
   the QR code's encoding modes (1.14), the bar width reduction, ITF-14's bearer bars, and a linear symbol beside a
   2D one, in the files and in the four printer languages (ADR 0002: a native command only once a test shows the same
-  symbol)
+  symbol) — *all but the linear symbol beside a 2D one done 15 November (mock-up A of two: a group of its own under the
+  barcode's fields, framed on a computer and folded on a phone; B left them loose): the text's place and height, a QR
+  code's level (the label's until changed) and mode, a linear symbol's bar width reduction and ITF-14's bearer bars,
+  each the barcode's own, in the files, the printer languages (Labelary reads them back) and the work file; next: the
+  linear symbol beside a 2D one*
 - 6.7 EPC+ and EPC++ (assessment first, then M to L): the Tag Data Standard's newer schemes (`sgtin+`, `sscc+`,
   `dsgtin+`…), which carry an alphanumeric serial and further data, and their `++` forms, which also carry the GS1
   Digital Link URI's domain; from TDS and TDT 2.3 (in the owner's Drive), tested against their examples and, where it
