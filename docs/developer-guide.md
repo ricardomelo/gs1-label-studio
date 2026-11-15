@@ -159,6 +159,7 @@ Each module, in the order of the flow above.
 | `logistic.ts` | `logisticLabel`: the GS1 Logistic Label as one `Layout` (6.6), its data titles also in a second language (`secondTitle`), a percent-encoded name in the middle block as people read it |
 | `design.ts` | `designLabel`: a label of one's own, barcodes, text blocks, lines, boxes and images placed on a page, each barcode, text block and image turned or not (`turnedRect`), as one `Layout` (backlog 4.2) |
 | `picture.ts` | `pictureOf`, `pictureBitmap`, `resample`, `bitmapRects`, `turnedPicture`: an image as a one-bit picture, at a printer's dots, as rectangles, turned |
+| `pictograms.ts` | `PICTOGRAMS`, `PICTOGRAM_SEGMENTS`, `pictogramContours`: the pictograms a label of one's own may carry, by segment (backlog 6.13): letters in cells (ISO 15223-1's UDI, LOT, STERILE EO…) or drawings of the studio's own after ISO 7000 and Directive 76/211/EEC, as contours filled by the nonzero rule (`Layout.shapes`), an image at the printer's dots |
 | `hri.ts` | `HriFont`: Liberation Sans through opentype.js, contours drawn as fontTools does, glyph points cached |
 | `hriFormat.ts` | `hriText`, `hriJoiner`, `checkHriPattern`, `dataTitle`, `secondTitle`: how the human readable text writes an element string, the AI in parentheses, data titles in six languages, both (figure 4-8) or a pattern of one's own (backlog 6.11); the layout and every printer language take it |
 | `dates.ts` | `formatDate`, `DATE_FORMATS`, `MONTH_NAMES`: a YYMMDD date (or YYYYMMDD, with its time) in a format of DD, MM, MMM, YY, YYYY, hh, mm and ss, for a text field and the human readable text |
@@ -201,6 +202,7 @@ Each module, in the order of the flow above.
 | `epcPlus.ts` | `encodeEpcPlus`, `decodeEpcPlus`: the '+' and '++' EPC schemes of TDS 2.x (backlog 6.7), the key four bits a digit (no company prefix length), six encodings for a serial, the DSGTIN's date, the '++' hostname with TDS's optimisation tables (`data/epc_hostname.json`); hexadecimal in 16-bit words |
 | `gcp.ts` | `GcpTable`: GS1's GCP length table read without a DOM, kept compact |
 | `ndef.ts` | `ndefUriMessage`, `ndefUri`: the NFC Forum URI record |
+| `reading.ts` | `readingFromDecoder`, `readingFromText`, `readingFromNdef`, `readingFromEpc`, `bytesToText`, `bytesToHex`, `withControlPictures`: the Check Studio's reading record (backlog 7.1 a, ADR 0007), the symbol's bytes and symbology identifier as decoded, a scanner's text with its identifier and group separators, an NFC tag's URI, an EPC |
 | `sign.ts` | `signedPayload`, `signJws`, `verifyJws`, `hideAuthenticationCode`, `keyCredential`, `productDataCredential`, `signCredential` (Web Crypto, ES256) |
 
 ## 6. The web application (`apps/web`)

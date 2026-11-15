@@ -343,6 +343,10 @@ export {
   type SigningKey,
 } from "./sign.ts";
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
+export {
+  bytesToHex, bytesToText, readingFromDecoder, readingFromEpc, readingFromNdef, readingFromText, withControlPictures,
+  type DecodedSymbol, type Reading, type ReadingCarrier, type ReadingOptions, type ReadingSource,
+} from "./reading.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
   boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, type DesignPictogram, PICTOGRAMS, PICTOGRAM_NAMES, PICTOGRAM_SEGMENTS, pictogramContours, pictogramLabel, type Contour, type Pictogram, type PictogramName, type PictogramSegment, pictogramSize, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,

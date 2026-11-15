@@ -17,6 +17,7 @@ Class Series 2 Programmer's Manual 88-2341-01 (DPL); Argox's Programmer's Manual
 1. [GS1 General Specifications](#1-gs1-general-specifications)
 2. [GS1 Barcode Syntax Engine and GS1 Digital Link](#2-gs1-barcode-syntax-engine-and-gs1-digital-link)
 3. [Symbologies (ISO/IEC)](#3-symbologies-isoiec)
+    1. [What a reader gives back](#31-what-a-reader-gives-back)
 4. [EPC Tag Data Standard and NFC](#4-epc-tag-data-standard-and-nfc)
 5. [GS1 Digital Signatures and Verifiable Credentials](#5-gs1-digital-signatures-and-verifiable-credentials)
 6. [ZPL II](#6-zpl-ii)
@@ -71,6 +72,40 @@ comparing the symbology identifier (ISO/IEC 15424) and the data.
 | ISO/IEC 24724 (GS1 DataBar) | The seven symbols; stacked rows at their least heights | `roundtrip`: gives a stacked GS1 DataBar its rows at their least heights |
 | ISO/IEC 16022 (Data Matrix) | ECC 200, square; FNC1 first for GS1 DataMatrix | `roundtrip`: gs1-datamatrix · `roundtrip`: dl-datamatrix |
 | ISO/IEC 18004 (QR Code) | Model 2, versions 1 to 40, levels L to H, numeric, alphanumeric and byte modes | `qrmode`: takes the version each mode's capacity gives · `roundtrip`: dl-qrcode |
+
+### 3.1 What a reader gives back
+
+The Check Studio (backlog 7.1) judges what a symbol carries from its bytes and its symbology identifier as ZXing
+decodes them, before any text mode (`reading.ts`): a reader that writes GS1 data with parentheses would hide
+parentheses really encoded. Measured for every symbology the studio makes and for the plain carriers a faulty label
+uses instead, each drawn by bwip-js and read by ZXing 3 (`reading`: the table says what was measured, row by row;
+each row is a test of its own, named after its carrier).
+
+| Carrier | Drawn as (bwip-js) | ZXing reads it | Format, identifier | Bytes |
+|---|---|---|---|---|
+| EAN-13 | `ean13` | yes | `EAN13, ]E0` | the 13 digits |
+| UPC-A | `upca` | yes | `EAN13, ]E0` | the 12 digits with a 0 before them: the decoder gives a UPC-A as the EAN-13 it is part of |
+| EAN-8 | `ean8` | yes | `EAN8, ]E4` | the 8 digits |
+| UPC-E | `upce` | yes | `UPCE, ]E0` | its UPC-A, expanded, in 13 digits |
+| ITF-14 | `itf14` | yes | `ITF, ]I1` | the 14 digits (`]I1`: its check digit checked by the decoder) |
+| GS1-128 | `gs1-128` | yes | `Code128, ]C1` | the element strings, no FNC1 first, a group separator (1D) after a variable-length one |
+| GS1 DataMatrix | `gs1datamatrix` | yes | `DataMatrix, ]d2` | as GS1-128 |
+| GS1 QR Code | `gs1qrcode` | yes | `QRCode, ]Q3` | as GS1-128 (`]Q3`: FNC1 in the first position) |
+| QR code (GS1 Digital Link) | `qrcode` | yes | `QRCode, ]Q1` | the URI |
+| Data Matrix (GS1 Digital Link) | `datamatrix` | yes | `DataMatrix, ]d1` | the URI |
+| GS1 DataBar Omnidirectional | `databaromni` | yes | `DataBarOmni, ]e0` | (01) and the GTIN |
+| GS1 DataBar Truncated | `databartruncated` | yes | `DataBarOmni, ]e0` | as Omnidirectional: the decoder does not tell them apart |
+| GS1 DataBar Stacked | `databarstacked` | yes | `DataBarStk, ]e0` | (01) and the GTIN |
+| GS1 DataBar Stacked Omnidirectional | `databarstackedomni` | yes | `DataBarStk, ]e0` | as Stacked: the decoder does not tell them apart |
+| GS1 DataBar Limited | `databarlimited` | yes | `DataBarLtd, ]e0` | (01) and the GTIN |
+| GS1 DataBar Expanded | `databarexpanded` | yes | `DataBarExp, ]e0` | as GS1-128 |
+| GS1 DataBar Expanded Stacked | `databarexpandedstacked` | yes | `DataBarExpStk, ]e0` | as GS1-128 |
+| Code 128 (not GS1-128) | `code128` | yes | `Code128, ]C0` | the characters; `]C0` says no FNC1 first: not GS1 |
+| Data Matrix with the parentheses encoded | `datamatrix` | yes | `DataMatrix, ]d1` | the parentheses as bytes 28 and 29: what a reader in GS1 text mode would hide |
+| QR code with element strings, no FNC1 | `qrcode` | yes | `QRCode, ]Q1` | the element strings and their separator, under a plain identifier |
+| GS1 DotCode | `gs1dotcode` | no | — | ZXing has no DotCode decoder: the studio must say it cannot read this symbol, not that there is none |
+| EAN-13 with a Composite Component | `ean13composite` | the linear part only | `EAN13, ]E0` | the 13 digits; the 2D component (here (10)) is not read, and must be said so |
+| GS1-128 with a Composite Component | `gs1-128composite` | the linear part only | `Code128, ]C1` | (01) and the GTIN; the 2D component is not read |
 
 ## 4. EPC Tag Data Standard and NFC
 
