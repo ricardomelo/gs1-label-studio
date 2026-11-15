@@ -21,7 +21,7 @@ const WORK: Work = {
       { id: "t", kind: "text", text: "VAL {17:DD MMM YYYY}\nLOTE {10}", heightMm: 3, months: "pt", rotation: 270, xMm: 8, yMm: 8 },
       { id: "q", kind: "symbol", symbology: "gs1-128", ais: ["01", "17"], size: 50, hri: true, hriPosition: "split", hriHeightMm: 3, reduction: 0.02, rotation: 90, xMm: 4, yMm: 4 },
       { ...(WITH_LOGO.elements[0] as DesignImage), id: "i", rotation: 180, threshold: 160, dither: true },
-      { id: "r", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, error: "h", qrMode: "byte", xMm: 40, yMm: 4 },
+      { id: "r", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, error: "h", qrMode: "byte", linear: "upce", linearSize: 120, xMm: 40, yMm: 4 },
       { id: "b", kind: "symbol", symbology: "itf14", ais: ["01"], size: 100, hri: true, bearer: "bars", xMm: 4, yMm: 40 },
     ],
   },
@@ -104,7 +104,7 @@ describe("the work saved and opened again (backlog 4.3)", () => {
     expect(element(0, { kind: "circle" })).toBe(at("element 1 of the label's page"));
     expect(element(5, { symbology: "aztec" })).toBe(at("element 6 of the label's page"));
     // A barcode's options of the symbol alone (backlog 6.6): only those the studio offers
-    for (const change of [{ hriPosition: "middle" }, { hriHeightMm: 1 }, { hriHeightMm: "3" }, { reduction: -0.01 }, { error: "x" }, { qrMode: "kanji" }, { bearer: "plates" }]) {
+    for (const change of [{ hriPosition: "middle" }, { hriHeightMm: 1 }, { hriHeightMm: "3" }, { reduction: -0.01 }, { error: "x" }, { qrMode: "kanji" }, { bearer: "plates" }, { linear: "ean13" }, { linearSize: 110 }, { linearSize: "120" }]) {
       expect(element(5, change), JSON.stringify(change)).toBe(at("element 6 of the label's page"));
     }
     expect(element(6, { months: "nl" })).toBe(at("element 7 of the label's page"));

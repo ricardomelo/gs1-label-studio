@@ -15,6 +15,7 @@ import {
   type Identified,
   type LabelDesign,
   type SyntaxEngine,
+  turnedRect,
 } from "../src/index.ts";
 import { textFile } from "./files.ts";
 import { hriFont } from "./font.ts";
@@ -130,5 +131,102 @@ describe("a barcode on a label of one's own with the options of the symbol alone
     // One mode for a QR code's whole data: refused in ZPL, as for the symbol alone (ADR 0002)
     const mode: LabelDesign = { ...design, page: page(symbol("qr", { symbology: "dl-qrcode", xMm: 2, yMm: 2, qrMode: "byte" })) };
     expect(() => printFileFor("zpl", labelFor(data, mode, font), mode, 203)).toThrow(/automatic mode/);
+  });
+});
+
+// The linear symbol beside a 2D one (backlog 6.6): an EAN/UPC with the GTIN beside a QR code or Data Matrix, as the
+// symbol alone's Linear barcode beside it; drawn as the symbol alone draws the pair, and printed as two symbols, each
+// with the printer's own command, its bars where the pair puts them.
+describe("a linear symbol beside a 2D one on a label of one's own", () => {
+  const box = (rects: readonly (readonly number[])[]) => {
+    const [x, y] = [Math.min(...rects.map((r) => r[0]!)), Math.min(...rects.map((r) => r[1]!))];
+    return [x, y, Math.max(...rects.map((r) => r[0]! + r[2]!)) - x, Math.max(...rects.map((r) => r[1]! + r[3]!)) - y];
+  };
+
+  it("draws the pair as the symbol alone does, both read back, and prints it as two symbols where the pair puts them", async () => {
+    for (const rotation of [0, 90] as const) {
+      const element = symbol("qr", { symbology: "dl-qrcode", xMm: 4, yMm: 4, linear: "auto", rotation });
+      const design: LabelDesign = { ...DESIGN, environment: "retail", page: page(element) };
+      const designed = labelFor(data, design, font).designed!;
+      // The pair as the symbol alone lays out a QR code with an EAN-13 beside it
+      const alone = labelFor(data, { ...DESIGN, environment: "retail", linear: "auto" }, font);
+      const pair = alone.layout;
+      expect(designed.placed[0]!.widthMm).toBeCloseTo((rotation ? pair.height : pair.width) * pair.xMm, 6);
+      expect(designed.expected).toEqual([`]Q1 ${dataFor("dl-qrcode", data)}`, "]E0 9506000134376"].sort());
+      expect(await reads(labelSvg(designed.options, designed.layout, font))).toEqual(designed.expected);
+      // Two symbols for the printer: the QR code alone, and the EAN-13 alone at its own X-dimension
+      const [twoD, linear] = designed.printer.symbols;
+      expect([twoD!.options.symbology, linear!.options.symbology, linear!.data]).toEqual(["dl-qrcode", "ean13", "9506000134376"]);
+      expect(twoD!.options.linear).toBeNull();
+      for (const s of [twoD!, linear!]) {
+        expect(s.layout).toEqual(layoutLabel(s.options, font));
+        expect(s.rotation).toBe(rotation);
+      }
+      expect(linear!.layout.xMm).toBeCloseTo(0.33, 6);
+      // Each part's bars where the pair's are on the page, as turned
+      const parts = [pair.rects.slice(0, pair.symbolRects), pair.rects.slice(pair.symbolRects)];
+      [twoD!, linear!].forEach((s, i) => {
+        const [px, py] = turnedRect(box(parts[i]!), pair.width, pair.height, rotation);
+        const [ox, oy] = turnedRect(box(s.layout.rects), s.layout.width, s.layout.height, rotation);
+        expect(s.xMm + ox * s.layout.xMm).toBeCloseTo(element.xMm + px * pair.xMm, 6);
+        expect(s.yMm + oy * s.layout.xMm).toBeCloseTo(element.yMm + py * pair.xMm, 6);
+      });
+    }
+  });
+
+  it("takes its own size and a bar width reduction; UPC-E where asked; nothing beside a linear symbol", () => {
+    const upc = engine.parse("(01)00042100005264(10)B42") as Identified;
+    const designed = labelFor(upc, {
+      ...DESIGN, environment: "retail",
+      page: page(
+        symbol("dm", { symbology: "gs1-datamatrix", xMm: 4, yMm: 4, linear: "upce", linearSize: 80, reduction: 0.02, hriPosition: "left" }),
+        symbol("bars", { symbology: "upca", ais: ["01"], xMm: 4, yMm: 60, linear: "auto" }),
+      ),
+    }, font).designed!;
+    const [dm, linear, bars] = designed.printer.symbols;
+    expect(linear!.options.symbology).toBe("upce");
+    expect(linear!.layout.xMm).toBeCloseTo(0.33 * 0.8, 6);
+    expect(designed.options.symbology).toBe("gs1-datamatrix");
+    // The text beside the 2D symbol goes below it, as for the symbol alone; the printer's bars unreduced
+    expect(dm!.options.hriPosition).toBeUndefined();
+    expect(dm!.options.barWidthReduction).toBeUndefined();
+    expect(bars!.options.linear).toBeUndefined();
+    expect(designed.printer.symbols).toHaveLength(3);
+    expect(linear!.data).toBe("04252614");
+    // The reduction narrows the UPC-E's bars in the files, and leaves the printer's symbols as they are without it
+    const plain = labelFor(upc, {
+      ...DESIGN, environment: "retail",
+      page: page(
+        symbol("dm", { symbology: "gs1-datamatrix", xMm: 4, yMm: 4, linear: "upce", linearSize: 80, hriPosition: "left" }),
+        symbol("bars", { symbology: "upca", ais: ["01"], xMm: 4, yMm: 60, linear: "auto" }),
+      ),
+    }, font).designed!;
+    const ink = (l: typeof plain.layout) => l.rects.reduce((sum, r) => sum + r[2] * r[3], 0);
+    expect(ink(designed.layout)).toBeLessThan(ink(plain.layout));
+    expect(designed.printer.symbols).toEqual(plain.printer.symbols);
+  });
+
+  it("is refused without a GTIN of a consumer unit, a scanning environment with an EAN/UPC, or a GTIN-12 for UPC-E", () => {
+    const refused = (d: Identified, environment: string, rest: Partial<DesignSymbol>) =>
+      () => labelFor(d, { ...DESIGN, environment, page: page(symbol("dm", { symbology: "gs1-datamatrix", xMm: 4, yMm: 4, linear: "auto", ...rest })) }, font);
+    expect(refused(data, "retail", { ais: ["10", "17"] })).toThrow(/needs a GTIN \(01\)/);
+    expect(refused(engine.parse("(01)19506000134373(10)B42") as Identified, "retail", {})).toThrow(/consumer units/);
+    expect(refused(data, "assets", {})).toThrow(/no EAN\/UPC/);
+    expect(refused(data, "retail", { linear: "upce" })).toThrow(/UPC-E is only/);
+  });
+
+  it("writes the pair in every printer language with its own commands: the 2D symbol's and the EAN-13's", () => {
+    const design: LabelDesign = { ...DESIGN, environment: "retail", page: page(symbol("dm", { symbology: "dl-datamatrix", xMm: 4, yMm: 4, linear: "auto" })) };
+    const drawn = labelFor(data, design, font);
+    const files = Object.fromEntries((["zpl", "tspl", "epl2", "dpl", "ppla"] as const).map((l) => [l, textFile(printFileFor(l, drawn, design, 203))]));
+    // PPLB has no Data Matrix: refused as for the 2D symbol alone
+    expect(() => printFileFor("pplb", drawn, design, 203)).toThrow(/PPLB has no Data Matrix/);
+    expect(files.zpl).toMatch(/\^BX/);
+    expect(files.zpl).toMatch(/\^BE[^\n]*\^FD950600013437/);
+    expect(files.tspl).toMatch(/DMATRIX/);
+    expect(files.tspl).toMatch(/BARCODE [^\n]*"EAN13"[^\n]*"950600013437/);
+    expect(files.epl2).toMatch(/,E30,[^\n]*"950600013437/);
+    expect(files.dpl).toMatch(/950600013437/);
+    expect(files.ppla).toMatch(/950600013437/);
   });
 });

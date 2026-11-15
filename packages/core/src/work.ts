@@ -7,6 +7,7 @@ import type { PrinterProfile } from "./printer.ts";
 import { PRINTER_LANGUAGES, type PrinterLanguage } from "./printFile.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
 import { QR_MODES, type QrMode } from "./encode.ts";
+import { SIZES } from "./environments.ts";
 import { ERROR_LEVELS, HRI_MAX_MM, HRI_MIN_MM, HRI_POSITIONS, type Bearer, type ErrorLevel, type HriPosition } from "./layout.ts";
 import { InputError } from "./syntax.ts";
 
@@ -135,14 +136,16 @@ const isSymbology = (value: unknown): value is SymbologyId => isString(value) &&
 
 /**
  * A barcode's options of the symbol alone (backlog 6.6), each read when it is there and one the studio knows: the text's
- * place and height, the error correction level, the QR code's mode, the bar width reduction, ITF-14's bearer bars.
+ * place and height, the error correction level, the QR code's mode, the bar width reduction, ITF-14's bearer bars, and
+ * the EAN/UPC beside a 2D symbol and its size.
  */
 function symbolOptions(value: Record<string, unknown>, at: string): Partial<DesignElement & { kind: "symbol" }> {
   const known = <T>(list: readonly T[], v: unknown): v is T => v === undefined || list.includes(v as T);
   if (!known(HRI_POSITIONS, value.hriPosition) || !known(ERROR_LEVELS, value.error) || !known(QR_MODES, value.qrMode)
     || !known(["frame", "bars"], value.bearer)
     || (value.hriHeightMm !== undefined && !(isNumber(value.hriHeightMm) && value.hriHeightMm >= HRI_MIN_MM && value.hriHeightMm <= HRI_MAX_MM))
-    || (value.reduction !== undefined && !(isNumber(value.reduction) && value.reduction >= 0 && value.reduction < 1))) damaged(at);
+    || (value.reduction !== undefined && !(isNumber(value.reduction) && value.reduction >= 0 && value.reduction < 1))
+    || !known(["auto", "upce"], value.linear) || !known(SIZES, value.linearSize)) damaged(at);
   return {
     ...(value.hriPosition ? { hriPosition: value.hriPosition as HriPosition } : {}),
     ...(value.hriHeightMm ? { hriHeightMm: value.hriHeightMm as number } : {}),
@@ -150,6 +153,8 @@ function symbolOptions(value: Record<string, unknown>, at: string): Partial<Desi
     ...(value.qrMode ? { qrMode: value.qrMode as QrMode } : {}),
     ...(value.reduction ? { reduction: value.reduction as number } : {}),
     ...(value.bearer ? { bearer: value.bearer as Bearer } : {}),
+    ...(value.linear ? { linear: value.linear as "auto" | "upce" } : {}),
+    ...(value.linearSize ? { linearSize: value.linearSize as number } : {}),
   };
 }
 

@@ -507,6 +507,18 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
       { id: "t", kind: "text", text: "BATCH {10}\nBEST BEFORE {17}", heightMm: 3, xMm: 4, yMm: 4 },
       { id: "q", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 70, yMm: 4 },
     ]],
+    // A linear symbol beside a 2D one (backlog 6.6): the 2D symbol and the EAN-13 each with its own command, its bars
+    // where the pair's layout puts them
+    ["epl", 203, "retail", [
+      { id: "p", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 4, yMm: 4, linear: "auto" },
+      { id: "t", kind: "text", text: "BATCH {10}", heightMm: 3, xMm: 100, yMm: 4 },
+    ]],
+    ["tspl", 300, "retail", [
+      { id: "p", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 4, yMm: 4, linear: "auto" },
+    ]],
+    ["dpl", 203.2, "retail", [
+      { id: "p", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 4, yMm: 4, linear: "auto", linearSize: 80 },
+    ]],
   ] as const)("%s: a label of one's own at %i dpi, every barcode read back, each where the layout puts it", async (language, dpi, environment, elements) => {
     const engine = await syntaxEngine();
     const page = { widthMm: 170, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };

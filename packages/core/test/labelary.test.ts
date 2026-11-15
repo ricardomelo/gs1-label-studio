@@ -347,6 +347,10 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       { id: "x", kind: "symbol", symbology: "databar-expanded", ais: null, size: 100, hri: true, xMm: 2, yMm: 32 },
       { id: "d", kind: "symbol", symbology: "dl-datamatrix", ais: null, size: 100, hri: false, xMm: 64, yMm: 4 },
     ]],
+    // A linear symbol beside a 2D one (backlog 6.6): ^BX and ^BE, each where the pair's layout puts its bars
+    [203, "retail", "(01)09506000134376(10)B42", [
+      { id: "p", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: true, xMm: 4, yMm: 4, linear: "auto" },
+    ]],
   ] as const)("a label of one's own at %i dpi: every barcode read back, each where the layout puts it", { timeout: 60000 }, async (dpi, environment, elementString, elements) => {
     const engine = await syntaxEngine();
     const page = { widthMm: 150, heightMm: 80, elements: elements as unknown as DesignPage["elements"] };

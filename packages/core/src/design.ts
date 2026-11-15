@@ -3,6 +3,7 @@ import { ENVIRONMENTS } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
 import type { HriFormat } from "./hriFormat.ts";
 import { inUriOrder, type Identified } from "./identify.ts";
+import { symbolFor, type LinearKind } from "./linear.ts";
 import { formatDate, TIME_TOKENS, type DateOptions, type MonthLanguage } from "./dates.ts";
 import { BARS, layoutLabel, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import type { QrMode } from "./encode.ts";
@@ -40,6 +41,12 @@ export interface DesignSymbol {
   qrMode?: QrMode;
   reduction?: number;
   bearer?: Bearer;
+  /**
+   * An EAN/UPC beside a 2D symbol, as the symbol alone's Linear barcode beside it (backlog 6.6): as the GTIN takes, or
+   * UPC-E; none when not given. Its size is a percentage of its own target X-dimension, the 2D symbol's when not given.
+   */
+  linear?: "auto" | "upce";
+  linearSize?: number;
   /** Turned clockwise about its box (backlog 4.2): upright when not given. */
   rotation?: Rotation;
   /** The top left corner of the symbol with its quiet zones (of its box as turned), in mm from the page's. */
@@ -281,6 +288,18 @@ function chosen(identified: Identified, ais: readonly string[] | null): Identifi
   return { ...identified, elements, elementString: elements.map((e) => `(${e.ai})${e.value}`).join("") };
 }
 
+/** The EAN/UPC beside a 2D symbol: the GTIN it carries, in a scanning environment with an EAN/UPC range. */
+function linearBeside(choice: "auto" | "upce", carried: Identified, environment: string): [LinearKind, string] {
+  if (!ENVIRONMENTS[environment]?.linear) throw new InputError("This scanning environment has no EAN/UPC: a linear barcode beside the 2D symbol needs one.");
+  const gtin = carried.elements.find((e) => e.ai === "01")?.value;
+  if (!gtin) throw new InputError("A linear barcode beside the 2D symbol needs a GTIN (01).");
+  try {
+    return symbolFor(gtin, choice);
+  } catch {
+    throw new InputError(choice === "upce" ? "UPC-E is only for a GTIN-12 that zero-suppresses." : "An EAN/UPC is only for GTINs of consumer units (indicator 0).");
+  }
+}
+
 /** One barcode's options as the editor gives a symbol alone: its table's row, or the environment's range. */
 function symbolOptions(element: DesignSymbol, identified: Identified, options: DesignOptions): LabelOptions {
   const { symbology } = element;
@@ -290,18 +309,53 @@ function symbolOptions(element: DesignSymbol, identified: Identified, options: D
   const bars = BARS.includes(symbology);
   const spec = bars && table !== undefined ? specificationFor(table, symbology as SpecSymbol) : undefined;
   if (bars && !spec) throw new InputError(`Table ${table} does not allow ${SYMBOLOGIES[symbology].name}: choose another symbol or scanning environment.`);
+  const linear = element.linear && SYMBOLOGIES[symbology].kind === "matrix" ? linearBeside(element.linear, carried, options.environment) : null;
+  // Beside an EAN/UPC, the 2D symbol's text goes below or above it, as for the symbol alone
+  const hriPosition = linear && (element.hriPosition === "left" || element.hriPosition === "right") ? "below" : element.hriPosition;
   return {
     symbology, data, showHri: element.hri,
     hriLines: (SYMBOLOGIES[symbology].data === "uri" ? inUriOrder(carried.elements) : carried.elements).map((e) => `(${e.ai})${e.value}`),
     size: element.size, environment: options.environment, error: element.error ?? options.error ?? "m", version: null,
-    ...(element.hriPosition && element.hriPosition !== "below" ? { hriPosition: element.hriPosition } : {}),
+    ...(hriPosition && hriPosition !== "below" ? { hriPosition } : {}),
     ...(element.hriHeightMm ? { hriHeightMm: element.hriHeightMm } : {}),
     ...(element.qrMode && symbology === "dl-qrcode" ? { qrMode: element.qrMode } : {}),
-    ...(element.reduction && SYMBOLOGIES[symbology].kind !== "matrix" ? { barWidthReduction: element.reduction } : {}),
+    ...(linear ? { linear, linearSize: element.linearSize ?? null } : {}),
+    ...(element.reduction && (linear || SYMBOLOGIES[symbology].kind !== "matrix") ? { barWidthReduction: element.reduction } : {}),
     ...(element.bearer && symbology === "itf14" ? { bearer: element.bearer } : {}),
     ...(options.hriFormat ? { hriFormat: options.hriFormat } : {}),
     ...(spec ? { spec, table } : {}),
   };
+}
+
+/**
+ * A 2D symbol and the EAN/UPC beside it as a printer language writes them (backlog 6.6, ADR 0002): two symbols, each
+ * with its own options and layout as a symbol alone, its bars' box where the pair's layout puts them on the page, as
+ * turned: each printed with the printer's own command, as the symbol alone and an EAN/UPC alone are.
+ */
+function besideParts(element: DesignSymbol, o: LabelOptions, drawn: Layout, font: HriFont): DesignedLabel["printer"]["symbols"] {
+  const rotation = element.rotation ?? 0;
+  // The bar width reduction is prepress, for the files: the printer's bars are where the pair's unreduced bars are
+  const { barWidthReduction, ...unreduced } = o;
+  const pair = barWidthReduction ? layoutLabel(unreduced, font) : drawn;
+  const [kind, digits] = o.linear!;
+  const twoD: LabelOptions = { ...unreduced, linear: null, linearSize: null };
+  const linear: LabelOptions = {
+    symbology: kind, data: digits, hriLines: [], showHri: true, environment: o.environment, size: o.linearSize ?? o.size,
+  };
+  const box = (rects: Layout["rects"]): [number, number, number, number] => {
+    const [x, y] = [Math.min(...rects.map((r) => r[0])), Math.min(...rects.map((r) => r[1]))];
+    return [x, y, Math.max(...rects.map((r) => r[0] + r[2])) - x, Math.max(...rects.map((r) => r[1] + r[3])) - y];
+  };
+  const part = (options: LabelOptions, rects: Layout["rects"]) => {
+    const layout = layoutLabel(options, font);
+    // Where the pair puts these bars on the page, less where the part's own layout puts them in its box
+    const [px, py] = turnedRect(box(rects), pair.width, pair.height, rotation);
+    const [ox, oy] = turnedRect(box(layout.rects), layout.width, layout.height, rotation);
+    const xMm = element.xMm + px * pair.xMm - ox * layout.xMm;
+    const yMm = element.yMm + py * pair.xMm - oy * layout.xMm;
+    return { id: element.id, xMm, yMm, rotation, data: options.data, options, layout };
+  };
+  return [part(twoD, pair.rects.slice(0, pair.symbolRects)), part(linear, pair.rects.slice(pair.symbolRects))];
 }
 
 /**
@@ -329,7 +383,8 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
     if (element.kind === "symbol") {
       const { layout, options: o } = symbols.find((s) => s.element === element)!;
       const rotation = element.rotation ?? 0;
-      printer.symbols.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, rotation, data: o.data, options: o, layout });
+      if (o.linear) printer.symbols.push(...besideParts(element, o, layout, font));
+      else printer.symbols.push({ id: element.id, xMm: element.xMm, yMm: element.yMm, rotation, data: o.data, options: o, layout });
       const scale = layout.xMm / unit;
       const [dx, dy] = [u(element.xMm), u(element.yMm)];
       const [w, h] = [layout.width * scale, layout.height * scale];

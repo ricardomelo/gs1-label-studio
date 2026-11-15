@@ -14,6 +14,7 @@
  "ISO 4217 currency code (e.g. 826) followed by the ": "codice valuta ISO 4217 (ad es. 978) seguito dal ",
  "A GS1 Logistic Label takes GS1-128 at its table's row.": "Un’etichetta logistica GS1 usa il GS1-128 alla riga della sua tabella.",
  "A linear barcode beside the 2D symbol needs a GTIN (01).": "Un codice a barre lineare accanto al simbolo 2D richiede un GTIN (01).",
+ "This scanning environment has no EAN/UPC: a linear barcode beside the 2D symbol needs one.": "Questo ambiente di lettura non ha EAN/UPC: un codice a barre lineare accanto al simbolo 2D ne richiede uno.",
  "The pattern is empty.": "Lo schema è vuoto.",
  "Not a name the pattern knows: {names}. Use {row}, {symbol}, {key}, an AI such as {01} or {10}, or a column's header such as {Produto}.": "Non è un nome che lo schema conosce: {names}. Usa {row}, {symbol}, {key}, un AI come {01} o {10}, oppure l’intestazione di una colonna come {Produto}.",
  "UPC-E is only for a GTIN-12 that zero-suppresses.": "UPC-E è solo per un GTIN-12 che sopprime gli zeri.",
