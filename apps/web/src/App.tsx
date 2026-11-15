@@ -61,6 +61,7 @@ import {
   sizesFor,
   specificationFor,
   SYMBOLOGIES,
+  POS_RADIUS_MM,
   syntaxEngine,
   xDimension,
   zplTemplate,
@@ -389,7 +390,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         };
         const problems = designed.problems.map((p) => p.kind === "edge"
           ? t("{name} goes past the label's edge.", { name: named(p.id) })
-          : t("{a} and {b} overlap: a barcode's quiet zones must stay clear.", { a: named(p.ids[0]), b: named(p.ids[1]) }));
+          : p.kind === "far"
+            ? t("{b} is more than {mm} mm from the centre of {a}: at the point of sale the 2D barcode and its quiet zones should stay within that radius, or the scanner may not take both for the same trade item (General Specifications 6.3.3.1).", { a: named(p.ids[0]), b: named(p.ids[1]), mm: formatNumber(POS_RADIUS_MM) })
+            : t("{a} and {b} overlap: a barcode's quiet zones must stay clear.", { a: named(p.ids[0]), b: named(p.ids[1]) }));
         const names = designed.symbols.map((s) => tm(SYMBOLOGIES[s.symbology].name)).join(", ");
         return {
           view: {

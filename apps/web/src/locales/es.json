@@ -578,6 +578,7 @@
  "English only": "Solo en inglés",
  "{name} goes past the label's edge.": "{name} sobrepasa el borde de la etiqueta.",
  "{a} and {b} overlap: a barcode's quiet zones must stay clear.": "{a} y {b} se superponen: las zonas de silencio de un código de barras deben quedar libres.",
+ "{b} is more than {mm} mm from the centre of {a}: at the point of sale the 2D barcode and its quiet zones should stay within that radius, or the scanner may not take both for the same trade item (General Specifications 6.3.3.1).": "{b} está a más de {mm} mm del centro de {a}: en el punto de venta, el código 2D y sus zonas de silencio deben quedar dentro de ese radio, o el lector puede no tomar ambos por el mismo artículo comercial (Especificaciones Generales 6.3.3.1).",
  "A label of my own {w} × {h} mm · {symbols}": "Etiqueta propia {w} × {h} mm · {symbols}",
  "Text": "Texto",
  "+ Barcode": "+ Código de barras",

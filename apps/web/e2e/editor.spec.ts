@@ -4304,10 +4304,10 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
   const card = (name: RegExp) => kinds.getByRole("radio", { name });
   await expect(label.getByRole("radio", { name: "The barcode only" })).toHaveAttribute("aria-checked", "true");
   await expect(kinds).toHaveCount(0);
-  // A label: eight cards by segment (backlog 6.5), none chosen yet, the barcode still drawn alone
+  // A label: nine cards by segment (backlog 6.5), none chosen yet, the barcode still drawn alone
   await label.getByRole("radio", { name: "A label", exact: true }).click();
   await expect(kinds.locator(".segment h4")).toHaveText(["Logistics", "Retail", "Healthcare", "Your own"]);
-  await expect(kinds.getByRole("radio")).toHaveCount(8);
+  await expect(kinds.getByRole("radio")).toHaveCount(9);
   await expect(kinds.getByRole("radio", { checked: true })).toHaveCount(0);
   await expect(page.getByText("Choose a kind of label; until then the barcode is drawn alone.")).toBeVisible();
   await expect(page.locator(".caption")).toContainText("QR code version 4");
@@ -4326,14 +4326,14 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
     for (let i = 1; i < boxes.length; i++) under(i - 1, i);
     for (const box of boxes) expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   } else {
-    // Logistics (0); Retail (1, 2); Healthcare (3, 4, 5), its third card wrapping where the row is too narrow; Your own (6, 7)
-    for (const [a, b] of [[1, 2], [3, 4], [6, 7]] as const) {
+    // Logistics (0); Retail (1, 2, 3) and Healthcare (4, 5, 6), a third card wrapping where the row is too narrow; Your own (7, 8)
+    for (const [a, b] of [[1, 2], [4, 5], [7, 8]] as const) {
       expect(Math.abs(boxes[b]!.y - boxes[a]!.y)).toBeLessThan(2);
       expect(boxes[b]!.x).toBeGreaterThan(boxes[a]!.x + boxes[a]!.width - 1);
     }
     under(0, 1);
-    under(2, 3);
-    under(5, 6);
+    under(3, 4);
+    under(6, 7);
   }
   // A label of one's own: chosen, its designer shown
   await card(/^A label of my own/).click();
@@ -4483,6 +4483,32 @@ test("the patient's wristband template sets step 1 to a GSRN with the patient's 
   await page.getByRole("button", { name: "Scan test" }).click();
   await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
   await expect(page.locator(".scan-result")).toContainText("(8018)950600013435200008(7253)SILVA(7254)MARIA(7250)19800315(7252)2");
+});
+
+test("the consumer unit template: an EAN-13 and a QR code with GS1 Digital Link, named once the QR code is more than 50 mm away", async ({ page }) => {
+  // Backlog 6.5: the GTIN alone, so step 1's data fits; General Specifications 6.3.3.1's radius in the designer
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134376");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
+  const unit = page.getByRole("radiogroup", { name: "Kind of label" }).locator('[data-template="retail-digital-link"]');
+  await expect(unit).toContainText("Consumer unit with GS1 Digital Link");
+  await expect(unit).toContainText("64 × 32 mm");
+  await unit.click();
+  await expect(page.locator(".designer")).toBeVisible();
+  await expect(page.locator(".caption")).toContainText("A label of my own 64 × 32 mm · EAN-13, QR code (GS1 Digital Link)");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toHaveText("✓ Read as intended: ]E0 9506000134376 and ]Q1 https://id.gs1.org/01/09506000134376", { timeout: 30_000 });
+  // A wider label, the QR code moved to its far end: named, and back within the radius, no longer
+  await page.locator(".design-list button").nth(1).press("Enter");
+  await page.fill("#page-width", "120");
+  await page.fill("#el-x", "95");
+  await expect(page.locator(".design-problems")).toContainText("QR code (GS1 Digital Link) is more than 50 mm from the centre of EAN-13");
+  await expect(page.locator(".design-problems")).toContainText("(General Specifications 6.3.3.1)");
+  await page.fill("#el-x", "41");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
 });
 
 // Backlog 6.11 (the owner, 15 November 2026; mock-up A of two): the human readable text's format chosen, the AI in

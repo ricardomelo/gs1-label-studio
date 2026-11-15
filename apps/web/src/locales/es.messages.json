@@ -710,5 +710,7 @@
  "ISO 15223-1:2021, symbol 5.7.10": "ISO 15223-1:2021, símbolo 5.7.10",
  "ISO 15223-1:2021, symbol 5.7.7": "ISO 15223-1:2021, símbolo 5.7.7",
  "Patient's wristband": "Pulsera de paciente",
+ "Consumer unit with GS1 Digital Link": "Unidad de consumo con GS1 Digital Link",
+ "EAN-13 and a QR code with GS1 Digital Link within 50 mm of it, a call to scan under the QR code": "EAN-13 y un código QR con GS1 Digital Link a 50 mm o menos de él, una invitación a escanear bajo el código QR",
  "The GSRN and the patient's name, date of birth and sex in a GS1 DataMatrix at each end": "El GSRN y el nombre, la fecha de nacimiento y el sexo del paciente en un GS1 DataMatrix en cada extremo"
 }
