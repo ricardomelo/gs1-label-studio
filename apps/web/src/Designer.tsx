@@ -1,8 +1,8 @@
 import {
-  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, type DesignPictogram, MONTH_NAMES, PICTOGRAM_NAMES, PICTOGRAMS, type PictogramName, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type ErrorLevel, type PlacedElement, type SymbologyId,
+  aiEntry, boxOf, carriesTime, DATE_FORMATS, PICTURE_THRESHOLD, formatDate, imageHeightMm, isDateAi, isFullYearDate, isPercentEncoded, percentDecode, TIME_FORMATS, type DesignImage, type DesignPictogram, MONTH_NAMES, PICTOGRAM_NAMES, PICTOGRAM_SEGMENTS, PICTOGRAMS, pictogramContours, pictogramLabel, type PictogramName, ROTATIONS, type Rotation, SIZES, type MonthLanguage, SYMBOLOGIES, type DesignBox, type DesignElement, type DesignLine, type DesignPage, type DesignSymbol, type DesignText, type ErrorLevel, type PlacedElement, type SymbologyId,
 } from "@gs1-label-studio/core";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { formatNumber, locale, t, tm } from "./i18n.ts";
+import { en, formatNumber, locale, t, tm } from "./i18n.ts";
 import { canDarken, darkened, percentOf, pictureFromFile, thresholdOf } from "./picture.ts";
 import { gridLines, rulerTicks } from "./guides.ts";
 import { freeCorner, heldMove, keyMoved, MOVE_KEYS, type MoveKey } from "./place.ts";
@@ -10,6 +10,7 @@ import { handleAt, heldResize, keyResized, resized, RESIZE_KEYS, TEXT_HEIGHTS, t
 import { keyEnd, placeSaid, sizeSaid } from "./said.ts";
 import { ENVIRONMENT_NAMES } from "./texts.ts";
 import { DesignerSymbolOptions } from "./DesignerSymbolOptions.tsx";
+import { SplitButton } from "./SplitButton.tsx";
 
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): in step 3, "Label" offers it; the page on the
 // canvas with its barcodes and text blocks, each selected by a click and moved by dragging it; "+ Barcode" and
@@ -40,6 +41,10 @@ import { DesignerSymbolOptions } from "./DesignerSymbolOptions.tsx";
 // Escape on the outline or the handle brings it back to the element's row; B sent the focus to the outline as soon as an
 // element was chosen in the list. Then the grid and rulers (mock-up A of two, 8 November 2026, taken under the owner's
 // rule; guides.ts): one button over the canvas turns them on or off; B had the grid alone, from a button by the zoom.
+// Then pictograms (backlog 6.5, 6.13): + Pictogram places one; its arrow lists them by segment, each with its letters or
+// drawing, and the one chosen is added and becomes what the button adds (mock-up A of two, 15 November 2026, taken
+// under the owner's rule: the owner asked for an arrow beside the button); B left the choice to the properties' list,
+// which is now grouped by segment as B showed.
 
 /** The symbols a barcode on the page can be: as step 3 offers them, not GS1 QR Code (ADR 0003). */
 const OFFERED = Object.values(SYMBOLOGIES).filter((symbology) => symbology.id !== "gs1-qrcode");
@@ -87,7 +92,7 @@ export function elementName(element: DesignElement): string {
   if (element.kind === "symbol") return tm(SYMBOLOGIES[element.symbology].name);
   if (element.kind === "text") return `“${element.text.split("\n")[0] || t("Text")}”`;
   if (element.kind === "image") return t("Image {name}", { name: element.name });
-  if (element.kind === "pictogram") return t("Pictogram {letters}", { letters: PICTOGRAMS[element.pictogram].letters });
+  if (element.kind === "pictogram") return t("Pictogram {letters}", { letters: pictogramName(element.pictogram) });
   if (element.kind === "line") {
     const mm = formatNumber(element.lengthMm);
     return element.vertical ? t("Line down {mm} mm", { mm }) : t("Line across {mm} mm", { mm });
@@ -152,8 +157,46 @@ export function removesElement(event: Pick<KeyboardEvent, "key" | "ctrlKey" | "a
   return target.closest(".canvas-frame, .design-tools, .designer") !== null;
 }
 
-/** A new pictogram's frame height, in mm (a medical device's label's UDI pictogram, beside its carrier). */
-const PICTOGRAM_HEIGHT_MM = 4;
+// The core's one-word names, which its catalogue of messages cannot hold (a message has a space): translated here
+en("Sterile");
+en("Non-sterile");
+en("Manufacturer");
+en("Fragile");
+en("Healthcare");
+en("Logistics");
+
+/** What a pictogram goes by: its letters (STERILE EO), or its name for a drawing, in the page's language. */
+function pictogramName(name: PictogramName): string {
+  return PICTOGRAMS[name].cells ? pictogramLabel(name) : tm(PICTOGRAMS[name].name);
+}
+
+/** A pictogram as the editor shows it in a list (backlog 6.13): its letters in their cells, or its drawing. */
+function PictogramMark({ name }: { name: PictogramName }) {
+  const { cells, drawing } = PICTOGRAMS[name];
+  if (cells) {
+    return (
+      <span className="pictogram-mark">
+        {cells.map((letters) => (
+          <span key={letters}>{letters}</span>
+        ))}
+      </span>
+    );
+  }
+  const d = pictogramContours(name).map((contour) => contour.map(([x, y], i) => `${i ? "L" : "M"}${(x * 100).toFixed(1)},${(y * 100).toFixed(1)}`).join("") + "Z").join("");
+  return (
+    <svg className="pictogram-drawing" viewBox={`0 0 ${drawing!.aspect * 100} 100`} aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
+/** The pictograms in + Pictogram's menu, each under its segment's heading (backlog 6.13, mock-up A of two). */
+function pictogramChoices() {
+  return PICTOGRAM_NAMES.map((name) => {
+    const segment = PICTOGRAM_SEGMENTS.find((s) => s.segment === PICTOGRAMS[name].segment)!;
+    return { value: name, text: tm(PICTOGRAMS[name].name), group: `${tm(segment.name)} · ${tm(segment.source)}`, icon: <PictogramMark name={name} /> };
+  });
+}
 
 /** + Barcode, + Text, + Shape, + Pictogram, + Image, the grid and rulers, and Delete, over the canvas. */
 export function DesignerTools({ page, selected, symbology, onChange, guides, onGuides }: ToolsProps) {
@@ -187,6 +230,9 @@ export function DesignerTools({ page, selected, symbology, onChange, guides, onG
     const placed = { ...element, ...freeCorner(page, element.xMm, element.yMm) };
     onChange({ ...page, elements: [...page.elements, placed] }, placed.id);
   };
+  // + Pictogram (backlog 6.13): the pictogram last chosen from its arrow, UDI at first, at its own height
+  const [pictogram, setPictogram] = useState<PictogramName>("udi");
+  const addPictogram = (name: PictogramName) => add({ id: nextId(page), kind: "pictogram", pictogram: name, heightMm: PICTOGRAMS[name].heightMm, xMm: 4, yMm: 4 });
   const addImage = async (chosen: File | undefined) => {
     if (!chosen) return;
     try {
@@ -208,14 +254,20 @@ export function DesignerTools({ page, selected, symbology, onChange, guides, onG
       <button type="button" className="btn" onClick={() => add({ id: nextId(page), kind: "line", vertical: false, lengthMm: 40, thicknessMm: 0.5, xMm: 4, yMm: 4 })}>
         {t("+ Shape")}
       </button>
-      <button
-        type="button"
-        className="btn"
-        title={t("The UDI or MD pictogram of ISO 15223-1, for a medical device's label")}
-        onClick={() => add({ id: nextId(page), kind: "pictogram", pictogram: "udi", heightMm: PICTOGRAM_HEIGHT_MM, xMm: 4, yMm: 4 })}
-      >
-        {t("+ Pictogram")}
-      </button>
+      <SplitButton
+        text={t("+ Pictogram")}
+        title={t("Adds the pictogram {name}; the arrow lists them all, by segment", { name: pictogramName(pictogram) })}
+        menuLabel={t("Choose a pictogram")}
+        heading={t("Pictograms by segment: the one chosen is added, and the button adds it again")}
+        menuClass="scrolls"
+        onClick={() => addPictogram(pictogram)}
+        value={pictogram}
+        choices={pictogramChoices()}
+        onChoose={(name) => {
+          setPictogram(name);
+          addPictogram(name);
+        }}
+      />
       <button type="button" className="btn" onClick={() => file.current?.click()}>
         {t("+ Image")}
       </button>
@@ -597,22 +649,31 @@ function ShapeFields({ element, onChange }: { element: DesignLine | DesignBox; o
 }
 
 /**
- * A pictogram's properties (backlog 6.5): which of ISO 15223-1's, named and with its symbol's number, and its frame's
- * height, its width following its letters.
+ * A pictogram's properties (backlog 6.5, 6.13): which one, listed by segment, named and with its standard's symbol; and
+ * its height, its width following its letters or its drawing.
  */
 function PictogramFields({ element, onChange }: { element: DesignPictogram; onChange: (element: DesignPictogram) => void }) {
+  const chosen = PICTOGRAMS[element.pictogram];
   return (
     <>
       <div className="wide">
         <label htmlFor="el-pictogram">{t("Pictogram")}</label>
         <select id="el-pictogram" value={element.pictogram} onChange={(e) => onChange({ ...element, pictogram: e.target.value as PictogramName })}>
-          {PICTOGRAM_NAMES.map((name) => (
-            <option key={name} value={name}>
-              {`${PICTOGRAMS[name].letters} · ${tm(PICTOGRAMS[name].name)}`}
-            </option>
+          {PICTOGRAM_SEGMENTS.map((segment) => (
+            <optgroup key={segment.segment} label={`${tm(segment.name)} · ${tm(segment.source)}`}>
+              {PICTOGRAM_NAMES.filter((name) => PICTOGRAMS[name].segment === segment.segment).map((name) => (
+                <option key={name} value={name}>
+                  {PICTOGRAMS[name].cells ? `${pictogramLabel(name)} · ${tm(PICTOGRAMS[name].name)}` : tm(PICTOGRAMS[name].name)}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
-        <p className="hint">{t("{source}: the letters in a frame, as the standard draws them.", { source: tm(PICTOGRAMS[element.pictogram].source) })}</p>
+        <p className="hint">
+          {chosen.cells
+            ? t("{source}: the letters in a frame, as the standard draws them.", { source: tm(chosen.source) })
+            : t("{source}: drawn after the standard's symbol; a printer prints it as an image (not yet in DPL).", { source: tm(chosen.source) })}
+        </p>
       </div>
       <div>
         <label htmlFor="el-pictogram-height">{t("Height (mm)")}</label>

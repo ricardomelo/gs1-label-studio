@@ -860,8 +860,15 @@
  "+ Pictogram": "+ Pittogramma",
  "Pictogram": "Pittogramma",
  "Pictogram {letters}": "Pittogramma {letters}",
- "The UDI or MD pictogram of ISO 15223-1, for a medical device's label": "Il pittogramma UDI o MD della ISO 15223-1, per l’etichetta di un dispositivo medico",
  "{source}: the letters in a frame, as the standard draws them.": "{source}: le lettere in una cornice, come le disegna la norma.",
  "Height {mm} mm": "Altezza {mm} mm",
- "Developed by": "Sviluppato da"
+ "Developed by": "Sviluppato da",
+ "Sterile": "Sterile",
+ "Non-sterile": "Non sterile",
+ "Manufacturer": "Fabbricante",
+ "Fragile": "Fragile",
+ "Choose a pictogram": "Scegli un pittogramma",
+ "Adds the pictogram {name}; the arrow lists them all, by segment": "Aggiunge il pittogramma {name}; la freccia li elenca tutti, per settore",
+ "Pictograms by segment: the one chosen is added, and the button adds it again": "Pittogrammi per settore: quello scelto viene aggiunto, e il pulsante lo aggiunge di nuovo",
+ "{source}: drawn after the standard's symbol; a printer prints it as an image (not yet in DPL).": "{source}: disegnato secondo il simbolo della norma; una stampante lo stampa come immagine (non ancora in DPL)."
 }

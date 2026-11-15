@@ -4466,6 +4466,73 @@ test("the medical device's UDI template shows the UDI's element strings under it
   expect(file).toContain("^FD(01)09506000134376^FS");
 });
 
+test("+ Pictogram's arrow lists the pictograms by segment: the one chosen is added at its height, drawn, and printed as an image", async ({ page }) => {
+  // Backlog 6.13 (the owner, 15 November 2026: an arrow beside + Pictogram to choose among pictograms by segment;
+  // mock-up A of two): three segments, each pictogram with its letters or drawing; the one chosen is added and is
+  // what the button adds next; the properties list them by segment; a drawing prints as an image (^GFA)
+  await on(page, "label");
+  await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
+  await page.locator('[data-template="healthcare-udi"]').click();
+  await expect(page.locator(".designer")).toBeVisible();
+  const arrow = page.getByRole("button", { name: "Choose a pictogram" });
+  await expect(arrow).toHaveAttribute("aria-expanded", "false");
+  await arrow.click();
+  const menu = page.getByRole("menu", { name: "Pictograms by segment: the one chosen is added, and the button adds it again" });
+  await expect(menu.locator(".split-group")).toHaveText(["Healthcare · ISO 15223-1", "Logistics · ISO 7000 / ISO 780", "Prepacked goods · Directive 76/211/EEC"]);
+  const items = menu.getByRole("menuitemradio");
+  await expect(items).toHaveCount(17);
+  await expect(items.first()).toHaveAttribute("aria-checked", "true");
+  await expect(items.nth(7)).toHaveText("STERILEEOSterilized using ethylene oxide");
+  await expect(menu.locator("svg.pictogram-drawing")).toHaveCount(7);
+  // Within the window, whatever the screen
+  const box = (await menu.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+  // The keyboard: the choice made has the focus; down to the next, Escape closes and gives the focus back
+  await expect(items.first()).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(items.nth(1)).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(arrow).toBeFocused();
+  // Use-by date chosen: added 4 mm high, its drawing named in the properties, listed by segment
+  await arrow.click();
+  await menu.getByRole("menuitemradio", { name: "Use-by date" }).click();
+  const chosen = page.locator(".design-list button[aria-pressed=true]");
+  await expect(chosen).toHaveText("▭ Pictogram Use-by date");
+  await expect(page.locator("#el-pictogram")).toHaveValue("use-by");
+  await expect(page.locator("#el-pictogram-height")).toHaveValue("4");
+  await expect(page.locator(".designer")).toContainText("ISO 15223-1:2021, symbol 5.1.4 (ISO 7000-2607): drawn after the standard's symbol; a printer prints it as an image (not yet in DPL).");
+  await expect(page.locator("#el-pictogram optgroup")).toHaveCount(3);
+  await expect(page.locator("#el-pictogram optgroup").nth(1).locator("option")).toHaveText(["Fragile", "This way up", "Keep dry"]);
+  // The button adds it again; the arrow shows it chosen
+  await page.getByRole("button", { name: "+ Pictogram" }).click();
+  const hourglasses = page.locator(".design-list button", { hasText: "Pictogram Use-by date" });
+  await expect(hourglasses).toHaveCount(2);
+  await expect(chosen).toHaveText("▭ Pictogram Use-by date");
+  await arrow.click();
+  await expect(menu.getByRole("menuitemradio", { name: "Use-by date" })).toHaveAttribute("aria-checked", "true");
+  // Fragile: a carton's pictogram, 15 mm high; STERILE R by the list, its letters in two cells
+  await menu.getByRole("menuitemradio", { name: "Fragile" }).click();
+  await expect(page.locator("#el-pictogram-height")).toHaveValue("15");
+  await page.selectOption("#el-pictogram", "sterile-r");
+  await expect(chosen).toHaveText("▭ Pictogram STERILE R");
+  await expect(page.locator(".designer")).toContainText("ISO 15223-1:2021, symbol 5.2.4: the letters in a frame, as the standard draws them.");
+  await page.getByRole("button", { name: "Delete" }).click();
+  // The two hourglasses side by side within the label, printed as images; the other pictograms as boxes and text
+  await hourglasses.nth(0).press("Enter");
+  await page.fill("#el-x", "30");
+  await page.fill("#el-y", "15");
+  await hourglasses.nth(1).press("Enter");
+  await page.fill("#el-x", "35");
+  await page.fill("#el-y", "15");
+  await expect(page.locator(".design-problems")).toHaveCount(0);
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  expect(file.match(/\^GFA/g)).toHaveLength(2);
+  expect(file).toContain("^FDUDI^FS");
+});
+
 test("the patient's wristband template sets step 1 to a GSRN with the patient's data, its two GS1 DataMatrix read back", async ({ page }) => {
   // Backlog 6.5: another key than the start's GTIN, so step 1 gives way to the template's example after saying so
   await on(page, "label");

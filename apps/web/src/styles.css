@@ -119,6 +119,16 @@ input[aria-invalid="true"] { border-color: var(--error); }
 .split-menu [role="menuitemradio"]:hover, .split-menu [role="menuitemradio"]:focus-visible { background: var(--soft); outline: none; }
 .split-text { grid-column: 2; }
 .split-detail { grid-column: 2; font-size: 12px; color: var(--muted); }
+/* Choices in groups, each with a picture (backlog 6.13: + Pictogram's pictograms by segment) */
+.split-group { font-size: 12px; font-weight: 600; color: var(--muted); padding: 10px 14px 2px; border-top: 1px solid var(--field-line); margin-top: 4px; }
+.split-menu [role="menuitemradio"].with-icon { grid-template-columns: 18px 100px 1fr; align-items: center; }
+.split-menu .with-icon .split-text, .split-menu .with-icon .split-detail { grid-column: 3; }
+.split-icon { grid-column: 2; display: flex; align-items: center; }
+.split-menu.scrolls { max-height: min(70vh, 560px); overflow-y: auto; }
+.pictogram-mark { display: inline-block; border: 1.5px solid currentColor; font-size: 11px; font-weight: 600; line-height: 16px; letter-spacing: 0.02em; white-space: nowrap; }
+.pictogram-mark > span { padding: 0 4px; }
+.pictogram-mark > span + span { border-left: 1.5px solid currentColor; }
+.pictogram-drawing { height: 20px; width: auto; fill: currentColor; }
 @media (max-width: 600px) {
   .split-menu { position: fixed; left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; min-width: 0; border-radius: 14px 14px 0 0; padding: 8px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 60; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.25); }
   .split-menu [role="menuitemradio"] { padding: 11px 18px; }
