@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   companyPart,
+  decodeEpc,
+  EPC_QUALIFIERS,
+  epcPathOf,
   encodeEpc,
   EpcError,
   epcSchemes,
@@ -107,5 +110,44 @@ describe("EPC read back by an independent decoder (epc-tds)", async () => {
   it.each(decodable)("(%s) %s %j, prefix of %i digits", (key, value, qualifiers, length, filter, expected) => {
     const epc = encodeEpc(schemes, key, value, qualifiers, length, filter);
     expect(tds.valueOf(epc.hex).toTagURI()).toBe(decodeURIComponent(expected.tagUri as string));
+  });
+});
+
+// A classic EPC read back from its hexadecimal (backlog 6.7: an EPC pasted in step 1 fills the data): every encoding of
+// the resolver's cases gives back its scheme, filter, prefix length, URIs and the key with its EPC qualifiers.
+describe("a classic EPC read back from its hexadecimal", () => {
+  const encodings = reference.encodings.filter(([, , , , , e]) => typeof e.scheme === "string");
+  it.each(encodings)("(%s) %s %j, prefix of %i digits", (key, value, qualifiers, length, filter) => {
+    const epc = encodeEpc(schemes, key, value, qualifiers, length, filter);
+    for (const hex of [epc.hex, epc.linkHex]) {
+      const read = decodeEpc(schemes, hex)!;
+      expect(read).toMatchObject({ scheme: epc.scheme, filter, prefixLength: length, tagUri: epc.tagUri, pureIdentity: epc.pureIdentity });
+      const expected: [string, string][] = [[key, value], ...EPC_QUALIFIERS.filter((q) => qualifiers[q] && !(key === "414" && q === "254" && qualifiers[q] === "0")).map((q) => [q, qualifiers[q]!] as [string, string])];
+      expect(read.elements).toEqual(expected);
+      expect(read.digitalLink).toBe(`https://id.gs1.org${epcPathOf(key, value, qualifiers).replace(/\/254\/0$/, "")}`);
+    }
+  });
+
+  it("refuses what no scheme's header and partition take", () => {
+    expect(decodeEpc(schemes, "")).toBeNull();
+    expect(decodeEpc(schemes, "not hex")).toBeNull();
+    expect(decodeEpc(schemes, "FF00")).toBeNull();
+    // SGTIN-96 cut short, then with a bit set after its 96 bits
+    const epc = encodeEpc(schemes, "01", "09506000134352", { "21": "12345" }, 7, 1);
+    expect(decodeEpc(schemes, epc.hex.slice(0, 20))).toBeNull();
+    expect(decodeEpc(schemes, epc.hex + "0001")).toBeNull();
+    expect(decodeEpc(schemes, epc.hex + "0000")?.scheme).toBe("sgtin-96");
+    // the partition 7 (a prefix of 5 digits) is none of TDS's
+    const bits = [...epc.hex].map((c) => parseInt(c, 16).toString(2).padStart(4, "0")).join("");
+    const bad = bits.slice(0, 11) + "111" + bits.slice(14);
+    expect(decodeEpc(schemes, (bad.match(/.{4}/g) ?? []).map((n) => parseInt(n, 2).toString(16)).join(""))).toBeNull();
+  });
+
+  it("reads TDS's own examples", () => {
+    // TDS 2.3, E.1 and E.2: an SGTIN-96 and an SGTIN-198
+    expect(decodeEpc(schemes, "3074257BF7194E4000001A85")).toMatchObject({
+      scheme: "sgtin-96", filter: 3, prefixLength: 7, tagUri: "urn:epc:tag:sgtin-96:3.0614141.812345.6789",
+      elements: [["01", "80614141123458"], ["21", "6789"]],
+    });
   });
 });

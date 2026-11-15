@@ -363,3 +363,79 @@ export function epcSchemes(): Promise<Record<string, EpcScheme>> {
   });
   return loaded;
 }
+
+export interface DecodedEpc {
+  /** Lower case, as in the tag URI: sgtin-96, sscc-96, … */
+  scheme: string;
+  filter: number;
+  /** The company prefix's length, which the binary string's partition says. */
+  prefixLength: number;
+  /** The key, then the qualifiers that are part of the EPC, as the GS1 Digital Link path carries them. */
+  elements: [string, string][];
+  tagUri: string;
+  pureIdentity: string;
+  /** The GS1 Digital Link URI on id.gs1.org. */
+  digitalLink: string;
+}
+
+/** A field of a BINARY grammar read back: a number written out in decimal, or characters until a zero character. */
+function unbinary(spec: EpcField, bits: string): string {
+  if (spec.compaction) {
+    const size = spec.compaction === "7-bit" ? 7 : 6;
+    let out = "";
+    for (let i = 0; i + size <= bits.length; i += size) {
+      const code = parseInt(bits.slice(i, i + size), 2);
+      if (code === 0) break;
+      // TDS 14.3.6: a 6-bit character is the low six bits of 0x20 to 0x5F
+      out += String.fromCharCode(size === 6 && code < 0x20 ? code | 0x40 : code);
+    }
+    return out;
+  }
+  const value = BigInt(`0b${bits || "0"}`).toString();
+  // a field of no digits (a GRAI's asset type under a 12-digit prefix) is written as zero bits (TDS 14.3.2)
+  if (spec.length !== undefined && spec.length !== "" && Number(spec.length) === 0) return "";
+  return spec.length && Number(spec.length) ? value.padStart(Number(spec.length), "0") : value;
+}
+
+/**
+ * A classic EPC (one of the schemes defined before TDS 2.0) read from its hexadecimal, as it is on a tag (zero-filled
+ * to a 16-bit word or not): the BINARY level whose pattern takes the bits gives the fields, the GS1_DIGITAL_LINK level
+ * writes them back as a path (TDT 3.x, decoding). Null when no scheme's header and partition take the bits.
+ */
+export function decodeEpc(schemes: Record<string, EpcScheme>, hex: string): DecodedEpc | null {
+  const clean = hex.replace(/\s+/g, "");
+  if (!/^[0-9A-Fa-f]+$/.test(clean)) return null;
+  const all = [...clean].map((c) => parseInt(c, 16).toString(2).padStart(4, "0")).join("");
+  for (const scheme of Object.values(schemes)) {
+    const length = scheme.tagLength ? Number(scheme.tagLength) : null;
+    const bits = length === null ? all : all.slice(0, length);
+    // the zero fill after the binary string, to the word boundary or the end of the EPC memory, is zeros only
+    if (length !== null && /1/.test(all.slice(length))) continue;
+    for (const opt of scheme.levels.BINARY.options) {
+      const match = pyMatch(opt.pattern, bits);
+      if (!match) continue;
+      const key = opt.optionKey;
+      const values: Record<string, string> = { gs1companyprefixlength: key, tagLength: String(scheme.tagLength ?? "") };
+      try {
+        for (const spec of opt.fields) values[spec.name] = unbinary(spec, match[Number(spec.seq)] ?? "");
+        run(scheme.levels.BINARY, "EXTRACT", values);
+        const path = text(scheme.levels.GS1_DIGITAL_LINK, key, { ...values, uriStem: "" });
+        const tagUri = text(scheme.levels.TAG_ENCODING, key, values);
+        const pureIdentity = text(scheme.levels.PURE_IDENTITY, key, values);
+        if (!path || !tagUri || !pureIdentity) continue;
+        const parts = path.split("/").slice(1);
+        const elements: [string, string][] = [];
+        for (let i = 0; i + 1 < parts.length; i += 2) elements.push([parts[i]!, unquote(parts[i + 1]!)]);
+        // the extension 0 a GLN without extension takes (TDS 6.3.3) is not data
+        const data = elements.filter(([ai, v], i) => !(i > 0 && ai === "254" && v === "0"));
+        return {
+          scheme: scheme.name.toLowerCase(), filter: Number(values.filter ?? 0), prefixLength: Number(key), elements: data,
+          tagUri, pureIdentity, digitalLink: `https://id.gs1.org${data.map(([ai, v]) => `/${ai}/${urlEscape(v)}`).join("")}`,
+        };
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
+}

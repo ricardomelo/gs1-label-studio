@@ -241,6 +241,8 @@ export {
   encodeEpc,
   EPC_QUALIFIERS,
   EpcError,
+  decodeEpc,
+  type DecodedEpc,
   epcMissing,
   epcPathOf,
   epcSchemes,
