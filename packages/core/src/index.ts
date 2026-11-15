@@ -102,6 +102,7 @@ export {
   EXAMPLE_VALUES,
   exampleValues,
   examplesLeft,
+  examplesStillIn,
   nextAssistantStep,
   normaliseNeed,
   readNeed,
@@ -116,6 +117,16 @@ export {
   type AssistantStep,
   type OtherKey,
 } from "./assistant.ts";
+export {
+  LABEL_TEMPLATES,
+  leaveOut,
+  TEMPLATE_SEGMENTS,
+  templateById,
+  templateFit,
+  type LabelTemplate,
+  type TemplateFit,
+  type TemplateSegment,
+} from "./templates.ts";
 export { HriFont } from "./hri.ts";
 export { pyFixed } from "./pyformat.ts";
 export {

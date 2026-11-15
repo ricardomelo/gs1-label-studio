@@ -386,8 +386,16 @@ export function exampleValues(outcome: AssistantOutcome): [ai: string, value: st
  * removed.
  */
 export function examplesLeft(outcome: AssistantOutcome, id: Identification): string[] {
+  return examplesStillIn(exampleValues(outcome), id);
+}
+
+/**
+ * Of example values by AI, those still in step 1 (`examplesLeft`, and a template's, backlog 6.5): the key while it is
+ * the same key with the example's value, a qualifier or an attribute while a row of that AI holds it.
+ */
+export function examplesStillIn(examples: readonly (readonly [string, string])[], id: Identification): string[] {
   const rows = rowsOf(id);
-  return exampleValues(outcome)
+  return examples
     .filter(([ai, value]) => (ai === id.key ? id.value.trim() === value : rows.some(([a, v]) => a === ai && v.trim() === value)))
     .map(([ai]) => ai);
 }

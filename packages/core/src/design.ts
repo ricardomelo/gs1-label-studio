@@ -13,8 +13,8 @@ import { dataFor, InputError } from "./syntax.ts";
 // A label of one's own (backlog 4.2, mock-up A of two, 3 November 2026): a page in millimetres with barcodes and text
 // blocks placed on it, lines and boxes, and images. Each barcode is laid out as the editor lays out a symbol alone — its quiet zones and text, at the
 // scanning environment's X-dimension — and the page is one Layout, in units of the smallest module, so that the SVG,
-// PNG, PDF and EPS draw it as they draw a symbol. Every place has its own label (the owner), so the designer, not
-// ready-made templates, is what the studio offers.
+// PNG, PDF and EPS draw it as they draw a symbol. Every place has its own label (the owner), so the designer is what the
+// studio offers first; the templates by segment (backlog 6.5, templates.ts) are pages of it, to change as any other.
 
 /** A barcode on the page: its symbology, the element strings it carries (null: all), its size and its top left corner. */
 export interface DesignSymbol {
