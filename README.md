@@ -777,6 +777,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   to type marked in step 1 (mock-up A7: an amber outline and a line under each example value, the card naming those
   left) and the first screen's *I know what I want* as a button (the owner, 14 November 2026: the link was too discreet
   on a phone) done 14 November; next: 6.4 and 6.5 on it*
+- 6.11 The human readable text's format, chosen (S to M; the owner, 15 November 2026): under each symbol, the AIs in
+  parentheses as today, *(17) 271231*; data titles, *EXPIRY 271231*; both, *EXPIRY (17) 271231* (General
+  Specifications 4.14.1, figure 4-8); or a format of one's own. A date written otherwise, such as *20 Nov 2027*, takes
+  its data title without the AI (figure 4-9). In the files and the four printer languages (ADR 0002: a native command
+  only once a test shows the same symbol); data titles in the six languages from `data_titles.json`
 
 
 ## Licence
