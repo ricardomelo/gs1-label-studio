@@ -137,6 +137,35 @@ export const LABEL_TEMPLATES: readonly LabelTemplate[] = [
     },
     section: "2.1.4, 4.15; ISO 15223-1",
   },
+  {
+    // A patient's wristband (backlog 6.5, mock-up A of two, 15 November 2026): the GSRN of the service recipient (8018)
+    // with the patient's family and given names, date of birth and sex (7253, 7254, 7250, 7252), in a GS1 DataMatrix at
+    // each end, so that one faces the scanner however the band curves round the wrist; the name large between them, the
+    // date of birth in a format of its own without its AI (4.14.1, figure 4-9) and the GSRN with its AI. B put the GSRN
+    // alone in a GS1-128 along the band.
+    id: "patient-wristband",
+    segment: "healthcare",
+    name: "Patient's wristband",
+    line: "The GSRN and the patient's name, date of birth and sex in a GS1 DataMatrix at each end",
+    identification: {
+      key: "8018", value: EXAMPLE_VALUES["8018"]!, qualifiers: {},
+      attributes: [["7253", "SILVA"], ["7254", "MARIA"], ["7250", "19800315"], ["7252", "2"]],
+    },
+    answers: {},
+    picked: { symbol: "gs1-datamatrix" },
+    page: {
+      widthMm: 150,
+      heightMm: 25,
+      elements: [
+        { id: "e1", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 2, yMm: 3 },
+        { id: "e2", kind: "text", text: lines("{7253}, {7254}"), heightMm: 4, xMm: 24, yMm: 4 },
+        { id: "e3", kind: "text", text: lines("DOB {7250:DD/MM/YYYY}   SEX {7252}"), heightMm: 2.5, xMm: 24, yMm: 11 },
+        { id: "e4", kind: "text", text: lines("GSRN (8018) {8018}"), heightMm: 2.5, xMm: 24, yMm: 17 },
+        { id: "e5", kind: "symbol", symbology: "gs1-datamatrix", ais: null, size: 100, hri: false, xMm: 128, yMm: 3 },
+      ],
+    },
+    section: "2.5.2, 4.14.1",
+  },
 ];
 
 /** The template by its id, or undefined. */

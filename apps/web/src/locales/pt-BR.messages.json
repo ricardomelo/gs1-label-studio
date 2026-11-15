@@ -708,5 +708,7 @@
  "Unique device identifier": "Identificador único do dispositivo",
  "Medical device": "Dispositivo médico",
  "ISO 15223-1:2021, symbol 5.7.10": "ISO 15223-1:2021, símbolo 5.7.10",
- "ISO 15223-1:2021, symbol 5.7.7": "ISO 15223-1:2021, símbolo 5.7.7"
+ "ISO 15223-1:2021, symbol 5.7.7": "ISO 15223-1:2021, símbolo 5.7.7",
+ "Patient's wristband": "Pulseira de paciente",
+ "The GSRN and the patient's name, date of birth and sex in a GS1 DataMatrix at each end": "O GSRN e o nome, a data de nascimento e o sexo do paciente num GS1 DataMatrix em cada ponta"
 }

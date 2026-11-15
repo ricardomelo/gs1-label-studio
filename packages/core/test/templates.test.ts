@@ -46,7 +46,7 @@ const STEM = "https://id.gs1.org";
 describe("labels by segment", () => {
   it("lists retail, then healthcare, each template with a unique id", () => {
     expect(TEMPLATE_SEGMENTS).toEqual(["retail", "healthcare"]);
-    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "healthcare", "healthcare"]);
+    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "healthcare", "healthcare", "healthcare"]);
     expect(new Set(LABEL_TEMPLATES.map((t) => t.id)).size).toBe(LABEL_TEMPLATES.length);
     expect(templateById("healthcare-pack")?.name).toBe("Medicine or medical device");
     expect(templateById("nothing")).toBeUndefined();
@@ -63,13 +63,15 @@ describe("labels by segment", () => {
         expect(option, `${symbol} offered`).toBeDefined();
       }
       // The page: within its edges, nothing over a symbol's quiet zones; each symbol read back from the SVG
-      const environment = Object.entries({ 1: "retail", 6: "healthcare" }).find(([table]) => Number(table) === leaf!.table)?.[1];
+      const environment = Object.entries({ 1: "retail", 6: "healthcare", 11: "gsrn" }).find(([table]) => Number(table) === leaf!.table)?.[1];
       expect(environment, `table ${leaf!.table}`).toBeDefined();
       const label = designLabel(template.page, identified, font, { environment: environment! });
       expect(label.problems).toEqual([]);
       const svg = labelSvg(label.options, label.layout, font);
       expect(await read(new Resvg(svg, { fitTo: { mode: "zoom", value: 8 }, background: "#fff" }).render().asPng())).toEqual([...label.expected].sort());
       expect(label.expected.length).toBe(template.page.elements.filter((e) => e.kind === "symbol").length);
+      // The symbol step 2 picks is the page's
+      expect(template.page.elements.some((e) => e.kind === "symbol" && e.symbology === template.picked.symbol)).toBe(true);
       // Every field of its texts filled from the data
       for (const text of label.layout.texts) expect(text.text).not.toMatch(/[{}]/);
     }, 60_000);
@@ -85,6 +87,15 @@ describe("labels by segment", () => {
     // The GS1 DataMatrix's element strings in the healthcare order: the expiry, then the lot and serial number last
     const pack = templateById("healthcare-pack")!;
     expect(identify(engine, pack.identification, STEM).elementString).toBe("(01)09506000134352(17)291231(10)ABC123(21)1001");
+    // The UDI's element strings, a line each, no data titles
+    expect(texts("healthcare-udi", "healthcare")).toEqual(expect.arrayContaining(["(01)09506000134352", "(17)291231", "(10)ABC123", "(21)1001", "UDI", "MD"]));
+    // The wristband: the patient's name, the date of birth in a format of its own without its AI, the GSRN with its AI
+    expect(texts("patient-wristband", "gsrn")).toEqual(expect.arrayContaining(["SILVA, MARIA", "DOB 15/03/1980   SEX 2", "GSRN (8018) 950600013435200008"]));
+    const band = templateById("patient-wristband")!;
+    // A GS1 DataMatrix at each end, one past the text's end and at the band's right edge
+    const symbols = designLabel(band.page, identify(engine, band.identification, STEM), font, { environment: "gsrn" }).placed.filter((p) => p.id === "e1" || p.id === "e5");
+    expect(symbols.map((p) => [p.xMm, Math.round((p.xMm + p.widthMm) * 100) / 100])).toEqual([[2, 16.44], [128, 142.44]]);
+    expect(identify(engine, band.identification, STEM).elementString).toBe("(8018)950600013435200008(7253)SILVA(7254)MARIA(7250)19800315(7252)2");
     // A variable measure GTIN starts with 9; its weight and price as element strings
     const weight = templateById("retail-weight")!;
     expect(identify(engine, weight.identification, STEM).elementString).toBe("(01)99506000134355(3102)000125(3922)1599");
