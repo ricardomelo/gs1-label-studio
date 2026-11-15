@@ -1051,6 +1051,278 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "check",
+   "file": "packages/core/test/check.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A1 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A2 (qrcode)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A3 (code128)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A4 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A5 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A6 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A7 (interleaved2of5)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A8 (code39)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B1 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B2 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B3 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B4 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B5 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B6 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B7 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B8 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B9 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B10 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B11 (datamatrix)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › B12 (code128)",
+     "status": "passed"
+    },
+    {
+     "name": "the fault corpus: each fault of groups A and B drawn in a symbol, read back by ZXing and found at its bytes › A9: a reading with no data, as from a symbol the decoder finds and cannot read, is not assessed",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › covers every symbology",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › ean13 9506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › ean8 95012346",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › upca 614141000036",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › upce 01234565",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › itf14 19506000134359",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › gs1-128 (00)106141411234567897",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › gs1-128 (01)09506000134352(10)ABC123",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › gs1-datamatrix (01)09506000134352(17)271231(10)ABC123",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › gs1-qrcode (01)09506000134352(21)12345",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › dl-qrcode https://id.gs1.org/01/09506000134352/10/ABC123",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › dl-datamatrix https://id.gs1.org/01/09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-omni (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-truncated (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-stacked (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-stacked-omni (01)09506000134352",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-limited (01)15012345678907",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-expanded (01)09506000134352(10)ABC123",
+     "status": "passed"
+    },
+    {
+     "name": "the clean corpus: every symbol the studio makes follows the rules › databar-expanded-stacked (01)09506000134352(3103)001250(10)ABC123(21)12345",
+     "status": "passed"
+    },
+    {
+     "name": "check() › the project's worked example: a plain Data Matrix with the parentheses encoded and an impossible date gives A1, B1, D1",
+     "status": "passed"
+    },
+    {
+     "name": "check() › reports every fault in one symbol, not only the engine's first",
+     "status": "passed"
+    },
+    {
+     "name": "check() › finds the associations once every element string is valid alone",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B3: a separator left out is a Warning while the value is still valid, and the data is left as it is",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B3: where two separators would each make the data valid, the one before a value of predefined length",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B3: never a separator before a company's internal AI (90 to 99), which would take any rest",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B7 in bracketed data: an AI between parentheses that does not exist",
+     "status": "passed"
+    },
+    {
+     "name": "check() › lists warnings before notes",
+     "status": "passed"
+    },
+    {
+     "name": "check() › A8: a plain symbol whose data is not GS1 data, even digits that look like an AI",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B2: printed titles and spaces between bracketed element strings",
+     "status": "passed"
+    },
+    {
+     "name": "check() › B2 as the project defines it: a space that leaves valid data once removed, wherever it is",
+     "status": "passed"
+    },
+    {
+     "name": "check() › takes pasted text without an identifier as people write it: brackets, ^ for FNC1, a GTIN alone",
+     "status": "passed"
+    },
+    {
+     "name": "check() › EAN/UPC and ITF-14 carry a GTIN, its check digit verified (C1 until item 7.1 c gives its own rule)",
+     "status": "passed"
+    },
+    {
+     "name": "check() › a GS1 Digital Link URI, in a plain symbol or an NFC tag, through the engine (group G is item 7.1 c)",
+     "status": "passed"
+    },
+    {
+     "name": "check() › points at bytes, not characters, when the data holds UTF-8",
+     "status": "passed"
+    },
+    {
+     "name": "check() › leaves the generators' parse() as it was: associations still checked after a check of one element string",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › No known AI is a prefix of: 8912... → B7",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › AI (01) data has incorrect length → B8",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › AI (10) data is too long → B8",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › AI (10): A non-CSET 82 character was found where a CSET 82 character is expected. → B9",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › Multiple instances of AI (10) have different values → B10",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › AI (01): The numeric check digit is incorrect. → C1",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › AI (17): The date contains an illegal day of the month. → D1",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › Required AIs for AI (10) are not satisfied: 01,02,03,8006,8026 → E1",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › It is invalid to pair AI (01) with AI (02) → E2",
+     "status": "passed"
+    },
+    {
+     "name": "faultOfEngineMessage() › No GS1 DL keys found in path info → G1",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "checkDigit",
    "file": "packages/core/test/checkDigit.test.ts",
    "kind": "unit",
@@ -6397,6 +6669,46 @@
     }
    ],
    "area": "RFID, NFC and digital signatures"
+  },
+  {
+   "program": "faults",
+   "file": "packages/core/test/faults.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the catalogue of faults › holds the project's 77 codes, in its order, and no other",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › gives every fault its group, a severity, four texts and at least one source",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › names the backlog item that finds each group: A and B now, the others later",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › keeps a severity's variants beside the usual one",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › refuses a code that is not in it",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › proves with every repair only faults it holds",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › names, in check.ts, only codes it holds",
+     "status": "passed"
+    },
+    {
+     "name": "the catalogue of faults › copies no text of the standard: its texts cite section numbers, the General Specifications' sentences stay out",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
   },
   {
    "program": "gs1128",

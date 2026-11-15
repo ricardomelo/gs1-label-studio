@@ -851,7 +851,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   expert view with the raw data, history, export, reports and sharing by e-mail and WhatsApp (also for the
   generators), and items 7.1 a to m to execute; twelve open questions for the owner; 7.1 a done the same day, the
   engine first as the project's Q2 recommends (ADR 0007): the reading record (`reading.ts`) and what ZXing reads of
-  each carrier, measured (`docs/conformance.md`, 3.1: DotCode not read, a Composite's 2D part left out)*
+  each carrier, measured (`docs/conformance.md`, 3.1: DotCode not read, a Composite's 2D part left out); 7.1 b done
+  the same day: the catalogue of the project's 77 faults as data (`faults.ts`, its English texts translated when a
+  screen shows them, 7.1 f), the named repairs (`repair.ts`) and the check of one reading (`check.ts`): groups A (the
+  carrier) and B (the structure), every fault of a symbol reported with the bytes it points at and the data made
+  right when a repair makes it valid; groups C to E named from the engine's messages until 7.1 c*
 
 
 ## Licence
