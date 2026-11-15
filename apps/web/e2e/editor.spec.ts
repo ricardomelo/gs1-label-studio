@@ -258,6 +258,15 @@ test("an EPC pasted fills in the data, classic or new", async ({ page }) => {
   await paste("3114 257b f442 f697 1500 0000");
   await expect(page.locator("#key")).toHaveValue("00");
   await expect(page.locator("#key-value")).toHaveValue("106141411234567897");
+  // A tag URI and a pure identity URI
+  await paste("urn:epc:tag:sgtin-198:1.9506000.013437.S1001");
+  await expect(page.locator("#key-value")).toHaveValue("09506000134376");
+  await expect(page.locator("#q-21")).toHaveValue("S1001");
+  await paste("urn:epc:id:sgln:9506000.13437.7");
+  await expect(page.locator("#key")).toHaveValue("414");
+  await expect(page.locator("#q-254")).toHaveValue("7");
+  await paste("urn:epc:id:sgtin:9506000.01343.1");
+  await expect(page.locator(".paste .hint")).toHaveText("This URI is not an EPC as the EPC Tag Data Standard writes it.");
   // Hexadecimal that is no EPC
   await paste("FF00000000000000000000000000");
   await expect(page.locator(".paste .hint")).toHaveText("This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.");

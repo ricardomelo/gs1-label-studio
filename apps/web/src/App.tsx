@@ -1164,6 +1164,14 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               // An EPC's hexadecimal, as an RFID reader gives it (backlog 6.7): its GS1 Digital Link URI fills the data.
               // Read as data first, so that digits that are an element string stay one.
               const hex = text.replace(/\s+/g, "");
+              // a classic EPC's tag URI or pure identity URI: no element string looks like one
+              if (/^urn:epc:(tag|id):/.test(text.trim())) {
+                return epcSchemes().then((schemes) => {
+                  const classic = decodeEpc(schemes, text);
+                  if (!classic) throw new Error(new EpcError("epc.uriNotDecodable").message);
+                  return take(classic.digitalLink);
+                });
+              }
               if (!/^[0-9A-Fa-f]{24,}$/.test(hex)) return take(text);
               try {
                 return take(text);

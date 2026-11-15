@@ -75,6 +75,7 @@
  "This key has no EPC scheme in the EPC Tag Data Standard.": "Esta chave não tem esquema EPC no padrão EPC Tag Data Standard.",
  "A '++' EPC carries the GS1 Digital Link URI's hostname: up to 63 characters of the GS1 set, such as example.com.": "Um EPC '++' leva o nome do host do URI GS1 Digital Link: até 63 caracteres do conjunto GS1, como example.com.",
  "This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.": "Este hexadecimal não é um EPC como o EPC Tag Data Standard o escreve.",
+ "This URI is not an EPC as the EPC Tag Data Standard writes it.": "Este URI não é um EPC como o EPC Tag Data Standard o escreve.",
  "These values fit no EPC scheme of this key (too long, or with characters an EPC cannot carry).": "Estes valores não cabem em nenhum esquema EPC desta chave (longos demais, ou com caracteres que um EPC não aceita).",
  "Choose the company prefix length (6 to 12 digits).": "Escolha o comprimento do prefixo da empresa (6 a 12 dígitos).",
  "Invalid filter (0 to 7).": "Filtro inválido (0 a 7).",

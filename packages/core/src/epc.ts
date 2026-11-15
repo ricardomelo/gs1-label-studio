@@ -94,6 +94,7 @@ const EPC_MESSAGES: Record<string, string> = {
   "epc.filterInvalid": "Invalid filter (0 to 7).",
   "epc.hostname": "A '++' EPC carries the GS1 Digital Link URI's hostname: up to 63 characters of the GS1 set, such as example.com.",
   "epc.notDecodable": "This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.",
+  "epc.uriNotDecodable": "This URI is not an EPC as the EPC Tag Data Standard writes it.",
   "epc.notGcp": "GS1's list says this key's range is not a GS1 Company Prefix: choose the prefix's length to write an EPC.",
 };
 
@@ -397,13 +398,54 @@ function unbinary(spec: EpcField, bits: string): string {
   return spec.length && Number(spec.length) ? value.padStart(Number(spec.length), "0") : value;
 }
 
+/** The fields of a classic EPC, from whichever level was read, written out at every level; null when one refuses them. */
+function written(scheme: EpcScheme, key: string, values: Record<string, string>): DecodedEpc | null {
+  const path = text(scheme.levels.GS1_DIGITAL_LINK, key, { ...values, uriStem: "" });
+  const tagUri = text(scheme.levels.TAG_ENCODING, key, values);
+  const pureIdentity = text(scheme.levels.PURE_IDENTITY, key, values);
+  if (!path || !tagUri || !pureIdentity) return null;
+  const parts = path.split("/").slice(1);
+  const elements: [string, string][] = [];
+  for (let i = 0; i + 1 < parts.length; i += 2) elements.push([parts[i]!, unquote(parts[i + 1]!)]);
+  // the extension 0 a GLN without extension takes (TDS 6.3.3) is not data
+  const data = elements.filter(([ai, v], i) => !(i > 0 && ai === "254" && v === "0"));
+  return {
+    scheme: scheme.name.toLowerCase(), filter: Number(values.filter ?? 0), prefixLength: Number(key), elements: data,
+    tagUri, pureIdentity, digitalLink: `https://id.gs1.org${data.map(([ai, v]) => `/${ai}/${urlEscape(v)}`).join("")}`,
+  };
+}
+
 /**
  * A classic EPC (one of the schemes defined before TDS 2.0) read from its hexadecimal, as it is on a tag (zero-filled
- * to a 16-bit word or not): the BINARY level whose pattern takes the bits gives the fields, the GS1_DIGITAL_LINK level
- * writes them back as a path (TDT 3.x, decoding). Null when no scheme's header and partition take the bits.
+ * to a 16-bit word or not), or from its tag URI or pure identity URI: the level whose pattern takes it gives the fields
+ * (TDT 3.x, decoding), the other levels write them back, the GS1 Digital Link path among them. A pure identity URI
+ * says no filter nor scheme: the key's first scheme that takes it, with the filter 0. Null when no scheme takes it.
  */
-export function decodeEpc(schemes: Record<string, EpcScheme>, hex: string): DecodedEpc | null {
-  const clean = hex.replace(/\s+/g, "");
+export function decodeEpc(schemes: Record<string, EpcScheme>, input: string): DecodedEpc | null {
+  const uri = input.trim();
+  const level = uri.startsWith("urn:epc:tag:") ? "TAG_ENCODING" : uri.startsWith("urn:epc:id:") ? "PURE_IDENTITY" : null;
+  if (level) {
+    const order = [...Object.values(KEY_SCHEMES).flat(), ...Object.keys(schemes)];
+    for (const name of new Set(order)) {
+      const scheme = schemes[name];
+      if (!scheme) continue;
+      for (const opt of scheme.levels[level].options) {
+        const match = pyMatch(opt.pattern, uri);
+        if (!match) continue;
+        const values: Record<string, string> = { gs1companyprefixlength: opt.optionKey, tagLength: String(scheme.tagLength ?? "") };
+        try {
+          for (const spec of opt.fields) values[spec.name] = match[Number(spec.seq)] ?? "";
+          run(scheme.levels[level], "EXTRACT", values);
+          const read = written(scheme, opt.optionKey, values);
+          if (read) return read;
+        } catch {
+          continue;
+        }
+      }
+    }
+    return null;
+  }
+  const clean = input.replace(/\s+/g, "");
   if (!/^[0-9A-Fa-f]+$/.test(clean)) return null;
   const all = [...clean].map((c) => parseInt(c, 16).toString(2).padStart(4, "0")).join("");
   for (const scheme of Object.values(schemes)) {
@@ -414,24 +456,12 @@ export function decodeEpc(schemes: Record<string, EpcScheme>, hex: string): Deco
     for (const opt of scheme.levels.BINARY.options) {
       const match = pyMatch(opt.pattern, bits);
       if (!match) continue;
-      const key = opt.optionKey;
-      const values: Record<string, string> = { gs1companyprefixlength: key, tagLength: String(scheme.tagLength ?? "") };
+      const values: Record<string, string> = { gs1companyprefixlength: opt.optionKey, tagLength: String(scheme.tagLength ?? "") };
       try {
         for (const spec of opt.fields) values[spec.name] = unbinary(spec, match[Number(spec.seq)] ?? "");
         run(scheme.levels.BINARY, "EXTRACT", values);
-        const path = text(scheme.levels.GS1_DIGITAL_LINK, key, { ...values, uriStem: "" });
-        const tagUri = text(scheme.levels.TAG_ENCODING, key, values);
-        const pureIdentity = text(scheme.levels.PURE_IDENTITY, key, values);
-        if (!path || !tagUri || !pureIdentity) continue;
-        const parts = path.split("/").slice(1);
-        const elements: [string, string][] = [];
-        for (let i = 0; i + 1 < parts.length; i += 2) elements.push([parts[i]!, unquote(parts[i + 1]!)]);
-        // the extension 0 a GLN without extension takes (TDS 6.3.3) is not data
-        const data = elements.filter(([ai, v], i) => !(i > 0 && ai === "254" && v === "0"));
-        return {
-          scheme: scheme.name.toLowerCase(), filter: Number(values.filter ?? 0), prefixLength: Number(key), elements: data,
-          tagUri, pureIdentity, digitalLink: `https://id.gs1.org${data.map(([ai, v]) => `/${ai}/${urlEscape(v)}`).join("")}`,
-        };
+        const read = written(scheme, opt.optionKey, values);
+        if (read) return read;
       } catch {
         continue;
       }

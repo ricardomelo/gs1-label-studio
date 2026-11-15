@@ -115,7 +115,7 @@ describe("EPC read back by an independent decoder (epc-tds)", async () => {
 
 // A classic EPC read back from its hexadecimal (backlog 6.7: an EPC pasted in step 1 fills the data): every encoding of
 // the resolver's cases gives back its scheme, filter, prefix length, URIs and the key with its EPC qualifiers.
-describe("a classic EPC read back from its hexadecimal", () => {
+describe("a classic EPC read back from its hexadecimal or its URIs", () => {
   const encodings = reference.encodings.filter(([, , , , , e]) => typeof e.scheme === "string");
   it.each(encodings)("(%s) %s %j, prefix of %i digits", (key, value, qualifiers, length, filter) => {
     const epc = encodeEpc(schemes, key, value, qualifiers, length, filter);
@@ -126,12 +126,21 @@ describe("a classic EPC read back from its hexadecimal", () => {
       expect(read.elements).toEqual(expected);
       expect(read.digitalLink).toBe(`https://id.gs1.org${epcPathOf(key, value, qualifiers).replace(/\/254\/0$/, "")}`);
     }
+    // its tag URI says the same; its pure identity URI the same data, in the key's first scheme that takes it
+    expect(decodeEpc(schemes, epc.tagUri)).toEqual(decodeEpc(schemes, epc.hex));
+    const pure = decodeEpc(schemes, ` ${epc.pureIdentity} `)!;
+    expect(pure.elements).toEqual(decodeEpc(schemes, epc.hex)!.elements);
+    expect(pure).toMatchObject({ filter: 0, pureIdentity: epc.pureIdentity, prefixLength: length });
+    const names = KEY_SCHEMES[key]!.map((n) => n.toLowerCase());
+    expect(names.slice(0, names.indexOf(epc.scheme) + 1)).toContain(pure.scheme);
   });
 
   it("refuses what no scheme's header and partition take", () => {
     expect(decodeEpc(schemes, "")).toBeNull();
     expect(decodeEpc(schemes, "not hex")).toBeNull();
     expect(decodeEpc(schemes, "FF00")).toBeNull();
+    expect(decodeEpc(schemes, "urn:epc:tag:sgtin-96:1.9506000.013437.S1001")).toBeNull(); // a 96-bit serial is a number
+    expect(decodeEpc(schemes, "urn:epc:id:sgtin:9506000.01343.1")).toBeNull();
     // SGTIN-96 cut short, then with a bit set after its 96 bits
     const epc = encodeEpc(schemes, "01", "09506000134352", { "21": "12345" }, 7, 1);
     expect(decodeEpc(schemes, epc.hex.slice(0, 20))).toBeNull();
