@@ -202,6 +202,25 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
     expect(Math.abs(bottom - top + 1 - Math.round((3 / 25.4) * 203))).toBeLessThanOrEqual(1);
   });
 
+  // The human readable text's format (backlog 6.11): data titles and AIs, a date in a format of its own, under the
+  // symbol in the printer's font; the symbol prints as without them, and the text stays below it, in the label
+  it("the text with data titles and AIs prints under the symbol, which still reads", { timeout: 30000 }, async () => {
+    const data = "(01)09506000134352(17)271231(10)B42";
+    const o = { ...options(0.38, 300), hriFormat: { style: "own" as const, pattern: "{title} ({ai}) {value:DD MMM YYYY}" } };
+    const zpl = zplLabel("gs1-datamatrix", data, o);
+    expect(zpl).toContain("^FDUSE BY or EXPIRY 31 DEC 2027^FS");
+    expect(zpl).toContain("^FDBATCH/LOT (10) B42^FS");
+    const png = await labelaryPng(zpl, 300, o.widthDots, o.heightDots);
+    const [result] = await readBarcodes(new Blob([png], { type: "image/png" }), { formats: [], textMode: "HRI", tryHarder: true });
+    expect(`${result?.symbologyIdentifier} ${result?.text}`).toBe(`]d2 ${data}`);
+    // Ink below the symbol: the three lines
+    const { grey, width } = decodePng(png);
+    const symbolBottom = Math.max(result!.position.bottomLeft.y, result!.position.bottomRight.y);
+    const rows = new Set<number>();
+    grey.forEach((value, index) => { if (value < 128 && Math.floor(index / width) > symbolBottom + 4) rows.add(Math.floor(index / width)); });
+    expect(rows.size).toBeGreaterThan(3 * Math.round((2.2 / 25.4) * 300) - 6);
+  });
+
   // GS1-128 as ^BC prints it: as wide as gs1128Modules() counts from the field data (a count's "24" kept in code set C),
   // which is what the label's width and the text's box are made from.
   it("GS1-128 is as wide as the modules counted from its field data", { timeout: 30000 }, async () => {

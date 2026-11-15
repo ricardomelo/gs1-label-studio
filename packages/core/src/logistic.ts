@@ -8,7 +8,7 @@ import { hriTextDots, PrinterUnsupportedError, type PrintPage } from "./printers
 import { layoutLabel, symbolMatrix, type ErrorLevel, type LabelOptions, type LabelText, type Layout } from "./layout.ts";
 import { baseX, specificationFor, specSizesFor, type SymbolSpecification } from "./specifications.ts";
 import { SYMBOLOGIES, type SymbologyId } from "./symbologies.ts";
-import SECOND_TITLES from "./data/data_titles.json";
+import { secondTitle, type SecondLanguage } from "./hriFormat.ts";
 
 // The GS1 Logistic Label (backlog 4.1; General Specifications 26.0, section 6.6): a page of A6 or 4 × 6 inches with
 // its building blocks from the top — free text (who sends, who receives), text with data titles, and at the bottom the
@@ -37,24 +37,7 @@ const BLOCK_GAP_MM = 3;
 const COLUMN_GAP_MM = 3; // between the top block's FROM and TO columns
 const TWO_D_GAP_MM = 3; // between the middle block's text and the 2D symbol's quiet zone
 
-/**
- * The languages a label's data titles can add to English (6.6.4.2: "If there is no other language agreed between
- * trading partners, data titles must be printed in English. As an option left at the discretion of the labeller, a
- * second language can be added"), each named in itself.
- */
-export const SECOND_LANGUAGES = { "pt-BR": "Português", es: "Español", fr: "Français", de: "Deutsch", it: "Italiano" } as const;
-export type SecondLanguage = keyof typeof SECOND_LANGUAGES;
-
-/**
- * A data title in a second language (`data/data_titles.json`, drafts by Claude to be reviewed by native speakers):
- * the AI's own entry where one English title has two meanings ((4305) SHIP TO LOC is a town, (410)'s a GLN), else the
- * English title's; also the label's own FROM and TO. Null where the title is the same in every language, an acronym
- * such as SSCC or GTIN.
- */
-export function secondTitle(english: string, language: SecondLanguage, ai?: string): string | null {
-  const titles = (SECOND_TITLES as Record<SecondLanguage, Record<string, string>>)[language];
-  return (ai !== undefined ? titles[`(${ai})`] : undefined) ?? titles[english] ?? null;
-}
+export { SECOND_LANGUAGES, secondTitle, type SecondLanguage } from "./hriFormat.ts";
 
 /**
  * The 2D symbols table 5 allows beside the GS1-128: GS1 DataMatrix with the element string, and a QR code or a Data

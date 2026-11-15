@@ -11,6 +11,7 @@ import {
   xDimension,
 } from "./environments.ts";
 import type { HriFont } from "./hri.ts";
+import { hriJoiner, hriText, type HriFormat } from "./hriFormat.ts";
 import { DIGIT_HEIGHT, encodeLinear, GUARD_EXTENSION, LINEAR_NAMES, type LinearKind } from "./linear.ts";
 import { pyFixed } from "./pyformat.ts";
 import { baseX, minimumBarHeight, specSizesFor, type SymbolSpecification } from "./specifications.ts";
@@ -94,6 +95,11 @@ export interface LabelOptions {
   hriPosition?: HriPosition;
   /** The human readable text's height in mm (its capitals'); TEXT_HEIGHT_MM when not given. */
   hriHeightMm?: number;
+  /**
+   * How the text writes each of `hriLines` (backlog 6.11): the AI in parentheses when not given, or data titles, both,
+   * or a pattern of one's own (`hriText`). EAN/UPC's and ITF-14's digits are written as they are.
+   */
+  hriFormat?: HriFormat;
   /**
    * GS1-128 over several symbols (backlog 1.13): the element strings, by index, that start a new symbol; as many as
    * fit in each when not given.
@@ -266,7 +272,7 @@ function layoutAtFullWidth(options: LabelOptions, font: HriFont): Layout {
 
   const textHeight = hriHeight(options) / xMm;
   const em = (textHeight * font.unitsPerEm) / font.capHeight;
-  const lines = options.showHri ? [...options.hriLines] : [];
+  const lines = options.showHri ? options.hriLines.map((line) => hriText(line, options.hriFormat)) : [];
   const position = options.hriPosition ?? "below";
   if (position !== "below" && lines.length) {
     if (options.linear && (position === "left" || position === "right")) {
@@ -460,13 +466,14 @@ function layoutBars(options: LabelOptions, font: HriFont, size: number): Layout 
 
   const textHeight = hriHeight(options) / xMm;
   const em = (textHeight * font.unitsPerEm) / font.capHeight;
-  const pieces = !options.showHri ? [] : symbology === "itf14" ? [options.data] : [...options.hriLines];
+  const pieces = !options.showHri ? [] : symbology === "itf14" ? [options.data] : options.hriLines.map((line) => hriText(line, options.hriFormat));
+  const joiner = symbology === "itf14" ? "" : hriJoiner(options.hriFormat);
   // Element strings joined on as few lines as the symbol's width allows, never one broken over two (rule 1e)
   const join = (from: string[]) => {
     const joined: string[] = [];
     const room = Math.max(boxWidth, ...from.map((piece) => font.textWidth(piece, em)));
     for (const piece of from) {
-      const next = joined.length ? joined.at(-1)! + piece : piece;
+      const next = joined.length ? joined.at(-1)! + joiner + piece : piece;
       if (joined.length && font.textWidth(next, em) <= room) joined[joined.length - 1] = next;
       else joined.push(piece);
     }

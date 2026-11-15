@@ -1,6 +1,7 @@
 import { dotsWithin, MM_PER_INCH, snapToDots } from "./dots.ts";
 import { encode, widthInModules, type QrMode, type SymbolGeometry } from "./encode.ts";
 import type { HriFont } from "./hri.ts";
+import type { HriFormat } from "./hriFormat.ts";
 import { inUriOrder, type Identified } from "./identify.ts";
 import { labelSvg, layoutLabel, BEARER_FRAME_MM, type Bearer, type ErrorLevel, type HriPosition, type LabelOptions, type Layout } from "./layout.ts";
 import { symbolFor } from "./linear.ts";
@@ -50,6 +51,8 @@ export interface LabelDesign {
   /** Where the human readable text goes and its height in mm (backlog 1.16); below and 2.2 mm when not given. */
   hriPosition?: HriPosition;
   hriHeightMm?: number;
+  /** How the text writes each element string (backlog 6.11): the AI in parentheses when not given (`hriText`). */
+  hriFormat?: HriFormat;
   /** GS1-128 over several symbols: the element strings that start a symbol; as many as fit in each when not given. */
   gs1128Starts?: readonly number[];
   /** A QR code's one encoding mode (backlog 1.14), and its URI's scheme and domain in capitals for alphanumeric mode. */
@@ -89,6 +92,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     if (!design.page.elements.some((e) => e.kind === "symbol")) throw new InputError("A label of one's own needs a barcode: add one.");
     const designed = designLabel(design.page, identified, font, {
       environment: design.environment ?? "retail", ...(design.table ? { table: design.table } : {}), error: design.error, cells,
+      ...(design.hriFormat && design.hriFormat.style !== "ai" ? { hriFormat: design.hriFormat } : {}),
     });
     // The first barcode's geometry from the data it carries (an ITF-14 the GTIN alone, its element strings chosen)
     const first = designed.printer.symbols[0]!;
@@ -134,6 +138,7 @@ export function labelFor(identified: Identified, design: LabelDesign, font: HriF
     bearer: design.bearer, ...(design.reduction ? { barWidthReduction: design.reduction } : {}),
     ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
     ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
+    ...(design.hriFormat && design.hriFormat.style !== "ai" ? { hriFormat: design.hriFormat } : {}),
   };
   const layout = layoutLabel(options, font);
   return { data, options, layout, geometry: geometryOf(options, layout) };
@@ -180,6 +185,7 @@ export function printPageFor(designed: DesignedLabel, dpi: number): PrintPage {
       symbology, hri: options.showHri ? "full" : "none", version: options.version ?? null, error: options.error ?? "m",
       ...(options.environment ? { environment: options.environment } : {}), size: options.size ?? 100, linear: "none", linearSize: null,
       ...(spec ? { spec, table: options.table } : {}), bearer: options.bearer ?? "frame", reduction: 0,
+      ...(options.hriFormat ? { hriFormat: options.hriFormat } : {}),
     };
     const geometry = geometryOf(options, layout);
     const { widthDots: boxWidth, heightDots: _, ...placement } = zplOptionsFor({ data, options, layout, geometry }, alone, dpi, d);
@@ -266,6 +272,7 @@ export function zplOptionsFor(drawn: DrawnLabel, design: LabelDesign, dpi: numbe
   const hri = {
     ...(design.hriPosition && design.hriPosition !== "below" ? { hriPosition: design.hriPosition } : {}),
     ...(design.hriHeightMm ? { hriHeightMm: design.hriHeightMm } : {}),
+    ...(design.hriFormat && design.hriFormat.style !== "ai" ? { hriFormat: design.hriFormat } : {}),
   };
   const lines = design.hri === "none" ? 0 : design.symbology === "gs1-datamatrix" ? Math.max(1, drawn.options.hriLines.length) : 1;
   const above = zplTextAbove({ ...hri, dpi, dotsPerModule: d }, lines);

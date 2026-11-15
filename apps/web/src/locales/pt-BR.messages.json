@@ -689,5 +689,10 @@
  "Fresh food sold by weight": "Alimento vendido por peso",
  "GS1 DataBar Expanded Stacked with the weight and price": "GS1 DataBar Expanded Stacked com o peso e o preço",
  "Medicine or medical device": "Medicamento ou dispositivo médico",
- "GS1 DataMatrix, the GTIN, expiry, lot and serial number beside it": "GS1 DataMatrix, com GTIN, validade, lote e número de série ao lado"
+ "GS1 DataMatrix, the GTIN, expiry, lot and serial number beside it": "GS1 DataMatrix, com GTIN, validade, lote e número de série ao lado",
+ "The text's format knows {ai}, {title} and {value}, not {whole}.": "O formato do texto conhece {ai}, {title} e {value}, não {whole}.",
+ "Only {value} takes a date format, not {whole}.": "Só {value} aceita um formato de data, não {whole}.",
+ "The text's format must show the data: put {value} in it.": "O formato do texto precisa mostrar os dados: inclua {value}.",
+ "{title} {value}": "{title} {value}",
+ "{title} ({ai}) {value}": "{title} ({ai}) {value}"
 }

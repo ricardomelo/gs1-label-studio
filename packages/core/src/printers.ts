@@ -1,5 +1,6 @@
 import { MM_PER_INCH } from "./dots.ts";
 import type { QrMode } from "./encode.ts";
+import { hriJoiner, hriText, type HriFormat } from "./hriFormat.ts";
 import type { Bitmap } from "./raster.ts";
 import type { SymbologyId } from "./symbologies.ts";
 
@@ -70,6 +71,8 @@ export interface PrintSymbolOptions {
   /** The human readable text's place and height in mm (backlog 1.16): below and 2.2 mm when not given. */
   hriPosition?: "below" | "above" | "split" | "left" | "right";
   hriHeightMm?: number;
+  /** How the text writes each element string (backlog 6.11, `hriText`); the AI in parentheses when not given. */
+  hriFormat?: HriFormat;
   /**
    * The symbol turned clockwise (backlog 4.2, a label of one's own): `x` and `y` are then the top left corner of its
    * box as turned — the symbol's own box, its bars or modules and a leading space (GS1 DataBar's left guard), without
@@ -152,7 +155,8 @@ export function textLines(lines: string[], x: number, top: number, bottom: numbe
   }
   const t = hriTextDots(options.dpi, options.hriHeightMm);
   const step = Math.round(t * 1.4);
-  const joined = (from: string[]) => (join && from.length ? [from.join("")] : from);
+  lines = lines.map((line) => hriText(line, options.hriFormat));
+  const joined = (from: string[]) => (join && from.length ? [from.join(hriJoiner(options.hriFormat))] : from);
   const below = position === "below" ? joined(lines) : position === "split" ? [lines[0]!] : [];
   const above = position === "above" ? joined(lines) : position === "split" ? joined(lines.slice(1)) : [];
   const line = (text: string, y: number): TextLine => ({ x, y, width: widthDots, height: t, text });

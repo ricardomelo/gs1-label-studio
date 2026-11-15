@@ -128,6 +128,11 @@ export {
   type TemplateSegment,
 } from "./templates.ts";
 export { HriFont } from "./hri.ts";
+export {
+  checkHriPattern, dataTitle, HRI_PATTERNS, HRI_STYLES, hriJoiner, hriText, SECOND_LANGUAGES, secondTitle, type HriFormat, type HriStyle,
+  type SecondLanguage,
+} from "./hriFormat.ts";
+export { DATE_FORMATS, formatDate, MONTH_NAMES, TIME_FORMATS, type DateOptions, type MonthLanguage } from "./dates.ts";
 export { pyFixed } from "./pyformat.ts";
 export {
   BAR_HEIGHT,
@@ -337,11 +342,10 @@ export {
 export { ndefUri, ndefUriMessage, URI_PREFIXES } from "./ndef.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
-  boxOf, DATE_FORMATS, TIME_FORMATS, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, columnCell, fillFields, type FieldOptions, formatDate, MONTH_NAMES, type DateOptions, type MonthLanguage, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
+  boxOf, designLabel, imageHeightMm, ROTATIONS, type Rotation, turnedRect, type DesignImage, columnCell, fillFields, type FieldOptions, type DesignBox, type DesignElement, type DesignedLabel, type DesignOptions, type DesignPage, type DesignLine, type DesignSymbol, type DesignText,
   type PlacedElement,
 } from "./design.ts";
 export {
-  LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, logisticPage, SECOND_LANGUAGES, secondTitle, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
-  type SecondLanguage,
+  LOGISTIC_SIZES, LOGISTIC_TWO_D, logisticLabel, logisticPage, type LogisticInput, type LogisticLabel, type LogisticSize, type LogisticText, type LogisticTwoD,
 } from "./logistic.ts";
 export { readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work, type WorkValue } from "./work.ts";

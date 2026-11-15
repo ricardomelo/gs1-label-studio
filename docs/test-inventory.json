@@ -1939,6 +1939,70 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "hriFormat",
+   "file": "packages/core/test/hriFormat.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the human readable text's format › writes an element string as the AI and data, data titles, or both (figure 4-8)",
+     "status": "passed"
+    },
+    {
+     "name": "the human readable text's format › takes the data titles in a second language, an acronym as it is",
+     "status": "passed"
+    },
+    {
+     "name": "the human readable text's format › writes a pattern of one's own; a date in a format of its own loses its AI (figure 4-9), another AI's value stays as encoded",
+     "status": "passed"
+    },
+    {
+     "name": "the human readable text's format › refuses a pattern without the data, with an unknown name, or with a format after the AI or title",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › draws each line of a 2D symbol in the format, the symbol unchanged and read back",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › joins a linear symbol's element strings with two spaces, the date in a format of its own, and still reads",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › zpl writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › tspl writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › epl2 writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › dpl writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › ppla writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › pplb writes the text in the format",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › writes a ZPL template's text in the format, the printer filling the values",
+     "status": "passed"
+    },
+    {
+     "name": "the format on the label and in the print files › a label of one's own takes the format, on the page and in the print file",
+     "status": "passed"
+    }
+   ],
+   "area": "Symbols and the label's layout"
+  },
+  {
    "program": "hriplace",
    "file": "packages/core/test/hriplace.test.ts",
    "kind": "unit",
@@ -2333,6 +2397,10 @@
     },
     {
      "name": "ZPL printed by Labelary and read back › the text's capitals are as high as asked",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › the text with data titles and AIs prints under the symbol, which still reads",
      "status": "passed"
     },
     {

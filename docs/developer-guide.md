@@ -160,6 +160,8 @@ Each module, in the order of the flow above.
 | `design.ts` | `designLabel`: a label of one's own, barcodes, text blocks, lines, boxes and images placed on a page, each barcode, text block and image turned or not (`turnedRect`), as one `Layout` (backlog 4.2) |
 | `picture.ts` | `pictureOf`, `pictureBitmap`, `resample`, `bitmapRects`, `turnedPicture`: an image as a one-bit picture, at a printer's dots, as rectangles, turned |
 | `hri.ts` | `HriFont`: Liberation Sans through opentype.js, contours drawn as fontTools does, glyph points cached |
+| `hriFormat.ts` | `hriText`, `hriJoiner`, `checkHriPattern`, `dataTitle`, `secondTitle`: how the human readable text writes an element string, the AI in parentheses, data titles in six languages, both (figure 4-8) or a pattern of one's own (backlog 6.11); the layout and every printer language take it |
+| `dates.ts` | `formatDate`, `DATE_FORMATS`, `MONTH_NAMES`: a YYMMDD date (or YYYYMMDD, with its time) in a format of DD, MM, MMM, YY, YYYY, hh, mm and ss, for a text field and the human readable text |
 | `pyformat.ts` | `pyFixed`: Python's `%.3f` with ties to even, so the SVG equals the resolver's |
 | `scan.ts` | `expectedReads`: the symbology identifier and data each symbol of a label should read as |
 
@@ -292,10 +294,11 @@ that say what is true; together they are the [inventory of features](test-invent
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 113 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
+| `hriFormat` | the human readable text's format: AI, data titles, both, one's own; in the SVG and every printer language, still read | 14 |
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 24 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 70 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 71 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 13 |
