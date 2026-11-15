@@ -301,11 +301,11 @@ that say what is true; together they are the [inventory of features](test-invent
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 24 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 73 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 75 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 13 |
-| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 20 |
+| `design` | a label of one's own: barcodes, text blocks, lines, boxes and images on a page, read back, in bulk | 22 |
 | `templates` | labels by segment: each template's page whole and read back, step 2 offering its symbol; step 1's data kept, examples added, the rest named | 12 |
 | `picture` | an image as a one-bit picture: its pixels, its size at a printer's dots, its rectangles | 9 |
 | `ndef` | NDEF URI records | 3 |
@@ -333,9 +333,9 @@ that say what is true; together they are the [inventory of features](test-invent
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
 | `tour` | the tour of the studio: its card beside what it points at and whole within the window, its ring within the window, its stops on a computer and on a phone or a tablet (apps/web/test) | 8 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 117 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 118 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
-| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 128 |
+| `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 
 The core's and the web application's unit tests run with `pnpm test` (Vitest); the browser tests with `pnpm --filter @gs1-label-studio/web e2e` after

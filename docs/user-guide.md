@@ -367,10 +367,15 @@ label**, then the card *A label of my own*:
 
 1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
    step 2's guided choice, its table does).
-2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box; **+ Pictogram** a pictogram of
-   ISO 15223-1 for a medical device's label, *UDI* (symbol 5.7.10, beside the barcode that carries the UDI) or *MD*
-   (5.7.7), chosen in its properties with its frame's **Height (mm)**, its letters half as high and centred, printed as
-   a box and a line of text; **+ Image** an image, such as
+2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box; **+ Pictogram** a pictogram,
+   *UDI* at first (ISO 15223-1, symbol 5.7.10, beside the barcode that carries the UDI). Its arrow **▾** lists them
+   all by segment, each with its letters or drawing: *Healthcare · ISO 15223-1* (UDI, MD, LOT, REF, SN, IVD, STERILE,
+   STERILE EO, STERILE R, NON STERILE, the manufacturer, the date of manufacture, the use-by date), *Logistics · ISO
+   7000 / ISO 780* (fragile, this way up, keep dry) and *Prepacked goods · Directive 76/211/EEC* (the estimated sign
+   ℮). The one you choose is added at its own height (4 mm; 15 mm for a carton's; 3 mm for the ℮, its least height
+   for most quantities) and the button then adds it again. Its properties list them the same way, with its
+   **Height (mm)**; letters are printed as boxes and text, a drawing as an image at the printer's dots (not yet in
+   DPL); **+ Image** an image, such as
    a logo, from a file you choose (PNG, JPEG, GIF, WebP or SVG). Each is listed under
    **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
    down, and again, so that it is never hidden under another.

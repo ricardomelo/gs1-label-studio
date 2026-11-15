@@ -829,7 +829,16 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   pictograms by segment (healthcare, food, textiles, logistics and others), rather than adding UDI alone. Each
   pictogram from a standard whose symbols may be drawn freely (ISO 15223-1 for medical devices, ISO 7000 / ISO 780
   for handling); the textile care symbols of ISO 3758 are GINETEX's registered trademarks and need a licence, so they
-  wait for the owner's word. Mock-ups first.
+  wait for the owner's word. Mock-ups first — *done 15 November (mock-up A of two: **+ Pictogram ▾**, its arrow
+  listing the pictograms by segment, each with its letters or drawing, the one chosen added and then what the button
+  adds; B left the choice to the properties' list, now grouped by segment as B showed): 17 pictograms in three
+  segments — healthcare (ISO 15223-1: UDI, MD, LOT, REF, SN, IVD, STERILE, STERILE EO and STERILE R in two cells,
+  NON STERILE; the manufacturer's factory, the date of manufacture's factory in outline, the use-by date's hourglass),
+  logistics (ISO 7000 / ISO 780: fragile, this way up, keep dry) and prepacked goods (the estimated sign ℮ of Directive
+  76/211/EEC); the letters printed as boxes and text in every printer language, the drawings as contours of the
+  studio's own after the standards' figures (vector in the SVG, PDF and EPS) and as an image filled at the printer's
+  dots in ZPL, EPL2 and TSPL (Labelary and Labelize print them dot for dot), refused in DPL with its reason; food has no
+  pictogram a standard lets anyone draw beyond the ℮, and textile care waits for the owner (GINETEX)*
 - 7.1 A family of studios (ideation round first; the owner, 15 November 2026): a start page offering *Label Studio*,
   *Barcode Studio*, *RFID Studio* and a studio that checks what it is given (*Check Studio* or *Verification Studio*,
   its name to be chosen): any barcode or RFID tag read by the camera, a scanner or pasted, analysed in full (the

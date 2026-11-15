@@ -1108,6 +1108,14 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › offers the pictograms by segment, each letters in a frame or a drawing within its box",
+     "status": "passed"
+    },
+    {
+     "name": "a label of one's own › draws STERILE EO as two cells with a rule between, and a drawing as contours in every file and as an image at the printer's dots",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF and in EPL2 as GW",
      "status": "passed"
     },
@@ -7148,6 +7156,14 @@
      "status": "passed"
     },
     {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 203 dpi: every pictogram's drawing printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL printed by Labelary and read back › a label of one's own at 300 dpi: every pictogram's drawing printed dot for dot",
+     "status": "passed"
+    },
+    {
      "name": "ZPL printed by Labelary and read back › a label of one's own whose barcodes have options of their own: every symbol read back",
      "status": "passed"
     },
@@ -8101,6 +8117,14 @@
     },
     {
      "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, its image printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › epl: a label of one's own at 203 dpi, its pictograms' drawings printed dot for dot",
+     "status": "passed"
+    },
+    {
+     "name": "TSPL, EPL2 and DPL rendered by Labelize and read back › tspl: a label of one's own at 300 dpi, its pictograms' drawings printed dot for dot",
      "status": "passed"
     },
     {
@@ -10812,6 +10836,15 @@
     },
     {
      "name": "the medical device's UDI template shows the UDI's element strings under its pictogram, and + Pictogram places UDI or MD on any label",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "+ Pictogram's arrow lists the pictograms by segment: the one chosen is added at its height, drawn, and printed as an image",
      "status": "listed",
      "projects": [
       "desktop",
