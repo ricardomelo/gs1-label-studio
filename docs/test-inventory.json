@@ -6046,6 +6046,15 @@
       "phone",
       "tablet"
      ]
+    },
+    {
+     "name": "the human readable text's format: the AI, data titles, both or one's own, in the label and the print file",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"

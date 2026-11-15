@@ -330,7 +330,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `said` | what an arrow key did on a label of one's own, said in the hint and to a screen reader, the label's edge reached by moving or resizing (apps/web/test) | 7 |
 | `guides` | the grid and rulers of a label of one's own: the grid's and the ticks' steps as the label is drawn, the choice kept (apps/web/test) | 10 |
 | `tour` | the tour of the studio: its card beside what it points at and whole within the window, its ring within the window, its stops on a computer and on a phone or a tablet (apps/web/test) | 8 |
-| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 108 |
+| `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 109 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 125 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
