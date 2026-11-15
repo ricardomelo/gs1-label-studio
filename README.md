@@ -825,12 +825,22 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   +AIDC data, an EPC pasted and NFC grown past step 3's card; a menu of its own beside the label's, with its own steps
   (the key and data, the scheme, the tag's memory, writing and reading back). Mock-ups first, after an ideation round
   with the owner (7.1).
+- 6.13 More pictograms (the owner, 15 November 2026): **+ Pictogram** with an arrow beside it to choose among
+  pictograms by segment (healthcare, food, textiles, logistics and others), rather than adding UDI alone. Each
+  pictogram from a standard whose symbols may be drawn freely (ISO 15223-1 for medical devices, ISO 7000 / ISO 780
+  for handling); the textile care symbols of ISO 3758 are GINETEX's registered trademarks and need a licence, so they
+  wait for the owner's word. Mock-ups first.
 - 7.1 A family of studios (ideation round first; the owner, 15 November 2026): a start page offering *Label Studio*,
   *Barcode Studio*, *RFID Studio* and a studio that checks what it is given (*Check Studio* or *Verification Studio*,
   its name to be chosen): any barcode or RFID tag read by the camera, a scanner or pasted, analysed in full (the
   symbology, the element strings against the GS1 Barcode Syntax Dictionary, the key's check digit and company prefix,
   dates, the EPC's scheme), every fault pointed out where it is, explained and with a correction suggested, as the GS1
-  Healthcare barcode survey app once did. To be shaped in an ideation round with the owner before any mock-up.
+  Healthcare barcode survey app once did. To be shaped in an ideation round with the owner before any mock-up —
+  *project written 15 November 2026 (the owner asked for it; kept in the maintainer's Drive, linked from the
+  handover): the reading (camera, image, NFC, a scanner in keyboard mode, pasted), the reading context, a catalogue of
+  faults with where, why and how to correct each, several carriers on one pack checked for coherence, a simple and an
+  expert view with the raw data, history, export, reports and sharing by e-mail and WhatsApp (also for the
+  generators), and items 7.1 a to m to execute; twelve open questions for the owner*
 
 
 ## Licence
