@@ -4304,10 +4304,10 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
   const card = (name: RegExp) => kinds.getByRole("radio", { name });
   await expect(label.getByRole("radio", { name: "The barcode only" })).toHaveAttribute("aria-checked", "true");
   await expect(kinds).toHaveCount(0);
-  // A label: six cards by segment (backlog 6.5), none chosen yet, the barcode still drawn alone
+  // A label: eight cards by segment (backlog 6.5), none chosen yet, the barcode still drawn alone
   await label.getByRole("radio", { name: "A label", exact: true }).click();
   await expect(kinds.locator(".segment h4")).toHaveText(["Logistics", "Retail", "Healthcare", "Your own"]);
-  await expect(kinds.getByRole("radio")).toHaveCount(6);
+  await expect(kinds.getByRole("radio")).toHaveCount(8);
   await expect(kinds.getByRole("radio", { checked: true })).toHaveCount(0);
   await expect(page.getByText("Choose a kind of label; until then the barcode is drawn alone.")).toBeVisible();
   await expect(page.locator(".caption")).toContainText("QR code version 4");
@@ -4326,13 +4326,14 @@ test("the barcode only or a label, the kinds of label as cards, one that does no
     for (let i = 1; i < boxes.length; i++) under(i - 1, i);
     for (const box of boxes) expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   } else {
-    for (const [a, b] of [[1, 2], [4, 5]] as const) {
+    // Logistics (0); Retail (1, 2); Healthcare (3, 4, 5), its third card wrapping where the row is too narrow; Your own (6, 7)
+    for (const [a, b] of [[1, 2], [3, 4], [6, 7]] as const) {
       expect(Math.abs(boxes[b]!.y - boxes[a]!.y)).toBeLessThan(2);
       expect(boxes[b]!.x).toBeGreaterThan(boxes[a]!.x + boxes[a]!.width - 1);
     }
     under(0, 1);
     under(2, 3);
-    under(3, 4);
+    under(5, 6);
   }
   // A label of one's own: chosen, its designer shown
   await card(/^A label of my own/).click();
@@ -4368,7 +4369,7 @@ test("a template by segment opens its label of one's own, fills steps 1 and 2 wi
   await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
   const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
   const medicine = kinds.locator('[data-template="healthcare-pack"]');
-  await expect(kinds.locator('[data-segment="healthcare"] .kind')).toHaveCount(2);
+  await expect(kinds.locator('[data-segment="healthcare"] .kind')).toHaveCount(3);
   await expect(medicine).toContainText("Medicine or medical device");
   await expect(medicine).toContainText("60 × 18 mm");
   await medicine.click();
@@ -4463,6 +4464,25 @@ test("the medical device's UDI template shows the UDI's element strings under it
   expect(file).toContain("^FDUDI^FS");
   expect(file).toContain("^FDMD^FS");
   expect(file).toContain("^FD(01)09506000134376^FS");
+});
+
+test("the patient's wristband template sets step 1 to a GSRN with the patient's data, its two GS1 DataMatrix read back", async ({ page }) => {
+  // Backlog 6.5: another key than the start's GTIN, so step 1 gives way to the template's example after saying so
+  await on(page, "label");
+  await page.getByRole("radiogroup", { name: "Label", exact: true }).getByRole("radio", { name: "A label", exact: true }).click();
+  const kinds = page.getByRole("radiogroup", { name: "Kind of label" });
+  const band = kinds.locator('[data-template="patient-wristband"]');
+  await expect(band).toContainText("Patient's wristband");
+  await expect(band).toContainText("150 × 25 mm");
+  await band.click();
+  const ask = page.getByRole("region", { name: "Before the template" });
+  await expect(ask).toContainText("The template Patient's wristband is for a GSRN, (8018): step 1's data gives way to its example values, for you to replace.");
+  await ask.getByRole("button", { name: "Use the template" }).click();
+  await expect(page.locator(".designer")).toBeVisible();
+  await expect(page.locator(".caption")).toContainText("A label of my own 150 × 25 mm · GS1 DataMatrix, GS1 DataMatrix");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await expect(page.locator(".scan-result")).toContainText("(8018)950600013435200008(7253)SILVA(7254)MARIA(7250)19800315(7252)2");
 });
 
 // Backlog 6.11 (the owner, 15 November 2026; mock-up A of two): the human readable text's format chosen, the AI in
