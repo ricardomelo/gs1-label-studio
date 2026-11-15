@@ -1,4 +1,6 @@
+import aidcTable from "./data/epc_aidc.json";
 import hostnameTables from "./data/epc_hostname.json";
+import { qualifiersOf } from "./dictionary.ts";
 import { EpcError, urlEscape } from "./epc.ts";
 
 /**
@@ -10,6 +12,8 @@ import { EpcError, urlEscape } from "./epc.ts";
  * CPI), its other component (a serial number, an extension) in the variable-length encoding its characters allow
  * (14.5.6) or as a number without encoding indicator (14.5.13), the DSGTIN's date before the GTIN (14.5.3), and for '++'
  * the hostname (14.5.16). They have no tag URI nor pure identity URI: the binary string and the GS1 Digital Link URI.
+ * After the EPC, other element strings may follow (+AIDC data, 15.3; backlog 6.7 B): each an AI in four bits a digit,
+ * then its value in the encoding TDS table F gives it (data/epc_aidc.json), the toggle bit set.
  *
  * Checked against the examples of TDS 2.3, Annex E.3. The hexadecimal is padded with zero bits to a 16-bit word, as an
  * RFID tag's EPC memory holds it (its PC bits count words, TDS 15.1.1).
@@ -129,6 +133,110 @@ function daysIn(yy: number, mm: number): number {
   return [31, yy % 4 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mm - 1]!;
 }
 
+/** TDS table F: how each AI's value is written after the EPC; a component of fixed length first, then the rest. */
+interface Component {
+  method: "fixedNumeric" | "fixedBits" | "date" | "dateTime" | "dateRange" | "dateTimeVariable" | "country" | "bit" | "minus" | "sequence" | "delimited" | "numeric" | "variable";
+  length?: number;
+  bits?: number;
+  lengthBits?: number;
+  max?: number;
+}
+interface AidcRow {
+  first: Component;
+  second?: Component;
+}
+const TABLE_F = aidcTable.ais as Record<string, AidcRow>;
+
+/** The row of table F for an AI, which may be one of a range ("3100-3105", "91-99"). */
+export function aidcRow(ai: string): AidcRow | undefined {
+  if (TABLE_F[ai]) return TABLE_F[ai];
+  for (const [key, row] of Object.entries(TABLE_F)) {
+    const [low, high] = key.split("-");
+    if (high && low!.length === ai.length && low! <= ai && ai <= high) return row;
+  }
+  return undefined;
+}
+
+/**
+ * TDS table K: how many digits an AI has, from its first two (General Specifications figure 7.8.1-2). The table
+ * leaves out 30, whose two digits make the whole AI (table F has it): added here.
+ */
+function aiLength(firstTwo: string): number | undefined {
+  const n = Number(firstTwo);
+  if ([0, 1, 2, 10, 11, 12, 13, 15, 16, 17, 20, 21, 22, 30, 37].includes(n) || (n >= 90 && n <= 99)) return 2;
+  if ([23, 24, 25, 40, 41, 42, 71].includes(n)) return 3;
+  if ((n >= 31 && n <= 36) || [39, 43, 70, 72, 80, 81, 82].includes(n)) return 4;
+  return undefined;
+}
+
+/** A date YYMMDD and, after it, hours, minutes and seconds (14.5.8, 14.5.9, 14.5.11): 7, 4, 5, then 5, 6 and 6 bits. */
+function dateTimeBits(value: string): string | null {
+  if (!/^\d{6}(\d\d){0,3}$/.test(value)) return null;
+  const [yy, mm, dd, hh, mi, ss] = (value.match(/\d\d/g) ?? []).map(Number);
+  if (mm! < 1 || mm! > 12 || dd! > daysIn(yy!, mm!)) return null;
+  if (hh !== undefined && (hh > 24 || (hh === 24 && (mi ?? 0) + (ss ?? 0) > 0))) return null;
+  if ((mi ?? 0) > 59 || (ss ?? 0) > 59) return null;
+  return [bin(yy!, 7), bin(mm!, 4), bin(dd!, 5), ...[hh, mi, ss].flatMap((n, i) => (n === undefined ? [] : [bin(n, i ? 6 : 5)]))].join("");
+}
+
+/** A component of a value in its method of table F, or null when the value does not fit it. */
+function componentBits(c: Component, text: string): string | null {
+  const n = c.length ?? 0;
+  switch (c.method) {
+    case "fixedNumeric":
+      return new RegExp(`^\\d{${n}}$`).test(text) ? digits4(text) : null;
+    case "fixedBits":
+      return new RegExp(`^\\d{${n}}$`).test(text) ? bin(BigInt(text), c.bits!) : null;
+    case "date":
+      return text.length === 6 ? dateTimeBits(text) : null;
+    case "dateTime":
+      return text.length === 10 ? dateTimeBits(text) : null;
+    case "dateRange": {
+      const parts = text.length === 6 ? [text] : text.length === 12 ? [text.slice(0, 6), text.slice(6)] : [];
+      const dates = parts.map(dateTimeBits);
+      return dates.length && dates.every((d) => d !== null) ? (parts.length === 2 ? "1" : "0") + dates.join("") : null;
+    }
+    case "dateTimeVariable": {
+      const indicator = { 6: "11", 8: "00", 10: "01", 12: "10" }[text.length];
+      const date = dateTimeBits(text);
+      return indicator && date ? indicator + date : null;
+    }
+    case "country":
+      return /^[A-Z]{2}$/.test(text) ? [...text].map((ch) => bin(ch.charCodeAt(0) - 65, 6)).join("") : null;
+    case "bit":
+      return /^[01]$/.test(text) ? text : null;
+    case "minus":
+      return text === "" ? "0" : text === "-" ? "1" : null;
+    case "sequence":
+      return /^[1-9]\/[1-9]$/.test(text) ? bin(Number(text[0]), 4) + bin(Number(text[2]), 4) : null;
+    case "delimited":
+      return /^[0-9]/.test(text) && text.length <= c.max! ? delimited(text, { bits: c.lengthBits!, max: c.max! }) : null;
+    case "numeric":
+      try {
+        return numeric(text, { bits: c.lengthBits!, max: c.max! });
+      } catch {
+        return null;
+      }
+    case "variable":
+      try {
+        return variable(text, { bits: c.lengthBits!, max: c.max! });
+      } catch {
+        return null;
+      }
+  }
+}
+
+/** An element string after the EPC (15.3): its AI in four bits a digit, then its value as table F writes it. */
+function aidcBits(ai: string, value: string): string {
+  const row = /^\d{2,4}$/.test(ai) && aiLength(ai.slice(0, 2)) === ai.length ? aidcRow(ai) : undefined;
+  if (!row) throw new EpcError("epc.aidcUnknown", { ai });
+  const split = row.second ? row.first.length! : value.length;
+  const first = componentBits(row.first, value.slice(0, split));
+  const second = row.second ? componentBits(row.second, value.slice(split)) : "";
+  if (first === null || second === null) throw new EpcError("epc.aidcValue", { ai });
+  return digits4(ai) + first + second;
+}
+
 const SEVEN_BIT: Record<string, string> = hostnameTables.sevenBit;
 const FOURTEEN_BIT: Record<string, string> = hostnameTables.fourteenBit;
 const PREFIXES = Object.entries(SEVEN_BIT).filter(([, s]) => s.endsWith("."));
@@ -162,6 +270,8 @@ export interface EpcPlusOptions {
   hostname?: string;
   /** A DSGTIN: the date (11, 13, 15, 16, 17, 7006 or 7007) written before the GTIN, and its value YYMMDD. */
   date?: [string, string];
+  /** Element strings written after the EPC (+AIDC data), in their order: [AI, value as in the element string]. */
+  aidc?: EpcPlusElements;
 }
 
 export interface EpcPlus {
@@ -182,7 +292,8 @@ export function encodeEpcPlus(elements: EpcPlusElements, options: EpcPlusOptions
   const layout = LAYOUTS[scheme];
   if (!Number.isInteger(options.filter) || options.filter < 0 || options.filter > 7) throw new EpcError("epc.filterInvalid");
   const of = (ai: string) => elements.find(([a]) => a === ai)?.[1];
-  let bits = bin(HEADERS[scheme][options.form === "++" ? 1 : 0], 8) + "0" + bin(options.filter, 3);
+  const aidc = options.aidc ?? [];
+  let bits = bin(HEADERS[scheme][options.form === "++" ? 1 : 0], 8) + (aidc.length ? "1" : "0") + bin(options.filter, 3);
   if (scheme === "dsgtin") bits += prioritisedDate(...options.date!);
   if (layout.fixed === null) {
     if (!/^[0-9]/.test(value)) throw new EpcError("epc.notEncodable");
@@ -204,6 +315,12 @@ export function encodeEpcPlus(elements: EpcPlusElements, options: EpcPlusOptions
     bits += "variable" in layout.qualifier ? variable(q, layout.qualifier.variable) : numeric(q, layout.qualifier.numeric);
   }
   if (options.form === "++") bits += hostnameBits(options.hostname ?? "");
+  const carried = new Set([...elements.slice(0, layout.qualifier ? 2 : 1).map(([ai]) => ai), ...(scheme === "dsgtin" ? [options.date![0]] : [])]);
+  for (const [ai, value] of aidc) {
+    if (carried.has(ai)) throw new EpcError("epc.aidcTwice", { ai });
+    carried.add(ai);
+    bits += aidcBits(ai, value);
+  }
   const padded = bits.padEnd(Math.ceil(bits.length / 16) * 16, "0");
   const hex = (padded.match(/.{4}/g) ?? []).map((n) => parseInt(n, 2).toString(16)).join("").toUpperCase();
   return { scheme: scheme.toUpperCase() + options.form, hex, bits: bits.length };
@@ -216,6 +333,8 @@ export interface DecodedEpcPlus {
   aidc: boolean;
   /** The key, then its qualifier, then a DSGTIN's date. */
   elements: EpcPlusElements;
+  /** The element strings after the EPC (+AIDC data), when the toggle bit says some follow. */
+  data?: EpcPlusElements;
   /** '++': the hostname; '+': none (id.gs1.org, or the jurisdiction's own). */
   hostname?: string;
   /** The GS1 Digital Link URI, on the hostname read or on id.gs1.org. */
@@ -332,7 +451,64 @@ export function decodeEpcPlus(hex: string): DecodedEpcPlus | null {
     }
   }
   if (date) elements.push(date);
-  const path = elements.filter(([ai]) => ai !== date?.[0]).map(([ai, v]) => `/${ai}/${urlEscape(v)}`).join("");
-  const digitalLink = `https://${hostname ?? "id.gs1.org"}${path}${date ? `?${date[0]}=${date[1]}` : ""}`;
-  return { scheme: scheme.toUpperCase() + (plusPlus ? "++" : "+"), filter, aidc, elements, ...(hostname ? { hostname } : {}), digitalLink };
+  // +AIDC data (15.3): element strings until fewer than 8 bits remain, or a zero header with no room for an SSCC
+  const readDateTime = (parts: number) => {
+    const values = [7, 4, 5, 5, 6, 6].slice(0, parts).map((n) => String(int(n)).padStart(2, "0"));
+    const text = values.join("");
+    return dateTimeBits(text) === null ? fail() : text;
+  };
+  const readComponent = (c: Component): string => {
+    switch (c.method) {
+      case "fixedNumeric": return readDigits(c.length!);
+      case "fixedBits": {
+        const value = int(c.bits!).toString();
+        return value.length > c.length! ? fail() : value.padStart(c.length!, "0");
+      }
+      case "date": return readDateTime(3);
+      case "dateTime": return readDateTime(5);
+      case "dateRange": return read(1) === "1" ? readDateTime(3) + readDateTime(3) : readDateTime(3);
+      case "dateTimeVariable": return readDateTime(({ "00": 4, "01": 5, "10": 6, "11": 3 } as Record<string, number>)[read(2)]!);
+      case "country": return Array.from({ length: 2 }, () => {
+        const n = Number(int(6));
+        return n > 25 ? fail() : String.fromCharCode(65 + n);
+      }).join("");
+      case "bit": return read(1);
+      case "minus": return read(1) === "1" ? "-" : "";
+      case "sequence": {
+        const [a, b] = [Number(int(4)), Number(int(4))];
+        return a < 1 || a > 9 || b < 1 || b > 9 ? fail() : `${a}/${b}`;
+      }
+      case "delimited": {
+        let lead = "";
+        for (;;) {
+          const nibble = Number(int(4));
+          if (nibble === 15) return lead;
+          if (nibble === 14) return lead + readVariable({ bits: c.lengthBits!, max: c.max! });
+          if (nibble > 9) fail();
+          lead += String(nibble);
+        }
+      }
+      case "numeric": return readNumeric({ bits: c.lengthBits!, max: c.max! });
+      case "variable": return readVariable({ bits: c.lengthBits!, max: c.max! });
+    }
+  };
+  const data: EpcPlusElements = [];
+  while (aidc && bits.length - at >= 8) {
+    const header = bits.slice(at, at + 8);
+    if (header === "00000000" && bits.length - at - 8 < 72) break;
+    let ai = readDigits(2);
+    const length = aiLength(ai) ?? fail();
+    if (length > 2) ai += readDigits(length - 2);
+    const row = aidcRow(ai) ?? fail();
+    data.push([ai, readComponent(row.first) + (row.second ? readComponent(row.second) : "")]);
+  }
+  // The key and its qualifiers in the GS1 Digital Link URI's path, in its order; the other element strings after "?"
+  const all = [...elements, ...data];
+  const [key, ...others] = all;
+  const qualifiers = qualifiersOf(key![0]).flatMap((q) => others.filter(([ai]) => ai === q));
+  const query = others.filter((e) => !qualifiers.includes(e));
+  const path = [key!, ...qualifiers].map(([ai, v]) => `/${ai}/${urlEscape(v)}`).join("");
+  const search = query.map(([ai, v]) => `${ai}=${encodeURIComponent(v)}`).join("&");
+  const digitalLink = `https://${hostname ?? "id.gs1.org"}${path}${search ? `?${search}` : ""}`;
+  return { scheme: scheme.toUpperCase() + (plusPlus ? "++" : "+"), filter, aidc, elements, ...(data.length ? { data } : {}), ...(hostname ? { hostname } : {}), digitalLink };
 }

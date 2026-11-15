@@ -95,6 +95,9 @@ const EPC_MESSAGES: Record<string, string> = {
   "epc.hostname": "A '++' EPC carries the GS1 Digital Link URI's hostname: up to 63 characters of the GS1 set, such as example.com.",
   "epc.notDecodable": "This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.",
   "epc.uriNotDecodable": "This URI is not an EPC as the EPC Tag Data Standard writes it.",
+  "epc.aidcUnknown": "({ai}) cannot follow an EPC: the EPC Tag Data Standard has no encoding for it.",
+  "epc.aidcValue": "The value of ({ai}) does not fit its encoding after the EPC (EPC Tag Data Standard, table F).",
+  "epc.aidcTwice": "({ai}) is already in the EPC.",
   "epc.notGcp": "GS1's list says this key's range is not a GS1 Company Prefix: choose the prefix's length to write an EPC.",
 };
 

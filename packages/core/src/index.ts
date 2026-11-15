@@ -254,7 +254,7 @@ export {
   type Epc,
   type EpcScheme,
 } from "./epc.ts";
-export { decodeEpcPlus, encodeEpcPlus, PLUS_KEYS, PRIORITISED_DATES, type DecodedEpcPlus, type EpcPlus, type EpcPlusElements, type EpcPlusOptions, type EpcPlusScheme } from "./epcPlus.ts";
+export { aidcRow, decodeEpcPlus, encodeEpcPlus, PLUS_KEYS, PRIORITISED_DATES, type DecodedEpcPlus, type EpcPlus, type EpcPlusElements, type EpcPlusOptions, type EpcPlusScheme } from "./epcPlus.ts";
 export { GcpError, gcpLengthOf, GcpTable, parseGcpTable } from "./gcp.ts";
 export { crc32, deflate } from "./deflate.ts";
 export { CMYK_BLACK, CMYK_BLACK_STROKE, CMYK_WHITE, CROP_MARKS, labelPdf, pdfContent, pdfDocument, type PdfPage } from "./pdf.ts";
