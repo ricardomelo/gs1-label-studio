@@ -9636,6 +9636,10 @@
      "status": "passed"
     },
     {
+     "name": "labels by segment › patient-wristband: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
      "name": "labels by segment › shows each element string the template holds: the lot and expiry under the barcodes, the GTIN, expiry, lot and serial beside the GS1 DataMatrix",
      "status": "passed"
     },
@@ -10800,6 +10804,15 @@
     },
     {
      "name": "the medical device's UDI template shows the UDI's element strings under its pictogram, and + Pictogram places UDI or MD on any label",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the patient's wristband template sets step 1 to a GSRN with the patient's data, its two GS1 DataMatrix read back",
      "status": "listed",
      "projects": [
       "desktop",

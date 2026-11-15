@@ -340,6 +340,7 @@ In **Label**, **A label** shows the kinds of label grouped by segment: *Logistic
 | Retail | *Fresh food sold by weight*, 60 × 54 mm | A GS1 DataBar Expanded Stacked with a variable measure GTIN (its first digit 9), the net weight (310n) and the price (392n), as a scale prints them (2.1.12) |
 | Healthcare | *Medicine or medical device*, 60 × 18 mm | A GS1 DataMatrix with *GTIN (01)*, *EXPIRY (17)*, *LOT (10)* and *SERIAL (21)* written beside it (4.14.1, figure 4-8), its element strings in the order (01), (17), (10), (21), for hospitals (table 6) |
 | Healthcare | *Medical device with its UDI*, 46 × 21 mm | A GS1 DataMatrix under the *UDI* pictogram (ISO 15223-1, symbol 5.7.10), the UDI's element strings beside it, one a line, each AI in parentheses before its value and no data titles, as the UDI rules take a GS1 carrier's human readable text; the *MD* pictogram (5.7.7) at the top right |
+| Healthcare | *Patient's wristband*, 150 × 25 mm | A GSRN of the service recipient (8018) with the patient's family name (7253), given name (7254), date of birth (7250) and sex (7252, ISO 5218: 1 male, 2 female), in a GS1 DataMatrix at each end so that one faces the scanner however the band curves; the name large between them, *DOB* with the date as DD/MM/YYYY (a format of its own, so without its AI: 4.14.1, figure 4-9) and *GSRN (8018)* (2.5.2) |
 
 Choosing one:
 
