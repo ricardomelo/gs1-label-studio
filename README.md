@@ -739,7 +739,12 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   strings beside the GS1 DataMatrix, one a line; B wrote them in one line under it): under the ISO 15223-1 UDI pictogram,
   with MD, and with it **+ Pictogram** on any label of one's own (the owner: let the UDI pictogram be placed); a
   patient's wristband the same day (mock-up A of two: a GS1 DataMatrix at each end, the name, date of birth, sex and
-  GSRN between; B put the GSRN alone in a GS1-128 along the band); next: a consumer unit's front panel*
+  GSRN between; B put the GSRN alone in a GS1-128 along the band); a consumer unit with GS1 Digital Link done 15 November
+  (mock-up A of two: the EAN-13 and a QR code carrying the GTIN alone side by side, a call to scan under the QR code; B
+  stacked them on a narrow panel), as the barcode area on a pack's back rather than its front (General Specifications
+  6.3.2, 6.3.3.1: the front is the trading and advertising area), and with it a 2D barcode further than 50 mm from the
+  nearest point-of-sale linear barcode named on any label of one's own (6.3.3.1); next: patients and further templates
+  as the owner chooses them*
 - 6.6 A barcode on a label of one's own with the options of the symbol alone (M): today its symbol, size, human
   readable text and element strings; then the human readable text's place and height (1.16), error correction and
   the QR code's encoding modes (1.14), the bar width reduction, ITF-14's bearer bars, and a linear symbol beside a

@@ -337,6 +337,7 @@ In **Label**, **A label** shows the kinds of label grouped by segment: *Logistic
 | Segment | Template | What it holds |
 |---|---|---|
 | Retail | *Product with lot and expiry*, 66 × 38 mm | An EAN-13 and a QR code (GS1 Digital Link) side by side, their quiet zones kept, *LOT (10)* and *EXPIRY (17)* under them (General Specifications 4.15.1, 6.3.3.1) |
+| Retail | *Consumer unit with GS1 Digital Link*, 64 × 32 mm | An EAN-13 and a QR code whose GS1 Digital Link URI carries the GTIN alone, the QR code with its quiet zones within 50 mm of the EAN-13's centre (6.3.3.1), *SCAN FOR PRODUCT INFO* under it; the barcode area of a pack's back, lower right (6.3.2: the front is the trading and advertising area) |
 | Retail | *Fresh food sold by weight*, 60 × 54 mm | A GS1 DataBar Expanded Stacked with a variable measure GTIN (its first digit 9), the net weight (310n) and the price (392n), as a scale prints them (2.1.12) |
 | Healthcare | *Medicine or medical device*, 60 × 18 mm | A GS1 DataMatrix with *GTIN (01)*, *EXPIRY (17)*, *LOT (10)* and *SERIAL (21)* written beside it (4.14.1, figure 4-8), its element strings in the order (01), (17), (10), (21), for hospitals (table 6) |
 | Healthcare | *Medical device with its UDI*, 46 × 21 mm | A GS1 DataMatrix under the *UDI* pictogram (ISO 15223-1, symbol 5.7.10), the UDI's element strings beside it, one a line, each AI in parentheses before its value and no data titles, as the UDI rules take a GS1 carrier's human readable text; the *MD* pictogram (5.7.7) at the top right |
@@ -467,7 +468,9 @@ label**, then the card *A label of my own*:
 
 A barcode, line, box or image past the label's edge, or a barcode overlapping another element (its quiet zones must stay
 clear; a box's outline counts only where it is drawn), is named in red under
-the size; the label is still drawn. **Scan test** reads every barcode. The label exports as SVG, PNG, PDF and EPS and
+the size; so is a 2D barcode more than 50 mm from the centre of the nearest EAN/UPC or GS1 DataBar when step 3's
+scanning environment is a point of sale (tables 1, 3 and 10): with its quiet zones it should stay within that radius, or
+the scanner may not take both for the same trade item (General Specifications 6.3.3.1). The label is still drawn. **Scan test** reads every barcode. The label exports as SVG, PNG, PDF and EPS and
 in bulk, and in ZPL with the printer's own commands (the printer section's file, its test print and the bulk ZPL file): each
 barcode as the symbol alone is written, at the whole dots a module nearest to its own X-dimension (within its table's
 row), its bars where the label puts them; each line of text with `^A0` at its capitals' height; each line and box with

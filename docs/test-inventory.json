@@ -1152,6 +1152,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › names a 2D barcode further than 50 mm from the centre of the nearest point-of-sale linear barcode, at the point of sale only",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › refuses a barcode the data or the table cannot give, naming it",
      "status": "passed"
     },
@@ -9628,6 +9632,10 @@
      "status": "passed"
     },
     {
+     "name": "labels by segment › retail-digital-link: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
      "name": "labels by segment › healthcare-pack: step 2's table offers its symbol for its data, and the page reads back whole",
      "status": "passed"
     },
@@ -10813,6 +10821,15 @@
     },
     {
      "name": "the patient's wristband template sets step 1 to a GSRN with the patient's data, its two GS1 DataMatrix read back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the consumer unit template: an EAN-13 and a QR code with GS1 Digital Link, named once the QR code is more than 50 mm away",
      "status": "listed",
      "projects": [
       "desktop",
