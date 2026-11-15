@@ -752,7 +752,21 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   Digital Link URI's domain; from TDS and TDT 2.3 (in the owner's Drive), tested against their examples and, where it
   has them, epc-tds. With it, the reverse of today's card: an EPC pasted in step 1 (its hexadecimal or its tag URI,
   classic or +) fills the fields, a shortcut for section 16 of the user guide. Where: the card stays in step 3 while it
-  fits; a mode of its own beside *One code* and *In bulk* only if the study (6.3) shows the options outgrow it
+  fits; a mode of its own beside *One code* and *In bulk* only if the study (6.3) shows the options outgrow it — *assessed
+  15 November (option A of three, taken under the owner's rule): TDS 2.3 has 24 new schemes, a '+' scheme for each of
+  the twelve kinds of EPC the studio writes today (headers F0 to FB: CPI+, GRAI+, SGLN+, ITIP+, GSRN+, GSRNP+, GDTI+,
+  SGTIN+, SGCN+, SSCC+, GIAI+ and DSGTIN+, the date-prioritised SGTIN) and a '++' form of each (E6 to EF, FC and FD),
+  which also carries the GS1 Digital Link URI's hostname. Each is a binary string of variable length: an 8-bit header, a
+  bit saying whether +AIDC data follows, the filter, the key in four bits a digit (so no GS1 Company Prefix length is
+  needed, unlike the classic schemes), the serial or other component in one of six character encodings chosen by its
+  characters, and for '++' the hostname. They have no tag URI or pure identity URI: the binary string and the GS1
+  Digital Link URI only (TDS 2.3, sections 14.5 and 14.6, examples in E.3). A: encode and decode the 24 schemes' EPC,
+  without +AIDC data, offered beside the classic scheme in step 3's EPC card, with the reverse: a hexadecimal EPC,
+  classic or new, pasted in step 1 fills the data; tested against E.3's 24 examples (two of which, SSCC++ and ITIP++,
+  begin with the '+' header, F9 and F3, instead of EF and ED: the tests follow the header table, 14.2). B: A and the
+  +AIDC data after the EPC (batch, expiry and the other AIs of TDS table F, each with its own encoding): its own item
+  after A. C: decoding only. epc-tds 1.4.1 (July 2024) has the classic schemes only, so the tests rest on the
+  standard's examples. Next: A, the core first, then mock-ups of the card*
 - 6.8 GS1 DotCode — *left as it is for now (the owner, 11 November 2026: option C)*: it is not offered because no independent decoder reads it back (ZXing does not), and
   every symbol is read back before it is offered (CLAUDE.md; 1.3). Options: (A, recommended) a decoder of our own,
   written from the DotCode specification (ISO/IEC 21471, or AIM's DotCode specification), that reads the dots from
