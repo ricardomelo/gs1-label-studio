@@ -815,6 +815,16 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   and its example as typed; the text, not the symbol, changes, in the SVG, PDF, EPS, PNG and every printer language,
   each element string sharing a line under a linear symbol joined by two spaces; the AI in parentheses stays the
   default; not for EAN/UPC's and ITF-14's digits, nor the GS1 Logistic Label, whose rules are its own*
+- 6.12 A destination of its own for RFID (assessment first; the owner, 15 November 2026): the EPC card, EPC+ and EPC++,
+  +AIDC data, an EPC pasted and NFC grown past step 3's card; a menu of its own beside the label's, with its own steps
+  (the key and data, the scheme, the tag's memory, writing and reading back). Mock-ups first, after an ideation round
+  with the owner (7.1).
+- 7.1 A family of studios (ideation round first; the owner, 15 November 2026): a start page offering *Label Studio*,
+  *Barcode Studio*, *RFID Studio* and a studio that checks what it is given (*Check Studio* or *Verification Studio*,
+  its name to be chosen): any barcode or RFID tag read by the camera, a scanner or pasted, analysed in full (the
+  symbology, the element strings against the GS1 Barcode Syntax Dictionary, the key's check digit and company prefix,
+  dates, the EPC's scheme), every fault pointed out where it is, explained and with a correction suggested, as the GS1
+  Healthcare barcode survey app once did. To be shaped in an ideation round with the owner before any mock-up.
 
 
 ## Licence
