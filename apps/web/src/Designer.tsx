@@ -866,7 +866,7 @@ export function DesignerPanel({ page, selected, elements, columns, environments,
                     </label>
                   </div>
                   {element.hri && !LINEAR_TEXT.includes(element.symbology) && hriFields}
-                  <DesignerSymbolOptions element={element} labelError={labelError} onChange={update} />
+                  <DesignerSymbolOptions element={element} labelError={labelError} environment={environment} onChange={update} />
                   <fieldset className="wide">
                     <legend>{t("Element strings it carries")}</legend>
                     {SYMBOLOGIES[element.symbology].data === "uri" ? (

@@ -4438,3 +4438,51 @@ test("a barcode on a label of one's own takes the options of the symbol alone", 
   await expect(page.locator("#el-hri-position")).toHaveCount(0);
   await expect(await option(page, "#el-reduction")).toBeVisible();
 });
+
+// A linear symbol beside a 2D one on a label of one's own (backlog 6.6; mock-up A of two): in This barcode's options,
+// where the page's environment has an EAN/UPC; its size and bar width reduction then; both read back, and the print
+// file with the printer's own commands for each.
+test("a 2D barcode on a label of one's own takes an EAN-13 beside it, as the symbol alone does", async ({ page }) => {
+  await on(page, "data");
+  await page.fill("#paste", "(01)09506000134376(17)271231(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await labelKind(page, "designer");
+  await page.selectOption("#page-env", "retail");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  // None until chosen: no size of its own, no reduction (a 2D symbol's modules are not reduced)
+  await expect(await option(page, "#el-linear")).toHaveValue("none");
+  await expect(page.locator("#el-linear-size")).toHaveCount(0);
+  await expect(page.locator("#el-reduction")).toHaveCount(0);
+  await page.selectOption("#el-linear", "auto");
+  await expect(page.locator("#el-linear-size")).toHaveValue("");
+  await expect(page.locator("#el-linear-size option").first()).toHaveText("As the 2D symbol: 100 % (X 0.330 mm)");
+  await page.selectOption("#el-linear-size", "120");
+  await page.selectOption("#el-reduction", "0.02");
+  await expect(page.locator("#el-linear-size")).toHaveValue("120");
+  await expect(page.locator("#el-reduction")).toHaveValue("0.02");
+  // On a phone, the group's line names it when folded
+  const summary = page.locator(".group:has(#el-linear) .group-summary");
+  if (await summary.count()) await expect(summary).toContainText("EAN-13 / UPC-A / EAN-8, as the GTIN takes");
+  await page.getByRole("button", { name: "Scan test" }).click();
+  await expect(page.locator(".scan-result")).toContainText("✓ Read as intended", { timeout: 30_000 });
+  await expect(page.locator(".scan-result")).toContainText("]E0 9506000134376");
+  await expect(page.locator(".scan-result")).toContainText("]Q1 https://id.gs1.org/01/09506000134376/10/B42?17=271231");
+  const [zpl] = await Promise.all([page.waitForEvent("download"), (await printFile(page, "ZPL (203 dpi)")).click()]);
+  const file = readFileSync((await zpl.path())!, "utf8");
+  expect(file).toContain("^BQN");
+  expect(file).toMatch(/\^BEN,[^\n]*\^FD950600013437\^FS/);
+  // None again: its size and reduction go with it
+  await on(page, "label");
+  await (await option(page, "#el-linear")).selectOption("none");
+  await expect(page.locator("#el-linear-size")).toHaveCount(0);
+  await expect(page.locator("#el-reduction")).toHaveCount(0);
+  // A GTIN that is not a consumer unit's: the label says why it cannot be drawn
+  await on(page, "data");
+  await page.fill("#paste", "(01)19506000134373(10)B42");
+  await page.getByRole("button", { name: "Fill in" }).click();
+  await on(page, "label");
+  await page.locator(".design-list button", { hasText: "QR code" }).press("Enter");
+  await (await option(page, "#el-linear")).selectOption("auto");
+  await expect(page.locator(".preview .error")).toContainText("An EAN/UPC is only for GTINs of consumer units (indicator 0).");
+});
