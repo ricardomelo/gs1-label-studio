@@ -198,6 +198,7 @@ Each module, in the order of the flow above.
 | Module | What it does |
 |---|---|
 | `epc.ts` | Every EPC scheme for a key (the resolver's `epc.py`, schemes loaded lazily, BigInt), hexadecimal in 16-bit words, base 64, tag and pure identity URIs, NFC links |
+| `epcPlus.ts` | `encodeEpcPlus`, `decodeEpcPlus`: the '+' and '++' EPC schemes of TDS 2.x (backlog 6.7), the key four bits a digit (no company prefix length), six encodings for a serial, the DSGTIN's date, the '++' hostname with TDS's optimisation tables (`data/epc_hostname.json`); hexadecimal in 16-bit words |
 | `gcp.ts` | `GcpTable`: GS1's GCP length table read without a DOM, kept compact |
 | `ndef.ts` | `ndefUriMessage`, `ndefUri`: the NFC Forum URI record |
 | `sign.ts` | `signedPayload`, `signJws`, `verifyJws`, `hideAuthenticationCode`, `keyCredential`, `productDataCredential`, `signCredential` (Web Crypto, ES256) |
@@ -293,6 +294,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `dots` | the printer's dot grid | 3 |
 | `environments` | the resolver's scanning environments, its 2,970 answers | 4 |
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 113 |
+| `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 28 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriFormat` | the human readable text's format: AI, data titles, both, one's own; in the SVG and every printer language, still read | 14 |

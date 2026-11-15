@@ -73,6 +73,8 @@
  "This key's EPC needs its qualifier ({qualifier}), such as the serial number.": "Der EPC dieses Schlüssels braucht seinen Qualifikator ({qualifier}), etwa die Seriennummer.",
  "This key's EPC needs its serial component after the first {serialAfter} digits.": "Der EPC dieses Schlüssels braucht seine serielle Komponente nach den ersten {serialAfter} Ziffern.",
  "This key has no EPC scheme in the EPC Tag Data Standard.": "Dieser Schlüssel hat kein EPC-Schema im EPC Tag Data Standard.",
+ "A '++' EPC carries the GS1 Digital Link URI's hostname: up to 63 characters of the GS1 set, such as example.com.": "Ein '++'-EPC trägt den Hostnamen des GS1-Digital-Link-URI: bis zu 63 Zeichen des GS1-Zeichensatzes, etwa example.com.",
+ "This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.": "Dieses Hexadezimal ist kein EPC, wie ihn der EPC Tag Data Standard schreibt.",
  "These values fit no EPC scheme of this key (too long, or with characters an EPC cannot carry).": "Diese Werte passen in kein EPC-Schema dieses Schlüssels (zu lang oder mit Zeichen, die ein EPC nicht tragen kann).",
  "Choose the company prefix length (6 to 12 digits).": "Wählen Sie die Länge der Basisnummer (6 bis 12 Ziffern).",
  "Invalid filter (0 to 7).": "Ungültiger Filter (0 bis 7).",

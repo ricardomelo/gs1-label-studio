@@ -92,6 +92,8 @@ const EPC_MESSAGES: Record<string, string> = {
   "epc.notEncodable": "These values fit no EPC scheme of this key (too long, or with characters an EPC cannot carry).",
   "epc.prefixLength": "Choose the company prefix length (6 to 12 digits).",
   "epc.filterInvalid": "Invalid filter (0 to 7).",
+  "epc.hostname": "A '++' EPC carries the GS1 Digital Link URI's hostname: up to 63 characters of the GS1 set, such as example.com.",
+  "epc.notDecodable": "This hexadecimal is not an EPC as the EPC Tag Data Standard writes it.",
   "epc.notGcp": "GS1's list says this key's range is not a GS1 Company Prefix: choose the prefix's length to write an EPC.",
 };
 
