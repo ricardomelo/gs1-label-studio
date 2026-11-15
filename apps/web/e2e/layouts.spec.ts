@@ -124,11 +124,16 @@ test("a tablet held horizontally: a rail on the left, the destination beside it,
   await expect(label).toBeVisible();
 });
 
-test("About: the repository, the licence, the version and the software it is made with, each with its repository", async ({ page }, info) => {
+test("About: who developed it, the repository, the licence, the version and the software it is made with, each with its repository", async ({ page }, info) => {
   if (info.project.name === "phone") await tabs(page).getByRole("button", { name: "More" }).click();
   const about = page.locator("footer.about");
   await about.scrollIntoViewIfNeeded();
   await expect(about.getByRole("heading", { name: "About GS1 Label Studio" })).toBeVisible();
+  // Who developed it, with his LinkedIn and GitHub (the owner, 15 November 2026)
+  const author = about.getByTestId("about-author");
+  await expect(author).toHaveText("Developed by Ricardo Verza Amaral Melo · LinkedIn · GitHub");
+  await expect(author.getByRole("link", { name: "LinkedIn" })).toHaveAttribute("href", "https://www.linkedin.com/in/ricardoverza");
+  await expect(author.getByRole("link", { name: "GitHub" })).toHaveAttribute("href", "https://github.com/ricardomelo");
   await expect(about.getByRole("link", { name: "github.com/ricardomelo/gs1-label-studio" })).toHaveAttribute("href", "https://github.com/ricardomelo/gs1-label-studio");
   await expect(about.getByRole("link", { name: "Apache License 2.0" })).toHaveAttribute("href", /\/blob\/main\/LICENSE$/);
   await expect(about.getByRole("link", { name: "user guide" })).toHaveAttribute("href", /docs\/user-guide\.md$/);

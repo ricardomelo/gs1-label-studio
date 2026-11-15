@@ -6,6 +6,8 @@ import { en, t } from "./i18n.ts";
 // versions and the tools of the tests). On a phone it closes the "More" destination.
 
 export const REPOSITORY = "https://github.com/ricardomelo/gs1-label-studio";
+/** Who made it, and where to find him (the owner, 15 November 2026). */
+export const AUTHOR = { name: "Ricardo Verza Amaral Melo", linkedin: "https://www.linkedin.com/in/ricardoverza", github: "https://github.com/ricardomelo" };
 
 /** The software the application contains, as docs/third-party.md lists it ("In the application"). */
 export const MADE_WITH: readonly { name: string; url: string; licence: string; use: string; release?: string }[] = [
@@ -33,6 +35,9 @@ export function About() {
       <h2 id="about-title">{t("About GS1 Label Studio")}</h2>
       <p>{t("GS1 barcodes and labels made in the browser, one at a time or thousands from a spreadsheet. Everything stays in your browser, and it works offline.")}</p>
       <ul className="about-links">
+        <li data-testid="about-author">
+          {t("Developed by")} {AUTHOR.name} · <a href={AUTHOR.linkedin}>LinkedIn</a> · <a href={AUTHOR.github}>GitHub</a>
+        </li>
         <li>
           {t("Source code")}: <a href={REPOSITORY}>github.com/ricardomelo/gs1-label-studio</a>
         </li>

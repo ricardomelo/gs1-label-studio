@@ -861,5 +861,6 @@
  "Pictogram {letters}": "Pictogramme {letters}",
  "The UDI or MD pictogram of ISO 15223-1, for a medical device's label": "Le pictogramme UDI ou MD de l’ISO 15223-1, pour l’étiquette d’un dispositif médical",
  "{source}: the letters in a frame, as the standard draws them.": "{source} : les lettres dans un cadre, comme la norme les dessine.",
- "Height {mm} mm": "Hauteur {mm} mm"
+ "Height {mm} mm": "Hauteur {mm} mm",
+ "Developed by": "Développé par"
 }
