@@ -90,6 +90,30 @@ export const LABEL_TEMPLATES: readonly LabelTemplate[] = [
     section: "2.1.12, 5.5",
   },
   {
+    // A consumer unit's barcode area (backlog 6.5, mock-up A of two, 15 November 2026): the EAN-13 and a QR code with
+    // GS1 Digital Link carrying the GTIN alone, the QR code with its quiet zones within 50 mm of the EAN-13's centre, as
+    // section 6.3.3.1 asks of a linear and a 2D barcode both scanned at the point of sale, and a call to scan under it.
+    // On the back of the pack, lower right (6.3.2, 6.3.3.1), rather than its front, the trading and advertising area.
+    // B stacked the QR code above the EAN-13 on a narrow panel.
+    id: "retail-digital-link",
+    segment: "retail",
+    name: "Consumer unit with GS1 Digital Link",
+    line: "EAN-13 and a QR code with GS1 Digital Link within 50 mm of it, a call to scan under the QR code",
+    identification: { key: "01", value: EXAMPLE_VALUES["01"]!, qualifiers: {}, attributes: [] },
+    answers: { retail: true, distribution: false },
+    picked: { symbol: "ean13", with: "dl-qrcode" },
+    page: {
+      widthMm: 64,
+      heightMm: 32,
+      elements: [
+        { id: "e1", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 1, yMm: 2 },
+        { id: "e2", kind: "symbol", symbology: "dl-qrcode", ais: null, size: 100, hri: false, xMm: 41, yMm: 2 },
+        { id: "e3", kind: "text", text: lines("SCAN FOR", "PRODUCT INFO"), heightMm: 1.8, xMm: 43, yMm: 24.5 },
+      ],
+    },
+    section: "6.3.2, 6.3.3.1",
+  },
+  {
     id: "healthcare-pack",
     segment: "healthcare",
     name: "Medicine or medical device",

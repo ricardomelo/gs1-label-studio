@@ -9,6 +9,7 @@ import {
   guidance,
   identify,
   LABEL_TEMPLATES,
+  POS_RADIUS_MM,
   labelSvg,
   leaveOut,
   TEMPLATE_SEGMENTS,
@@ -46,7 +47,7 @@ const STEM = "https://id.gs1.org";
 describe("labels by segment", () => {
   it("lists retail, then healthcare, each template with a unique id", () => {
     expect(TEMPLATE_SEGMENTS).toEqual(["retail", "healthcare"]);
-    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "healthcare", "healthcare", "healthcare"]);
+    expect(LABEL_TEMPLATES.map((t) => t.segment)).toEqual(["retail", "retail", "retail", "healthcare", "healthcare", "healthcare"]);
     expect(new Set(LABEL_TEMPLATES.map((t) => t.id)).size).toBe(LABEL_TEMPLATES.length);
     expect(templateById("healthcare-pack")?.name).toBe("Medicine or medical device");
     expect(templateById("nothing")).toBeUndefined();
@@ -96,6 +97,16 @@ describe("labels by segment", () => {
     const symbols = designLabel(band.page, identify(engine, band.identification, STEM), font, { environment: "gsrn" }).placed.filter((p) => p.id === "e1" || p.id === "e5");
     expect(symbols.map((p) => [p.xMm, Math.round((p.xMm + p.widthMm) * 100) / 100])).toEqual([[2, 16.44], [128, 142.44]]);
     expect(identify(engine, band.identification, STEM).elementString).toBe("(8018)950600013435200008(7253)SILVA(7254)MARIA(7250)19800315(7252)2");
+    // The consumer unit: the QR code carries the GTIN alone in GS1 Digital Link, the call to scan under it, and the QR
+    // code with its quiet zones within 50 mm of the EAN-13's centre (6.3.3.1)
+    const unit = templateById("retail-digital-link")!;
+    const unitLabel = designLabel(unit.page, identify(engine, unit.identification, STEM), font, { environment: "retail" });
+    expect(unitLabel.expected).toEqual(["]E0 9506000134352", "]Q1 https://id.gs1.org/01/09506000134352"]);
+    expect(texts("retail-digital-link", "retail")).toEqual(expect.arrayContaining(["SCAN FOR", "PRODUCT INFO"]));
+    const [ean, qr, call] = ["e1", "e2", "e3"].map((id) => unitLabel.placed.find((p) => p.id === id)!);
+    expect(call!.yMm).toBeGreaterThanOrEqual(qr!.yMm + qr!.heightMm);
+    const [cx, cy] = [ean!.xMm + ean!.widthMm / 2, ean!.yMm + ean!.heightMm / 2];
+    expect(Math.hypot(qr!.xMm + qr!.widthMm - cx, qr!.yMm + qr!.heightMm - cy)).toBeLessThan(POS_RADIUS_MM);
     // A variable measure GTIN starts with 9; its weight and price as element strings
     const weight = templateById("retail-weight")!;
     expect(identify(engine, weight.identification, STEM).elementString).toBe("(01)99506000134355(3102)000125(3922)1599");

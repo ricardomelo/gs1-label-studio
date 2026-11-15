@@ -523,7 +523,9 @@ describe("TSPL, EPL2 and DPL rendered by Labelize and read back", () => {
     const engine = await syntaxEngine();
     const page = { widthMm: 170, heightMm: 75, elements: elements as unknown as DesignPage["elements"] };
     const designed = designLabel(page, engine.parse("(01)09506000134376(17)271231(10)B42") as Identified, hriFont(), { environment });
-    expect(designed.problems).toEqual([]);
+    // Every symbol apart on the page, each 2D one in reach of the printer's own command; some further than 50 mm from the
+    // EAN-13 at the point of sale (6.3.3.1), named but beside the point here
+    expect(designed.problems.filter((p) => p.kind !== "far")).toEqual([]);
     const printed = printPageFor(designed, dpi);
     const png = render(language, PAGES[language](printed), printed.widthDots, printed.heightDots, dpi);
     expect(await reads(png)).toEqual(designed.expected);

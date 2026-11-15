@@ -230,9 +230,12 @@ export interface DesignedLabel {
   symbols: { id: string; symbology: SymbologyId; modules: number; version: number | null }[];
   /**
    * What is wrong with the page but does not stop it being drawn: an element past its edge, a symbol overlapping another
-   * element (its quiet zones must stay clear); by the elements' ids, for the editor to name them.
+   * element (its quiet zones must stay clear), a 2D symbol with its quiet zones further than 50 mm from the centre of
+   * the nearest linear barcode scanned at the point of sale with it (`far`: the linear's id, then the 2D symbol's;
+   * General Specifications 6.3.3.1, in a retail point-of-sale environment); by the elements' ids, for the editor to
+   * name them.
    */
-  problems: ({ kind: "edge"; id: string } | { kind: "overlap"; ids: [string, string] })[];
+  problems: ({ kind: "edge"; id: string } | { kind: "overlap"; ids: [string, string] } | { kind: "far"; ids: [string, string] })[];
   /**
    * What a printer language writes the page from (backlog 4.2): each barcode as the editor's symbol alone — its data,
    * options and layout — with its box's top left corner on the page, and each line of text with its capitals' top left
@@ -402,6 +405,13 @@ function besideParts(element: DesignSymbol, o: LabelOptions, drawn: Layout, font
   return [part(twoD, pair.rects.slice(0, pair.symbolRects)), part(linear, pair.rects.slice(pair.symbolRects))];
 }
 
+/** The radius within which a 2D symbol and its quiet zones stay of a linear barcode's centre (6.3.3.1). */
+export const POS_RADIUS_MM = 50;
+/** The scanning environments of the point of sale, where 6.3.3.1's radius applies (tables 1, 3 and 10). */
+const POS_ENVIRONMENTS = new Set(["retail", "retail-gd", "pharmacy"]);
+/** The linear barcodes scanned at the point of sale: EAN/UPC and GS1 DataBar. */
+const POS_LINEAR = (symbology: SymbologyId) => ["ean13", "upca", "ean8", "upce"].includes(symbology) || symbology.startsWith("databar");
+
 /**
  * The page of `page` with the data of `identified`: one Layout in units of its smallest module, each barcode as the
  * editor lays out a symbol alone, each text block in the HRI font at its capitals' height. An element that cannot be
@@ -517,6 +527,23 @@ export function designLabel(page: DesignPage, identified: Identified, font: HriF
     const symbol = [a, b].some((p) => page.elements.find((e) => e.id === p.id)!.kind === "symbol");
     if (symbol && areas(a).some((ra) => areas(b).some((rb) => !apart(ra, rb)))) problems.push({ kind: "overlap", ids: [a.id, b.id] });
   }));
+
+  // A linear and a 2D barcode both scanned at the point of sale: the 2D symbol and its quiet zones within 50 mm of the
+  // linear's centre, or the scanner may not take them for the same trade item (6.3.3.1)
+  if (POS_ENVIRONMENTS.has(options.environment)) {
+    const boxOfId = (id: string) => placed.find((p) => p.id === id)!;
+    const linears = symbols.filter((s) => POS_LINEAR(s.element.symbology)).map((s) => boxOfId(s.element.id));
+    for (const twoD of symbols.filter((s) => SYMBOLOGIES[s.element.symbology].kind === "matrix").map((s) => boxOfId(s.element.id))) {
+      const reach = (linear: PlacedElement) => {
+        const [cx, cy] = [linear.xMm + linear.widthMm / 2, linear.yMm + linear.heightMm / 2];
+        const dx = Math.max(Math.abs(twoD.xMm - cx), Math.abs(twoD.xMm + twoD.widthMm - cx));
+        const dy = Math.max(Math.abs(twoD.yMm - cy), Math.abs(twoD.yMm + twoD.heightMm - cy));
+        return Math.hypot(dx, dy);
+      };
+      const nearest = linears.reduce<PlacedElement | undefined>((best, l) => (!best || reach(l) < reach(best) ? l : best), undefined);
+      if (nearest && reach(nearest) > POS_RADIUS_MM + 1e-9) problems.push({ kind: "far", ids: [nearest.id, twoD.id] });
+    }
+  }
 
   const names = symbols.map((s) => SYMBOLOGIES[s.element.symbology].name);
   const description = `A label of one's own, ${page.widthMm} × ${page.heightMm} mm` + (names.length ? `: ${names.join(", ")}` : "");

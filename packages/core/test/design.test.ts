@@ -8,6 +8,7 @@ import {
   columnCell,
   pictogramSize,
   designLabel,
+  POS_RADIUS_MM,
   dplPage,
   encode,
   eplPage,
@@ -772,6 +773,41 @@ describe("a label of one's own", () => {
     expect(designLabel(page, data, font, { environment: "distribution" }).problems).toEqual([{ kind: "edge", id: "b1" }]);
     const over: DesignPage = { ...PAGE, elements: [...PAGE.elements, { id: "t3", kind: "text", text: "190 g", heightMm: 3, xMm: 100, yMm: 10 }] };
     expect(designLabel(over, data, font, { environment: "distribution" }).problems).toEqual([{ kind: "overlap", ids: ["qr", "t3"] }]);
+  });
+
+  // General Specifications 6.3.3.1: a linear and a 2D barcode both scanned at the point of sale, the 2D symbol with its
+  // quiet zones within 50 mm of the linear's centre
+  it("names a 2D barcode further than 50 mm from the centre of the nearest point-of-sale linear barcode, at the point of sale only", () => {
+    const at = (qrX: number, environment = "retail", linear: "ean13" | "gs1-128" | "databar-omni" = "ean13", more: DesignPage["elements"] = [], twoD: "dl-qrcode" | "dl-datamatrix" = "dl-qrcode") => {
+      const page: DesignPage = { widthMm: 200, heightMm: 80, elements: [
+        { id: "lin", kind: "symbol", symbology: linear, ais: ["01"], size: 100, hri: true, xMm: 2, yMm: 2 },
+        { id: "qr", kind: "symbol", symbology: twoD, ais: null, size: 100, hri: false, xMm: qrX, yMm: 2 },
+        ...more,
+      ] };
+      const designed = designLabel(page, data, font, { environment });
+      const [l, q] = ["lin", "qr"].map((id) => designed.placed.find((p) => p.id === id)!);
+      const [cx, cy] = [l!.xMm + l!.widthMm / 2, l!.yMm + l!.heightMm / 2];
+      const reach = Math.hypot(Math.max(Math.abs(q!.xMm - cx), Math.abs(q!.xMm + q!.widthMm - cx)), Math.max(Math.abs(q!.yMm - cy), Math.abs(q!.yMm + q!.heightMm - cy)));
+      return { problems: designed.problems, reach };
+    };
+    const near = at(42);
+    expect(near.reach).toBeLessThan(POS_RADIUS_MM);
+    expect(near.problems).toEqual([]);
+    // Just past the radius, and well past it
+    const just = at(42 + (POS_RADIUS_MM - near.reach) + 0.5);
+    expect(just.reach).toBeGreaterThan(POS_RADIUS_MM);
+    expect(just.problems).toEqual([{ kind: "far", ids: ["lin", "qr"] }]);
+    expect(at(120).problems).toEqual([{ kind: "far", ids: ["lin", "qr"] }]);
+    // The healthcare point of sale (table 10) too; not in general distribution, nor beside a GS1-128
+    expect(at(120, "pharmacy", "ean13", [], "dl-datamatrix").problems).toEqual([{ kind: "far", ids: ["lin", "qr"] }]);
+    expect(at(120, "distribution").problems).toEqual([]);
+    expect(at(120, "retail-gd").problems).toEqual([{ kind: "far", ids: ["lin", "qr"] }]);
+    expect(at(120, "pharmacy", "gs1-128", [], "dl-datamatrix").problems.filter((p) => p.kind === "far")).toEqual([]);
+    expect(at(120, "retail", "databar-omni").problems).toEqual([{ kind: "far", ids: ["lin", "qr"] }]);
+    // A second EAN-13 near the QR code: the nearest linear is the one it is measured from
+    expect(at(120, "retail", "ean13", [{ id: "lin2", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 113, yMm: 34 }]).problems).toEqual([]);
+    expect(at(150, "retail", "ean13", [{ id: "lin2", kind: "symbol", symbology: "ean13", ais: ["01"], size: 100, hri: true, xMm: 75, yMm: 2 }]).problems)
+      .toEqual([{ kind: "far", ids: ["lin2", "qr"] }]);
   });
 
   it("refuses a barcode the data or the table cannot give, naming it", () => {
