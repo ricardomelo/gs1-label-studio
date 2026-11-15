@@ -735,7 +735,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   cards under A label grouped by segment, Logistics, Retail, Healthcare and Your own; B put the templates behind a
   fourth card, in a dialog; retail then healthcare, the recommended order): Product with lot and expiry (EAN-13 and a
   QR code), Fresh food sold by weight (GS1 DataBar Expanded Stacked), Medicine or medical device (GS1 DataMatrix with
-  its data written beside it); next: more templates, patients (GSRN), as the owner chooses*
+  its data written beside it); a medical device's UDI label done 15 November (mock-up A of two: the UDI's element
+  strings beside the GS1 DataMatrix, one a line; B wrote them in one line under it): under the ISO 15223-1 UDI pictogram,
+  with MD, and with it **+ Pictogram** on any label of one's own (the owner: let the UDI pictogram be placed); next: a
+  patient's wristband (GSRN), then a consumer unit's front panel*
 - 6.6 A barcode on a label of one's own with the options of the symbol alone (M): today its symbol, size, human
   readable text and element strings; then the human readable text's place and height (1.16), error correction and
   the QR code's encoding modes (1.14), the bar width reduction, ITF-14's bearer bars, and a linear symbol beside a

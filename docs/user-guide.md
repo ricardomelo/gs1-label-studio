@@ -75,8 +75,8 @@ English.
 
 On a computer the page takes the screen's whole width, as above: steps 1 and 2 and the label's options on the left, the
 label with its tools and the **Export** bar on the right, which stays in view as the page scrolls, so step 2's answers
-and the options change the label in sight (as on a tablet). At its foot, **About GS1 Label Studio**: the
-repository on GitHub, the licence (Apache 2.0), links to this guide and the printing guide, the version published (the
+and the options change the label in sight (as on a tablet). At its foot, **About GS1 Label Studio**: who
+developed it (Ricardo Verza Amaral Melo, with links to his LinkedIn and GitHub), the repository on GitHub, the licence (Apache 2.0), links to this guide and the printing guide, the version published (the
 commit it was built from, with its date — the way to tell whether the page shows the latest work), and the software it
 is made with, each linked to its repository; the GS1 Barcode Syntax Engine with the release that checks the data and the
 date of its GS1 Barcode Syntax Dictionary (*GS1 Barcode Syntax Engine 1.4.1 — … · GS1 Barcode Syntax Dictionary of
@@ -339,6 +339,7 @@ In **Label**, **A label** shows the kinds of label grouped by segment: *Logistic
 | Retail | *Product with lot and expiry*, 66 × 38 mm | An EAN-13 and a QR code (GS1 Digital Link) side by side, their quiet zones kept, *LOT (10)* and *EXPIRY (17)* under them (General Specifications 4.15.1, 6.3.3.1) |
 | Retail | *Fresh food sold by weight*, 60 × 54 mm | A GS1 DataBar Expanded Stacked with a variable measure GTIN (its first digit 9), the net weight (310n) and the price (392n), as a scale prints them (2.1.12) |
 | Healthcare | *Medicine or medical device*, 60 × 18 mm | A GS1 DataMatrix with *GTIN (01)*, *EXPIRY (17)*, *LOT (10)* and *SERIAL (21)* written beside it (4.14.1, figure 4-8), its element strings in the order (01), (17), (10), (21), for hospitals (table 6) |
+| Healthcare | *Medical device with its UDI*, 46 × 21 mm | A GS1 DataMatrix under the *UDI* pictogram (ISO 15223-1, symbol 5.7.10), the UDI's element strings beside it, one a line, each AI in parentheses before its value and no data titles, as the UDI rules take a GS1 carrier's human readable text; the *MD* pictogram (5.7.7) at the top right |
 
 Choosing one:
 
@@ -364,7 +365,10 @@ label**, then the card *A label of my own*:
 
 1. Set **Label width (mm)** and **Label height (mm)**, and the **Scanning environment** that sizes the barcodes (in
    step 2's guided choice, its table does).
-2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box; **+ Image** an image, such as
+2. **+ Barcode** adds a barcode; **+ Text** a text block; **+ Shape** a line or a box; **+ Pictogram** a pictogram of
+   ISO 15223-1 for a medical device's label, *UDI* (symbol 5.7.10, beside the barcode that carries the UDI) or *MD*
+   (5.7.7), chosen in its properties with its frame's **Height (mm)**, its letters half as high and centred, printed as
+   a box and a line of text; **+ Image** an image, such as
    a logo, from a file you choose (PNG, JPEG, GIF, WebP or SVG). Each is listed under
    **Elements**, and chosen. Where an element already sits at the new one's corner, the new one goes 5 mm right and
    down, and again, so that it is never hidden under another.

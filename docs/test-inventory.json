@@ -1104,6 +1104,10 @@
      "status": "passed"
     },
     {
+     "name": "a label of one's own › draws a pictogram of ISO 15223-1 as its letters centred in a frame, turned or not, and prints it as a box and a line of text",
+     "status": "passed"
+    },
+    {
      "name": "a label of one's own › draws an image where the page puts it, as high as its proportions make it, and sends it in ZPL as ^GF and in EPL2 as GW",
      "status": "passed"
     },
@@ -8528,6 +8532,18 @@
      "status": "passed"
     },
     {
+     "name": "resizing a pictogram › follows the corner along its diagonal by half millimetres of its height, turned or not",
+     "status": "passed"
+    },
+    {
+     "name": "resizing a pictogram › takes half a millimetre of height, or 5 mm with Shift, from the keyboard, never less than half a millimetre",
+     "status": "passed"
+    },
+    {
+     "name": "resizing a pictogram › is held on the last half millimetre of its height that keeps its whole frame on the label",
+     "status": "passed"
+    },
+    {
      "name": "a barcode's sizing › is a QR code's modules alone, not its text, and the sizes its scanning environment allows",
      "status": "passed"
     },
@@ -9613,6 +9629,10 @@
     },
     {
      "name": "labels by segment › healthcare-pack: step 2's table offers its symbol for its data, and the page reads back whole",
+     "status": "passed"
+    },
+    {
+     "name": "labels by segment › healthcare-udi: step 2's table offers its symbol for its data, and the page reads back whole",
      "status": "passed"
     },
     {
@@ -10779,6 +10799,15 @@
      ]
     },
     {
+     "name": "the medical device's UDI template shows the UDI's element strings under its pictogram, and + Pictogram places UDI or MD on any label",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
      "name": "the human readable text's format: the AI, data titles, both or one's own, in the label and the print file",
      "status": "listed",
      "projects": [
@@ -10850,7 +10879,7 @@
      ]
     },
     {
-     "name": "About: the repository, the licence, the version and the software it is made with, each with its repository",
+     "name": "About: who developed it, the repository, the licence, the version and the software it is made with, each with its repository",
      "status": "listed",
      "projects": [
       "desktop",
