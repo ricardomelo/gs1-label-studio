@@ -343,7 +343,7 @@ export {
   type Jwk,
   type SigningKey,
 } from "./sign.ts";
-export { firstUriRecord, ndefRecords, ndefRecordUri, ndefUri, ndefUriMessage, URI_PREFIXES, type NdefRecord } from "./ndef.ts";
+export { firstUriRecord, ndefMessage, ndefRecords, ndefRecordUri, ndefUri, ndefUriMessage, URI_PREFIXES, type NdefRecord } from "./ndef.ts";
 export {
   bytesToHex, bytesToText, readingFromDecoder, readingFromEpc, readingFromNdef, readingFromText, withControlPictures,
   type DecodedSymbol, type Reading, type ReadingCarrier, type ReadingOptions, type ReadingSource,

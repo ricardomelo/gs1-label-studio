@@ -33,6 +33,23 @@ export interface NdefRecord {
   payload: Uint8Array;
 }
 
+/**
+ * An NDEF message of the records given, in order: the first marked MB, the last ME, each a short record when its
+ * payload is under 256 bytes (backlog 7.1 h: what Web NFC hands over as records, made a message again for
+ * `readingFromNdef()`).
+ */
+export function ndefMessage(records: readonly NdefRecord[]): Uint8Array<ArrayBuffer> {
+  const bytes: number[] = [];
+  records.forEach((record, i) => {
+    const type = new TextEncoder().encode(record.type);
+    const n = record.payload.length;
+    const short = n < 256;
+    const flags = (i === 0 ? 0x80 : 0) | (i === records.length - 1 ? 0x40 : 0) | (short ? 0x10 : 0) | (record.tnf & 0x07);
+    bytes.push(flags, type.length, ...(short ? [n] : [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]), ...type, ...record.payload);
+  });
+  return Uint8Array.from(bytes);
+}
+
 /** The records of an NDEF message, in their order (chunked records are not joined: a GS1 tag holds none). */
 export function ndefRecords(message: Uint8Array): NdefRecord[] {
   const records: NdefRecord[] = [];

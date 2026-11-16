@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstUriRecord, ndefRecords, ndefUri, ndefUriMessage } from "../src/index.ts";
+import { firstUriRecord, ndefMessage, ndefRecords, ndefUri, ndefUriMessage } from "../src/index.ts";
 
 // NFC tags (backlog 1.19): the NDEF message of one URI record (NFC Forum URI RTD), byte by byte.
 
@@ -51,5 +51,29 @@ describe("an NDEF message's records (the Check Studio, I3)", () => {
     expect(ndefRecords(Uint8Array.from([0xd1, 0x01, 0x03, 0x55, 0x04, 0x61, 0x62, 0xff, 0xff]))).toHaveLength(1);
     expect(() => ndefRecords(Uint8Array.from([0xd1, 0x01, 0x09, 0x55, 0x04]))).toThrow(/ends inside a record/);
     expect(() => ndefUri(new Uint8Array())).toThrow(/holds no record/);
+  });
+});
+
+describe("an NDEF message made of records (the Check Studio's NFC reading, 7.1 h)", () => {
+  const enc = (text: string) => new TextEncoder().encode(text);
+  it("gives the same bytes as a URI record written alone", () => {
+    const one = ndefUriMessage("https://id.gs1.org/01/09506000134352");
+    expect([...ndefMessage(ndefRecords(one))]).toEqual([...one]);
+  });
+  it("marks the first record MB and the last ME, short records under 256 bytes, and reads back as given", () => {
+    const records = [
+      { tnf: 1, type: "T", payload: Uint8Array.from([2, ...enc("en"), ...enc("Hello")]) },
+      { tnf: 2, type: "text/plain", payload: new Uint8Array(300).fill(65) },
+      { tnf: 1, type: "U", payload: Uint8Array.from([4, ...enc("id.gs1.org/01/09506000134352")]) },
+    ];
+    const message = ndefMessage(records);
+    expect(message[0]).toBe(0x80 | 0x10 | 1);
+    expect(message[message.length - 33]).toBe(0x40 | 0x10 | 1);
+    // The middle record: neither MB nor ME, a long record (four length bytes) of a media type
+    const second = 3 + 1 + records[0]!.payload.length;
+    expect(message[second]).toBe(2);
+    expect([...message.subarray(second + 2, second + 6)]).toEqual([0, 0, 1, 44]);
+    expect(ndefRecords(message).map((r) => [r.tnf, r.type, r.payload.length])).toEqual([[1, "T", 8], [2, "text/plain", 300], [1, "U", 29]]);
+    expect(firstUriRecord(message)).toEqual({ index: 2, uri: "https://id.gs1.org/01/09506000134352" });
   });
 });
