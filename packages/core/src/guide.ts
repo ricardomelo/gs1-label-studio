@@ -236,6 +236,16 @@ export const TREE: Record<number, Node> = {
   16: { question: "long-distance", yes: LONG_DISTANCE, no: DIRECT_MARKING },
 };
 
+/** The leaf of each scanning environment of environments.ts: the decision tree's leaf for its table (figure 5-68). */
+export function leafOfEnvironment(environment: string): Leaf | undefined {
+  const at = (node: number, answer: "yes" | "no") => TREE[node]![answer] as Leaf;
+  const leaves: Record<string, Leaf> = {
+    retail: at(6, "no"), "retail-gd": at(6, "yes"), distribution: at(12, "no"), pharmacy: at(8, "no"), "pharmacy-gd": at(8, "yes"),
+    healthcare: at(14, "no"), other: at(15, "no"), logistics: at(11, "yes"), assets: at(2, "no"), gsrn: at(4, "yes"), dpm: DIRECT_MARKING,
+  };
+  return leaves[environment];
+}
+
 const ASSET_KEYS = ["253", "8003", "8004", "414", "417"];
 const GSRN_KEYS = ["8017", "8018"];
 const LOGISTIC_KEYS = ["00", "401", "402"];
@@ -428,7 +438,8 @@ const GS1_EQUIVALENT: Partial<Record<SpecSymbol, SpecSymbol>> = {
   "dl-qrcode": "gs1-qrcode",
 };
 
-function rowsFor(leaf: Leaf, symbol: SpecSymbol): SymbolSpecification[] {
+/** The rows of a leaf's table for a symbol: a Digital Link symbol takes its GS1 equivalent's where it has none. */
+export function rowsFor(leaf: Leaf, symbol: SpecSymbol): SymbolSpecification[] {
   const rows = SPECIFICATION_TABLES[leaf.table]!.rows;
   const applies = (row: SymbolSpecification) => row.part === undefined || (leaf.parts ?? []).includes(row.part);
   const own = rows.filter((row) => row.symbol === symbol && applies(row));

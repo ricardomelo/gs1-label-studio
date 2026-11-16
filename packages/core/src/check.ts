@@ -1,3 +1,5 @@
+import { contextRules } from "./checkContext.ts";
+import { checkTag, type TagEpc } from "./checkTag.ts";
 import { checkUri, uriValueRange } from "./checkUri.ts";
 import { expectedCheckDigit, hasKey, reorderedDate, valueRules, withTitles, type AddFinding, type CheckContext, type Located } from "./checkValues.ts";
 import { aiEntry } from "./dictionary.ts";
@@ -16,8 +18,9 @@ import type { EngineFault, SyntaxEngine } from "./syntax.ts";
 // (repair.ts), kept when they leave fewer faults; (3) the GS1 Barcode Syntax Engine on every element string alone and
 // then on the whole message, so that every fault is found, not only the engine's first; (4) the studio's own rules on
 // the structure (group B); (5) the own rules on keys, values and associations (groups C to E, checkValues.ts) and on
-// GS1 Digital Link URIs (group G, checkUri.ts). Groups F, H, I and J come with items d and m. Every finding points at
-// the reading's own bytes.
+// GS1 Digital Link URIs (group G, checkUri.ts); (6) the reading context (group F, checkContext.ts). An RFID tag's EPC is
+// decoded first (group I, checkTag.ts) and an NFC tag's record placed (I3). Several readings of one item are
+// checkGroup.ts (group J); the estimates (group H) are item 7.1 m. Every finding points at the reading's own bytes.
 
 /** The four verdicts of the simple view, and one for a reading nothing could be checked of. */
 export type Verdict = "follows" | "remarks" | "does-not-follow" | "not-gs1" | "not-assessed";
@@ -58,8 +61,10 @@ export interface CheckResult {
   repairs: RepairName[];
   /** The data in its other forms, when it is valid once repaired: bracketed, the engine's notation, GS1 Digital Link. */
   forms: { elementString: string; dataStr: string; digitalLinkUri: string } | null;
-  /** Codes that could not be assessed for want of something: C8 without a GCP table. */
+  /** Codes that could not be assessed for want of something: C8 without a GCP table, F1 without a context. */
   notChecked: string[];
+  /** An RFID tag's EPC as decoded: its scheme, filter and partition; null for anything else. */
+  tag: TagEpc | null;
 }
 
 export type { CheckContext } from "./checkValues.ts";
@@ -81,9 +86,13 @@ export function check(engine: SyntaxEngine, reading: Reading, context: CheckCont
     const f = fault(code);
     findings.push({ code, severity: f.severity, ranges, ai: null, sections: f.sections, engineMessage: null, ...extra });
   };
+  let tag: TagEpc | null = null;
   const result = (elements: CheckedElement[] = [], forms: CheckResult["forms"] = null): CheckResult => {
+    if (reading.carrier === "barcode" && !findings.some((f) => f.code === "A8" || f.code === "A9")) {
+      for (const code of contextRules(engine, reading, context, forms?.elementString ?? null, add)) notChecked.add(code);
+    }
     findings.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || order(a) - order(b));
-    return { verdict: verdictOf(findings), findings, elements, repairs, forms, notChecked: [...notChecked] };
+    return { verdict: verdictOf(findings, elements.length), findings, elements, repairs, forms, notChecked: [...notChecked], tag };
   };
   /** An engine message on one element string, named, with what explains it. */
   const engineFinding = (ai: string, value: string, message: string, ranges: Range[], valueRange: Range) => {
@@ -108,7 +117,31 @@ export function check(engine: SyntaxEngine, reading: Reading, context: CheckCont
     add("A9", []);
     return result();
   }
-  if (reading.carrier === "rfid") return result(); // tags are item 7.1 d
+  if (reading.carrier === "rfid") {
+    const outcome = checkTag(reading, context, add);
+    tag = outcome.epc;
+    for (const code of outcome.notChecked) notChecked.add(code);
+    const all = rangeOf(markedOf(reading), 0, reading.text.length);
+    const refused = new Set<string>();
+    for (const [ai, value] of outcome.elements) {
+      const problem = engine.checkElementString(ai, value);
+      if (!problem) continue;
+      refused.add(ai);
+      engineFinding(ai, value, problem.message, [], all);
+    }
+    ownRules(outcome.elements.map(([ai, value]) => ({ ai, value, range: all })), refused);
+    const elements = outcome.elements.map(([ai, value]) => ({ ai, value, title: aiEntry(ai)?.title ?? "", range: all, separator: false }));
+    let forms: CheckResult["forms"] = null;
+    if (elements.length && refused.size === 0) {
+      try {
+        const parsed = engine.parse(elements.map((e) => `(${e.ai})${e.value}`).join(""));
+        forms = { elementString: parsed.elementString, dataStr: parsed.dataStr, digitalLinkUri: parsed.digitalLinkUri };
+      } catch {
+        // an association the tag's elements leave unsatisfied: the element strings alone are what the matrix compares
+      }
+    }
+    return result(elements, forms);
+  }
 
   const id = reading.symbologyIdentifier;
   const plain = id ? PLAIN_CARRIERS[id] : undefined;
@@ -121,9 +154,31 @@ export function check(engine: SyntaxEngine, reading: Reading, context: CheckCont
   }
   const gtin = (kind: "itf" | "ean" | "assumed") => gtinOnly(engine, m, kind, id ?? "", add, result, engineFinding, ownRules);
   if (/^\]I\d$/.test(id ?? "")) return gtin("itf");
+  // An add-on symbol: alone (]E1, ]E2) it carries no GTIN; with its EAN/UPC (]E3), its 2 or 5 digits follow the GTIN
+  if (id === "]E1" || id === "]E2") {
+    add("F4", [rangeOf(m, 0, m.text.length)]);
+    return result();
+  }
+  if (id === "]E3") {
+    const length = m.text.length;
+    const gtinLength = length === 15 || length === 18 ? 13 : length === 10 || length === 13 ? 8 : length;
+    add("F4", [rangeOf(m, gtinLength, length)]);
+    m = cut(m, gtinLength, length);
+  }
   if (/^\]E\d$/.test(id ?? "")) return gtin("ean");
   if (id === null && /^(?:\d{8}|\d{12,14})$/.test(m.text)) return gtin("assumed");
 
+  if (reading.carrier === "nfc") {
+    // I3: the GS1 Digital Link URI first, in a URI record, with https://
+    const record = reading.nfc;
+    if (!record || record.recordType !== "U") {
+      add("I3", [], { details: { record: record?.recordType ?? "" } });
+      return result();
+    }
+    if (record.recordIndex > 0 || !/^https:\/\//.test(m.text)) {
+      add("I3", [], { details: { recordIndex: String(record.recordIndex), scheme: /^[a-z][a-z0-9+.-]*:/i.exec(m.text)?.[0] ?? "" } });
+    }
+  }
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(m.text) || reading.carrier === "nfc") {
     if (!/^https?:/i.test(m.text) && !/\/(?:01|00|414|8018|gtin|sscc)\//.test(m.text)) {
       add("A8", []);
@@ -131,6 +186,12 @@ export function check(engine: SyntaxEngine, reading: Reading, context: CheckCont
     }
     if (id && ELEMENT_STRING_CARRIERS.has(id)) add("A6", []);
     const outcome = checkUri(engine, m, add);
+    if (reading.carrier === "nfc") {
+      // I4: the tag's URI breaks group G's rules; the G findings say which
+      const g = findings.filter((f) => f.code.startsWith("G"));
+      const worst = g.map((f) => f.severity).sort((a, b) => SEVERITY_RANK[a] - SEVERITY_RANK[b])[0];
+      if (worst && worst !== "not-assessed") add("I4", [], { severity: worst, details: { codes: [...new Set(g.map((f) => f.code))].join(", ") } });
+    }
     if (!outcome.parsed) return result();
     const located = outcome.parsed.elements.map((e) => ({ ai: e.ai, value: e.value, range: uriValueRange(m, e.ai) }));
     ownRules(located, new Set());
@@ -359,11 +420,16 @@ function order(f: Finding): number {
   return f.code.charCodeAt(0) * 1e8 + (f.ranges[0]?.[0] ?? 0) * 100 + Number(f.code.slice(1));
 }
 
-function verdictOf(findings: Finding[]): Verdict {
-  if (findings.length === 0) return "follows";
-  if (findings.every((f) => f.severity === "not-assessed")) return "not-assessed";
+/**
+ * The verdict: findings that could not be assessed (F5, a reading of no data) do not make a reading follow or fail;
+ * a reading of which nothing was checked, no data and no finding judged, is not assessed.
+ */
+export function verdictOf(findings: readonly Finding[], elements: number): Verdict {
+  const judged = findings.filter((f) => f.severity !== "not-assessed");
+  if (judged.length === 0) return elements > 0 ? "follows" : "not-assessed";
+  findings = judged;
   if (findings.some((f) => f.severity === "error")) return "does-not-follow";
-  if (findings.every((f) => f.code === "A8" || f.code === "G1")) return "not-gs1";
+  if (findings.every((f) => f.code === "A8" || f.code === "G1" || (f.code === "I1" && f.severity === "note"))) return "not-gs1";
   return findings.some((f) => f.severity === "warning") ? "remarks" : "follows";
 }
 

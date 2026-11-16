@@ -188,7 +188,8 @@ describe("a reading from a tag", () => {
     const reading = readingFromNdef(ndefUriMessage(uri), { serialNumber: "04:a2:6b:1c", at: new Date("2026-11-15T22:00:00Z") });
     expect([reading.carrier, reading.source, reading.text, reading.symbologyIdentifier, reading.identifierAssumed]).toEqual(["nfc", "nfc", uri, null, false]);
     expect(reading.nfc).toEqual({ serialNumber: "04:a2:6b:1c", recordIndex: 0, recordType: "U" });
-    expect(() => readingFromNdef(Uint8Array.from([0xd2, 1, 1, 0x54, 0]), {})).toThrow(/not of a well-known type|not a URI/);
+    // No URI record: the first record's type, for the check to say so (I3)
+    expect(readingFromNdef(Uint8Array.from([0xd1, 1, 1, 0x54, 0]), {}).nfc).toEqual({ serialNumber: null, recordIndex: 0, recordType: "T" });
   });
 
   it("an RFID tag's EPC: its hexadecimal as the memory's bytes, or a URI as text", () => {

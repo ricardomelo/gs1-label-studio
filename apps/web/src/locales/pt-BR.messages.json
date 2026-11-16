@@ -187,6 +187,8 @@
  "The label's text and symbols need {mm} mm; the {name} label is {heightMm} mm high. Choose a smaller size, fewer element strings, or the larger label.": "O texto e os símbolos da etiqueta precisam de {mm} mm; a etiqueta {name} tem {heightMm} mm de altura. Escolha um tamanho menor, menos element strings, ou a etiqueta maior.",
  "The label's text and symbols need {mm} mm; the {name} label is {heightMm} mm high. Choose a smaller size, fewer element strings, shorter text in From and To, or the larger label.": "O texto e os símbolos da etiqueta precisam de {mm} mm; a etiqueta {name} tem {heightMm} mm de altura. Escolha um tamanho menor, menos element strings, textos mais curtos em De e Até, ou a etiqueta maior.",
  "The first record is not of a well-known type.": "O primeiro registro não é de um tipo well-known.",
+ "The NDEF message ends inside a record.": "A mensagem NDEF termina dentro de um registro.",
+ "The NDEF message holds no record.": "A mensagem NDEF não contém nenhum registro.",
  "The first record is of type {type}, not a URI.": "O primeiro registro é do tipo {type}, não um URI.",
  "Unknown URI identifier code {payload}.": "Código identificador de URI desconhecido {payload}.",
  "A profile needs a name.": "Um perfil precisa de um nome.",

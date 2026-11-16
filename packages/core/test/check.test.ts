@@ -282,7 +282,7 @@ describe("group C: the key", () => {
   it("C4: indicator 1 to 8 only matters at a retail point of sale", () => {
     const gtin = withCheck("1950600013435");
     expect(findings(`]d201${gtin}`)).toEqual([]);
-    expect(findings(`]d201${gtin}`, { environment: "retail" })).toEqual(["C4 warning [2,3]"]);
+    expect(findings(`]d201${gtin}`, { environment: "retail" })).toEqual(["C4 warning [2,3]", "F3 warning"]);
     expect(findings(`]d201${gtin}`, { environment: "distribution" })).toEqual([]);
   });
 

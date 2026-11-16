@@ -1,5 +1,6 @@
 import { checkDigit } from "./checkDigit.ts";
 import { aiEntry, isDateAi, isFullYearDate } from "./dictionary.ts";
+import type { EpcScheme } from "./epc.ts";
 import { gcpLengthOf, type GcpTable } from "./gcp.ts";
 import { isKey } from "./identify.ts";
 import type { Range } from "./repair.ts";
@@ -14,8 +15,15 @@ import { isoDate } from "./sign.ts";
 
 /** What the check is told about where the code is used, and what it may use. */
 export interface CheckContext {
-  /** The reading context, a key of ENVIRONMENTS ("retail", "healthcare"…); unknown when not given. */
-  environment?: string;
+  /**
+   * The reading context, a key of ENVIRONMENTS ("retail", "healthcare"…). Null: the user said "I do not know", so the
+   * checks that need it are not assessed (F5); undefined: not asked, and those checks are left out.
+   */
+  environment?: string | null;
+  /** The user expected attributes (a batch, a date) besides the GTIN: an EAN/UPC then says it cannot carry them (F2). */
+  attributesExpected?: boolean;
+  /** The EPC schemes (epcSchemes()), to read a classic EPC; an EPC+ needs none. */
+  epcSchemes?: Record<string, EpcScheme>;
   /** GS1's GCP length table, when the user loaded it. */
   gcp?: GcpTable;
   /** Today, for the century of a YYMMDD date and its plausibility; the reading's time when not given. */
@@ -41,7 +49,7 @@ const POINT_OF_SALE = new Set(["retail", "retail-gd", "pharmacy", "pharmacy-gd"]
 const HEALTHCARE = new Set(["pharmacy", "pharmacy-gd", "healthcare"]);
 
 /** Where a key's GS1 Company Prefix starts in its value: after an SSCC's extension digit or a GTIN's indicator. */
-const COMPANY_START: Readonly<Record<string, number>> = {
+export const COMPANY_START: Readonly<Record<string, number>> = {
   "00": 1, "01": 1, "02": 1, "03": 1, "253": 0, "255": 0, "401": 0, "402": 0, "414": 0, "415": 0, "416": 0, "417": 0,
   "8003": 1, "8004": 0, "8010": 0, "8017": 0, "8018": 0,
 };
@@ -104,7 +112,7 @@ export function valueRules(elements: readonly Located[], context: CheckContext, 
         ? /^[02]/.exec(prefix)?.[0]
         : /^(?:0[245]|2\d|9[89]|97[789])/.exec(prefix)?.[0];
       if (special && !prefix.startsWith("00000")) {
-        const outside = environment !== undefined && !POINT_OF_SALE.has(environment);
+        const outside = typeof environment === "string" && !POINT_OF_SALE.has(environment);
         add("C6", [part(e, offset, offset + special.length)], { ai: e.ai, severity: outside ? "warning" : "note", details: { prefix: special } });
       }
     }

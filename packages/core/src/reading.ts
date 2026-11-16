@@ -5,7 +5,7 @@
 // keeps what it says, its identifier when it carries one, its group separators however they were written. An NFC
 // tag's NDEF message and an RFID tag's EPC come in as what they hold. The checks themselves are item 7.1 b.
 
-import { ndefUri } from "./ndef.ts";
+import { firstUriRecord, ndefRecords } from "./ndef.ts";
 
 /** How the reading came in: the camera, an image, an NFC tag, a scanner in keyboard mode, pasted or typed text. */
 export type ReadingSource = "camera" | "image" | "nfc" | "wedge" | "paste";
@@ -113,15 +113,20 @@ export function readingFromText(input: string, options: ReadingOptions & { sourc
   };
 }
 
-/** A reading from an NFC tag's NDEF message: its first URI record, the tag's serial number when the browser gives it. */
+/**
+ * A reading from an NFC tag's NDEF message: its first URI record, wherever it is (the check says when it is not the
+ * first record, I3), else its first record as text; the tag's serial number when the browser gives it.
+ */
 export function readingFromNdef(message: Uint8Array, options: ReadingOptions & { serialNumber?: string | null }): Reading {
-  const uri = ndefUri(message);
+  const found = firstUriRecord(message);
+  const first = found ? null : ndefRecords(message)[0];
+  const text = found ? found.uri : first ? bytesToText(first.payload) : "";
   return {
     ...blank("nfc", "nfc", options.at),
     symbologyIdentifier: null,
-    bytes: new TextEncoder().encode(uri),
-    text: uri,
-    nfc: { serialNumber: options.serialNumber ?? null, recordIndex: 0, recordType: "U" },
+    bytes: new TextEncoder().encode(text),
+    text,
+    nfc: { serialNumber: options.serialNumber ?? null, recordIndex: found?.index ?? 0, recordType: found ? "U" : (first?.type ?? "") },
     identifierAssumed: false,
   };
 }

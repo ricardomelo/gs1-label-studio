@@ -57,6 +57,22 @@ to put it right.
    are written for an expert; the simple view's wording (the project's section 6.1) and the translations into the
    five other languages come with the result screen (7.1 f), so that no text is translated twice.
 
+9. **The context is asked, and "I do not know" is an answer** (7.1 d). `check()` takes the reading context as a
+   scanning environment of `environments.ts`; with one, the symbol is held to that table (F1, with the symbols the
+   table allows for this data, recommended first, from `guidance()` as step 2 of the Label Studio lists them) and a
+   2D symbol alone at a retail till is a Warning (F3); with `null`, the user's "I do not know", F5 and the codes that
+   needed the context listed as not assessed; left out (an API call), those checks are left out, so that a check of
+   the data alone is not marked down. The verdict counts only the findings judged: a reading whose data follows the
+   rules follows them, with F5 beside it.
+10. **Several carriers are compared, not merged** (7.1 d, `checkGroup.ts`). Each reading is checked alone, then the
+   group: a matrix of one row per AI and one column per carrier, values compared character by character (4.15.2: no
+   leading zero dropped), the GTIN of an EAN/UPC already padded to 14 digits. The user says what the group is (a
+   consumer pack, a case, a logistic label, a tag with its printed code), since the rules differ; a finding of one
+   reading that the group answers (C9 or E1 whose key or companion another carrier holds, F3 beside a linear symbol)
+   is listed as resolved, by J3 where 4.15 still asks for one symbol. The columns are data (carrier, symbol name,
+   identifier, EPC scheme), not text: the screen heads them in the user's language (7.1 f). J5, the 50 mm distance,
+   is not assessed until the estimates (7.1 m).
+
 ## 3. Consequences
 
 - The scan test of the label studio keeps `textMode: "HRI"`: it compares what a label carries with
