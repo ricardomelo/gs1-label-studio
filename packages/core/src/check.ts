@@ -1,4 +1,7 @@
+import { checkUri, uriValueRange } from "./checkUri.ts";
+import { expectedCheckDigit, hasKey, reorderedDate, valueRules, withTitles, type AddFinding, type CheckContext, type Located } from "./checkValues.ts";
 import { aiEntry } from "./dictionary.ts";
+import { faultOfEngineMessage } from "./engineFaults.ts";
 import { fault, SEVERITY_RANK, type Severity } from "./faults.ts";
 import { dataCharacters, GS1_128_MAX_DATA } from "./gs1128.ts";
 import type { Reading } from "./reading.ts";
@@ -12,8 +15,9 @@ import type { EngineFault, SyntaxEngine } from "./syntax.ts";
 // (1) the carrier — is the symbol a GS1 one, and does its data start as GS1 data should (group A); (2) the named repairs
 // (repair.ts), kept when they leave fewer faults; (3) the GS1 Barcode Syntax Engine on every element string alone and
 // then on the whole message, so that every fault is found, not only the engine's first; (4) the studio's own rules on
-// the structure (group B). Groups C to E are named here from the engine's messages until item 7.1 c gives them rules
-// of their own; groups F, H, I and J come with items d and m. Every finding points at the reading's own bytes.
+// the structure (group B); (5) the own rules on keys, values and associations (groups C to E, checkValues.ts) and on
+// GS1 Digital Link URIs (group G, checkUri.ts). Groups F, H, I and J come with items d and m. Every finding points at
+// the reading's own bytes.
 
 /** The four verdicts of the simple view, and one for a reading nothing could be checked of. */
 export type Verdict = "follows" | "remarks" | "does-not-follow" | "not-gs1" | "not-assessed";
@@ -30,6 +34,8 @@ export interface Finding {
   engineMessage: string | null;
   /** The data made right, as a bracketed element string, when a repair produced valid data. */
   fixedData?: string;
+  /** What explains it: the check digit that would be right, the date a day 00 stands for, the URI mended… */
+  details?: Record<string, string>;
 }
 
 export interface CheckedElement {
@@ -52,49 +58,50 @@ export interface CheckResult {
   repairs: RepairName[];
   /** The data in its other forms, when it is valid once repaired: bracketed, the engine's notation, GS1 Digital Link. */
   forms: { elementString: string; dataStr: string; digitalLinkUri: string } | null;
+  /** Codes that could not be assessed for want of something: C8 without a GCP table. */
+  notChecked: string[];
 }
+
+export type { CheckContext } from "./checkValues.ts";
 
 /** The symbology identifiers of GS1 symbols carrying element strings (General Specifications 5.1.3, table 5-2). */
 const ELEMENT_STRING_CARRIERS = new Set(["]C1", "]d2", "]Q3", "]e0", "]J1"]);
 /** The plain symbols a faulty label uses instead: Data Matrix, QR Code (models 1 and 2) and Code 128. */
 const PLAIN_CARRIERS: Record<string, "A1" | "A2" | "A3"> = { "]d1": "A1", "]Q1": "A2", "]Q0": "A2", "]C0": "A3" };
 
-/** The fault an engine message stands for, until item 7.1 c maps every message. */
-export function faultOfEngineMessage(message: string): string {
-  const rules: [RegExp, string][] = [
-    [/No known AI is a prefix|Unrecognised AI/, "B7"],
-    [/Multiple instances of AI/, "B10"],
-    [/check digit/i, "C1"],
-    [/check character/i, "C2"],
-    [/illegal (?:month|day)|date/i, "D1"],
-    [/Required AIs/, "E1"],
-    [/invalid to pair/, "E2"],
-    [/Serial component/, "E3"],
-    [/No GS1 DL keys/, "G1"],
-    [/key-qualifier/, "G2"],
-    [/in query param/i, "G4"],
-    [/not a valid DL URI data attribute/, "G5"],
-    [/percent/i, "G6"],
-    [/Scheme/, "G8"],
-    [/incorrect length|too short|too long|is empty/, "B8"],
-    [/non-digit|non-CSET|\^ character/, "B9"],
-  ];
-  return rules.find(([pattern]) => pattern.test(message))?.[1] ?? "D9";
-}
-
 const AI_IN_MESSAGE = /AI \((\d{2,4})\)/;
 
 /** Checks one reading: what is wrong with it, where, and the data made right when a named repair makes it so. */
-export function check(engine: SyntaxEngine, reading: Reading): CheckResult {
+export function check(engine: SyntaxEngine, reading: Reading, context: CheckContext = {}): CheckResult {
   const findings: Finding[] = [];
   const repairs: RepairName[] = [];
-  const add = (code: string, ranges: Range[], extra: Partial<Finding> = {}) => {
+  const notChecked = new Set<string>();
+  const today = context.today ?? new Date(reading.at);
+  const add: AddFinding = (code, ranges, extra = {}) => {
     const f = fault(code);
     findings.push({ code, severity: f.severity, ranges, ai: null, sections: f.sections, engineMessage: null, ...extra });
   };
   const result = (elements: CheckedElement[] = [], forms: CheckResult["forms"] = null): CheckResult => {
     findings.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || order(a) - order(b));
-    return { verdict: verdictOf(findings), findings, elements, repairs, forms };
+    return { verdict: verdictOf(findings), findings, elements, repairs, forms, notChecked: [...notChecked] };
+  };
+  /** An engine message on one element string, named, with what explains it. */
+  const engineFinding = (ai: string, value: string, message: string, ranges: Range[], valueRange: Range) => {
+    const code = faultOfEngineMessage(message, ai, value);
+    const details: Record<string, string> = {};
+    if (code === "C1") {
+      const expected = expectedCheckDigit(ai, value);
+      if (expected) details.expected = expected;
+    }
+    add(code, ranges, { ai, engineMessage: message, ...(Object.keys(details).length ? { details } : {}) });
+    if (code === "D1") {
+      const reordered = reorderedDate(value, today);
+      if (reordered) add("D4", [valueRange], { ai, details: { reordered } });
+    }
+  };
+  /** The own rules on element strings the engine accepted alone. */
+  const ownRules = (located: Located[], refused: Set<string>) => {
+    for (const code of valueRules(located, context, today, add, refused)) notChecked.add(code);
   };
 
   if (reading.bytes.length === 0) {
@@ -112,13 +119,26 @@ export function check(engine: SyntaxEngine, reading: Reading): CheckResult {
     add("A8", []);
     return result();
   }
-  if (/^\]I\d$/.test(id ?? "")) return gtinOnly(engine, m, "itf", id!, add, result);
-  if (/^\]E\d$/.test(id ?? "")) return gtinOnly(engine, m, "ean", id!, add, result);
-  if (id === null && /^(?:\d{8}|\d{12,14})$/.test(m.text)) return gtinOnly(engine, m, "assumed", "", add, result);
+  const gtin = (kind: "itf" | "ean" | "assumed") => gtinOnly(engine, m, kind, id ?? "", add, result, engineFinding, ownRules);
+  if (/^\]I\d$/.test(id ?? "")) return gtin("itf");
+  if (/^\]E\d$/.test(id ?? "")) return gtin("ean");
+  if (id === null && /^(?:\d{8}|\d{12,14})$/.test(m.text)) return gtin("assumed");
 
-  if (/^https?:\/\//i.test(m.text) || reading.carrier === "nfc") {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(m.text) || reading.carrier === "nfc") {
+    if (!/^https?:/i.test(m.text) && !/\/(?:01|00|414|8018|gtin|sscc)\//.test(m.text)) {
+      add("A8", []);
+      return result();
+    }
     if (id && ELEMENT_STRING_CARRIERS.has(id)) add("A6", []);
-    return uri(engine, m.text, add, result);
+    const outcome = checkUri(engine, m, add);
+    if (!outcome.parsed) return result();
+    const located = outcome.parsed.elements.map((e) => ({ ai: e.ai, value: e.value, range: uriValueRange(m, e.ai) }));
+    ownRules(located, new Set());
+    const proven = findings.filter((f) => f.details?.uri || f.details?.canonical);
+    for (const f of proven) f.fixedData = outcome.parsed.elementString;
+    const elements = located.map((e) => ({ ai: e.ai, value: e.value, title: aiEntry(e.ai)?.title ?? "", range: e.range, separator: false }));
+    const { elementString, dataStr, digitalLinkUri } = outcome.parsed;
+    return result(elements, { elementString, dataStr, digitalLinkUri });
   }
 
   let carrierFault: string | null = null;
@@ -184,12 +204,15 @@ export function check(engine: SyntaxEngine, reading: Reading): CheckResult {
   if (split.events.some((e) => e.code === "B4" || e.code === "B5")) repairs.push("drop-separator");
 
   let valid = split.complete;
+  const refused = new Set<string>();
   for (const token of split.tokens) {
     const problem = engine.checkElementString(token.ai, token.value);
     if (!problem) continue;
     valid = false;
-    add(faultOfEngineMessage(problem.message), [markupRange(sm, token, problem)], { ai: token.ai, engineMessage: problem.message });
+    refused.add(token.ai);
+    engineFinding(token.ai, token.value, problem.message, [markupRange(sm, token, problem)], rangeOf(sm, token.valueStart, token.end));
   }
+  ownRules(split.tokens.map((t) => ({ ai: t.ai, value: t.value, range: rangeOf(sm, t.valueStart, t.end) })), refused);
   const elements = split.tokens.map((t) => ({
     ai: t.ai, value: t.value, title: aiEntry(t.ai)?.title ?? "", range: rangeOf(sm, t.start, t.end), separator: t.separator,
   }));
@@ -209,10 +232,16 @@ export function check(engine: SyntaxEngine, reading: Reading): CheckResult {
     const dataStr = `^${split.tokens.map((t, i) => t.ai + t.value + (!t.predefined && i < split.tokens.length - 1 ? "^" : "")).join("")}`;
     const problem = engine.checkMessage(dataStr);
     if (problem) {
-      const code = faultOfEngineMessage(problem.message);
       const ai = AI_IN_MESSAGE.exec(problem.message)?.[1] ?? null;
-      const token = split.tokens.find((t) => t.ai === ai);
-      add(code, token ? [rangeOf(sm, token.start, token.end)] : [], { ai, engineMessage: problem.message });
+      const named = [...problem.message.matchAll(/AI \((\d{2,4})\)/g)].map((x) => x[1]!);
+      const required = /not satisfied: ([\d,]+)/.exec(problem.message)?.[1]?.split(",") ?? [];
+      const ranges = named.flatMap((a) => split.tokens.filter((t) => t.ai === a).map((t) => rangeOf(sm, t.start, t.end)));
+      let code = faultOfEngineMessage(problem.message);
+      // Attributes with no key at all: C9 rather than one companion missing
+      if (code === "E1" && !hasKey(split.tokens.map((t) => t.ai))) code = "C9";
+      const details: Record<string, string> = { ais: withTitles(named) };
+      if (required.length) details.required = withTitles(required);
+      add(code, ranges, { ai, engineMessage: problem.message, details });
     } else {
       const bracketed = split.tokens.map((t) => `(${t.ai})${t.value}`).join("");
       try {
@@ -251,7 +280,7 @@ const worse = (engine: SyntaxEngine, a: Split, b: Split) => faultsOf(engine, a) 
  * value, a separator inserted where the rest becomes valid element strings is the repair, an Error; when the value is
  * valid as it is but ends in element strings of predefined length, only a Warning, and the data is left as it is.
  */
-function separatorsInserted(engine: SyntaxEngine, split: Split, add: (code: string, ranges: Range[], extra?: Partial<Finding>) => void, repairs: RepairName[], from = 0): Split {
+function separatorsInserted(engine: SyntaxEngine, split: Split, add: AddFinding, repairs: RepairName[], from = 0): Split {
   if (isBracketed(split.marked.text)) return split;
   for (const [index, token] of split.tokens.entries()) {
     if (index < from || token.predefined || token.value.length < 3) continue;
@@ -292,10 +321,12 @@ function markupRange(m: Marked, token: Token, problem: EngineFault): Range {
   return rangeOf(m, token.valueStart + open, token.valueStart + close - 1);
 }
 
-/** A GTIN alone, as EAN/UPC and ITF-14 carry it: read as AI (01), the check digit verified. */
+/** A GTIN alone, as EAN/UPC and ITF-14 carry it: read as AI (01), the check digit verified, then the own rules. */
 function gtinOnly(
-  engine: SyntaxEngine, m: Marked, kind: "itf" | "ean" | "assumed", id: string,
-  add: (code: string, ranges: Range[], extra?: Partial<Finding>) => void, result: (elements?: CheckedElement[], forms?: CheckResult["forms"]) => CheckResult,
+  engine: SyntaxEngine, m: Marked, kind: "itf" | "ean" | "assumed", id: string, add: AddFinding,
+  result: (elements?: CheckedElement[], forms?: CheckResult["forms"]) => CheckResult,
+  engineFinding: (ai: string, value: string, message: string, ranges: Range[], valueRange: Range) => void,
+  ownRules: (located: Located[], refused: Set<string>) => void,
 ): CheckResult {
   const all = rangeOf(m, 0, m.text.length);
   if (kind === "itf") {
@@ -313,30 +344,14 @@ function gtinOnly(
   const element: CheckedElement = { ai: "01", value: gtin, title: aiEntry("01")?.title ?? "", range: all, separator: false };
   const problem = engine.checkElementString("01", gtin);
   if (problem) {
-    add(faultOfEngineMessage(problem.message), [all], { ai: "01", engineMessage: problem.message });
+    engineFinding("01", gtin, problem.message, [all], all);
     return result([element]);
   }
+  // The padding's zeros are not in the reading: a part of the GTIN is shifted back to the digits read
+  const pad = gtin.length - m.text.length;
+  ownRules([{ ai: "01", value: gtin, range: [all[0] - pad, all[1]] }], new Set());
   const parsed = engine.parse(`(01)${gtin}`);
   return result([element], { elementString: parsed.elementString, dataStr: parsed.dataStr, digitalLinkUri: parsed.digitalLinkUri });
-}
-
-/** A GS1 Digital Link URI, through the engine, until item 7.1 c gives group G its own rules. */
-function uri(
-  engine: SyntaxEngine, text: string,
-  add: (code: string, ranges: Range[], extra?: Partial<Finding>) => void, result: (elements?: CheckedElement[], forms?: CheckResult["forms"]) => CheckResult,
-): CheckResult {
-  const problem = engine.checkMessage(text);
-  if (problem) {
-    const ai = AI_IN_MESSAGE.exec(problem.message)?.[1] ?? null;
-    add(faultOfEngineMessage(problem.message), [], { ai, engineMessage: problem.message });
-    return result();
-  }
-  try {
-    const parsed = engine.parse(text);
-    return result([], { elementString: parsed.elementString, dataStr: parsed.dataStr, digitalLinkUri: parsed.digitalLinkUri });
-  } catch {
-    return result();
-  }
 }
 
 /** Groups in the order of the checks, then the place in the data, then the code's number. */

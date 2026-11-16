@@ -201,7 +201,10 @@ Each module, in the order of the flow above.
 | `epc.ts` | Every EPC scheme for a key (the resolver's `epc.py`, schemes loaded lazily, BigInt), hexadecimal in 16-bit words, base 64, tag and pure identity URIs, NFC links |
 | `epcPlus.ts` | `encodeEpcPlus`, `decodeEpcPlus`: the '+' and '++' EPC schemes of TDS 2.x (backlog 6.7), the key four bits a digit (no company prefix length), six encodings for a serial, the DSGTIN's date, the '++' hostname with TDS's optimisation tables (`data/epc_hostname.json`); hexadecimal in 16-bit words |
 | `gcp.ts` | `GcpTable`: GS1's GCP length table read without a DOM, kept compact |
-| `check.ts` | `check`, `faultOfEngineMessage`: the Check Studio's check of one reading (backlog 7.1 b, ADR 0007): the carrier (group A), the named repairs, every element string through the Syntax Engine alone and then the whole message, the structure (group B); each finding with its code, severity, the reading's bytes, the AI, the engine's message and the data made right |
+| `check.ts` | `check`: the Check Studio's check of one reading (backlog 7.1 b and c, ADR 0007): the carrier (group A), the named repairs, every element string through the Syntax Engine alone and then the whole message, the structure (group B), then the own rules of `checkValues.ts` and `checkUri.ts`; each finding with its code, severity, the reading's bytes, the AI, the engine's message, what explains it and the data made right; what could not be assessed |
+| `checkUri.ts` | `checkUri`, `uriValueRange`: the Check Studio's checks of a GS1 Digital Link URI (group G, 7.1 c): short names, a compressed URI, a slash or percent sign left raw, qualifiers out of order, an attribute in the path, the scheme, the canonical form; each mended URI given |
+| `checkValues.ts` | `valueRules`, `expectedCheckDigit`, `reorderedDate`: the Check Studio's own rules on keys, values and associations (groups C to E, 7.1 c): the indicator and prefixes, the company prefix against a GCP table, day 00, an order that looks swapped, dates against today, a measure of zero |
+| `engineFaults.ts` | `ENGINE_MESSAGE_FAULTS`, `ENGINE_LINTER_FAULTS`, `ENGINE_UNMAPPED`, `engineMessageId`, `faultOfEngineMessage`: every Syntax Engine message and linter named by a Check Studio fault, or listed with its reason (`data/engine_messages.json`) |
 | `faults.ts` | `FAULTS`, `FAULT_GROUPS`, `fault`, `SEVERITY_RANK`: the Check Studio's catalogue of 77 faults in ten groups (`data/check_faults.json`), each with its severity, sections of the General Specifications, the backlog item that finds it and four English texts (what, where, why, how to fix) |
 | `ndef.ts` | `ndefUriMessage`, `ndefUri`: the NFC Forum URI record |
 | `reading.ts` | `readingFromDecoder`, `readingFromText`, `readingFromNdef`, `readingFromEpc`, `bytesToText`, `bytesToHex`, `withControlPictures`: the Check Studio's reading record (backlog 7.1 a, ADR 0007), the symbol's bytes and symbology identifier as decoded, a scanner's text with its identifier and group separators, an NFC tag's URI, an EPC |
@@ -242,7 +245,7 @@ Each module, in the order of the flow above.
 | `src/texts.ts` | The page's texts kept apart from the code (keys, qualifiers, environments, guide, bulk), in English; `aiText`, `aiTitle` |
 | `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
 | `src/locales/` | `pt-BR.json`, `es.json` (the page), `pt-BR.messages.json`, `es.messages.json` (the core and the Syntax Engine), `ai-titles.pt-BR.json` (the AIs' Portuguese names, the resolver's) |
-| `test/i18n.test.ts`, `test/texts.ts` | Every text in each language: the page's `t()`/`en()` literals and texts.ts, the core's messages found in its sources, the engine's (`test/engine-messages.json`, release 1.4.1) |
+| `test/i18n.test.ts`, `test/texts.ts` | Every text in each language: the page's `t()`/`en()` literals and texts.ts, the core's messages found in its sources, the engine's (`packages/core/src/data/engine_messages.json`, release 1.4.1) |
 | `src/styles.css` | Light and dark; the computer's layout, the phone's (one destination, a tab bar) and the tablet's (a rail, the label beside), by `data-pane` and `data-beside` |
 | `offline.ts` | The Vite plugin writing `sw.js` with every built file: pages network-first, hashed files cache-first |
 
@@ -318,8 +321,9 @@ that say what is true; together they are the [inventory of features](test-invent
 | `printer` | the module in whole dots, profiles, the test label | 6 |
 | `pyformat` | Python's fixed-point rounding | 2 |
 | `qrmode` | QR Code's encoding modes and the domain in capitals | 7 |
-| `check` | The Check Studio's check of one reading: each fault of groups A and B drawn in a symbol by bwip-js, read back by ZXing and found at its bytes; every symbol the studio makes found clean; the project's worked example; several faults in one symbol; the repairs | 66 |
-| `faults` | The Check Studio's catalogue: the project's 77 codes and no other, each with its severity, four texts and a source | 8 |
+| `check` | The Check Studio's check of one reading: each fault of groups A and B drawn in a symbol by bwip-js, read back by ZXing and found at its bytes; every symbol the studio makes found clean; the project's worked example; several faults in one symbol; the repairs; the key, the values, the associations and GS1 Digital Link URIs (groups C, D, E, G) | 91 |
+| `engine-map` | Every message of the Syntax Engine and every linter's named by a fault of the Check Studio, or listed with the reason none applies | 7 |
+| `faults` | The Check Studio's catalogue: the project's 77 codes and no other, each with its severity, four texts and a source; the table of `docs/conformance.md`, 3.2 | 9 |
 | `reading` | The Check Studio's reading record: what ZXing reads of every carrier, measured and held to `docs/conformance.md`; a scanner's text, an NFC tag, an EPC | 34 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
 | `report` | the validation report and its CSVs | 11 |
@@ -374,14 +378,14 @@ The core's and the web application's unit tests run with `pnpm test` (Vitest); t
 - **An AI or a key.** The Syntax Engine and the dictionary file decide; they move together with a new release (next
   point). Run the tests of `identify`, `identifiers` and `attributes`; a new data title fails `logistic` until
   `src/data/data_titles.json` translates it or the test lists it as an acronym.
-- **A new Syntax Engine release.** `src/data/gs1_dictionary.json` and `apps/web/test/engine-messages.json` are not
+- **A new Syntax Engine release.** `src/data/gs1_dictionary.json` and `src/data/engine_messages.json` are not
   written by hand: `scripts/syntax-engine.mjs` makes them from the release's sources (`gs1-syntax-dictionary.txt`,
   `tr_EN.h`, the linters' codes and texts in `gs1syntaxdictionary.h` and `.c`, fetched with git from
   github.com/gs1/gs1-syntax-engine at the release's tag), byte for byte as the resolver's tools made them for 1.4.1.
   `--latest` compares our `gs1encoder` with npm's; `--verify` makes both files again from our release and compares;
   `--update [X.Y.Z]` moves to a release: `packages/core/package.json`, both files, and the release where the documents
   name it (the script's `RELEASE_MENTIONS`), printing the engine messages added, changed and removed. Then
-  `pnpm install` and `pnpm check`. The workflow `syntax-engine.yml` does this every Monday: `--verify` (a red run
+  `pnpm install` and `pnpm check`; a new message fails `engine-map` until `engineFaults.ts` names its fault or its reason. The workflow `syntax-engine.yml` does this every Monday: `--verify` (a red run
   means the script no longer gives what the repository holds), and on a newer release a branch `syntax-engine/X.Y.Z`
   with the update, the lockfile and `pnpm check`'s result, a draft pull request (or an issue, when *Settings → Actions
   → General → Allow GitHub Actions to create and approve pull requests* is off) listing what is left, and CI started

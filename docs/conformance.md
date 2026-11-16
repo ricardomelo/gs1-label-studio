@@ -18,6 +18,7 @@ Class Series 2 Programmer's Manual 88-2341-01 (DPL); Argox's Programmer's Manual
 2. [GS1 Barcode Syntax Engine and GS1 Digital Link](#2-gs1-barcode-syntax-engine-and-gs1-digital-link)
 3. [Symbologies (ISO/IEC)](#3-symbologies-isoiec)
     1. [What a reader gives back](#31-what-a-reader-gives-back)
+    2. [The Check Studio's faults and their sources](#32-the-check-studios-faults-and-their-sources)
 4. [EPC Tag Data Standard and NFC](#4-epc-tag-data-standard-and-nfc)
 5. [GS1 Digital Signatures and Verifiable Credentials](#5-gs1-digital-signatures-and-verifiable-credentials)
 6. [ZPL II](#6-zpl-ii)
@@ -106,6 +107,93 @@ each row is a test of its own, named after its carrier).
 | GS1 DotCode | `gs1dotcode` | no | — | ZXing has no DotCode decoder: the studio must say it cannot read this symbol, not that there is none |
 | EAN-13 with a Composite Component | `ean13composite` | the linear part only | `EAN13, ]E0` | the 13 digits; the 2D component (here (10)) is not read, and must be said so |
 | GS1-128 with a Composite Component | `gs1-128composite` | the linear part only | `Code128, ]C1` | (01) and the GTIN; the 2D component is not read |
+
+### 3.2 The Check Studio's faults and their sources
+
+The faults the Check Studio reports (backlog 7.1, `packages/core/src/data/check_faults.json`), each with the sections
+of the General Specifications (release 26.0) or the other standard it rests on, and the backlog item that finds it.
+The texts paraphrase the standards; none is copied. `packages/core/test/faults.test.ts` holds this table to the
+catalogue.
+
+| Code | Fault | Severity | Sections or source | Found by |
+|---|---|---|---|---|
+| A1 | Data Matrix used instead of GS1 DataMatrix | error | 5.6.3.3; 5.9; 5.1.3; 7.8 | 7.1 b |
+| A2 | QR Code without FNC1 carrying element strings | error | 5.7; 5.10 | 7.1 b |
+| A3 | Code 128 instead of GS1-128 | error | 7.8.5; 5.4.7.4; 5.12.5.10.4 | 7.1 b |
+| A4 | The flag typed as text | error | 5.1.3 | 7.1 b |
+| A5 | A separator in place of the leading FNC1 | error | 5.6.3.3 | 7.1 b |
+| A6 | A GS1 Digital Link URI inside a GS1 DataMatrix or GS1 QR Code | error | 5.1.3 | 7.1 b |
+| A7 | ITF that is not ITF-14, or check digit not verified by the reader | error | 7.2.6; 7.2.7 | 7.1 b |
+| A8 | Not a GS1 carrier or not GS1 data | note | 5.1.3 | 7.1 b |
+| A9 | A symbol type the studio cannot read | not-assessed | docs/conformance.md, section 3.1 (what the decoder reads) | 7.1 b |
+| B1 | The AIs' parentheses are encoded | error | 4.14; 1.4.2; 5.12.5.10.4 | 7.1 b |
+| B2 | Spaces, line breaks or printed titles encoded (EXP, LOT, GTIN:) | error | 7.8.1; 7.11 | 7.1 b |
+| B3 | Separator missing after a variable-length AI | error | 7.8.3; 7.8.4 | 7.1 b |
+| B4 | Separator after a predefined-length AI | warning | 7.8.3 | 7.1 b |
+| B5 | Separator at the end of the data | warning | 7.8.3 | 7.1 b |
+| B6 | Wrong separator character | error | 7.8.4 | 7.1 b |
+| B7 | Unknown AI | error | 3.2 | 7.1 b |
+| B8 | Wrong length for a fixed-length field | error | 3.3.2 | 7.1 b |
+| B9 | Characters outside the allowed set | error | 7.11 | 7.1 b |
+| B10 | The same AI twice with different values | error | 4.13 | 7.1 b |
+| B11 | Predefined-length AIs after variable-length ones | note | 5.12.5.10.4 | 7.1 b |
+| B12 | More data than GS1-128 allows | error | 5.4.7.2 | 7.1 b |
+| C1 | Wrong check digit (GTIN, SSCC, GLN, GRAI, GSRN, GDTI…) | error | 7.9.1; 7.2.7 | 7.1 c |
+| C2 | Wrong check character pair (GMN, AI 8013) | error | 7.9.5 | 7.1 c |
+| C3 | GTIN-14 indicator 9 without a measure | error | 2.1.10; 4.13.2 | 7.1 c |
+| C4 | GTIN-14 with indicator 1–8 in a retail point-of-sale context | warning | 2.1.7.2 | 7.1 c |
+| C5 | A GTIN-13, GTIN-12 or GTIN-8 not padded, or over-padded | error | 3.3.2 | 7.1 c |
+| C6 | Restricted circulation or special prefix | note | 1.2.3.1; 2.1.11 | 7.1 c |
+| C7 | An example number | warning | 1.2.3.1 | 7.1 c |
+| C8 | Company prefix not in the GCP table | warning | The GS1 Company Prefix licence, from the GS1 member organisation | 7.1 c |
+| C9 | No key at all | error | 4.13.2 | 7.1 c |
+| D1 | Impossible date | error | 3.4; 7.2.7 | 7.1 c |
+| D2 | Day 00 | note | 3.4.7 | 7.1 c |
+| D3 | Day 00 on a regulated healthcare item | error | 3.4.7 | 7.1 c |
+| D4 | Date order looks swapped | error | 3.4 | 7.1 c |
+| D5 | Implausible dates | warning | 7.2.7; 7.12 | 7.1 c |
+| D6 | Lot or serial with forbidden characters, or too long | error | 3.4.1; 7.11 | 7.1 c |
+| D7 | Lot or serial likely to be mis-keyed | note | 7.11; GS1 Digital Link: URI Syntax | 7.1 c |
+| D8 | Measure of zero or implausible | warning | 7.8.7 | 7.1 c |
+| D9 | Other typed fields | error | 3 | 7.1 c |
+| E1 | A required companion AI is missing | error | 4.13.2 | 7.1 c |
+| E2 | Two AIs that may not appear together | error | 4.13.1 | 7.1 c |
+| E3 | Serial missing where the scheme needs it | error | 3 | 7.1 c |
+| F1 | A symbol the context's table does not list | error | 5.12.3; 2.1; 2.7 | 7.1 d |
+| F2 | EAN/UPC asked to carry more than a GTIN | note | 5.1.3 | 7.1 d |
+| F3 | A 2D symbol alone at a retail point of sale | warning | 4.15.4 | 7.1 d |
+| F4 | Add-on symbol | note | 5.1.3 | 7.1 d |
+| F5 | Context not given | not-assessed | The Check Studio project, section 3.6 (the reading context) | 7.1 d |
+| G1 | A web address with no GS1 key | note | GS1 Digital Link: URI Syntax | 7.1 c |
+| G2 | Qualifiers in the wrong order, or not belonging to the key | error | GS1 Digital Link: URI Syntax | 7.1 c |
+| G3 | An attribute in the path, or a qualifier in the query | error | GS1 Digital Link: URI Syntax | 7.1 c |
+| G4 | Unknown AI in the query | error | GS1 Digital Link: URI Syntax | 7.1 c |
+| G5 | An AI a URI cannot carry | error | GS1 Digital Link: URI Syntax | 7.1 c |
+| G6 | Bad percent-encoding, or a reserved character left raw | error | GS1 Digital Link: URI Syntax | 7.1 c |
+| G7 | Not canonical, though valid | note | GS1 Digital Link: URI Syntax | 7.1 c |
+| G8 | http:// instead of https://; a non-web scheme | warning | 4.15.3; GS1 Digital Link: URI Syntax | 7.1 c |
+| G9 | Short names in the path (/gtin/ for /01/) | warning | GS1 Digital Link: URI Syntax | 7.1 c |
+| G10 | A compressed Digital Link URI | note | GS1 Digital Link: URI Syntax | 7.1 c |
+| G11 | The key's check digit, dates and values inside the URI | error | 1.4.4 | 7.1 c |
+| H1 | X-dimension outside the context's range | warning | 5.12.3 | 7.1 m |
+| H2 | Quiet zone too small | warning | 5.2.3.4 | 7.1 m |
+| H3 | Bars truncated | warning | 5.12.2.2 | 7.1 m |
+| H4 | Light on dark, or mirrored | warning | The decoder (ZXing): isInverted, isMirrored | 7.1 m |
+| H5 | Human readable text does not match the data | not-assessed | 4.14; 5.12.5.1 | 7.1 m |
+| I1 | Not an EPC, or an unknown header | note | EPC Tag Data Standard 2.3 | 7.1 d |
+| I2 | EPC fields inconsistent | error | EPC Tag Data Standard 2.3 | 7.1 d |
+| I3 | NFC: the URI is not the first record, not a URI record, or not https | error | 4.15.3 | 7.1 d |
+| I4 | NFC: the URI itself | error | GS1 Digital Link: URI Syntax | 7.1 d |
+| J1 | Different GTINs (or other keys) on one item | error | 4.15.1 | 7.1 d |
+| J2 | Same attribute, different values (batch, expiry, serial, weight) | error | 4.15.1 | 7.1 d |
+| J3 | Attributes in one symbol, their GTIN only in another | warning | 4.15.5; 4.15.1; 4.15.4 | 7.1 d |
+| J4 | Retail pack with a 2D symbol and no EAN/UPC or GS1 DataBar | warning | 4.15.4 | 7.1 d |
+| J5 | The 2D symbol is far from the linear one | warning | 6.3.3.1 | 7.1 d |
+| J6 | A supplemental 2D symbol missing data of the GS1-128 | error | 4.15.1 | 7.1 d |
+| J7 | EPC and barcode disagree | error | 4.15.2 | 7.1 d |
+| J8 | NFC tag and 2D symbol disagree | error | 4.15.3 | 7.1 d |
+| J9 | A logistic label that contradicts itself | error | 2.2; 6.6; 4.13.2 | 7.1 d |
+| J10 | A non-GS1 symbol on the pack | note | 4.15.1 | 7.1 d |
 
 ## 4. EPC Tag Data Standard and NFC
 

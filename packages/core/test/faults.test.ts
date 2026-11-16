@@ -47,15 +47,28 @@ describe("the catalogue of faults", () => {
     for (const codes of Object.values(REPAIR_PROVES)) for (const code of codes) expect(CODES).toContain(code);
   });
 
-  it("names, in check.ts, only codes it holds", () => {
-    const source = readFileSync(new URL("../src/check.ts", import.meta.url), "utf8");
+  it("names, in the checks' sources, only codes it holds", () => {
+    const source = ["check.ts", "checkValues.ts", "checkUri.ts", "engineFaults.ts"].map((f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8")).join("\n");
     const named = new Set([...source.matchAll(/"([A-J]\d{1,2})"/g)].map((m) => m[1]!));
-    expect(named.size).toBeGreaterThan(20);
+    expect(named.size).toBeGreaterThan(50);
     for (const code of named) expect(CODES, code).toContain(code);
   });
 
   it("copies no text of the standard: its texts cite section numbers, the General Specifications' sentences stay out", () => {
     // A guard against pasting: the catalogue's sentences are short paraphrases
     for (const f of FAULTS) for (const text of Object.values(f.texts)) expect(text.length, f.code).toBeLessThan(420);
+  });
+});
+
+describe("docs/conformance.md, section 3.2", () => {
+  it("lists every fault with its severity, its sections or source and the item that finds it", () => {
+    const doc = readFileSync(new URL("../../../docs/conformance.md", import.meta.url), "utf8");
+    const section = doc.slice(doc.indexOf("### 3.2 The Check Studio's faults"), doc.indexOf("## 4. EPC Tag Data Standard"));
+    const rows = section.split("\n").filter((l) => /^\| [A-J]\d/.test(l)).map((l) => l.slice(2, -2).split(" | "));
+    expect(rows.map((r) => r[0])).toEqual(CODES);
+    for (const [code, , severity, sources, item] of rows) {
+      const f = fault(code!);
+      expect([severity, sources, item], code).toEqual([f.severity, [...f.sections, ...(f.references ?? [])].join("; "), f.item]);
+    }
   });
 });

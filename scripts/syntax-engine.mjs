@@ -3,7 +3,7 @@
 //
 // Two files of this repository are derived from the engine's sources rather than written by hand:
 //   packages/core/src/data/gs1_dictionary.json  the GS1 Barcode Syntax Dictionary (gs1-syntax-dictionary.txt)
-//   apps/web/test/engine-messages.json          the engine's English messages (tr_EN.h) and its linters' messages
+//   packages/core/src/data/engine_messages.json the engine's English messages (tr_EN.h) and its linters' messages
 //                                               (gs1syntaxdictionary.h and .c), which each language must translate
 // This script makes both from a release's sources, as the GS1 Digital Link Resolver CE's portal did when they were
 // first ported, and moves the release named in package.json and the documents along with them.
@@ -26,7 +26,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE_REPOSITORY = "https://github.com/gs1/gs1-syntax-engine";
 export const DICTIONARY_FILE = "packages/core/src/data/gs1_dictionary.json";
-export const MESSAGES_FILE = "apps/web/test/engine-messages.json";
+export const MESSAGES_FILE = "packages/core/src/data/engine_messages.json";
 const PACKAGE_FILE = "packages/core/package.json";
 const MESSAGES_SOURCE =
   "GS1 Barcode Syntax Engine's tr_EN.h and its linters, as the GS1 Digital Link Resolver CE read them (portal/engine_messages.json)";
@@ -165,7 +165,7 @@ function pythonJson(value) {
   return JSON.stringify(value);
 }
 
-/** engine-messages.json's text. */
+/** engine_messages.json's text. */
 export function messagesJson(release, messages, linters) {
   return `${JSON.stringify({ release, source: MESSAGES_SOURCE, messages, linters }, null, 1)}`;
 }

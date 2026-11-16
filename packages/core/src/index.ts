@@ -359,4 +359,6 @@ export {
 export { readWork, WORK_FORMAT, WORK_VERSION, workFile, zplWithWork, type Work, type WorkValue } from "./work.ts";
 export { FAULT_GROUPS, FAULTS, fault, SEVERITY_RANK, type Fault, type FaultGroup, type FaultTexts, type Severity } from "./faults.ts";
 export { REPAIR_PROVES, type RepairName } from "./repair.ts";
-export { check, faultOfEngineMessage, type CheckedElement, type CheckResult, type Finding, type Verdict } from "./check.ts";
+export { check, type CheckContext, type CheckedElement, type CheckResult, type Finding, type Verdict } from "./check.ts";
+export { ENGINE_LINTER_FAULTS, ENGINE_MESSAGE_FAULTS, ENGINE_UNMAPPED, engineMessageId, faultOfEngineMessage } from "./engineFaults.ts";
+export { expectedCheckDigit, reorderedDate } from "./checkValues.ts";

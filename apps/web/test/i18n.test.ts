@@ -17,7 +17,7 @@ import { coreTexts, dynamicCalls, pageTexts } from "./texts.ts";
 // every message of the core and of the GS1 Barcode Syntax Engine in Brazilian Portuguese, Spanish, French, German and
 // Italian, with the same placeholders.
 
-const engine = JSON.parse(readFileSync(new URL("./engine-messages.json", import.meta.url), "utf8")) as {
+const engine = JSON.parse(readFileSync(new URL("../../../packages/core/src/data/engine_messages.json", import.meta.url), "utf8")) as {
   messages: Record<string, string>;
   linters: Record<string, string>;
 };

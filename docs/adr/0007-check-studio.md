@@ -63,7 +63,9 @@ to put it right.
   `expectedReads()`, where parentheses are the convention, not data.
 - A new carrier the studio makes needs a row in `docs/conformance.md`, section 3.1, or the test that holds the table
   to the measure fails.
-- The faults and the check of groups A and B are item 7.1 b; groups C to E, their own rules and the mapping of every
-  engine message, item 7.1 c; the texts in six languages, item 7.1 f. The open questions (the studio's
+- The faults and the check of groups A and B are item 7.1 b; groups C to E and G, their own rules and the mapping of
+  every engine message (`engineFaults.ts`, each message named by a fault or listed with its reason), item 7.1 c; the
+  context (group F), tags (I) and several carriers (J), item 7.1 d; the texts in six languages, item 7.1 f. The
+  engine's messages moved to `packages/core/src/data/engine_messages.json`, where the core reads them. The open questions (the studio's
   name, what a phone opens on, the report's language, a survey mode, regulatory profiles, a shared link with the
   reading) are the owner's to answer, in the project.

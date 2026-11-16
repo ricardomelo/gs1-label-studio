@@ -5,8 +5,8 @@ import bwipjs from "bwip-js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { prepareZXingModule, readBarcodes } from "zxing-wasm/reader";
 import {
-  check, encode, faultOfEngineMessage, rasterize, readingFromDecoder, readingFromNdef, readingFromText, ndefUriMessage, SYMBOLOGIES,
-  SyntaxEngine, type CheckResult, type DecodedSymbol, type Reading, type SymbologyId,
+  check, checkDigit, encode, expectedCheckDigit, faultOfEngineMessage, parseGcpTable, rasterize, reorderedDate, readingFromDecoder, readingFromNdef, readingFromText, ndefUriMessage, SYMBOLOGIES,
+  SyntaxEngine, type CheckContext, type CheckResult, type DecodedSymbol, type Reading, type SymbologyId,
 } from "../src/index.ts";
 
 // The Check Studio's check of one reading (backlog 7.1 b): groups A (the carrier) and B (the structure of the element
@@ -69,8 +69,8 @@ const CORPUS: Case[] = [
   { code: "B5", bcid: "datamatrix", text: `${FNC1}010950600013435210ABC123${FNC1}`, extra: PARSE, identifier: "]d2", findings: ["B5 warning [24,25]"], fixed: "(01)09506000134352(10)ABC123" },
   { code: "B6", bcid: "datamatrix", text: `${FNC1}010950600013435210ABC123{GS}17271231`, extra: PARSE, identifier: "]d2", findings: ["B6 error [24,28]", "B11 note [28,36]"], fixed: "(01)09506000134352(10)ABC123(17)271231" },
   { code: "B7", bcid: "datamatrix", text: `${FNC1}01095060001343528912`, extra: PARSE, identifier: "]d2", findings: ["B7 error [16,20]"] },
-  { code: "B8", bcid: "datamatrix", text: `${FNC1}010950600013435`, extra: PARSE, identifier: "]d2", findings: ["B8 error [2,15]"] },
-  { code: "B9", bcid: "datamatrix", text: `${FNC1}010950600013435210ABC#123`, extra: PARSE, identifier: "]d2", findings: ["B9 error [21,22]"] },
+  { code: "B8", bcid: "datamatrix", text: `${FNC1}0012345678901234567`, extra: PARSE, identifier: "]d2", findings: ["B8 error [2,19]"] },
+  { code: "B9", bcid: "datamatrix", text: `${FNC1}0109506000134352240ABC#123`, extra: PARSE, identifier: "]d2", findings: ["B9 error [22,23]"] },
   { code: "B10", bcid: "datamatrix", text: `${FNC1}010950600013435210A${FNC1}10B`, extra: PARSE, identifier: "]d2", findings: ["B10 error [16,19][20,23]"] },
   { code: "B11", bcid: "datamatrix", text: `${FNC1}10ABC123${FNC1}0109506000134352`, extra: PARSE, identifier: "]d2", findings: ["B11 note [9,25]"] },
   {
@@ -147,12 +147,12 @@ describe("check()", () => {
 
   it("reports every fault in one symbol, not only the engine's first", () => {
     const result = check(engine, pasted(`]d2010950600013435317271300` + `10AB#C${GS}21X`));
-    expect(summary(result)).toEqual(["C1 error [15,16]", "D1 error [20,22]", "B9 error [28,29]"].sort(bySummaryOrder));
-    expect(result.findings.map((f) => f.ai)).toEqual(["01", "17", "10"].sort(byAiOrder(result)));
+    expect(summary(result)).toEqual(["C1 error [15,16]", "D1 error [20,22]", "D6 error [28,29]"]);
+    expect(result.findings.map((f) => f.ai)).toEqual(["01", "17", "10"]);
   });
 
   it("finds the associations once every element string is valid alone", () => {
-    expect(summary(check(engine, pasted("]d210ABC123")))).toEqual(["E1 error [0,8]"]);
+    expect(summary(check(engine, pasted("]d20209506000134352")))).toEqual(["E1 error [0,16]"]);
     expect(summary(check(engine, pasted("]d20109506000134352020950600013435237"))).length).toBe(1);
   });
 
@@ -167,7 +167,7 @@ describe("check()", () => {
   it("B3: where two separators would each make the data valid, the one before a value of predefined length", () => {
     // (10)ABCDEFGHIJ21XY17271231 is too long for a batch: (21)XY17271231 would do, but a date after the batch is likelier
     const result = check(engine, pasted("]d210ABCDEFGHIJ21XY17271231"));
-    expect(summary(result)).toEqual(["B3 error [16,16]", "E1 error [0,16]", "B11 note [16,24]"]);
+    expect(summary(result)).toEqual(["B3 error [16,16]", "C9 error [0,16]", "B11 note [16,24]", "D7 note [2,16]"]);
     expect(result.elements.map((e) => `(${e.ai})${e.value}`)).toEqual(["(10)ABCDEFGHIJ21XY", "(17)271231"]);
   });
 
@@ -226,13 +226,13 @@ describe("check()", () => {
     expect(summary(check(engine, pasted("]Q1https://example.com/about")))).toEqual(["G1 note"]);
     expect(check(engine, pasted("]Q1https://example.com/about")).verdict).toBe("not-gs1");
     const nfc = readingFromNdef(ndefUriMessage("https://id.gs1.org/01/09506000134353"), { at: AT });
-    expect(summary(check(engine, nfc))).toEqual(["C1 error"]);
+    expect(summary(check(engine, nfc))).toEqual(["C1 error [22,36]"]);
   });
 
   it("points at bytes, not characters, when the data holds UTF-8", () => {
     const result = check(engine, pasted(`]d2010950600013435210ÀBC${GS}`));
     // À is two bytes: the value is bytes 18 to 21, and the separator at the end byte 22, not character 21
-    expect(summary(result)).toEqual(["B9 error [18,22]", "B5 warning [22,23]"]);
+    expect(summary(result)).toEqual(["D6 error [18,22]", "B5 warning [22,23]"]);
     expect(summary(check(engine, readingFromText("^0109506000134352^10ABC", { source: "paste", at: AT })))).toEqual(["B4 warning [17,18]"]);
   });
 
@@ -259,6 +259,186 @@ describe("faultOfEngineMessage()", () => {
   });
 });
 
-const ORDER = (s: string) => s.charCodeAt(0) * 1e8 + Number(/\[(\d+),/.exec(s)?.[1] ?? 0) * 100 + Number(s.split(" ")[0]!.slice(1));
-const bySummaryOrder = (a: string, b: string) => ORDER(a) - ORDER(b);
-const byAiOrder = (result: CheckResult) => (a: string, b: string) => result.findings.findIndex((f) => f.ai === a) - result.findings.findIndex((f) => f.ai === b);
+// Item 7.1 c: the key (group C), the values (D), the associations (E) and GS1 Digital Link URIs (G)
+const withCheck = (body: string) => `${body}${checkDigit(body)}`;
+const findings = (text: string, context: CheckContext = {}) => summary(check(engine, pasted(text), context));
+const TODAY = new Date("2026-11-16T00:00:00Z");
+
+describe("group C: the key", () => {
+  it("C1: the check digit that would be right", () => {
+    const result = check(engine, pasted("]d20109506000134353"));
+    expect(summary(result)).toEqual(["C1 error [15,16]"]);
+    expect(result.findings[0]!.details).toEqual({ expected: "2" });
+    expect(expectedCheckDigit("00", "106141411234567890")).toBe("7");
+    expect(expectedCheckDigit("10", "ABC")).toBeNull();
+  });
+
+  it("C3: indicator 9 without its measure; with (3103) it is a variable measure trade item", () => {
+    const gtin = withCheck("9950600013435");
+    expect(findings(`]d201${gtin}`)).toEqual(["C3 error [2,3]"]);
+    expect(findings(`]d201${gtin}3103001250`)).toEqual([]);
+  });
+
+  it("C4: indicator 1 to 8 only matters at a retail point of sale", () => {
+    const gtin = withCheck("1950600013435");
+    expect(findings(`]d201${gtin}`)).toEqual([]);
+    expect(findings(`]d201${gtin}`, { environment: "retail" })).toEqual(["C4 warning [2,3]"]);
+    expect(findings(`]d201${gtin}`, { environment: "distribution" })).toEqual([]);
+  });
+
+  it("C5: a GTIN-13 under AI (01), not padded", () => {
+    expect(findings("]d2019506000134352")).toEqual(["C5 error [2,15]"]);
+  });
+
+  it("C6: restricted circulation, coupons, books and serials; a Warning outside retail", () => {
+    expect(findings(`]E0${withCheck("200123456789")}`)).toEqual(["C6 note [0,2]"]);
+    expect(findings(`]E0${withCheck("978014300723")}`)).toEqual(["C6 note [0,3]"]);
+    expect(findings(`]E0${withCheck("978014300723")}`, { environment: "distribution" })).toEqual(["C6 warning [0,3]"]);
+    expect(findings(`]E4${withCheck("2012345")}`)).toEqual(["C6 note [0,1]"]);
+    expect(findings(`]E0${withCheck("950600013435")}`)).toEqual([]);
+  });
+
+  it("C7: the prefix for examples, in a GTIN and in an SSCC", () => {
+    expect(findings(`]E0${withCheck("952012345678")}`)).toEqual(["C7 warning [0,3]"]);
+    expect(findings(`]C100${withCheck("39520123456789012")}`)).toEqual(["C7 warning [3,6]"]);
+  });
+
+  it("C8: a company prefix the user's GCP table does not hold; not assessed without a table", () => {
+    const gcp = parseGcpTable('<GCPPrefixFormatList date="2026-01-01T00:00:00Z"><entry prefix="950" gcpLength="7"/></GCPPrefixFormatList>');
+    expect(findings("]E09506000134352", { gcp })).toEqual([]);
+    expect(findings(`]E0${withCheck("761234567890")}`, { gcp })).toEqual(["C8 warning [0,13]"]);
+    expect(check(engine, pasted("]E09506000134352")).notChecked).toEqual(["C8"]);
+    expect(check(engine, pasted("]E09506000134352"), { gcp }).notChecked).toEqual([]);
+  });
+
+  it("C9: attributes with no key, the companions named with their titles", () => {
+    const result = check(engine, pasted("]d210ABC123"));
+    expect(summary(result)).toEqual(["C9 error [0,8]"]);
+    expect(result.findings[0]!.details).toEqual({ ais: "10 BATCH/LOT", required: "01 GTIN, 02 CONTENT, 03 MTO GTIN, 8006 ITIP, 8026 ITIP CONTENT" });
+  });
+});
+
+describe("group D: dates and other values", () => {
+  it("D1 and D4: an impossible date that reads right as DDMMYY, re-ordered", () => {
+    const result = check(engine, pasted("]d2010950600013435217150635"), { today: TODAY });
+    expect(summary(result)).toEqual(["D4 error [18,24]", "D1 error [22,24]"]);
+    expect(result.findings[0]!.details).toEqual({ reordered: "350615" });
+    expect(check(engine, pasted("]d2010950600013435217061535"), { today: TODAY }).findings[0]!.details).toEqual({ reordered: "350615" });
+    expect(reorderedDate("131227", TODAY)).toBe("271213");
+    expect(reorderedDate("121327", TODAY)).toBe("271213");
+    expect(reorderedDate("991399", TODAY)).toBeNull();
+    expect(reorderedDate("310427", TODAY)).toBeNull(); // 31 April, read either way
+  });
+
+  it("D2 and D3: day 00, the last day of the month; an Error in regulated healthcare", () => {
+    const result = check(engine, pasted("]d2010950600013435217280200"), { today: TODAY });
+    expect(summary(result)).toEqual(["D2 note [22,24]"]);
+    expect(result.findings[0]!.details).toEqual({ date: "2028-02-29" });
+    expect(findings("]d2010950600013435217280200", { today: TODAY, environment: "healthcare" })).toEqual(["D3 error [22,24]"]);
+  });
+
+  it("D5: expiry before production, expired, made in the future, too far away, the century by the rule of 7.12", () => {
+    expect(findings("]d201095060001343521126060117260101", { today: TODAY })).toEqual(["D5 warning [18,24][26,32]"]);
+    expect(findings("]d2010950600013435217250101", { today: TODAY })).toEqual(["D5 warning [18,24]"]);
+    expect(findings("]d2010950600013435211270101", { today: TODAY })).toEqual(["D5 warning [18,24]"]);
+    const far = check(engine, pasted("]d2010950600013435217700101"), { today: TODAY });
+    expect(summary(far)).toEqual(["D5 warning [18,24]"]);
+    expect(far.findings[0]!.details).toEqual({ reason: "far", date: "2070-01-01" });
+  });
+
+  it("D6: a batch too long; D7: a serial likely to be mis-keyed", () => {
+    expect(findings("]d2010950600013435210ABCDEFGHIJKLMNOPQRSTU")).toEqual(["D6 error [18,39]"]);
+    expect(findings("]d201095060001343522112-")).toEqual(["D7 note [18,21]"]);
+    expect(findings("]d2010950600013435221AO0")).toEqual(["D7 note [18,21]"]);
+  });
+
+  it("D8: a measure of zero, its value with the decimal point and unit", () => {
+    const result = check(engine, pasted("]d201995060001343533103000000".replace("99506000134353", withCheck("9950600013435"))));
+    expect(summary(result)).toEqual(["D8 warning [20,26]"]);
+    expect(result.findings[0]!.details).toEqual({ value: "0.000", unit: "kg" });
+  });
+
+  it("D9: a typed field's own rule (a country code)", () => {
+    expect(findings("]d20109506000134352422999")[0]).toMatch(/^D9 error/);
+  });
+});
+
+describe("group E: combinations", () => {
+  it("E1 and E2 name both AIs with their data titles", () => {
+    const e1 = check(engine, pasted("]d20209506000134352"));
+    expect(e1.findings[0]!.details).toEqual({ ais: "02 CONTENT", required: "37 COUNT" });
+    const e2 = check(engine, pasted(`]d242012345${GS}4210761234`));
+    expect(summary(e2)).toEqual(["E2 error [0,8][9,19]"]);
+    expect(e2.findings[0]!.details?.ais).toMatch(/^420 SHIP TO POST, 421 SHIP TO POST$/);
+  });
+});
+
+describe("group G: GS1 Digital Link URIs", () => {
+  const uri = (text: string, context: CheckContext = {}) => check(engine, pasted(`]Q1${text}`), context);
+  it("G1: a web address with no key is not a GS1 code", () => {
+    expect(summary(uri("https://example.com/about"))).toEqual(["G1 note"]);
+  });
+
+  it("G2: qualifiers out of order, the URI re-ordered", () => {
+    const result = uri("https://id.gs1.org/01/09506000134352/21/12345/10/ABC");
+    expect(summary(result)).toEqual(["G2 error [0,52]"]);
+    expect(result.findings[0]!.details?.uri).toBe("https://id.gs1.org/01/09506000134352/10/ABC/21/12345");
+    expect(result.findings[0]!.fixedData).toBe("(01)09506000134352(10)ABC(21)12345");
+  });
+
+  it("G3: an attribute in the path, moved to the query; a qualifier in the query", () => {
+    const result = uri("https://id.gs1.org/01/09506000134352/17/271231");
+    expect(summary(result)).toEqual(["G3 error [37,39]"]);
+    expect(result.findings[0]!.details?.uri).toBe("https://id.gs1.org/01/09506000134352?17=271231");
+    expect(summary(uri("https://id.gs1.org/01/09506000134352?10=ABC"))).toEqual(["G3 error [40,43]"]);
+  });
+
+  it("G4 and G5: an unknown AI in the query; an AI a URI cannot carry", () => {
+    expect(summary(uri("https://id.gs1.org/01/09506000134352?9999=x"))[0]).toMatch(/^G4|^B7/);
+    expect(summary(uri("https://id.gs1.org/01/09506000134352?235=x"))[0]).toMatch(/^G5/);
+  });
+
+  it("G6: a percent sign that starts no %hh, and a slash left raw in a batch", () => {
+    const percent = uri("https://id.gs1.org/01/09506000134352/10/A%2");
+    expect(summary(percent)).toEqual(["G6 error [41,42]"]);
+    expect(percent.findings[0]!.details?.uri).toBe("https://id.gs1.org/01/09506000134352/10/A%252");
+    const slash = uri("https://id.gs1.org/01/09506000134352/10/AB/12");
+    expect(summary(slash)).toEqual(["G6 error [0,45]"]);
+    expect(slash.findings[0]!.details?.uri).toBe("https://id.gs1.org/01/09506000134352/10/AB%2F12");
+  });
+
+  it("G7: valid but not canonical, with the canonical URI", () => {
+    for (const [text, reason] of [
+      ["https://ID.GS1.ORG/01/09506000134352", "upper-case-host"], ["https://id.gs1.org/01/09506000134352/", "trailing-slash"],
+      ["https://id.gs1.org/01/09506000134352#top", "fragment"], ["https://example.com/shop/01/09506000134352", "path-before-key"],
+      ["https://id.gs1.org/01/9506000134352", "gtin"],
+    ]) {
+      const result = uri(text!);
+      expect(summary(result).map((s) => s.split(" ")[0]), text).toEqual(["G7"]);
+      expect(result.findings[0]!.details).toEqual({ canonical: "https://id.gs1.org/01/09506000134352", reason });
+      expect(result.verdict).toBe("follows");
+    }
+  });
+
+  it("G8: plain http is a Warning, another scheme an Error", () => {
+    expect(summary(uri("http://id.gs1.org/01/09506000134352"))).toEqual(["G8 warning [0,4]"]);
+    expect(summary(uri("ftp://id.gs1.org/01/09506000134352"))).toEqual(["G8 error [0,3]"]);
+    expect(summary(uri("ftp://example.com/file.txt"))).toEqual(["A8 note"]);
+  });
+
+  it("G9: short names in the path, which the engine refuses, given their AIs", () => {
+    const result = uri("https://id.gs1.org/gtin/09506000134352/lot/ABC");
+    expect(summary(result)).toEqual(["G9 warning [19,23][39,42]"]);
+    expect(result.findings[0]!.details).toEqual({ names: "gtin, lot", uri: "https://id.gs1.org/01/09506000134352/10/ABC" });
+    expect(engine.checkMessage("https://id.gs1.org/gtin/09506000134352")?.message).toBe("No GS1 DL keys found in path info");
+  });
+
+  it("G10: a compressed URI", () => {
+    expect(summary(uri("https://id.gs1.org/ARHKVAdpQgEJ"))).toEqual(["G10 note [0,31]"]);
+  });
+
+  it("G11: the key's and the values' rules inside the URI", () => {
+    expect(summary(uri("https://id.gs1.org/01/09506000134353"))).toEqual(["C1 error [22,36]"]);
+    expect(summary(uri("https://id.gs1.org/01/09506000134352?17=280200", { today: TODAY }))).toEqual(["D2 note [44,46]"]);
+  });
+});

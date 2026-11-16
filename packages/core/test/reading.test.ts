@@ -90,7 +90,7 @@ async function decode(c: Case): Promise<DecodedSymbol[]> {
 /** The rows of the table in docs/conformance.md, section 3.1: carrier, bwip-js's name, read, format and identifier. */
 function conformanceRows(): string[][] {
   const doc = readFileSync(new URL("../../../docs/conformance.md", import.meta.url), "utf8");
-  const section = doc.slice(doc.indexOf("### 3.1 What a reader gives back"), doc.indexOf("## 4. EPC Tag Data Standard"));
+  const section = doc.slice(doc.indexOf("### 3.1 What a reader gives back"), doc.indexOf("### 3.2 The Check Studio"));
   return section
     .split("\n")
     .filter((line) => line.startsWith("| ") && !line.startsWith("| Carrier") && !line.startsWith("| ---"))
