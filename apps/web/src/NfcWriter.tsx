@@ -1,25 +1,11 @@
 import { ndefUriMessage } from "@gs1-label-studio/core";
 import { useState } from "react";
+import { nfcAvailable, scanTag } from "./nfc.ts";
 import { NFC_TEXTS } from "./texts.ts";
 import { formatNumber, t, tm } from "./i18n.ts";
 
 // Writing an NFC tag (backlog 1.19): one of the code's URIs as an NDEF URI record, through Web NFC where the browser has
 // it (Chrome on Android), read back from the tag to check it; elsewhere the NDEF message as a file for a tag writer.
-
-/** Web NFC, which TypeScript's DOM library does not describe. */
-interface NdefRecord {
-  recordType: string;
-  data?: DataView;
-}
-interface NdefReader extends EventTarget {
-  write(message: { records: { recordType: string; data: string }[] }, options?: { signal?: AbortSignal }): Promise<void>;
-  scan(options?: { signal?: AbortSignal }): Promise<void>;
-}
-declare global {
-  interface Window {
-    NDEFReader?: new () => NdefReader;
-  }
-}
 
 interface Props {
   /** The URIs that can go on the tag: [label, uri]. */
@@ -32,7 +18,7 @@ type Status = { kind: "idle" | "busy" | "ok" | "error"; text: string };
 export function NfcWriter({ choices, download }: Props) {
   const [chosen, setChosen] = useState(0);
   const [status, setStatus] = useState<Status>({ kind: "idle", text: "" });
-  const available = typeof window !== "undefined" && typeof window.NDEFReader === "function";
+  const available = nfcAvailable();
   const uri = choices[Math.min(chosen, choices.length - 1)]?.[1];
   if (!uri) return null;
 
@@ -51,24 +37,18 @@ export function NfcWriter({ choices, download }: Props) {
   }
 
   async function readBack() {
-    if (!window.NDEFReader || !uri) return;
+    if (!uri) return;
     setStatus({ kind: "busy", text: t(NFC_TEXTS.holdRead) });
-    const reader = new window.NDEFReader();
-    const stop = new AbortController();
-    reader.addEventListener("reading", (event) => {
-      stop.abort();
-      const records = (event as Event & { message?: { records: NdefRecord[] } }).message?.records ?? [];
+    try {
+      const { records } = await scanTag(new AbortController().signal);
       const found = records.find((r) => r.recordType === "url");
       const text = found?.data ? new TextDecoder().decode(found.data) : null;
       setStatus(text === uri
         ? { kind: "ok", text: `${t(NFC_TEXTS.same)} ${text}` }
         : { kind: "error", text: text ? `${t(NFC_TEXTS.different)} ${text}` : t(NFC_TEXTS.noUrl) });
-    }, { once: true });
-    reader.addEventListener("readingerror", () => setStatus({ kind: "error", text: t(NFC_TEXTS.unreadable) }), { once: true });
-    try {
-      await reader.scan({ signal: stop.signal });
     } catch (error) {
-      failed(error);
+      if ((error as { name?: string }).name === "NotReadableError") setStatus({ kind: "error", text: t(NFC_TEXTS.unreadable) });
+      else failed(error);
     }
   }
 

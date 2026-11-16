@@ -1,6 +1,6 @@
 import {
-  bytesToHex, check, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult, type Finding,
-  type Reading, type SyntaxEngine, type Verdict,
+  bytesToHex, check, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult, type Finding,
+  type EpcScheme, type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera } from "./Camera.tsx";
@@ -10,6 +10,8 @@ import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
 import { Picture, SymbolList, type PictureRead } from "./Picture.tsx";
 import { Segmented } from "./Segmented.tsx";
+import { Tag } from "./Tag.tsx";
+import { layoutRepairs, WedgeListener } from "./wedge.ts";
 import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
 
 // The Check Studio's result (backlog 7.1 f; the check studio's project, section 6; ADR 0007): what a code holds, pasted
@@ -58,13 +60,19 @@ const PLACES: readonly { value: Place; text: string }[] = [
   { value: "asset", text: en("An asset, document, place or service") },
   { value: "unknown", text: en("I do not know / just check the data") },
 ];
-/** The ways a code comes in (backlog 7.1 g): the camera, a picture, typed or pasted text. Tags come with 7.1 h. */
-type Way = "camera" | "picture" | "type";
+/** The ways a code comes in: the camera, a picture (7.1 g), an NFC or RFID tag (7.1 h), typed or pasted text. */
+type Way = "camera" | "picture" | "tag" | "type";
 const WAYS: readonly { value: Way; icon: string; text: string }[] = [
   { value: "camera", icon: "📷", text: en("Camera") },
   { value: "picture", icon: "🖼", text: en("Picture") },
+  { value: "tag", icon: "📶", text: en("Tag") },
   { value: "type", icon: "⌨", text: en("Type or paste") },
 ];
+/** A missing separator in text a keyboard gave: the code may lack it, or the scanner may have dropped it (section 3.5). */
+const B3_KEYBOARD = {
+  what: en("Either the code lacks a separator after a value whose length varies, or your scanner removes it."),
+  scanner: en("Many scanners drop the separator in keyboard mode. If the code was scanned, set the scanner to send the separator as a visible stand-in the studio accepts, such as <GS>, and scan again: if the problem goes, the code is right."),
+};
 /** Where a reading came from, as the expert view's Reading panel names it. */
 const SOURCE_NAMES: Record<Reading["source"], string> = {
   camera: en("Camera"),
@@ -222,6 +230,16 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   const [pictureFailed, setPictureFailed] = useState(false);
   const [chosen, setChosen] = useState(0);
   const [unreadable, setUnreadable] = useState<Reading | null>(null);
+  const [tagReading, setTagReading] = useState<Reading | null>(null);
+  const [tagMessage, setTagMessage] = useState<Uint8Array | null>(null);
+  // A scanner in keyboard mode (7.1 h): a scan is told from typing by its rhythm, and marked as the scanner's
+  const [typedSource, setTypedSource] = useState<"wedge" | "paste">("paste");
+  const wedge = useRef(new WedgeListener());
+  // A classic EPC is read with the EPC schemes (the application's own tables), loaded when a tag is first read
+  const [schemes, setSchemes] = useState<Record<string, EpcScheme> | undefined>(undefined);
+  useEffect(() => {
+    if (way === "tag" && !schemes) epcSchemes().then(setSchemes, (e: unknown) => console.error(e));
+  }, [way, schemes]);
   const pictureInput = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLElement>(null);
   const pictureUrl = useRef<string | null>(null);
@@ -273,22 +291,23 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
 
   const typed = useMemo(() => {
     const text = data.trim() === "" ? "" : `${symbol}${data}`;
-    return text ? readingFromText(text, { source: "paste" }) : null;
-  }, [data, symbol]);
+    return text ? readingFromText(text, { source: typedSource }) : null;
+  }, [data, symbol, typedSource]);
+  const repairs = useMemo(() => (data.trim() ? layoutRepairs(data.trim()) : []), [data]);
   const scanned = way === "camera" ? camReadings : way === "picture" ? (picture?.readings ?? []) : [];
-  const reading = way === "type" ? typed : (unreadable ?? scanned[chosen] ?? null);
+  const reading = way === "type" ? typed : way === "tag" ? tagReading : (unreadable ?? scanned[chosen] ?? null);
   useEffect(() => {
     if (way === "camera" && camReadings.length) resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [way, camReadings]);
   // Checked once without a place, whose elements say which place an asset's is, then against the place chosen
-  const unplaced = useMemo(() => (engine && reading ? check(engine, reading, { environment: null }) : null), [engine, reading]);
+  const unplaced = useMemo(() => (engine && reading ? check(engine, reading, { environment: null, epcSchemes: schemes }) : null), [engine, reading, schemes]);
   const environment = place === null ? undefined : environmentOf(place, follow, unplaced?.elements.map((e) => e.ai) ?? []);
   const result = useMemo<CheckResult | null>(() => {
     if (!engine || !reading || !unplaced) return null;
     if (!environment) return unplaced;
-    const context: CheckContext = { environment };
+    const context: CheckContext = { environment, epcSchemes: schemes };
     return check(engine, reading, context);
-  }, [engine, reading, unplaced, environment]);
+  }, [engine, reading, unplaced, environment, schemes]);
   // Each symbol of a picture or a frame with its verdict, for the numbered list
   const verdicts = useMemo<Verdict[]>(
     () => (engine ? scanned.map((r) => check(engine, r, { environment: environment ?? null }).verdict) : []),
@@ -308,7 +327,32 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           value={data}
           spellCheck={false}
           placeholder="]d20109506000134352172712311 0ABC123"
-          onChange={(e) => setData(e.target.value)}
+          onChange={(e) => {
+            setData(e.target.value);
+            setTypedSource("paste");
+          }}
+          onKeyDown={(e) => {
+            const now = performance.now();
+            // A scanner sends the group separator as Ctrl+] (ASCII 29), which a field does not type by itself
+            if (e.ctrlKey && (e.key === "]" || e.code === "BracketRight")) {
+              e.preventDefault();
+              const field = e.currentTarget;
+              const at = field.selectionStart ?? field.value.length;
+              setData(field.value.slice(0, at) + "\u001d" + field.value.slice(field.selectionEnd ?? at));
+              wedge.current.key("\u001d", now);
+              return;
+            }
+            if (e.key === "Enter") {
+              const burst = wedge.current.end(now);
+              if (burst) {
+                e.preventDefault();
+                setData(burst);
+                setTypedSource("wedge");
+              }
+              return;
+            }
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) wedge.current.key(e.key, now);
+          }}
         />
       </label>
       <div className="check-row">
@@ -333,6 +377,19 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           {t("Try an example")}
         </button>
       </div>
+      {typed?.source === "wedge" && <p className="hint ok" role="status">{t("Read from a scanner in keyboard mode.")}</p>}
+      {typed?.identifierAssumed && typedSource === "wedge" && !symbol && (
+        <p className="hint scanner-help">
+          {t("The scanner sent no symbology identifier, so the data alone says which symbol it was. Choose the symbol below, or switch on the scanner's “AIM ID” (symbology identifier) setting so that it says so itself.")}
+        </p>
+      )}
+      {repairs.map((r) => (
+        <p key={r.text} className="hint scanner-help">
+          {t("Typed on another keyboard layout? With {layouts}, the scanner meant:", { layouts: r.layouts.map((l) => t(l.name)).join(", ") })}{" "}
+          <code className="mono">{r.text}</code>{" "}
+          <button type="button" className="link" onClick={() => setData(r.text)}>{t("Use this")}</button>
+        </p>
+      ))}
       <p className="hint">{t("A separator can be typed as <GS>, {GS} or \\x1D. Nothing leaves this page.")}</p>
     </div>
   );
@@ -394,6 +451,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           onUnreadable={notRead}
         />
       )}
+      {way === "tag" && <Tag onRead={setTagReading} message={tagMessage} onMessage={setTagMessage} />}
       {way === "type" && typeIn}
       {ways}
       <div className="check-place" role="group" aria-labelledby="check-place-title">
@@ -457,6 +515,8 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     </section>
   );
 
+  // Text from a keyboard (a scanner's or pasted) may have lost its separators on the way (the project's section 3.5)
+  const keyboard = reading.source === "wedge" || reading.source === "paste";
   const cards = judged.length > 0 && (
     <section aria-labelledby="check-wrong">
       <h3 id="check-wrong">{t("What is wrong")} ({judged.length})</h3>
@@ -466,7 +526,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           return (
             <li key={i} className="finding" data-severity={f.severity} data-code={f.code}>
               <p className="finding-what">
-                <span className="severity">{t(SEVERITIES[f.severity])}</span> {texts ? t(texts.what) : f.code}
+                <span className="severity">{t(SEVERITIES[f.severity])}</span> {f.code === "B3" && keyboard ? t(B3_KEYBOARD.what) : texts ? t(texts.what) : f.code}
               </p>
               <p className="finding-where">
                 <b>{t("Where:")}</b>{" "}
@@ -477,6 +537,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
                 <>
                   <p><b>{t("Why it matters:")}</b> {t(texts.why)}</p>
                   <p><b>{t("How to fix:")}</b> {t(texts.fix)}</p>
+                  {f.code === "B3" && keyboard && <p className="scanner-help">{t(B3_KEYBOARD.scanner)}</p>}
                 </>
               )}
               {detailLines(f).map((line) => (
