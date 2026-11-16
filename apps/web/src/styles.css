@@ -764,6 +764,44 @@ a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offse
 .ex-table th, .ex-table td { text-align: left; border-bottom: 1px solid var(--line); padding: 4px 8px 4px 0; overflow-wrap: anywhere; }
 .ex-findings { padding-left: 20px; }
 .ex-findings li p { margin: 2px 0; }
+/* The Check Studio's group (backlog 7.1 i): the codes of one item, the matrix of section 5.3, the AIs' column fixed */
+.group-members { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.group-members li { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.group-members li:not([data-on]) { opacity: 0.6; }
+.group-members li[data-selected] { border-color: var(--navy); }
+.group-tick { display: inline-flex; gap: 8px; align-items: center; flex: 1 1 12em; cursor: pointer; }
+.group-tick input { width: auto; flex: none; margin: 0; }
+.group-tick { margin: 0; font-size: 15px; font-weight: 400; }
+.group-tick b { font-weight: 700; }
+.group-verdict { font-size: 13px; color: var(--muted); }
+.group-verdict[data-verdict="follows"] { color: var(--ok); }
+.group-verdict[data-verdict="remarks"] { color: #9a6700; }
+.group-verdict[data-verdict="does-not-follow"] { color: var(--error); }
+.matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.group-matrix { border-collapse: separate; border-spacing: 0; font-size: 14px; width: 100%; }
+.group-matrix th, .group-matrix td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+.group-matrix tbody tr:last-child > * { border-bottom: 0; }
+.group-matrix thead th { background: var(--soft); font-weight: 600; }
+.group-matrix thead th .link { font-weight: 600; }
+.group-matrix thead th[data-selected] { box-shadow: inset 0 -3px 0 var(--navy); }
+.group-matrix th[scope="row"], .group-matrix thead th:first-child { position: sticky; left: 0; background: var(--card); font-weight: 400; white-space: normal; min-width: 7em; max-width: 12em; box-shadow: 1px 0 0 var(--line); }
+.group-matrix thead th:first-child { background: var(--soft); }
+.group-matrix td[data-differs] { background: #ffd8a8; color: #1a1a1a; font-weight: 600; }
+.group-matrix .absent { color: var(--muted); }
+.group-question { background: var(--soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
+.group-question p { margin: 0 0 6px; }
+.group-resolved { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+/* On a phone the matrix is a card per detail, each code's value on its own line (mock-up B of 7.1 i): nothing scrolls sideways */
+@media (max-width: 700px) {
+  .group-matrix, .group-matrix tbody, .group-matrix tr, .group-matrix th, .group-matrix td { display: block; }
+  .group-matrix thead { display: none; }
+  .matrix-scroll { border: 0; overflow: visible; }
+  .group-matrix tbody { display: grid; gap: 8px; }
+  .group-matrix tbody tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .group-matrix th[scope="row"] { position: static; box-shadow: none; max-width: none; padding: 0 0 4px; font-weight: 600; border: 0; }
+  .group-matrix td { border: 0; padding: 2px 4px; white-space: normal; overflow-wrap: anywhere; display: flex; gap: 8px; }
+  .group-matrix td::before { content: attr(data-col); color: var(--muted); flex: 0 0 45%; font-family: system-ui, sans-serif; font-weight: 400; }
+}
 @media (max-width: 700px) {
   .says { grid-template-columns: 1fr; gap: 0; }
   .says dd { margin-bottom: 6px; }

@@ -1,10 +1,12 @@
 import {
-  bytesToHex, check, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult, type Finding,
-  type EpcScheme, type Reading, type SyntaxEngine, type Verdict,
+  bytesToHex, check, checkGroup, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult,
+  type Finding, type EpcScheme, type GroupKind, type GroupResult, type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera } from "./Camera.tsx";
 import { decodeImage, mayHaveComposite, picturePixels, readingsOf } from "./camera.ts";
+import { guessKind, memberName, sameReading, type Member } from "./group.ts";
+import { GroupMatrix } from "./GroupMatrix.tsx";
 import { SIMPLE_TEXTS } from "./checkTexts.ts";
 import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
@@ -20,7 +22,8 @@ import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
 // what, where, why and how to fix, what was not checked — and the expert view, one press away, shows the reading, the
 // bytes, the element strings, the other syntaxes, the findings with their codes and sections, the context and the
 // versions. Both are drawn from the same findings, so they cannot disagree. A code comes in three ways (7.1 g): the
-// camera, first on a phone (the project's Q3), a picture, or typed and pasted text.
+// camera, first on a phone (the project's Q3), a picture, or typed and pasted text. Several codes of one item are
+// checked together (7.1 i): after any reading the next one joins the group, or every symbol of a picture at once.
 
 /** The symbols a pasted text can say it came from (the scanner's identifier, ISO/IEC 15424), the GS1 ones first. */
 const SYMBOLS: readonly { id: string; name: string }[] = [
@@ -284,6 +287,12 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     setUnreadable(null);
     setChosen(0);
   };
+  // The codes of one item (7.1 i): the next reading joins while awaiting; selected shows a member's own result
+  const [members, setMembers] = useState<Member[]>([]);
+  const [awaiting, setAwaiting] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [chosenKind, setChosenKind] = useState<GroupKind | null>(null);
+  const [round, setRound] = useState(0);
   const [place, setPlace] = useState<Place | null>(null);
   const [follow, setFollow] = useState<Follow>("a");
   const [view, setView] = useState<"simple" | "expert">("simple");
@@ -295,7 +304,39 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   }, [data, symbol, typedSource]);
   const repairs = useMemo(() => (data.trim() ? layoutRepairs(data.trim()) : []), [data]);
   const scanned = way === "camera" ? camReadings : way === "picture" ? (picture?.readings ?? []) : [];
-  const reading = way === "type" ? typed : way === "tag" ? tagReading : (unreadable ?? scanned[chosen] ?? null);
+  const current = way === "type" ? typed : way === "tag" ? tagReading : (unreadable ?? scanned[chosen] ?? null);
+  const reading = selected !== null && members[selected] ? members[selected].reading : current;
+  // A new reading is shown rather than the member chosen before it; read while awaiting, it joins the group, unless
+  // it is text still being typed (it joins on a press) or a code already in the group
+  useEffect(() => setSelected(null), [current]);
+  const inGroup = (r: Reading) => members.some((m) => sameReading(m.reading, r));
+  const join = (r: Reading) => {
+    if (inGroup(r)) return;
+    setMembers((list) => [...list, { reading: r, on: true }]);
+    setAwaiting(false);
+  };
+  useEffect(() => {
+    if (awaiting && current && current.source !== "paste") join(current);
+  }, [awaiting, current]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Starts a group with the code shown, or adds to it: the ways in are cleared for the next code. */
+  const addAnother = () => {
+    if (members.length === 0 && current) setMembers([{ reading: current, on: true }]);
+    setAwaiting(true);
+    setSelected(null);
+    setCamReadings([]);
+    setData("");
+    setTypedSource("paste");
+    setTagReading(null);
+    setTagMessage(null);
+    setUnreadable(null);
+    setRound((n) => n + 1);
+  };
+  const closeGroup = () => {
+    setMembers([]);
+    setAwaiting(false);
+    setSelected(null);
+    setChosenKind(null);
+  };
   useEffect(() => {
     if (way === "camera" && camReadings.length) resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [way, camReadings]);
@@ -313,6 +354,16 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     () => (engine ? scanned.map((r) => check(engine, r, { environment: environment ?? null }).verdict) : []),
     [engine, scanned, environment],
   );
+  // The group: each member checked alone, then the ticked ones together (the project's section 5)
+  const memberResults = useMemo<(CheckResult | null)[]>(
+    () => members.map((m) => (engine ? check(engine, m.reading, { environment: environment ?? null, epcSchemes: schemes }) : null)),
+    [engine, members, environment, schemes],
+  );
+  const kind = chosenKind ?? guessKind(members.filter((m) => m.on).map((m) => m.reading));
+  const group = useMemo<GroupResult | null>(() => {
+    const on = members.flatMap((m, i) => (m.on && memberResults[i] ? [{ reading: m.reading, result: memberResults[i]! }] : []));
+    return on.length >= 2 ? checkGroup(on, kind, { environment: environment ?? null }) : null;
+  }, [members, memberResults, kind, environment]);
   /** The user says there is a code the decoder did not read: a reading with nothing in it, which check() calls A9. */
   const notRead = () =>
     setUnreadable(readingFromDecoder({ format: "", symbologyIdentifier: "", bytes: new Uint8Array(0) }, { source: way === "camera" ? "camera" : "image" }));
@@ -451,7 +502,21 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           onUnreadable={notRead}
         />
       )}
-      {way === "tag" && <Tag onRead={setTagReading} message={tagMessage} onMessage={setTagMessage} />}
+      {(way === "camera" || way === "picture") && scanned.length >= 2 && members.length === 0 && (
+        <div className="check-row">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              setMembers(scanned.map((r) => ({ reading: r, on: true })));
+              setAwaiting(false);
+            }}
+          >
+            {t("Check all {n} as one item", { n: String(scanned.length) })}
+          </button>
+        </div>
+      )}
+      {way === "tag" && <Tag key={round} onRead={setTagReading} message={tagMessage} onMessage={setTagMessage} />}
       {way === "type" && typeIn}
       {ways}
       <div className="check-place" role="group" aria-labelledby="check-place-title">
@@ -477,29 +542,72 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     </section>
   );
 
+  const verdictOf = (v: Verdict) => {
+    const box = VERDICTS[v];
+    return (
+      <div className="verdict" data-verdict={v} role="status">
+        <span className="verdict-icon" aria-hidden="true">{box.icon}</span>
+        <span>
+          <b>{t(box.word)}</b>
+          <span>{t(box.line)}</span>
+        </span>
+      </div>
+    );
+  };
+  const groupCard = members.length > 0 && (
+    <GroupMatrix
+      members={members}
+      results={memberResults}
+      group={group}
+      kind={kind}
+      onKind={setChosenKind}
+      selected={selected}
+      onSelect={(i) => {
+        setSelected(i);
+        setTimeout(() => resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+      }}
+      onToggle={(i) => setMembers((list) => list.map((m, k) => (k === i ? { ...m, on: !m.on } : m)))}
+      onRemove={(i) => {
+        setMembers((list) => list.filter((_, k) => k !== i));
+        setSelected(null);
+      }}
+      awaiting={awaiting}
+      onAdd={addAnother}
+      onClose={closeGroup}
+      verdictBox={verdictOf}
+    />
+  );
+
   if (!result || !reading) {
     return (
       <main className="check" lang={lang} aria-label={t("Check Studio")}>
         {input}
+        {groupCard}
         {!engine && reading && <p className="hint">{t("Loading…")}</p>}
       </main>
     );
   }
 
-  const verdict = VERDICTS[result.verdict];
   const today = new Date(reading.at);
   const judged = result.findings.filter((f) => f.severity !== "not-assessed");
   const notAssessed = [...result.findings.filter((f) => f.severity === "not-assessed").map((f) => f.code), ...result.notChecked];
 
-  const verdictBox = (
-    <div className="verdict" data-verdict={result.verdict} role="status">
-      <span className="verdict-icon" aria-hidden="true">{verdict.icon}</span>
-      <span>
-        <b>{t(verdict.word)}</b>
-        <span>{t(verdict.line)}</span>
-      </span>
-    </div>
-  );
+  const verdictBox = verdictOf(result.verdict);
+  // The code shown: a member of the group, a code read to join it, or a code alone
+  const memberShown = selected !== null && members[selected] ? selected : members.findIndex((m) => sameReading(m.reading, reading));
+  const groupLine =
+    memberShown >= 0 ? (
+      <p className="hint">{t("The result of one code of this item: {name}.", { name: memberName(reading, undefined) })}</p>
+    ) : members.length > 0 ? (
+      <div className="check-row">
+        <button type="button" className="btn primary" onClick={() => join(reading)}>{t("Add this code to the item")}</button>
+      </div>
+    ) : (
+      <div className="check-row">
+        <button type="button" className="btn" onClick={addAnother}>{t("Add another code from this item")}</button>
+        <span className="hint">{t("A pack's 2D symbol and its barcode, or a barcode and its RFID or NFC tag, are compared.")}</span>
+      </div>
+    );
 
   const says = result.elements.length > 0 && (
     <section aria-labelledby="check-says">
@@ -580,6 +688,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   return (
     <main className="check" lang={lang} aria-label={t("Check Studio")}>
       {input}
+      {groupCard}
       <section ref={resultRef} className="card check-result" aria-labelledby="check-result-title">
         <h2 id="check-result-title">{t("The result")}</h2>
         <Segmented
@@ -589,6 +698,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           options={[{ value: "simple", text: t("Simple") }, { value: "expert", text: t("Expert") }]}
           onChange={setView}
         />
+        {groupLine}
         {view === "simple" ? simple : <Expert result={result} reading={reading} environment={environment} />}
       </section>
     </main>
