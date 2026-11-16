@@ -119,6 +119,20 @@ to put it right.
    opens the tag's link by itself; an .ndef file) and shows no dead button. No browser reads UHF RFID: the EPC is pasted
    or typed by a reader in keyboard mode, and a classic EPC is read with the application's own EPC tables. The tag
    writer of 1.19 now shares the Web NFC code.
+15. **Several codes of one item: the next reading joins; the matrix is a table on a computer and a card per detail on
+   a phone** (7.1 i). After any result, *Add another code from this item* starts a group with that code and clears the
+   ways in; the next code read joins it by itself when it comes whole (the camera, a picture's symbol, an NFC tag, a
+   scanner's burst) and on a press when it is text being typed or pasted, which has no end the studio can see. The same
+   code read twice (the same carrier, identifier and bytes) joins once, so the camera seeing the first symbol again
+   adds nothing. Every symbol of a picture or a frame can be taken at once (the project's automatic group). A member can
+   be unticked, left listed but out of the check, or removed; either re-runs `checkGroup()`. The kind of group is
+   guessed (a tag beside a code, an SSCC in a GS1-128, a GS1-128 alone, else a consumer pack) until the user names it.
+   The matrix (`GroupMatrix.tsx`) heads each column with the code's number, name and verdict, and marks the cells of a
+   row that differs; a column's head opens that code's own result below. On a phone it is shown as a card per AI with
+   each code's value on its own line (mock-up B of two under the owner's rule; A, the same table with the AIs' column
+   fixed and the rest scrolling sideways, cut a GTIN in two on a phone 412 pixels wide). J1 between GTINs that differ
+   only in the indicator asks the project's question; *Yes* says they are different items and offers to check them one
+   at a time.
 
 ## 3. Consequences
 

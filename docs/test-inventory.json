@@ -6991,6 +6991,34 @@
    "area": "The Check Studio: a code read to be checked"
   },
   {
+   "program": "group",
+   "file": "apps/web/test/group.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the kind of group › is guessed from the readings until the user names it",
+     "status": "passed"
+    },
+    {
+     "name": "a code already in the group › is the same carrier, identifier and bytes",
+     "status": "passed"
+    },
+    {
+     "name": "a column's name › names the symbol, or the tag and its scheme",
+     "status": "passed"
+    },
+    {
+     "name": "a column's name › numbers the codes a finding concerns",
+     "status": "passed"
+    },
+    {
+     "name": "a group finding's details › say what differs in plain words",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "gs1128",
    "file": "packages/core/test/gs1128.test.ts",
    "kind": "unit",
@@ -10716,6 +10744,41 @@
     },
     {
      "name": "a picture pasted or dropped on the studio is read",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-matrix",
+   "file": "apps/web/e2e/check-matrix.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "a picture with an EAN-13 and a GS1 DataMatrix of different GTINs, checked as one item, gives J1; a code left out re-runs the checks",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the project's example 5.3 built by the camera then a tag shows J7 on the differing cells; removing the tag re-runs the checks",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "two GTINs that differ in the indicator only ask whether one is the box's code, and a scanner's code joins by itself",
      "status": "listed",
      "projects": [
       "desktop",

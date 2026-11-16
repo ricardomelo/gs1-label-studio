@@ -332,6 +332,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check-studio` | The Check Studio's result screen: the 77 faults told in plain words, one sentence each, and the places a code is scanned mapped to scanning environments | 3 |
 | `camera` | The Check Studio's camera and pictures without a camera: a refused, missing or busy camera named, the torch and zoom offered, the same symbol counted once in three seconds, the readings of a frame or a picture, the Composite part said to be left out, the symbols' names, a picture's size | 8 |
 | `wedge` | The Check Studio's scanner in keyboard mode and NFC tags without a screen: a scan told from typing by its rhythm, a keyboard layout's damage undone and offered (AZERTY, QWERTZ, ABNT2, Spanish, Italian), Web NFC's records made an NDEF message again and listed | 8 |
+| `group` | The Check Studio's group without a screen: the kind of group guessed from the readings (a tag, an SSCC, a GS1-128), a code already in the group, a column's name, the codes a finding concerns, what a group finding's details say | 5 |
 | `faults` | The Check Studio's catalogue: the project's 77 codes and no other, each with its severity, four texts and a source; the table of `docs/conformance.md`, 3.2 | 9 |
 | `reading` | The Check Studio's reading record: what ZXing reads of every carrier, measured and held to `docs/conformance.md`; a scanner's text, an NFC tag, an EPC | 34 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
@@ -361,6 +362,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check-result` | the Check Studio's result in a browser: the worked example's verdict, cards and expert panels, the place re-running the checks, Make it right, Portuguese, the Identify card's link (Playwright) | 5 |
 | `check-camera` | the Check Studio's camera and pictures in a browser: the camera first on a touch screen, a code read and the camera stopped, hidden and shown, left; torch and zoom; refused and missing; a picture of three symbols outlined and numbered; no barcode and fault A9; pasted and dropped (Playwright, a canvas stream as the camera) | 8 |
 | `check-scan` | the Check Studio's scanner, NFC tags and EPCs in a browser: a scan with ]d2 and a separator, a scan without identifier and AIM ID, Ctrl+] by hand, a lost separator told as the scanner's, another keyboard layout, an NFC tag's records and I3, no Web NFC and an .ndef file, a pasted SGTIN-96 (Playwright, a stand-in NDEFReader) | 8 |
+| `check-matrix` | the Check Studio's group in a browser: a picture's two symbols of different GTINs checked as one item (J1, the cells marked, a code left out, one not joining twice), the project's example 5.3 by the camera then a tag (J7, a column's own result, the tag removed), the indicator question and a scanner's code joining by itself (Playwright, a canvas camera) | 3 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 

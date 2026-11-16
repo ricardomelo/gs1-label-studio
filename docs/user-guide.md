@@ -75,7 +75,7 @@ another studio.
 
 ![The Check Studio with the worked example: the verdict, what the code says and three cards](images/guide/check.png)
 
-1. Open **Check Studio** on the start page (or `#/check`). Under **Read a code**, three buttons choose how the code
+1. Open **Check Studio** on the start page (or `#/check`). Under **Read a code**, four buttons choose how the code
    comes in: **Camera**, **Picture**, **Tag** and **Type or paste**. A phone or a tablet opens on the camera, a
    computer on the text.
 2. With **Camera**, press **Start the camera** and allow it when the browser asks; point it at the code, which is read
@@ -126,6 +126,22 @@ another studio.
    its translation, the context, and the versions that checked it.
 
 ![The expert view of the same result](images/guide/check-expert.png)
+
+10. To check several codes of one item together (a pack's 2D symbol and its EAN-13, a barcode and its RFID or NFC
+    tag), press **Add another code from this item** under the result, then read the next code in any way: a code read
+    by the camera, a picture, an NFC tag or a scanner joins by itself; a code typed or pasted joins on **Add this code
+    to the item**. A picture or a camera frame with several symbols offers **Check all … as one item**. **The codes of
+    this item** lists them, numbered; untick one to leave it out, or **Remove** it, and the group is checked again.
+    Under **What is this item?** say whether it is a consumer pack, a case, a logistic label or a tag with its printed
+    code (the studio guesses until you choose: the rules differ). The group's verdict comes first, then **What each code
+    says**: one row per detail and one column per code (on a phone, a card per detail), the values that disagree
+    marked; values are compared character by character, though a GTIN-13 padded to 14 digits is the same GTIN. Then a
+    card per group fault, such as different GTINs, an RFID tag whose serial number differs from the barcode's, or a
+    case's 2D symbol missing the GS1-128's data. When two GTINs differ only in their first digit, the studio asks whether
+    one is the box's code and the other the product's: then they are different items, to be checked one at a time.
+    **Its own result** shows one code's result below; **Check codes one at a time** ends the group.
+
+![The codes of one item: a GS1 DataMatrix, its EAN-13 and an RFID tag, the serial numbers marked where they differ](images/guide/check-group.png)
 
 In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
 with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.

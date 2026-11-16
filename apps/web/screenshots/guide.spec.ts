@@ -67,6 +67,22 @@ test("the Check Studio: a picture of three symbols, outlined and numbered", asyn
   await shot(studio.locator(".check-input"), "check-picture");
 });
 
+test("the Check Studio: the codes of one item, the matrix and a group fault", async ({ page }) => {
+  await page.goto("/#/check");
+  const studio = page.getByRole("main", { name: "Check Studio" });
+  await studio.getByRole("button", { name: "Type or paste", exact: true }).click();
+  await studio.getByRole("textbox").fill("]d201095060001343521727123110ABC123\u001d2100417");
+  await studio.getByRole("button", { name: "Add another code from this item" }).click();
+  await studio.getByRole("textbox").fill("]E09506000134352");
+  await studio.getByRole("button", { name: "Add this code to the item" }).click();
+  await studio.locator(".check-group").getByRole("button", { name: "Add another code from this item" }).click();
+  await studio.getByRole("button", { name: "Tag", exact: true }).click();
+  await studio.getByLabel(/Paste the EPC/).fill("30364433400d1ec0000001a1");
+  await studio.getByRole("button", { name: "Add this code to the item" }).click();
+  await expect(studio.locator('.check-group .finding[data-code="J7"]')).toBeVisible();
+  await shot(studio.locator(".check-group"), "check-group");
+});
+
 test("the editor at a glance", async ({ page }) => {
   await shot(page, "editor");
 });

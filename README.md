@@ -887,7 +887,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   scan checked at once, Ctrl+] as the separator), the scanner's three faults named rather than blamed on the code (no
   identifier, the separator lost, another keyboard layout undone), and a fourth way in, Tag: NFC read with Web NFC on
   Android and every record listed, an .ndef file elsewhere with what works instead said, an RFID tag's EPC pasted or
-  typed*
+  typed; 7.1 i done the same day: several codes of one item on screen (mock-up B of two: on a phone, a card per detail),
+  *Add another code from this item* after any result (the next code read joins, a typed one on a press), every symbol
+  of a picture as one item, a code unticked or removed and the group checked again, the kind of group guessed until
+  the user names it, the matrix with the cells that differ marked, a card per group fault, and the question whether two
+  GTINs that differ in the indicator are a box and the product inside*
 
 
 ## Licence
