@@ -65,6 +65,14 @@ const WAYS: readonly { value: Way; icon: string; text: string }[] = [
   { value: "picture", icon: "🖼", text: en("Picture") },
   { value: "type", icon: "⌨", text: en("Type or paste") },
 ];
+/** Where a reading came from, as the expert view's Reading panel names it. */
+const SOURCE_NAMES: Record<Reading["source"], string> = {
+  camera: en("Camera"),
+  image: en("Picture"),
+  nfc: en("NFC tag"),
+  wedge: en("A scanner in keyboard mode"),
+  paste: en("Pasted or typed"),
+};
 /** On a touch screen the studio opens on the camera (the project's Q3); with a mouse, on the text a scanner types. */
 const prefersCamera = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 type Follow = "a" | "b" | "c";
@@ -587,7 +595,7 @@ function Expert({ result, reading, environment }: { result: CheckResult; reading
       <section aria-labelledby="ex-reading">
         <h3 id="ex-reading">{t("Reading")}</h3>
         <dl className="pairs">
-          <dt>{t("Source")}</dt><dd>{t("Pasted or typed")}</dd>
+          <dt>{t("Source")}</dt><dd>{t(SOURCE_NAMES[reading.source])}{reading.format ? ` (${reading.format})` : ""}</dd>
           <dt>{t("Time (UTC)")}</dt><dd className="mono">{reading.at}</dd>
           <dt>{t("Symbology identifier")}</dt>
           <dd className="mono">

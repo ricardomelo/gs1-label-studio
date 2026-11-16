@@ -1230,5 +1230,6 @@
  "A GS1 DotCode and the 2D part of a Composite symbol are not read here.": "Un GS1 DotCode y la parte 2D de un símbolo Composite no se leen aquí.",
  "A 2D part printed with this barcode (a Composite Component): no decoder here reads it.": "Una parte 2D impresa con este código de barras (un Composite Component): ningún decodificador de aquí la lee.",
  "Camera": "Cámara",
- "Type or paste": "Escribir o pegar"
+ "Type or paste": "Escribir o pegar",
+ "A scanner in keyboard mode": "Un lector en modo teclado"
 }

@@ -91,6 +91,7 @@ test("the camera reads a code, opens its result and stops; Scan another starts i
   // The reading says where it came from, with the decoder's identifier
   await studio(page).getByRole("radio", { name: "Expert" }).click();
   await expect(studio(page).locator(".expert")).toContainText("]d2");
+  await expect(studio(page).locator(".expert .pairs").first()).toContainText("Camera (DataMatrix)");
   await studio(page).getByRole("button", { name: "Scan another" }).click();
   await expect.poll(() => live(page)).toBe(1);
 });
