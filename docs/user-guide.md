@@ -60,6 +60,19 @@ English.
 
 ## 2. The screen at a glance
 
+### The start page: the studios
+
+![The start page: the Label Studio and the Barcode Studio, the RFID Studio and the Check Studio coming soon](images/guide/start.png)
+
+The address of the tool opens on its studios. **Label Studio** opens the editor below with the kinds of label shown;
+**Barcode Studio** opens the same editor with the barcode alone. The **RFID Studio** and the **Check Studio** (which
+will read a barcode or a tag and say whether it follows the GS1 rules) are marked *Coming soon*. Each studio has its
+own address, to bookmark or to open from the installed application's shortcuts: `#/label`, `#/barcode`. The name in
+the header always leads back to the studios; the browser's Back and Forward move between them, and what you typed in
+the editor is kept while you look at another studio.
+
+### The editor
+
 ![The editor: steps 1 and 2 and the options on the left, the label on the right](images/guide/editor.png)
 
 - The header: the name, with the version under it (the commit the page was built from and its date, which opens

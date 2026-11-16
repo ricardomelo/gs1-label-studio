@@ -30,8 +30,14 @@ async function paste(page: Page, data: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/label");
   await expect(page.locator(".preview .symbol svg")).toBeAttached(); // behind another destination on a phone
+});
+
+test("the start page: the studios", async ({ page }) => {
+  await page.goto("/#/");
+  await expect(page.getByRole("heading", { name: "Choose a studio" })).toBeVisible();
+  await shot(page, "start");
 });
 
 test("the editor at a glance", async ({ page }) => {

@@ -222,6 +222,8 @@ Each module, in the order of the flow above.
 | `src/App.tsx` | The state of the editor (identification, answers, settings, bulk rows, edits, printer) and the label memo through `labelFor`; downloads; the destination shown on a phone or a tablet, each keeping its scroll, a link to another destination opening it |
 | `src/layout.ts` | The layouts (backlog 1.21): the destinations (`Pane`), the phone's and the tablet's media queries, `useMedia`, `paneOf` |
 | `src/TabBar.tsx` | The destinations' bar: at the bottom on a phone, a rail on a tablet held horizontally, hidden on a computer; a dot where something needs attention |
+| `src/routes.ts` | The studios' addresses (backlog 7.1 e): `parseRoute`, `routeHash`, `useRoute`; `#/` the start page, `#/label` and `#/barcode` the editor, `#/rfid` and `#/check` to come; an anchor without the slash stays in the editor |
+| `src/StartPage.tsx` | The start page offering the studios as cards (mock-up A of two), the ones to come named and marked, and a studio's page while it is coming |
 | `src/install.ts`, `src/InstallApp.tsx` | Installing as an app: `beforeinstallprompt` caught as soon as the page loads (main.tsx imports it), `install()`, the state (installed, ready, iOS, the browser's menu); the button under More |
 | `src/About.tsx` | About, at the foot of the page: the repository, the licence, the manuals, the version (`__BUILD__`, the commit the build was made from, set in `vite.config.ts`), the software it is made with |
 | `src/IdentifyCard.tsx` | Step 1: paste box, key, the list of qualifiers and attributes (`AiCombo`), other keys, parameters |
@@ -351,6 +353,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `tour` | the tour of the studio: its card beside what it points at and whole within the window, its ring within the window, its stops on a computer and on a phone or a tablet (apps/web/test) | 8 |
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 118 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
+| `routes` | the studios' addresses: the start page, each studio, a shared link's query, the editor's anchors (apps/web/test) | 4 |
+| `studios` | the start page and the studios' addresses in a browser: one tap to the editor, the keyboard, back and forward, what was typed kept, the shortcuts (Playwright) | 5 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 

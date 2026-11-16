@@ -73,6 +73,12 @@ to put it right.
    identifier, EPC scheme), not text: the screen heads them in the user's language (7.1 f). J5, the 50 mm distance,
    is not assessed until the estimates (7.1 m).
 
+11. **The studios have addresses** (7.1 e). Hash routes, which GitHub Pages serves without configuration and which
+   never reach the server: `#/` the start page, `#/label` and `#/barcode` the editor (the second with the barcode
+   alone), `#/rfid` and `#/check` the studios to come, a query after the route for what a shared link carries. A hash
+   without the slash is one of the editor's anchors, as before. The editor stays in the page, hidden, while another
+   studio is shown, so that its state survives without being stored.
+
 ## 3. Consequences
 
 - The scan test of the label studio keeps `textMode: "HRI"`: it compares what a label carries with

@@ -26,7 +26,7 @@ import {
   symbolFor,
   type SymbologyId,
 } from "@gs1-label-studio/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Help } from "./Help.tsx";
 import { HriFormatFields, type HriFormatSettings } from "./HriFormatFields.tsx";
 import { OptionGroup } from "./OptionGroup.tsx";
@@ -154,6 +154,8 @@ export type FileKind = "svg" | "png" | "pdf" | "eps" | "zip";
 const REDUCTIONS = [0, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05];
 
 interface Props {
+  /** A studio entered from the start page: true asks for a label, false for the barcode alone (backlog 7.1 e). */
+  labelRequest?: { label: boolean; at: number } | null;
   /**
    * Until step 2 is answered, a line over the label saying the symbol is the default one and leading to step 2 (backlog
    * 6.3 d, mock-up A of two: B covered the label until then).
@@ -242,7 +244,7 @@ function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; h
   );
 }
 
-export function LabelCard({ byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, onTemplate, templateQuestion, fileError, rows }: Props) {
+export function LabelCard({ labelRequest = null, byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, onTemplate, templateQuestion, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
   const aiList = (() => {
@@ -254,6 +256,11 @@ export function LabelCard({ byDefault, children, generate, printer, settings: s,
   })();
   // A label asked for before its kind is chosen: the cards are shown, the barcode still drawn alone (backlog 6.3 g)
   const [labelAsked, setLabelAsked] = useState(false);
+  // A studio entered from the start page (backlog 7.1 e): the Label Studio shows the kinds of label, the Barcode Studio
+  // the barcode alone
+  useEffect(() => {
+    if (labelRequest) setLabelAsked(labelRequest.label);
+  }, [labelRequest]);
   const isLabel = labelAsked || s.designer || s.logistic !== "none";
   type Kind = { id: string; template?: string; name: string; line: string; why: string | null; chosen: boolean; pick: () => void };
   const logistic: Kind = {

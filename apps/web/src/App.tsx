@@ -128,6 +128,8 @@ import { InstallApp } from "./InstallApp.tsx";
 import { onUpdateReady, updateReady } from "./update.ts";
 import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
+import { useRoute } from "./routes.ts";
+import { ComingStudio, StartPage } from "./StartPage.tsx";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
 // code identifies and where it is scanned on the left (step 2, the guided choice: mock-up B of 29 October 2026), the
@@ -179,6 +181,22 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const [font, setFont] = useState<HriFont | null>(null);
   const [id, setId] = useState<Identification>(START);
   const [settings, setSettings] = useState<LabelSettings>(START_SETTINGS);
+  // The studios' addresses (backlog 7.1 e): the editor stays drawn, hidden, while another studio or the start page is
+  // shown, so that what was typed survives the visit. Coming from the start page, the Label Studio asks for a label and
+  // the Barcode Studio for the barcode only; an address opened directly leaves the editor as it was.
+  const route = useRoute();
+  const inEditor = route.studio === "label" || route.studio === "barcode";
+  const [labelRequest, setLabelRequest] = useState<{ label: boolean; at: number } | null>(null);
+  const lastStudio = useRef(route.studio);
+  useEffect(() => {
+    const from = lastStudio.current;
+    lastStudio.current = route.studio;
+    if (from === route.studio) return;
+    if (route.studio === "barcode") {
+      setSettings((current) => ({ ...current, designer: false, logistic: "none", template: null }));
+      setLabelRequest({ label: false, at: Date.now() });
+    } else if (route.studio === "label" && from === "start") setLabelRequest({ label: true, at: Date.now() });
+  }, [route.studio]);
   const [answers, setAnswers] = useState<Answers>({});
   const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -945,11 +963,13 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   }
 
   return (
-    <div className="app" data-tab={tab}>
+    <div className="app" data-tab={tab} data-studio={route.studio}>
       <header className="top">
         {/* The version under the name (backlog 6.1, mock-up A of two), linking to About, which says more */}
         <span className="brand">
-          <h1>GS1 Label Studio</h1>
+          <h1>
+            <a href="#/" title={t("All studios")}>GS1 Label Studio</a>
+          </h1>
           {__BUILD__.commit && (
             <a className="version mono" href="#about-title" title={t("Version")}>
               {buildDate() ? `${__BUILD__.commit} · ${buildDate()}` : __BUILD__.commit}
@@ -970,10 +990,11 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         <span className="tagline">{t("Everything stays in your browser, and it works offline.")}</span>
         {/* On a phone the language is in "More" and Start over an icon beside the name, leaving the header to the name,
             the mode and the assistant */}
-        {!phone && languageMenu}
+        {(!phone || !inEditor) && languageMenu}
         {!phone && workButtons}
         {!phone && startOver}
       </header>
+      {!inEditor && (route.studio === "start" ? <StartPage /> : <ComingStudio studio={route.studio} />)}
       {update && (
         <div className="update-ready" role="status">
           <span>{t("A new version of GS1 Label Studio is ready.")}</span>
@@ -1226,6 +1247,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           </div>
         </div>
         <LabelCard
+          labelRequest={labelRequest}
           settings={effective}
           onChange={(next) => {
             setSettings(next);

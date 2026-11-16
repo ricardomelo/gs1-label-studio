@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 // 2026). Each test runs in the project it is about.
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/label");
   await expect(page.locator(".preview .symbol svg")).toBeAttached();
 });
 
@@ -174,7 +174,7 @@ test("an iPhone is told to install from Share, Add to Home Screen; the name on t
     userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
   });
   const page = await context.newPage();
-  await page.goto(baseURL!);
+  await page.goto(`${baseURL}#/label`);
   await tabs(page).getByRole("button", { name: "More" }).click();
   await expect(page.locator(".install .hint")).toHaveText("On an iPhone or iPad: tap Share, then Add to Home Screen.");
   await expect(page.locator("meta[name='apple-mobile-web-app-title']")).toHaveAttribute("content", "GS1 Label Studio");

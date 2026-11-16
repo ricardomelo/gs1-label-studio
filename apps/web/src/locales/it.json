@@ -870,5 +870,16 @@
  "Choose a pictogram": "Scegli un pittogramma",
  "Adds the pictogram {name}; the arrow lists them all, by segment": "Aggiunge il pittogramma {name}; la freccia li elenca tutti, per settore",
  "Pictograms by segment: the one chosen is added, and the button adds it again": "Pittogrammi per settore: quello scelto viene aggiunto, e il pulsante lo aggiunge di nuovo",
- "{source}: drawn after the standard's symbol; a printer prints it as an image (not yet in DPL).": "{source}: disegnato secondo il simbolo della norma; una stampante lo stampa come immagine (non ancora in DPL)."
+ "{source}: drawn after the standard's symbol; a printer prints it as an image (not yet in DPL).": "{source}: disegnato secondo il simbolo della norma; una stampante lo stampa come immagine (non ancora in DPL).",
+ "All studios": "Tutti gli studi",
+ "Choose a studio": "Scegli uno studio",
+ "Label Studio": "Studio etichette",
+ "Barcode Studio": "Studio codici a barre",
+ "RFID Studio": "Studio RFID",
+ "Check Studio": "Studio di verifica",
+ "Coming soon": "Prossimamente",
+ "Labels with their barcodes: the GS1 Logistic Label, retail and healthcare templates, or a label of your own, for artwork and label printers.": "Etichette con i loro codici a barre: l’Etichetta Logistica GS1, modelli per la distribuzione e la sanità o un’etichetta tua, per la grafica e le stampanti di etichette.",
+ "One GS1 barcode or a whole list of them, as SVG, PNG, PDF or EPS files, or for a label printer.": "Un codice a barre GS1 o un intero elenco, come file SVG, PNG, PDF o EPS, o per una stampante di etichette.",
+ "The EPC of RFID tags, and NFC tags that carry a GS1 Digital Link URI.": "L’EPC dei tag RFID e i tag NFC che portano un URI GS1 Digital Link.",
+ "Read a barcode or a tag and see whether it follows the GS1 rules: what is wrong, where, and how to put it right.": "Leggi un codice a barre o un tag e scopri se segue le regole GS1: cosa non va, dove e come correggerlo."
 }

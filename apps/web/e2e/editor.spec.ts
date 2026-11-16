@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
   errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
-  await page.goto("/");
+  await page.goto("/#/label");
   await expect(page.locator(".preview .symbol svg")).toBeAttached(); // behind another destination on a phone
 });
 
@@ -2295,7 +2295,7 @@ test("a browser in German, French or Italian opens the studio in its language, a
   ] as const) {
     const context = await browser.newContext({ locale, viewport: { width: 1400, height: 950 } });
     const page = await context.newPage();
-    await page.goto("/");
+    await page.goto("/#/label");
     await expect(page.locator("#identify-title")).toHaveText(title);
     await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
     await page.getByRole("button", { name: fill }).click();
@@ -2312,7 +2312,7 @@ test("a browser in German, French or Italian opens the studio in its language, a
 test("a browser in Portuguese opens the studio in Portuguese", async ({ browser }) => {
   const context = await browser.newContext({ locale: "pt-BR" });
   const page = await context.newPage();
-  await page.goto("/");
+  await page.goto("/#/label");
   await expect(page.locator("#identify-title")).toHaveText("1 O que o código identifica?");
   await context.close();
 });
@@ -2321,7 +2321,7 @@ test("a browser in Portuguese opens the studio in Portuguese", async ({ browser 
 test("a label of one's own in Portuguese: a new text block writes its months in Portuguese", async ({ browser }) => {
   const context = await browser.newContext({ locale: "pt-BR", viewport: { width: 1400, height: 950 } });
   const page = await context.newPage();
-  await page.goto("/");
+  await page.goto("/#/label");
   await page.fill("#paste", "(01)09506000134376(10)B42(17)271231");
   await page.getByRole("button", { name: "Preencher" }).click();
   await page.getByRole("button", { name: "Escolher o símbolo você mesmo" }).click();
@@ -4069,7 +4069,7 @@ test("the assistant opens by itself on a first visit only; the owner's sentence 
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
-  await page.goto("/");
+  await page.goto("/#/label");
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("heading", { name: "What do you want to identify?" })).toBeVisible();
   await dialog.getByLabel("Describe what you need").fill("Preciso adicionar um QR Code com o site da minha marca no produto que vou vender no varejo");

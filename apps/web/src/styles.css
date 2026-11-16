@@ -651,3 +651,22 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
 .tour-actions .link { font-size: 13px; }
 .tour-open { display: inline-flex; align-items: center; gap: 6px; }
 @media (prefers-reduced-motion: reduce) { .tour-ring { transition: none; } }
+
+/* The start page and the studios' addresses (backlog 7.1 e, mock-up A): the editor stays in the page, hidden, while
+   another studio is shown, so that what was typed survives; in the header only the name and the language. */
+.app:not([data-studio="label"]):not([data-studio="barcode"]) > :not(header):not(.start):not(.update-ready) { display: none !important; }
+.app:not([data-studio="label"]):not([data-studio="barcode"]) .top > :not(.brand):not(.lang):not(.tagline) { display: none !important; }
+.brand h1 a { color: inherit; text-decoration: none; }
+.brand h1 a:hover { text-decoration: underline; }
+.start { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+.start > p { color: var(--muted); }
+.studios { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.studio { display: flex; gap: 14px; align-items: flex-start; height: 100%; box-sizing: border-box; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); text-decoration: none; }
+a.studio:hover { border-color: var(--navy); }
+a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offset: 2px; }
+.studio[aria-disabled="true"] { border-style: dashed; opacity: 0.75; }
+.studio-picture { flex: none; width: 44px; height: 44px; fill: none; stroke: var(--navy); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.studio-text { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
+.studio-text b { font-size: 17px; color: var(--navy); }
+.soon { display: inline-block; align-self: flex-start; font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; }
+@media (max-width: 700px) { .studios { grid-template-columns: 1fr; } .start { margin-top: 12px; } }
