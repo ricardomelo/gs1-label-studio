@@ -108,7 +108,7 @@ jobs:
           core: GS1 Barcode Syntax Engine $RELEASE, its dictionary and messages made from its sources
 
           Made by .github/workflows/syntax-engine.yml (scripts/syntax-engine.mjs --update $RELEASE): gs1encoder
-          $CURRENT → $RELEASE, gs1_dictionary.json and engine-messages.json made again from the release's sources,
+          $CURRENT → $RELEASE, gs1_dictionary.json and engine_messages.json made again from the release's sources,
           and the release named in the documents. Not yet reviewed: see the pull request.
           EOF
           git push -u origin "$BRANCH"
@@ -134,6 +134,7 @@ jobs:
             echo
             echo "- [ ] Read the engine's release notes: https://github.com/gs1/gs1-syntax-engine/releases/tag/$RELEASE"
             echo "- [ ] Each message added or changed above, translated in \`apps/web/src/locales/*.messages.json\` (\`apps/web/test/i18n.test.ts\` names them)"
+            echo "- [ ] Each message added, named by a Check Studio fault or listed with its reason in \`packages/core/src/engineFaults.ts\` (\`packages/core/test/engine-map.test.ts\` names them)"
             echo "- [ ] New or changed AIs: their titles in \`packages/core/src/data/data_titles.json\` (the GS1 Logistic Label) and anything the tests above name"
             echo "- [ ] The comparisons with the resolver (pinned at the release it was ported with, ADR 0004): differences explained in the tests, not hidden"
             echo "- [ ] CHANGELOG, \`docs/features.md\`, the inventory (\`node scripts/inventory.mjs\`) and the metrics, as for any change"
