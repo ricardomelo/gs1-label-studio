@@ -7,9 +7,14 @@ import { expect, test, type Page } from "@playwright/test";
 
 const studio = (page: Page) => page.getByRole("main", { name: "Check Studio" });
 const data = (page: Page) => studio(page).getByRole("textbox");
+/** The studio with its text field: on a touch screen it opens on the camera (7.1 g), so Type or paste is chosen. */
+async function openTyped(page: Page) {
+  await page.goto("/#/check");
+  await studio(page).getByRole("button", { name: "Type or paste" }).click();
+}
 
 test("the worked example: the verdict, three cards in order, the positions highlighted, then the expert panels", async ({ page }) => {
-  await page.goto("/#/check");
+  await openTyped(page);
   await studio(page).getByRole("button", { name: "Try an example" }).click();
   const verdict = studio(page).locator(".verdict");
   await expect(verdict).toHaveAttribute("data-verdict", "does-not-follow");
@@ -37,7 +42,7 @@ test("the worked example: the verdict, three cards in order, the positions highl
 });
 
 test("choosing where the code is scanned re-runs the checks on the same data", async ({ page }) => {
-  await page.goto("/#/check");
+  await openTyped(page);
   await data(page).fill("]d201095060001343521727123110ABC123");
   const verdict = studio(page).locator(".verdict");
   await expect(verdict).toHaveAttribute("data-verdict", "follows");
@@ -52,7 +57,7 @@ test("choosing where the code is scanned re-runs the checks on the same data", a
 });
 
 test("Make it right opens the Barcode Studio with the data made right", async ({ page }) => {
-  await page.goto("/#/check");
+  await openTyped(page);
   await data(page).fill("]d2(01)09506000134352(17)271231(10)ABC123");
   const card = studio(page).locator('.finding[data-code="B1"]');
   await card.getByRole("button", { name: "Make it right" }).click();
@@ -65,6 +70,7 @@ test("the result in Portuguese, the engine's English message beside its translat
   await page.addInitScript(() => localStorage.setItem("gs1-label-studio.locale", "pt-BR"));
   await page.goto("/#/check");
   const main = page.getByRole("main", { name: "Estúdio de verificação" });
+  await main.getByRole("button", { name: "Digitar ou colar" }).click();
   await main.getByRole("button", { name: "Experimente um exemplo" }).click();
   await expect(main.locator(".verdict")).toContainText("Não segue as regras GS1");
   await main.getByRole("radio", { name: "Especialista" }).click();

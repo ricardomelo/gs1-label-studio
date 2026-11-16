@@ -1,11 +1,14 @@
 import {
-  bytesToHex, check, fault, formatDate, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult, type Finding,
+  bytesToHex, check, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult, type Finding,
   type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Camera } from "./Camera.tsx";
+import { decodeImage, mayHaveComposite, picturePixels, readingsOf } from "./camera.ts";
 import { SIMPLE_TEXTS } from "./checkTexts.ts";
 import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
+import { Picture, SymbolList, type PictureRead } from "./Picture.tsx";
 import { Segmented } from "./Segmented.tsx";
 import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
 
@@ -14,7 +17,8 @@ import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
 // depths: the simple view opens — the verdict with an icon and a word, what the code says, one card per finding with
 // what, where, why and how to fix, what was not checked — and the expert view, one press away, shows the reading, the
 // bytes, the element strings, the other syntaxes, the findings with their codes and sections, the context and the
-// versions. Both are drawn from the same findings, so they cannot disagree. The camera and pictures come with 7.1 g.
+// versions. Both are drawn from the same findings, so they cannot disagree. A code comes in three ways (7.1 g): the
+// camera, first on a phone (the project's Q3), a picture, or typed and pasted text.
 
 /** The symbols a pasted text can say it came from (the scanner's identifier, ISO/IEC 15424), the GS1 ones first. */
 const SYMBOLS: readonly { id: string; name: string }[] = [
@@ -54,6 +58,15 @@ const PLACES: readonly { value: Place; text: string }[] = [
   { value: "asset", text: en("An asset, document, place or service") },
   { value: "unknown", text: en("I do not know / just check the data") },
 ];
+/** The ways a code comes in (backlog 7.1 g): the camera, a picture, typed or pasted text. Tags come with 7.1 h. */
+type Way = "camera" | "picture" | "type";
+const WAYS: readonly { value: Way; icon: string; text: string }[] = [
+  { value: "camera", icon: "📷", text: en("Camera") },
+  { value: "picture", icon: "🖼", text: en("Picture") },
+  { value: "type", icon: "⌨", text: en("Type or paste") },
+];
+/** On a touch screen the studio opens on the camera (the project's Q3); with a mouse, on the text a scanner types. */
+const prefersCamera = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 type Follow = "a" | "b" | "c";
 const FOLLOW_UPS: Partial<Record<Place, { label: string; options: { value: Follow; text: string }[] }>> = {
   shop: {
@@ -194,15 +207,71 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     if (params.d !== undefined) setData(params.d);
     if (params.s !== undefined && SYMBOLS.some((s) => s.id === params.s)) setSymbol(params.s);
   }, [params.d, params.s]);
+  const [way, setWay] = useState<Way>(() => (params.d !== undefined || !prefersCamera() ? "type" : "camera"));
+  const [camReadings, setCamReadings] = useState<Reading[]>([]);
+  const [picture, setPicture] = useState<PictureRead | null>(null);
+  const [pictureBusy, setPictureBusy] = useState(false);
+  const [pictureFailed, setPictureFailed] = useState(false);
+  const [chosen, setChosen] = useState(0);
+  const [unreadable, setUnreadable] = useState<Reading | null>(null);
+  const pictureInput = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLElement>(null);
+  const pictureUrl = useRef<string | null>(null);
+  useEffect(() => () => { if (pictureUrl.current) URL.revokeObjectURL(pictureUrl.current); }, []);
+  useEffect(() => {
+    if (params.d !== undefined) setWay("type");
+  }, [params.d]);
+
+  const readPicture = async (file: Blob) => {
+    setWay("picture");
+    setPictureBusy(true);
+    setPictureFailed(false);
+    setUnreadable(null);
+    try {
+      const { pixels, url, width, height } = await picturePixels(file);
+      const symbols = await decodeImage(pixels, true);
+      if (pictureUrl.current) URL.revokeObjectURL(pictureUrl.current);
+      pictureUrl.current = url;
+      setPicture({ url, width, height, readings: readingsOf(symbols, "image", { width, height }) });
+      setChosen(0);
+    } catch {
+      setPictureFailed(true);
+    } finally {
+      setPictureBusy(false);
+    }
+  };
+  // A picture pasted anywhere in the studio is read; pasted text goes where the cursor is
+  const readPictureRef = useRef(readPicture);
+  readPictureRef.current = readPicture;
+  useEffect(() => {
+    const paste = (event: ClipboardEvent) => {
+      const file = [...(event.clipboardData?.files ?? [])].find((f) => f.type.startsWith("image/"));
+      if (!file) return;
+      event.preventDefault();
+      void readPictureRef.current(file);
+    };
+    document.addEventListener("paste", paste);
+    return () => document.removeEventListener("paste", paste);
+  }, []);
+  const choose = (next: Way) => {
+    setWay(next);
+    setUnreadable(null);
+    setChosen(0);
+  };
   const [place, setPlace] = useState<Place | null>(null);
   const [follow, setFollow] = useState<Follow>("a");
   const [view, setView] = useState<"simple" | "expert">("simple");
   const lang = locale();
 
-  const reading = useMemo(() => {
+  const typed = useMemo(() => {
     const text = data.trim() === "" ? "" : `${symbol}${data}`;
     return text ? readingFromText(text, { source: "paste" }) : null;
   }, [data, symbol]);
+  const scanned = way === "camera" ? camReadings : way === "picture" ? (picture?.readings ?? []) : [];
+  const reading = way === "type" ? typed : (unreadable ?? scanned[chosen] ?? null);
+  useEffect(() => {
+    if (way === "camera" && camReadings.length) resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [way, camReadings]);
   // Checked once without a place, whose elements say which place an asset's is, then against the place chosen
   const unplaced = useMemo(() => (engine && reading ? check(engine, reading, { environment: null }) : null), [engine, reading]);
   const environment = place === null ? undefined : environmentOf(place, follow, unplaced?.elements.map((e) => e.ai) ?? []);
@@ -212,10 +281,18 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     const context: CheckContext = { environment };
     return check(engine, reading, context);
   }, [engine, reading, unplaced, environment]);
+  // Each symbol of a picture or a frame with its verdict, for the numbered list
+  const verdicts = useMemo<Verdict[]>(
+    () => (engine ? scanned.map((r) => check(engine, r, { environment: environment ?? null }).verdict) : []),
+    [engine, scanned, environment],
+  );
+  /** The user says there is a code the decoder did not read: a reading with nothing in it, which check() calls A9. */
+  const notRead = () =>
+    setUnreadable(readingFromDecoder({ format: "", symbologyIdentifier: "", bytes: new Uint8Array(0) }, { source: way === "camera" ? "camera" : "image" }));
 
-  const input = (
-    <section className="card check-input" aria-labelledby="check-input-title">
-      <h2 id="check-input-title">{t("What the code holds")}</h2>
+  const typeIn = (
+    <div className="check-type">
+      <h3 id="check-type-title">{t("What the code holds")}</h3>
       <label className="field">
         <span>{t("Paste or type it, or scan it with a scanner connected as a keyboard")}</span>
         <textarea
@@ -249,6 +326,68 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         </button>
       </div>
       <p className="hint">{t("A separator can be typed as <GS>, {GS} or \\x1D. Nothing leaves this page.")}</p>
+    </div>
+  );
+
+  const ways = (
+    <div className="ways" role="group" aria-label={t("How to read the code")}>
+      {WAYS.map((w) => (
+        <button key={w.value} type="button" className="btn way" aria-pressed={way === w.value} onClick={() => choose(w.value)}>
+          <span aria-hidden="true">{w.icon}</span> {t(w.text)}
+        </button>
+      ))}
+    </div>
+  );
+
+  const input = (
+    <section className="card check-input" aria-labelledby="check-input-title">
+      <h2 id="check-input-title">{t("Read a code")}</h2>
+      {way === "camera" && (
+        <>
+          <Camera
+            active={camReadings.length === 0}
+            autoStart={false}
+            onRead={(readings) => {
+              setCamReadings(readings);
+              setChosen(0);
+              setUnreadable(null);
+            }}
+            onPicture={() => {
+              choose("picture");
+              setTimeout(() => pictureInput.current?.click());
+            }}
+          />
+          {camReadings.length > 0 && (
+            <div className="check-row">
+              <SymbolList readings={camReadings} chosen={chosen} verdicts={verdicts} onChoose={setChosen} />
+              <button type="button" className="btn primary" onClick={() => { setCamReadings([]); setChosen(0); setUnreadable(null); }}>
+                {t("Scan another")}
+              </button>
+            </div>
+          )}
+          {camReadings.length === 0 && (
+            <p className="hint">
+              {t("A GS1 DotCode and the 2D part of a Composite symbol are not read here.")}{" "}
+              <button type="button" className="link" onClick={notRead}>{t("There is a code here that is not read")}</button>
+            </p>
+          )}
+        </>
+      )}
+      {way === "picture" && (
+        <Picture
+          picture={picture}
+          busy={pictureBusy}
+          failed={pictureFailed}
+          chosen={chosen}
+          verdicts={verdicts}
+          inputRef={pictureInput}
+          onFile={(file) => void readPicture(file)}
+          onChoose={(i) => { setChosen(i); setUnreadable(null); }}
+          onUnreadable={notRead}
+        />
+      )}
+      {way === "type" && typeIn}
+      {ways}
       <div className="check-place" role="group" aria-labelledby="check-place-title">
         <h3 id="check-place-title">{t("Where is it scanned?")}</h3>
         <div className="chips">
@@ -347,13 +486,14 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     </section>
   );
 
-  const unchecked = notAssessed.length > 0 && (
+  const unchecked = (notAssessed.length > 0 || mayHaveComposite(reading)) && (
     <section aria-labelledby="check-unchecked">
       <h3 id="check-unchecked">{t("What was not checked")}</h3>
       <ul className="unchecked">
         {[...new Set(notAssessed)].map((code) => (
           <li key={code}>{NOT_CHECKED[code] ? t(NOT_CHECKED[code]!) : SIMPLE_TEXTS[code] ? t(SIMPLE_TEXTS[code]!.what) : code}</li>
         ))}
+        {mayHaveComposite(reading) && <li>{t("A 2D part printed with this barcode (a Composite Component): no decoder here reads it.")}</li>}
         <li>{t("Print quality: a phone or a page cannot grade it; that needs a barcode verifier.")}</li>
       </ul>
     </section>
@@ -371,7 +511,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   return (
     <main className="check" lang={lang} aria-label={t("Check Studio")}>
       {input}
-      <section className="card check-result" aria-labelledby="check-result-title">
+      <section ref={resultRef} className="card check-result" aria-labelledby="check-result-title">
         <h2 id="check-result-title">{t("The result")}</h2>
         <Segmented
           id="check-view"
