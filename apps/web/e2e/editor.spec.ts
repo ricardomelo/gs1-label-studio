@@ -2787,7 +2787,8 @@ test("a person's sex typed as a word, in one code and in bulk, written as ISO/IE
 /** The work this browser keeps for the next visit (backlog 4.3 (c)), read from IndexedDB; null when nothing is kept. */
 async function keptWorkText(page: Page): Promise<string | null> {
   return page.evaluate(() => new Promise<string | null>((resolve) => {
-    const request = indexedDB.open("gs1-label-studio", 1);
+    // The database's current version (2 since the Check Studio's history, backlog 7.1 j), whatever it is
+    const request = indexedDB.open("gs1-label-studio");
     request.onupgradeneeded = () => request.result.createObjectStore("kept");
     request.onsuccess = () => {
       const get = request.result.transaction("kept", "readonly").objectStore("kept").get("work");
