@@ -7259,6 +7259,42 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "history",
+   "file": "apps/web/test/history.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "what is kept of a reading › the reading with its bytes, the verdict, the codes, the counts, the key and every value",
+     "status": "passed"
+    },
+    {
+     "name": "what is kept of a reading › an item with no barcode, for a survey's count",
+     "status": "passed"
+    },
+    {
+     "name": "what is kept of a reading › marks a serial number or a person's number",
+     "status": "passed"
+    },
+    {
+     "name": "the list › is newest first, filtered by verdict, session and fault, searched by any value",
+     "status": "passed"
+    },
+    {
+     "name": "the list › offers the oldest past the limit for deletion",
+     "status": "passed"
+    },
+    {
+     "name": "the re-check › marks a verdict the current release changes, and only then",
+     "status": "passed"
+    },
+    {
+     "name": "the same code shown again › is not kept twice in a row, unless checked against another place",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "hriFormat",
    "file": "packages/core/test/hriFormat.test.ts",
    "kind": "unit",
@@ -10744,6 +10780,59 @@
     },
     {
      "name": "a picture pasted or dropped on the studio is read",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-history",
+   "file": "apps/web/e2e/check-history.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "a code checked is kept, survives a reload, and opens its result again",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "version 1 of the database is upgraded keeping what it held; Delete all leaves nothing",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a reading kept under an older release is marked when its verdict changes",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a browser that keeps nothing still checks, says so and lists the visit's codes",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "History off keeps nothing; an item with no barcode is counted",
      "status": "listed",
      "projects": [
       "desktop",

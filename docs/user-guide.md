@@ -143,6 +143,18 @@ another studio.
 
 ![The codes of one item: a GS1 DataMatrix, its EAN-13 and an RFID tag, the serial numbers marked where they differ](images/guide/check-group.png)
 
+11. **History**, at the end of the studio, lists the codes you checked, newest first, kept on this device only and
+    without pictures (a code typed or pasted is kept once you stop typing for two seconds; the same code shown again
+    is kept once). Search a GTIN or any value, or filter by verdict or session; press a reading to see its result
+    again, checked under the current release: a reading whose verdict that changes says so. Before a run of readings
+    (a ward, a supplier, a day), name a session and press **Start a session**; **End the session** stops adding to it.
+    **This item has no barcode** counts an item without one, for a survey. Readings that carry a serial number or a
+    person's number are marked. **History off** stops keeping codes, and **Delete all** removes every reading and
+    session. In a private window, or where the browser keeps nothing, the history lasts only for the visit and the
+    studio says so.
+
+![The history: a session named, four readings, one with no barcode, one marked as carrying a serial number](images/guide/check-history.png)
+
 In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
 with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.
 

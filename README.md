@@ -891,7 +891,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   *Add another code from this item* after any result (the next code read joins, a typed one on a press), every symbol
   of a picture as one item, a code unticked or removed and the group checked again, the kind of group guessed until
   the user names it, the matrix with the cells that differ marked, a card per group fault, and the question whether two
-  GTINs that differ in the indicator are a box and the product inside*
+  GTINs that differ in the indicator are a box and the product inside; 7.1 j done the same day: the history on the
+  device (IndexedDB version 2, the GCP table kept by the upgrade), every code checked kept with its bytes and checked
+  again under the current release, a changed verdict marked, newest first with search and filters, named sessions, an
+  item with no barcode counted, serial and personal numbers marked, History off and Delete all, a browser that keeps
+  nothing said so; the About page says what is stored*
 
 
 ## Licence

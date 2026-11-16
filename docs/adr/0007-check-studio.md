@@ -133,6 +133,19 @@ to put it right.
    fixed and the rest scrolling sideways, cut a GTIN in two on a phone 412 pixels wide). J1 between GTINs that differ
    only in the indicator asks the project's question; *Yes* says they are different items and offers to check them one
    at a time.
+16. **The history is kept on the device, with the bytes, and checked again under the current release** (7.1 j, the
+   project's Q7 and Q9 under the owner's rule). The application's IndexedDB database goes to version 2, adding the
+   stores `readings` and `sessions`; the upgrade leaves version 1's store, and the GCP table in it, as it was (one
+   `openDatabase()` in `keep.ts` for both). Each entry keeps the reading itself (bytes, identifier, source), the
+   context, the verdict, the fault codes, the key and the values, and the engine and dictionary releases; no picture.
+   A code is kept when it is read; typed text once it has rested for two seconds, so that each keystroke does not
+   make an entry; the same code shown again in a row is kept once, and switching History on, starting a session or
+   deleting everything keeps nothing by itself. The list checks the newest 200 again under the current release and
+   marks an entry whose verdict that changes. Readings carrying (21), (235), (250), (8017) or (8018) are marked, for
+   the export's question (7.1 k). History off is remembered by the browser; Delete all clears both stores. Where the
+   browser keeps nothing the studio still checks, lists the visit's readings and says so. The list sits at the end of
+   the studio (mock-up A of two; B, above *Read a code*, pushed the camera off a phone's screen). Groups are not kept
+   yet: the group a reading belonged to comes with the reports (7.1 k).
 
 ## 3. Consequences
 

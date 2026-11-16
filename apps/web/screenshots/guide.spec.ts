@@ -71,9 +71,9 @@ test("the Check Studio: the codes of one item, the matrix and a group fault", as
   await page.goto("/#/check");
   const studio = page.getByRole("main", { name: "Check Studio" });
   await studio.getByRole("button", { name: "Type or paste", exact: true }).click();
-  await studio.getByRole("textbox").fill("]d201095060001343521727123110ABC123\u001d2100417");
+  await studio.getByRole("textbox", { name: /Paste or type it/ }).fill("]d201095060001343521727123110ABC123\u001d2100417");
   await studio.getByRole("button", { name: "Add another code from this item" }).click();
-  await studio.getByRole("textbox").fill("]E09506000134352");
+  await studio.getByRole("textbox", { name: /Paste or type it/ }).fill("]E09506000134352");
   await studio.getByRole("button", { name: "Add this code to the item" }).click();
   await studio.locator(".check-group").getByRole("button", { name: "Add another code from this item" }).click();
   await studio.getByRole("button", { name: "Tag", exact: true }).click();
@@ -81,6 +81,27 @@ test("the Check Studio: the codes of one item, the matrix and a group fault", as
   await studio.getByRole("button", { name: "Add this code to the item" }).click();
   await expect(studio.locator('.check-group .finding[data-code="J7"]')).toBeVisible();
   await shot(studio.locator(".check-group"), "check-group");
+});
+
+test("the Check Studio: the history, a session and four readings", async ({ page }) => {
+  await page.goto("/#/check");
+  const studio = page.getByRole("main", { name: "Check Studio" });
+  await studio.getByRole("button", { name: "Type or paste", exact: true }).click();
+  const history = studio.locator(".check-history");
+  await history.getByLabel(/Name a session/).fill("Ward 3, 16 November");
+  await history.getByRole("button", { name: "Start a session" }).click();
+  for (const [i, code] of ["]d2010950600013435210ABC123", "]d20109506000134352172713311", "]d20109506000134352211234"].entries()) {
+    const field = studio.getByRole("textbox", { name: /Paste or type it/ });
+    await field.fill("");
+    await field.focus();
+    await page.keyboard.type(code, { delay: 5 });
+    await page.keyboard.press("Enter");
+    await expect(history.locator(".history-list li")).toHaveCount(i + 1);
+  }
+  await history.getByRole("button", { name: "This item has no barcode" }).click();
+  await expect(history.locator(".history-list li")).toHaveCount(4);
+  await page.evaluate(() => document.querySelectorAll(".history-when").forEach((e) => (e.textContent = "16/11/2026, 10:30")));
+  await shot(history, "check-history");
 });
 
 test("the editor at a glance", async ({ page }) => {
