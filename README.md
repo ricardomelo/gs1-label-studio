@@ -872,7 +872,7 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   start page offering the studios (mock-up A of two, cards; the RFID and Check Studios marked coming soon until their
   screens exist) and hash routes, `#/label` today's editor unchanged, `#/barcode` the same editor with the barcode
   alone, `#/rfid` and `#/check` reserved; the editor kept drawn behind another studio so that what was typed
-  survives; the installed application's shortcuts; 7.1 f under way on 16 November: the result screen at `#/check` (mock-up A of two: a Simple / Expert switch),
+  survives; the installed application's shortcuts; 7.1 f done on 16 November: the result screen at `#/check` (mock-up A of two: a Simple / Expert switch),
   what a code holds pasted or typed, the symbol it came from and where it is scanned; the simple view (the verdict with
   an icon and a word, what the code says, a card per fault with what, where, why and how to fix, *Make it right*, what
   was not checked) and the expert view (the reading, the bytes with copy buttons, the element strings, the other
