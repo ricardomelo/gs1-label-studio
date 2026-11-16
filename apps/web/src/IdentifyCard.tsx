@@ -43,6 +43,8 @@ interface Props {
    * until it is replaced.
    */
   examples?: ReadonlyMap<string, string>;
+  /** The Check Studio's address with this data (backlog 7.1 f), once the data is checked. */
+  checkHref?: string;
 }
 
 /** The line under a field that still holds the assistant's example. */
@@ -81,7 +83,7 @@ function Markup({ text }: { text: string }) {
   );
 }
 
-export function IdentifyCard({ id, onChange, onPaste, status, examples }: Props) {
+export function IdentifyCard({ id, onChange, onPaste, status, examples, checkHref }: Props) {
   const [pasted, setPasted] = useState("");
   const [pasteError, setPasteError] = useState<string | null>(null);
   // The rows of qualifiers and attributes, in the order shown, with their AI fields as typed, so that a half-typed AI
@@ -382,6 +384,11 @@ export function IdentifyCard({ id, onChange, onPaste, status, examples }: Props)
           />
         ) : null}
       </div>
+      {checkHref && !status.error && (
+        <p className="hint">
+          <a href={checkHref}>{t("Check this in the Check Studio")}</a>
+        </p>
+      )}
     </section>
   );
 }

@@ -10,10 +10,11 @@ test("the root offers the studios, each named, the ones to come not links; one t
   await page.goto("/");
   const start = studios(page);
   await expect(start.getByRole("listitem")).toHaveCount(4);
-  await expect(start.getByRole("link")).toHaveCount(2);
+  await expect(start.getByRole("link")).toHaveCount(3);
   await expect(start.getByRole("link", { name: /^Label Studio/ })).toHaveAttribute("href", "#/label");
   await expect(start.getByRole("link", { name: /^Barcode Studio/ })).toHaveAttribute("href", "#/barcode");
-  for (const name of ["RFID Studio", "Check Studio"]) {
+  await expect(start.getByRole("link", { name: /^Check Studio/ })).toHaveAttribute("href", "#/check");
+  for (const name of ["RFID Studio"]) {
     const card = start.getByRole("listitem").filter({ hasText: name });
     await expect(card.getByRole("link")).toHaveCount(0);
     await expect(card).toContainText("Coming soon");
@@ -58,8 +59,8 @@ test("back and forward move between studios, and what was typed survives the vis
 });
 
 test("a studio still to come says so at its own address, with the way back", async ({ page }) => {
-  await page.goto("/#/check?r=abc");
-  const main = page.getByRole("main", { name: "Check Studio" });
+  await page.goto("/#/rfid?r=abc");
+  const main = page.getByRole("main", { name: "RFID Studio" });
   await expect(main).toContainText("Coming soon");
   await main.getByRole("link", { name: "All studios" }).click();
   await expect(studios(page)).toBeVisible();
@@ -70,5 +71,6 @@ test("the installed application offers each studio as a shortcut", async ({ page
   expect(manifest.shortcuts.map((s: { name: string; url: string }) => [s.name, s.url])).toEqual([
     ["Label Studio", "./#/label"],
     ["Barcode Studio", "./#/barcode"],
+    ["Check Studio", "./#/check"],
   ]);
 });

@@ -128,7 +128,8 @@ import { InstallApp } from "./InstallApp.tsx";
 import { onUpdateReady, updateReady } from "./update.ts";
 import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
-import { useRoute } from "./routes.ts";
+import { routeHash, useRoute } from "./routes.ts";
+import { checkAddress, CheckStudio } from "./CheckStudio.tsx";
 import { ComingStudio, StartPage } from "./StartPage.tsx";
 
 // One code: the resolver's editor without its records (ADR 0004, mock-ups approved on 28 October 2026) — what the
@@ -994,7 +995,23 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
         {!phone && workButtons}
         {!phone && startOver}
       </header>
-      {!inEditor && (route.studio === "start" ? <StartPage /> : <ComingStudio studio={route.studio} />)}
+      {!inEditor &&
+        (route.studio === "start" ? (
+          <StartPage />
+        ) : route.studio === "check" ? (
+          <CheckStudio
+            engine={engine}
+            params={route.params}
+            onMakeRight={(elementString) => {
+              if (!engine) return;
+              setId(fieldsOf(engine.parse(elementString)));
+              setOpened((n) => n + 1);
+              window.location.hash = routeHash({ studio: "barcode" });
+            }}
+          />
+        ) : (
+          <ComingStudio studio={route.studio} />
+        ))}
       {update && (
         <div className="update-ready" role="status">
           <span>{t("A new version of GS1 Label Studio is ready.")}</span>
@@ -1216,6 +1233,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               }
             }}
             status={{ error: checked.error, markup: checked.markup, count: checked.identified?.elements.length }}
+            {...(checked.identified?.dataStr ? { checkHref: checkAddress(checked.identified.dataStr) } : {})}
           />
           </>
           )}

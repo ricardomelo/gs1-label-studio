@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 export const STUDIOS = ["label", "barcode", "rfid", "check"] as const;
 export type Studio = (typeof STUDIOS)[number];
 /** The studios the application has today; the others are offered as coming soon. */
-export const READY: ReadonlySet<Studio> = new Set(["label", "barcode"]);
+export const READY: ReadonlySet<Studio> = new Set(["label", "barcode", "check"]);
 
 export interface Route {
   /** "start" for the start page. */

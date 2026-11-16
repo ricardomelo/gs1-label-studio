@@ -40,6 +40,18 @@ test("the start page: the studios", async ({ page }) => {
   await shot(page, "start");
 });
 
+test("the Check Studio: the worked example's result, simple and expert", async ({ page }) => {
+  await page.goto("/#/check");
+  const studio = page.getByRole("main", { name: "Check Studio" });
+  await studio.getByRole("button", { name: "Try an example" }).click();
+  await studio.getByRole("button", { name: "A product sold in a shop" }).click();
+  await expect(studio.locator(".finding")).not.toHaveCount(0);
+  await page.screenshot({ path: out("check"), fullPage: true, animations: "disabled" });
+  await studio.getByRole("radio", { name: "Expert" }).click();
+  await studio.locator(".expert").scrollIntoViewIfNeeded();
+  await shot(studio.locator(".check-result"), "check-expert");
+});
+
 test("the editor at a glance", async ({ page }) => {
   await shot(page, "editor");
 });

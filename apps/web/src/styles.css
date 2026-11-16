@@ -654,7 +654,7 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
 
 /* The start page and the studios' addresses (backlog 7.1 e, mock-up A): the editor stays in the page, hidden, while
    another studio is shown, so that what was typed survives; in the header only the name and the language. */
-.app:not([data-studio="label"]):not([data-studio="barcode"]) > :not(header):not(.start):not(.update-ready) { display: none !important; }
+.app:not([data-studio="label"]):not([data-studio="barcode"]) > :not(header):not(.start):not(.check):not(.update-ready) { display: none !important; }
 .app:not([data-studio="label"]):not([data-studio="barcode"]) .top > :not(.brand):not(.lang):not(.tagline) { display: none !important; }
 .brand h1 a { color: inherit; text-decoration: none; }
 .brand h1 a:hover { text-decoration: underline; }
@@ -670,3 +670,58 @@ a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offse
 .studio-text b { font-size: 17px; color: var(--navy); }
 .soon { display: inline-block; align-self: flex-start; font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; }
 @media (max-width: 700px) { .studios { grid-template-columns: 1fr; } .start { margin-top: 12px; } }
+/* The Check Studio's result (backlog 7.1 f): the input, then the verdict, what the code says, a card per finding */
+.check { max-width: 960px; margin: 20px auto; padding: 0 16px; display: grid; gap: 16px; }
+.check .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.check textarea, .check select { font: inherit; font-size: 15px; color: var(--ink); background: var(--field); border: 1px solid var(--field-line); border-radius: 6px; padding: 8px; }
+.check textarea { font-family: ui-monospace, Menlo, Consolas, monospace; width: 100%; resize: vertical; }
+.check-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px; }
+.check .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.check .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.check .chip { border: 1px solid var(--field-line); background: var(--card); color: var(--ink); border-radius: 16px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.check .chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--card); }
+.verdict { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 8px; border: 2px solid; margin: 12px 0; }
+.verdict > span:last-child { display: flex; flex-direction: column; gap: 2px; color: var(--ink); }
+.verdict b { font-size: 17px; }
+.verdict { --v: var(--muted); border-color: var(--v); }
+.verdict-icon { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 18px; color: var(--card); background: var(--v); }
+.verdict[data-verdict="follows"] { --v: var(--ok); }
+.verdict[data-verdict="remarks"] { --v: #9a6700; }
+.verdict[data-verdict="does-not-follow"] { --v: var(--error); }
+.says { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+.says > div { display: contents; }
+.says dt { color: var(--muted); }
+.says dd { margin: 0; overflow-wrap: anywhere; }
+.findings { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.finding { border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px; padding: 10px 14px; }
+.finding p { margin: 4px 0; }
+.finding[data-severity="error"] { border-left-color: var(--error); }
+.finding[data-severity="warning"] { border-left-color: #9a6700; }
+.finding-what { font-weight: 600; }
+.finding .severity { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); margin-right: 4px; }
+.finding[data-severity="error"] .severity { color: var(--error); }
+.finding[data-severity="warning"] .severity { color: #9a6700; }
+.finding .small, .expert .small { font-size: 13px; }
+.marked { font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; background: var(--soft); border-radius: 4px; padding: 1px 4px; }
+.marked .sid { color: var(--muted); margin-right: 2px; }
+.marked mark { background: #ffd8a8; color: #1a1a1a; border-radius: 2px; }
+.unchecked { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+.expert section { margin-top: 12px; }
+.pairs { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; font-size: 14px; }
+.pairs dt { color: var(--muted); }
+.pairs dd { margin: 0; overflow-wrap: anywhere; }
+.bytes { font-size: 13px; overflow-x: auto; background: var(--soft); border-radius: 6px; padding: 8px; }
+.bytes-line { display: flex; gap: 14px; white-space: pre; }
+.bytes-at { color: var(--muted); }
+.bytes-hex { display: inline-flex; gap: 5px; }
+.bytes .hit { background: #ffd8a8; color: #1a1a1a; }
+.expert .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.ex-table { border-collapse: collapse; font-size: 14px; width: 100%; }
+.ex-table th, .ex-table td { text-align: left; border-bottom: 1px solid var(--line); padding: 4px 8px 4px 0; overflow-wrap: anywhere; }
+.ex-findings { padding-left: 20px; }
+.ex-findings li p { margin: 2px 0; }
+@media (max-width: 700px) {
+  .says { grid-template-columns: 1fr; gap: 0; }
+  .says dd { margin-bottom: 6px; }
+  .check { padding: 0 8px; }
+}
