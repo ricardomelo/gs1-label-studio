@@ -368,3 +368,8 @@ export {
 export { leafOfEnvironment, rowsFor } from "./guide.ts";
 export { ENGINE_LINTER_FAULTS, ENGINE_MESSAGE_FAULTS, ENGINE_UNMAPPED, engineMessageId, faultOfEngineMessage } from "./engineFaults.ts";
 export { expectedCheckDigit, reorderedDate } from "./checkValues.ts";
+export {
+  FINDINGS_COLUMNS, findingsCsv, KEY_AIS, keyOf, parseReadingsJson, READINGS_COLUMNS, READINGS_FORMAT, READINGS_VERSION, readingsCsv, readingsJson,
+  RECORD_VERDICTS, recordVerdict, surveyCounts, symbologyName, type CheckedRecord, type ReadingRecord, type RecordVerdict, type SurveyCounts,
+} from "./readings.ts";
+export { REPORT_PAGE, reportPages, reportPdf, textWidth, winAnsiCode, wrapText, type ReportBlock, type ReportDocument } from "./checkReport.ts";

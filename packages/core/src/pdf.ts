@@ -124,6 +124,8 @@ export interface PdfPage {
   height: number;
   /** The label's place on a page with crop marks, in points from the bottom left: x, y, width, height (its TrimBox). */
   trim?: readonly [number, number, number, number];
+  /** The page's resources, inside its Resources dictionary: a report's fonts (checkReport.ts); a label has none. */
+  resources?: string;
 }
 
 /**
@@ -145,7 +147,7 @@ export async function pdfDocument(pages: readonly PdfPage[], title: string): Pro
       : "";
     const boxes = box ? ` /TrimBox ${box} /BleedBox ${box}` : "";
     objects.push(
-      [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(page.width, 3)} ${pyFixed(page.height, 3)}]${boxes} /Contents ${4 + 2 * i} 0 R /Resources << >> >>`)],
+      [ascii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pyFixed(page.width, 3)} ${pyFixed(page.height, 3)}]${boxes} /Contents ${4 + 2 * i} 0 R /Resources ${page.resources ? `<< ${page.resources} >>` : "<< >>"} >>`)],
       [ascii(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, ascii("\nendstream")],
     );
   }
