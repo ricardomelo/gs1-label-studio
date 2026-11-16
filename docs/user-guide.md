@@ -155,6 +155,18 @@ another studio.
 
 ![The history: a session named, four readings, one with no barcode, one marked as carrying a serial number](images/guide/check-history.png)
 
+12. **Reports and files.** Under a result, **Report (PDF)** saves the result as a document to print or send: the
+    verdict, what the code says, each fault with where, why and how to fix it, what was not checked, then the details
+    for experts (the bytes, the element string, every fault's sections). With a group, **Item report (PDF)** saves the
+    table of what each code says, the differences in bold, and the group's faults. In **History**, the row under the
+    filters exports what the list shows (filter first to export a session or one verdict): **Session report (PDF)**
+    counts the readings by verdict, by kind (a code with GS1 data, one without, no barcode), by symbology, the ten most
+    frequent faults and by company prefix, then lists every reading; **Readings (CSV)** and **Findings (CSV)** open in a
+    spreadsheet (tick **CSV with semicolons** where your spreadsheet expects them); **All the data (JSON)** keeps
+    everything, and **Open a readings file** brings it back on this or another device. When the readings carry a serial
+    number or a person's number, the studio asks once before it exports them. The reports are in the language of the
+    page; the files' columns stay in English.
+
 In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
 with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.
 

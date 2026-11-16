@@ -146,6 +146,28 @@ to put it right.
    browser keeps nothing the studio still checks, lists the visit's readings and says so. The list sits at the end of
    the studio (mock-up A of two; B, above *Read a code*, pushed the camera off a phone's screen). Groups are not kept
    yet: the group a reading belonged to comes with the reports (7.1 k).
+17. **Reports are PDFs the core writes with the standard fonts; files are of what the history lists** (7.1 k, the
+   project's sections 7.2 and 7.3, Q5, Q6 and Q9 as recommended). `checkReport.ts` lays out blocks the web builds
+   (title, heading, paragraph, label and value lines, tables, page breaks) on A4 pages with Helvetica, Helvetica-Bold
+   and Courier in WinAnsi encoding, which hold the six languages without a font embedded: the text can be selected and
+   searched; lines wrap by Adobe's widths, a table breaks between rows with its head repeated, and every page carries
+   the releases that gave the verdicts and its number. `pdf.ts` gains a page's resources (a label still has none, so
+   its bytes are unchanged). The words are the screen's (`checkWords.ts` now holds the verdicts, severities and what was
+   not checked for both), in the interface's language; codes, sections, element strings and bytes stay as they are.
+   Three reports: one reading (the simple view, the print quality sentence, then an expert annex: identifier, bytes,
+   element string, every finding with its sections and the engine's message), one item (the matrix of section 5.3, the
+   differing cells in bold, the group's faults, each code) and a session (counts by verdict; GS1, non-GS1 and no
+   barcode; by symbology; the ten most frequent faults; by company prefix with GS1's table, else by GS1 prefix; then a
+   line per reading). `readings.ts` writes readings.json (`gs1-label-studio.readings`, version 1, the bytes in
+   hexadecimal, every field checked when opened), readings.csv with the project's 22 columns and findings.csv, in
+   English, with a byte order mark and a semicolon variant. The history's exports take the readings the list shows,
+   so the report counts what the filters count; every reading is checked again under the current release, as opening
+   it does (a verdict the release changed is already marked in the list). An export of readings that carry a serial
+   or a person's number asks once a visit. A readings file opened adds its readings, their sessions and items, to the
+   history. The history keeps the item a code was read with (`group`, named by when the group started), and the
+   item's report is made from the group on screen. The buttons sit in a row under the history's filters, visible
+   (mock-up A of two; B, one *Export* button with a menu, hid what can be exported), and a *Report (PDF)* button closes
+   the result and the group.
 
 ## 3. Consequences
 

@@ -895,7 +895,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   device (IndexedDB version 2, the GCP table kept by the upgrade), every code checked kept with its bytes and checked
   again under the current release, a changed verdict marked, newest first with search and filters, named sessions, an
   item with no barcode counted, serial and personal numbers marked, History off and Delete all, a browser that keeps
-  nothing said so; the About page says what is stored*
+  nothing said so; the About page says what is stored; 7.1 k done the same day: reports as PDFs the core writes with
+  the standard fonts, in the page's language (one reading in two pages at most, an item with its matrix, a session
+  counted by verdict, kind, symbology, fault and company prefix), and readings.csv, findings.csv and readings.json of
+  what the history lists, the JSON opened again on any device, an export with personal data asking once (mock-up A of
+  two: the buttons in a row under the history's filters)*
 
 
 ## Licence

@@ -1591,6 +1591,38 @@
    "area": "Input and identification: the Syntax Engine, keys, qualifiers, attributes"
   },
   {
+   "program": "checkReport",
+   "file": "packages/core/test/checkReport.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a report as PDF › has its text selectable and searchable, accents intact in each of the six languages",
+     "status": "passed"
+    },
+    {
+     "name": "a report as PDF › breaks a long table between rows, its head on every page, and numbers the pages",
+     "status": "passed"
+    },
+    {
+     "name": "a report as PDF › starts a new page where it is asked to",
+     "status": "passed"
+    },
+    {
+     "name": "the lines › are cut at spaces within the width, and inside a word only when the word alone is wider",
+     "status": "passed"
+    },
+    {
+     "name": "the lines › measure Helvetica by Adobe's widths, and Courier at 600",
+     "status": "passed"
+    },
+    {
+     "name": "the lines › encode WinAnsi: Latin-1, the Windows-1252 punctuation, and ? for the rest",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "design",
    "file": "packages/core/test/design.test.ts",
    "kind": "unit",
@@ -9207,6 +9239,58 @@
    "area": "The Check Studio: a code read to be checked"
   },
   {
+   "program": "readings",
+   "file": "packages/core/test/readings.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "readings.json › opened again gives identical readings and, checked again, identical findings",
+     "status": "passed"
+    },
+    {
+     "name": "readings.json › keeps the bytes as hexadecimal, so a group separator survives",
+     "status": "passed"
+    },
+    {
+     "name": "readings.json › refuses what is not a readings file this release reads",
+     "status": "passed"
+    },
+    {
+     "name": "readings.csv and findings.csv › one row per reading, with the project's columns, a byte order mark and accents intact",
+     "status": "passed"
+    },
+    {
+     "name": "readings.csv and findings.csv › a semicolon variant, quoting only what holds a semicolon",
+     "status": "passed"
+    },
+    {
+     "name": "readings.csv and findings.csv › findings.csv: one row per finding, numbered as its reading's row",
+     "status": "passed"
+    },
+    {
+     "name": "a session's counts › equal what filtering by verdict counts, and GS1, non-GS1 and no barcode add up",
+     "status": "passed"
+    },
+    {
+     "name": "a session's counts › keeps the ten most frequent faults, the most first",
+     "status": "passed"
+    },
+    {
+     "name": "a session's counts › lists ten faults at most, when more are found",
+     "status": "passed"
+    },
+    {
+     "name": "a session's counts › counts by company prefix with a GCP table, by GS1 prefix without",
+     "status": "passed"
+    },
+    {
+     "name": "a session's counts › names the symbologies as a person knows them",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "render",
    "file": "packages/core/test/render.test.ts",
    "kind": "unit",
@@ -9345,6 +9429,26 @@
     }
    ],
    "area": "In bulk: rows, the report, sequences, generation"
+  },
+  {
+   "program": "reports",
+   "file": "apps/web/test/reports.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the report of one reading › has the verdict, what the code says, each fault with what, where, why and fix, the print quality sentence and the expert annex, in two pages",
+     "status": "passed"
+    },
+    {
+     "name": "the report of an item › has the matrix with the differing cells in bold, the group's faults and each code",
+     "status": "passed"
+    },
+    {
+     "name": "the report of a session › counts what is listed: by verdict, GS1, non-GS1 and no barcode, then one line per reading",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
   },
   {
    "program": "resize",
@@ -10868,6 +10972,50 @@
     },
     {
      "name": "two GTINs that differ in the indicator only ask whether one is the box's code, and a scanner's code joins by itself",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-report",
+   "file": "apps/web/e2e/check-report.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "one reading's report: its verdict, faults and print quality sentence, in two pages at most",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the history exports what is listed: readings.csv has one row per listed reading; the session report counts the same",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "readings.json opened again gives the same readings; an export with a serial number asks once",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "an item's report: the matrix of the codes compared",
      "status": "listed",
      "projects": [
       "desktop",
