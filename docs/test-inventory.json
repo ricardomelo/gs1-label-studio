@@ -1,5 +1,5 @@
 {
- "date": "2026-11-15",
+ "date": "2026-11-16",
  "skipped": 0,
  "programs": [
   {
@@ -1318,6 +1318,106 @@
     {
      "name": "faultOfEngineMessage() › No GS1 DL keys found in path info → G1",
      "status": "passed"
+    },
+    {
+     "name": "group C: the key › C1: the check digit that would be right",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C3: indicator 9 without its measure; with (3103) it is a variable measure trade item",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C4: indicator 1 to 8 only matters at a retail point of sale",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C5: a GTIN-13 under AI (01), not padded",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C6: restricted circulation, coupons, books and serials; a Warning outside retail",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C7: the prefix for examples, in a GTIN and in an SSCC",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C8: a company prefix the user's GCP table does not hold; not assessed without a table",
+     "status": "passed"
+    },
+    {
+     "name": "group C: the key › C9: attributes with no key, the companions named with their titles",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D1 and D4: an impossible date that reads right as DDMMYY, re-ordered",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D2 and D3: day 00, the last day of the month; an Error in regulated healthcare",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D5: expiry before production, expired, made in the future, too far away, the century by the rule of 7.12",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D6: a batch too long; D7: a serial likely to be mis-keyed",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D8: a measure of zero, its value with the decimal point and unit",
+     "status": "passed"
+    },
+    {
+     "name": "group D: dates and other values › D9: a typed field's own rule (a country code)",
+     "status": "passed"
+    },
+    {
+     "name": "group E: combinations › E1 and E2 name both AIs with their data titles",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G1: a web address with no key is not a GS1 code",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G2: qualifiers out of order, the URI re-ordered",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G3: an attribute in the path, moved to the query; a qualifier in the query",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G4 and G5: an unknown AI in the query; an AI a URI cannot carry",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G6: a percent sign that starts no %hh, and a slash left raw in a batch",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G7: valid but not canonical, with the canonical URI",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G8: plain http is a Warning, another scheme an Error",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G9: short names in the path, which the engine refuses, given their AIs",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G10: a compressed URI",
+     "status": "passed"
+    },
+    {
+     "name": "group G: GS1 Digital Link URIs › G11: the key's and the values' rules inside the URI",
+     "status": "passed"
     }
    ],
    "area": "The Check Studio: a code read to be checked"
@@ -1537,6 +1637,42 @@
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
+   "program": "engine-map",
+   "file": "packages/core/test/engine-map.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the engine's messages and the faults they stand for › are the messages of the engine release in use",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › place every message in one list, and no message in two",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › place every linter in one list, and no linter in two",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › name only faults of the catalogue, and only messages there are",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › give every unmapped message its reason",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › recognise each message filled in, and each linter's as the engine writes it",
+     "status": "passed"
+    },
+    {
+     "name": "the engine's messages and the faults they stand for › name a GTIN not padded C5, a batch too long or with a forbidden character D6, else as the lists say",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
   },
   {
    "program": "environments",
@@ -6700,11 +6836,15 @@
      "status": "passed"
     },
     {
-     "name": "the catalogue of faults › names, in check.ts, only codes it holds",
+     "name": "the catalogue of faults › names, in the checks' sources, only codes it holds",
      "status": "passed"
     },
     {
      "name": "the catalogue of faults › copies no text of the standard: its texts cite section numbers, the General Specifications' sentences stay out",
+     "status": "passed"
+    },
+    {
+     "name": "docs/conformance.md, section 3.2 › lists every fault with its severity, its sections or source and the item that finds it",
      "status": "passed"
     }
    ],

@@ -855,7 +855,13 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   the same day: the catalogue of the project's 77 faults as data (`faults.ts`, its English texts translated when a
   screen shows them, 7.1 f), the named repairs (`repair.ts`) and the check of one reading (`check.ts`): groups A (the
   carrier) and B (the structure), every fault of a symbol reported with the bytes it points at and the data made
-  right when a repair makes it valid; groups C to E named from the engine's messages until 7.1 c*
+  right when a repair makes it valid; 7.1 c done on 16 November: the key (the check digit that would be right, the
+  indicator, restricted and example prefixes, the company prefix against a GCP table), the values (day 00 and the date
+  it stands for, an Error in regulated healthcare; a date that reads right re-ordered; dates against today by the
+  century rule; a batch or serial number likely to be mis-keyed; a measure of zero), the associations with their data
+  titles, GS1 Digital Link URIs (short names, compressed, a raw slash or percent sign, qualifiers out of order, an
+  attribute in the path, http, the canonical form, each URI mended), and every engine message named by a fault or
+  listed with its reason (`docs/conformance.md`, 3.2, lists the 77 faults and their sources)*
 
 
 ## Licence
