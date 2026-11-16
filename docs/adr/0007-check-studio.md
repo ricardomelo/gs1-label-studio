@@ -79,6 +79,18 @@ to put it right.
    without the slash is one of the editor's anchors, as before. The editor stays in the page, hidden, while another
    studio is shown, so that its state survives without being stored.
 
+12. **One result, two depths, the simple view first** (7.1 f). The result screen at `#/check` takes what a code holds
+   pasted or typed (a scanner in keyboard mode types into the same field), the symbol it came from (a scanner's
+   identifier at the start says it by itself) and where it is scanned, eight places of the project's section 3.6, two
+   with a follow-up question, mapped to a scanning environment; "I do not know" is the default answer, so that a check
+   is never marked down for a context nobody gave. Mock-up A of two was taken (the owner's rule, open to change): a
+   Simple / Expert switch at the head of the result, both views drawn from the same findings; B put the verdict and the
+   data beside the cards and the expert view folded at the end. The 77 faults are told in plain words in the web
+   application (`apps/web/src/checkTexts.ts`: what, why, how to fix and who), through `t()` in six languages; the
+   catalogue's texts stay the expert's, in English, shown as such in the expert view beside the engine's English
+   message and its translation. *Make it right* opens the Barcode Studio with the data a repair made valid; the
+   editor's Identify card links to the studio with its data, as a GS1 DataMatrix would carry it (`#/check?s=]d2&d=`).
+
 ## 3. Consequences
 
 - The scan test of the label studio keeps `textMode: "HRI"`: it compares what a label carries with

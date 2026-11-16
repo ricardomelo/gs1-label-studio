@@ -329,6 +329,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check` | The Check Studio's check of one reading: each fault of groups A and B drawn in a symbol by bwip-js, read back by ZXing and found at its bytes; every symbol the studio makes found clean; the project's worked example; several faults in one symbol; the repairs; the key, the values, the associations and GS1 Digital Link URIs (groups C, D, E, G) | 91 |
 | `engine-map` | Every message of the Syntax Engine and every linter's named by a fault of the Check Studio, or listed with the reason none applies | 7 |
 | `check-group` | The Check Studio's context (group F), tags (group I) and several carriers of one item (group J), with the matrix of the project's section 5.3 | 18 |
+| `check-studio` | The Check Studio's result screen: the 77 faults told in plain words, one sentence each, and the places a code is scanned mapped to scanning environments | 3 |
 | `faults` | The Check Studio's catalogue: the project's 77 codes and no other, each with its severity, four texts and a source; the table of `docs/conformance.md`, 3.2 | 9 |
 | `reading` | The Check Studio's reading record: what ZXing reads of every carrier, measured and held to `docs/conformance.md`; a scanner's text, an NFC tag, an EPC | 34 |
 | `render` | PNG, PDF and zip against the resolver, PDFs drawn by pdftoppm | 20 |
@@ -355,6 +356,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `routes` | the studios' addresses: the start page, each studio, a shared link's query, the editor's anchors (apps/web/test) | 4 |
 | `studios` | the start page and the studios' addresses in a browser: one tap to the editor, the keyboard, back and forward, what was typed kept, the shortcuts (Playwright) | 5 |
+| `check-result` | the Check Studio's result in a browser: the worked example's verdict, cards and expert panels, the place re-running the checks, Make it right, Portuguese, the Identify card's link (Playwright) | 5 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
 

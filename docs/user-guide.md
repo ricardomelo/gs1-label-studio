@@ -62,14 +62,44 @@ English.
 
 ### The start page: the studios
 
-![The start page: the Label Studio and the Barcode Studio, the RFID Studio and the Check Studio coming soon](images/guide/start.png)
+![The start page: the Label Studio, the Barcode Studio and the Check Studio, the RFID Studio coming soon](images/guide/start.png)
 
 The address of the tool opens on its studios. **Label Studio** opens the editor below with the kinds of label shown;
-**Barcode Studio** opens the same editor with the barcode alone. The **RFID Studio** and the **Check Studio** (which
-will read a barcode or a tag and say whether it follows the GS1 rules) are marked *Coming soon*. Each studio has its
-own address, to bookmark or to open from the installed application's shortcuts: `#/label`, `#/barcode`. The name in
-the header always leads back to the studios; the browser's Back and Forward move between them, and what you typed in
-the editor is kept while you look at another studio.
+**Barcode Studio** opens the same editor with the barcode alone; **Check Studio** checks a code you already have (see
+below). The **RFID Studio** is marked *Coming soon*. Each studio has its own address, to bookmark or to open from the
+installed application's shortcuts: `#/label`, `#/barcode`, `#/check`. The name in the header always leads back to the
+studios; the browser's Back and Forward move between them, and what you typed in the editor is kept while you look at
+another studio.
+
+### The Check Studio: is a code right?
+
+![The Check Studio with the worked example: the verdict, what the code says and three cards](images/guide/check.png)
+
+1. Open **Check Studio** on the start page (or `#/check`).
+2. Under **What the code holds**, paste or type what the code carries, or scan it with a scanner connected as a
+   keyboard. A separator can be typed as `<GS>`, `{GS}` or `\x1D`. **Try an example** fills in the example of the
+   project: an ordinary Data Matrix with the brackets encoded and a month 13.
+3. Under **The symbol it came from**, say which symbol it was, when you know; a scanner that sends its symbology
+   identifier (`]d2`, `]Q3`, `]C1`…) at the start says it by itself. *Not known* lets the data decide.
+4. Under **Where is it scanned?**, choose the place: a shop, a medicine or medical device (then the pharmacy, the
+   pharmacy and warehouse, or a hospital), a case, a pallet, the part itself, a phone, an asset, or *I do not know*.
+   Changing it checks the same data again. Without it, whether the symbol suits its place is listed as not checked.
+5. **The result** opens in the **Simple** view: the verdict with its icon and word (*Follows the GS1 rules*, *Works,
+   with remarks*, *Does not follow the GS1 rules*, *Not a GS1 code*), what the code says (each data title in your
+   language with its value, a date written out), then a card per problem, the worst first, each saying what is wrong,
+   where (the code's text with the part highlighted), why it matters and how to fix it, and who does it. When the data
+   can be made right, **Make it right** opens the Barcode Studio with it. **What was not checked** ends the list; print
+   quality is never graded here, since that needs a barcode verifier.
+6. **Expert** shows the same result in detail: the reading (the symbology identifier and the repairs tried), the raw
+   bytes in hexadecimal and as text with the problems' bytes highlighted and three copy buttons, the element strings,
+   the other syntaxes (bracketed, the engine's notation, the GS1 Digital Link URI) when the data is valid, each finding
+   with its code, the General Specifications sections, the GS1 Barcode Syntax Engine's own message in English beside
+   its translation, the context, and the versions that checked it.
+
+![The expert view of the same result](images/guide/check-expert.png)
+
+In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
+with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.
 
 ### The editor
 
