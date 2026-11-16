@@ -746,5 +746,18 @@
  "ISO 15223-1:2021, symbol 5.1.1 (ISO 7000-3082)": "ISO 15223-1:2021, symbole 5.1.1 (ISO 7000-3082)",
  "ISO 15223-1:2021, symbol 5.1.3 (ISO 7000-2497)": "ISO 15223-1:2021, symbole 5.1.3 (ISO 7000-2497)",
  "ISO 15223-1:2021, symbol 5.1.4 (ISO 7000-2607)": "ISO 15223-1:2021, symbole 5.1.4 (ISO 7000-2607)",
- "no fault {code} in the catalogue": "aucun défaut {code} dans le catalogue"
+ "no fault {code} in the catalogue": "aucun défaut {code} dans le catalogue",
+ "The readings file has bytes that are not hexadecimal.": "Le fichier de lectures contient des octets qui ne sont pas hexadécimaux.",
+ "The readings file has a reading that is not an object.": "Le fichier de lectures contient une lecture qui n’est pas un objet.",
+ "The readings file has a reading without its source, carrier, bytes or time.": "Le fichier de lectures contient une lecture sans source, support, octets ou heure.",
+ "This is not a readings file of GS1 Label Studio.": "Ce n’est pas un fichier de lectures de GS1 Label Studio.",
+ "This readings file was written by a later release of GS1 Label Studio.": "Ce fichier de lectures a été écrit par une version plus récente de GS1 Label Studio.",
+ "Data Matrix": "Data Matrix",
+ "QR Code": "QR Code",
+ "Code 128": "Code 128",
+ "GS1 DataBar": "GS1 DataBar",
+ "RFID tag": "Étiquette RFID",
+ "NFC tag": "Tag NFC",
+ "Text without a symbology identifier": "Texte sans identifiant de symbologie",
+ "Not in the GCP table": "Absent de la table des GCP"
 }

@@ -128,6 +128,7 @@ import { InstallApp } from "./InstallApp.tsx";
 import { onUpdateReady, updateReady } from "./update.ts";
 import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout.ts";
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
+import { download } from "./download.ts";
 import { routeHash, useRoute } from "./routes.ts";
 import { checkAddress, CheckStudio } from "./CheckStudio.tsx";
 import { ComingStudio, StartPage } from "./StartPage.tsx";
@@ -144,13 +145,6 @@ const PNG_RESOLUTIONS = [300, 600, 1200]; // besides the PNG at the label's size
 const ASSISTANT_SEEN = "gs1-label-studio.assistant-seen";
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
-
-function download(name: string, content: string | Uint8Array<ArrayBuffer>, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const link = Object.assign(document.createElement("a"), { href: url, download: name });
-  link.click();
-  URL.revokeObjectURL(url);
-}
 
 // A print file is text, or bytes when EPL2 sends an image (GW): then not text, so that nothing changes its bytes
 const printFileType = (file: string | Uint8Array) => (typeof file === "string" ? "text/plain" : "application/octet-stream");

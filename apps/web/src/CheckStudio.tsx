@@ -1,4 +1,5 @@
 import {
+  findingsCsv, parseReadingsJson, readingsCsv, readingsJson, reportPdf, surveyCounts, type CheckedRecord, type ReportDocument,
   bytesToHex, check, checkGroup, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult,
   type Finding, type EpcScheme, type GroupKind, type GroupResult, type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
@@ -8,10 +9,13 @@ import { decodeImage, mayHaveComposite, picturePixels, readingsOf } from "./came
 import { guessKind, memberName, sameReading, type Member } from "./group.ts";
 import { GroupMatrix } from "./GroupMatrix.tsx";
 import {
-  addEntry, addSession, deleteAll, deleteEntries, entryOf, historyOff, loadHistory, sameAsLast, setHistoryOff, type HistoryEntry, type HistorySession,
+  addEntry, addSession, deleteAll, deleteEntries, entryOf, historyOff, loadHistory, putEntries, sameAsLast, setHistoryOff, type HistoryEntry, type HistorySession,
 } from "./history.ts";
-import { HistoryList } from "./HistoryList.tsx";
+import { HistoryList, type ExportKind } from "./HistoryList.tsx";
+import { download } from "./download.ts";
+import { itemReport, readingReport, sessionReport } from "./reports.ts";
 import { SIMPLE_TEXTS } from "./checkTexts.ts";
+import { B3_KEYBOARD, detailLines, NOT_CHECKED, readable, SEVERITIES, SOURCE_NAMES, VERDICTS } from "./checkWords.ts";
 import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
 import { Picture, SymbolList, type PictureRead } from "./Picture.tsx";
@@ -76,19 +80,6 @@ const WAYS: readonly { value: Way; icon: string; text: string }[] = [
   { value: "tag", icon: "📶", text: en("Tag") },
   { value: "type", icon: "⌨", text: en("Type or paste") },
 ];
-/** A missing separator in text a keyboard gave: the code may lack it, or the scanner may have dropped it (section 3.5). */
-const B3_KEYBOARD = {
-  what: en("Either the code lacks a separator after a value whose length varies, or your scanner removes it."),
-  scanner: en("Many scanners drop the separator in keyboard mode. If the code was scanned, set the scanner to send the separator as a visible stand-in the studio accepts, such as <GS>, and scan again: if the problem goes, the code is right."),
-};
-/** Where a reading came from, as the expert view's Reading panel names it. */
-const SOURCE_NAMES: Record<Reading["source"], string> = {
-  camera: en("Camera"),
-  image: en("Picture"),
-  nfc: en("NFC tag"),
-  wedge: en("A scanner in keyboard mode"),
-  paste: en("Pasted or typed"),
-};
 /** On a touch screen the studio opens on the camera (the project's Q3); with a mouse, on the text a scanner types. */
 const prefersCamera = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 type Follow = "a" | "b" | "c";
@@ -121,29 +112,6 @@ export function environmentOf(place: Place, follow: Follow, ais: readonly string
   }
 }
 
-const VERDICTS: Record<Verdict, { icon: string; word: string; line: string }> = {
-  follows: { icon: "✓", word: en("Follows the GS1 rules"), line: en("No errors and no warnings.") },
-  remarks: { icon: "!", word: en("Works, with remarks"), line: en("No errors, but some things are worth correcting.") },
-  "does-not-follow": { icon: "✕", word: en("Does not follow the GS1 rules"), line: en("At least one error: see what is wrong below.") },
-  "not-gs1": { icon: "–", word: en("Not a GS1 code"), line: en("Nothing here for a GS1 system to read.") },
-  "not-assessed": { icon: "?", word: en("Could not be checked"), line: en("Nothing could be read to check.") },
-};
-/** What a code listed as not assessed could not say, and what would let it be checked. */
-const NOT_CHECKED: Record<string, string> = {
-  C8: en("Whether the company prefix is licensed: that needs GS1's table of company prefixes."),
-  F1: en("Whether this type of symbol suits where it is scanned: that needs the place, and data that can be read."),
-  F3: en("Whether a 2D symbol alone suits a shop till: that needs the place."),
-  I1: en("The tag's EPC: that needs the EPC tables."),
-  I2: en("The tag's EPC: that needs the EPC tables."),
-  H1: en("Sizes and margins: those need a picture with a known scale."),
-  J5: en("The distance between symbols: that needs a picture with a known scale."),
-};
-const SEVERITIES: Record<Finding["severity"], string> = {
-  error: en("Error"),
-  warning: en("Warning"),
-  note: en("Note"),
-  "not-assessed": en("Not checked"),
-};
 
 /** The byte offsets of each character of a text, and its length in bytes after the last. */
 function byteStarts(text: string): number[] {
@@ -178,42 +146,6 @@ function Marked({ reading, ranges }: { reading: Reading; ranges: readonly (reado
   );
 }
 
-const DATE_AIS = new Set(["11", "12", "13", "15", "16", "17", "7006"]);
-
-/** An element's value made readable: a date in the user's language, day 00 as the date it stands for. */
-function readable(ai: string, value: string, today: Date): string {
-  if (DATE_AIS.has(ai) && /^\d{6}$/.test(value)) {
-    const month = Number(value.slice(2, 4));
-    const day = Number(value.slice(4, 6));
-    if (month < 1 || month > 12) return value;
-    try {
-      const iso = formatDate(value, "YYYY-MM-DD", { today });
-      const date = new Date(`${iso}T12:00:00Z`);
-      if (Number.isNaN(date.getTime()) || Number(iso.slice(8)) !== (day || Number(iso.slice(8)))) return value;
-      return new Intl.DateTimeFormat(locale(), { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
-    } catch {
-      return value;
-    }
-  }
-  if (/^3[1-6]\d\d$/.test(ai) && /^\d{6}$/.test(value)) {
-    const decimals = Number(ai[3]);
-    return (Number(value) / 10 ** decimals).toLocaleString(locale(), { minimumFractionDigits: decimals });
-  }
-  return value;
-}
-
-/** What a finding's details say in plain words, the ones the simple view shows. */
-function detailLines(finding: Finding): string[] {
-  const d = finding.details ?? {};
-  const lines: string[] = [];
-  if (d.expected) lines.push(t("The check digit that would be right: {expected}", { expected: d.expected }));
-  if (d.reordered) lines.push(t("Read the other way round: {reordered}", { reordered: d.reordered }));
-  if (d.required) lines.push(t("Needed with it: {required}", { required: d.required }));
-  if (d.allowed) lines.push(t("Symbols allowed here: {allowed}", { allowed: d.allowed }));
-  if (d.uri) lines.push(t("The address made right: {uri}", { uri: d.uri }));
-  else if (d.canonical) lines.push(t("In GS1's standard form: {canonical}", { canonical: d.canonical }));
-  return lines;
-}
 
 interface Props {
   engine: SyntaxEngine | null;
@@ -347,6 +279,12 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     setSelected(null);
     setChosenKind(null);
   };
+  // The item a group is, named by when it started: the history keeps it with each code of it (7.1 k)
+  const [itemId, setItemId] = useState<string | null>(null);
+  useEffect(() => {
+    if (members.length && !itemId) setItemId(new Date().toISOString().slice(0, 19).replace("T", " "));
+    if (!members.length && itemId) setItemId(null);
+  }, [members, itemId]);
   useEffect(() => {
     if (way === "camera" && camReadings.length) resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [way, camReadings]);
@@ -400,12 +338,14 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   offRef.current = off;
   const sessionRef = useRef(session);
   sessionRef.current = session;
+  const itemRef = useRef(itemId);
+  itemRef.current = itemId;
   useEffect(() => {
     if (!engine || !current) return;
     const timer = setTimeout(() => {
       const env = environmentRef.current ?? null;
       if (offRef.current || sameAsLast(entriesRef.current, current, env)) return;
-      store(entryOf(current, check(engine, current, { environment: env, epcSchemes: schemes }), env, sessionRef.current, releases));
+      store(entryOf(current, check(engine, current, { environment: env, epcSchemes: schemes }), env, sessionRef.current, releases, itemRef.current));
     }, current.source === "paste" ? 2000 : 0);
     return () => clearTimeout(timer);
   }, [current, engine]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -418,6 +358,62 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     }
     return map;
   }, [engine, entries, schemes]);
+  // Each code of the item, as the history last kept it, gets the item's name
+  useEffect(() => {
+    if (!itemId) return;
+    const changed: HistoryEntry[] = [];
+    for (const m of members) {
+      const e = [...entries].reverse().find((x) => x.reading && sameReading(x.reading, m.reading));
+      if (e && !e.group) changed.push({ ...e, group: itemId });
+    }
+    if (!changed.length) return;
+    void putEntries(changed.filter((e) => e.id > 0));
+    setEntries((list) => list.map((e) => changed.find((c) => c.id === e.id) ?? e));
+  }, [itemId, members, entries]);
+  // Reports and files (7.1 k): every reading checked again under the current release, as the list's re-check does
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const savePdf = (doc: ReportDocument, name: string) => void reportPdf(doc).then((pdf) => download(name, pdf, "application/pdf"));
+  const recordsOf = (list: readonly HistoryEntry[]): CheckedRecord[] =>
+    [...list].reverse().map((e) => ({
+      reading: e.reading,
+      at: e.at,
+      session: sessions.find((s) => s.id === e.session)?.name ?? null,
+      group: e.group ?? null,
+      environment: e.environment,
+      note: e.note,
+      result: e.reading && engine ? check(engine, e.reading, { environment: e.environment, epcSchemes: schemes }) : null,
+    }));
+  const exportHistory = (kind: ExportKind, listed: HistoryEntry[], title: string, delimiter: "," | ";") => {
+    const records = recordsOf(listed);
+    if (kind === "report") savePdf(sessionReport(title, records, surveyCounts(records), releases), "session-report.pdf");
+    else if (kind === "readings") download("readings.csv", readingsCsv(records, delimiter), "text/csv;charset=utf-8");
+    else if (kind === "findings") download("findings.csv", findingsCsv(records, delimiter), "text/csv;charset=utf-8");
+    else download("readings.json", readingsJson(records), "application/json");
+    setExportMessage(t("{n} readings exported.", { n: String(records.length) }));
+  };
+  const importReadings = async (file: File) => {
+    try {
+      const records = parseReadingsJson(await file.text());
+      const known = new Map(sessions.map((s) => [s.name, s.id]));
+      for (const record of records) {
+        let id: number | null = null;
+        if (record.session) {
+          id = known.get(record.session) ?? null;
+          if (id === null) {
+            const name = record.session;
+            id = (await addSession(name)) ?? memoryId.current--;
+            known.set(name, id);
+            setSessions((list) => [...list, { id: id!, name, at: record.at }]);
+          }
+        }
+        const result = record.reading && engine ? check(engine, record.reading, { environment: record.environment, epcSchemes: schemes }) : null;
+        store({ ...entryOf(record.reading, result, record.environment, id, releases, record.group), at: record.at, note: record.note });
+      }
+      setExportMessage(t("{n} readings opened from the file.", { n: String(records.length) }));
+    } catch (error) {
+      setExportMessage(tm(error instanceof Error ? error.message : String(error)));
+    }
+  };
   const history = (
     <HistoryList
       entries={entries}
@@ -449,6 +445,9 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         void deleteEntries(ids);
         setEntries((list) => list.filter((e) => !ids.includes(e.id)));
       }}
+      onExport={exportHistory}
+      onImport={(file) => void importReadings(file)}
+      message={exportMessage}
       onDeleteAll={() => {
         void deleteAll();
         setEntries([]);
@@ -672,6 +671,11 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
       awaiting={awaiting}
       onAdd={addAnother}
       onClose={closeGroup}
+      onReport={() => {
+        if (!group) return;
+        const on = members.flatMap((m, i) => (m.on && memberResults[i] ? [{ reading: m.reading, result: memberResults[i]! }] : []));
+        savePdf(itemReport(on, group, kind, releases), "item-report.pdf");
+      }}
       verdictBox={verdictOf}
     />
   );
@@ -801,6 +805,12 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         />
         {groupLine}
         {view === "simple" ? simple : <Expert result={result} reading={reading} environment={environment} />}
+        <div className="check-row check-report">
+          <button type="button" className="btn" onClick={() => savePdf(readingReport(reading, result, environment ?? null, releases), "check-report.pdf")}>
+            {t("Report (PDF)")}
+          </button>
+          <span className="hint">{t("The simple view and the expert details, to print or send.")}</span>
+        </div>
       </section>
       {history}
     </main>

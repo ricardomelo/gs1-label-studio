@@ -82,7 +82,7 @@ const CORE_FORMS = [
 ];
 
 /** Files whose texts are the content of a file made, not shown on the page (README, SVG description, ZPL notes). */
-const FILE_CONTENT = new Set(["zip.ts", "svg.ts", "pdf.ts", "eps.ts", "png.ts"]);
+const FILE_CONTENT = new Set(["zip.ts", "svg.ts", "pdf.ts", "eps.ts", "png.ts", "checkReport.ts"]);
 
 /** The core's messages and names, from its sources (comments left out). */
 export function coreTexts(): { text: string; file: string }[] {

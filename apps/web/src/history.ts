@@ -33,6 +33,8 @@ export interface HistoryEntry {
   values: string[];
   releases: Releases;
   note: string;
+  /** The item (a group of codes, 7.1 i) it was read with; absent in entries kept before 7.1 k. */
+  group?: string | null;
 }
 
 export interface HistorySession {
@@ -48,7 +50,7 @@ const PERSONAL_AIS = new Set(["21", "8017", "8018", "235", "250"]);
 const KEY_AIS = ["01", "00", "414", "8017", "8018", "253", "255", "8003", "8004", "401", "402", "417", "8006", "8010", "8013"];
 
 /** What is kept of a reading and its result. */
-export function entryOf(reading: Reading | null, result: CheckResult | null, environment: string | null, session: number | null, releases: Releases): Omit<HistoryEntry, "id"> {
+export function entryOf(reading: Reading | null, result: CheckResult | null, environment: string | null, session: number | null, releases: Releases, group: string | null = null): Omit<HistoryEntry, "id"> {
   const elements = result?.elements ?? [];
   const key = KEY_AIS.map((ai) => elements.find((e) => e.ai === ai)).find(Boolean) ?? elements[0];
   const judged = result?.findings.filter((f) => f.severity !== "not-assessed") ?? [];
@@ -66,6 +68,7 @@ export function entryOf(reading: Reading | null, result: CheckResult | null, env
     values: elements.map((e) => e.value),
     releases,
     note: "",
+    group,
   };
 }
 
@@ -159,6 +162,26 @@ export async function addEntry(entry: Omit<HistoryEntry, "id">): Promise<number 
     return Number(await withStore(READINGS, "readwrite", (s) => s.add(entry)));
   } catch {
     return null;
+  }
+}
+
+/** Puts entries back as they now are (a code that joined an item gets the item's name). */
+export async function putEntries(entries: readonly HistoryEntry[]): Promise<boolean> {
+  try {
+    const db = await openDatabase();
+    try {
+      const transaction = db.transaction(READINGS, "readwrite");
+      for (const entry of entries) transaction.objectStore(READINGS).put(entry);
+      await new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    } finally {
+      db.close();
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Reading, Verdict } from "@gs1-label-studio/core";
+import { symbologyName, type Reading, type Verdict } from "@gs1-label-studio/core";
 import { useRef, useState } from "react";
 import { en, t } from "./i18n.ts";
 
@@ -18,32 +18,9 @@ export interface PictureRead {
 /** The verdict marks the list shows beside each symbol (the result's icons). */
 export const VERDICT_ICONS: Record<Verdict, string> = { follows: "✓", remarks: "!", "does-not-follow": "✕", "not-gs1": "–", "not-assessed": "?" };
 
-/** The decoder's names of the symbologies, as a person knows them. */
-const FORMAT_NAMES: Record<string, string> = {
-  DataMatrix: "Data Matrix",
-  QRCode: "QR Code",
-  Code128: "Code 128",
-  EAN13: "EAN-13",
-  EAN8: "EAN-8",
-  UPCA: "UPC-A",
-  UPCE: "UPC-E",
-  ITF: "ITF",
-  DataBar: "GS1 DataBar",
-  DataBarOmni: "GS1 DataBar",
-  DataBarLtd: "GS1 DataBar Limited",
-  DataBarLimited: "GS1 DataBar Limited",
-  DataBarExp: "GS1 DataBar Expanded",
-  DataBarExpanded: "GS1 DataBar Expanded",
-  DataBarStk: "GS1 DataBar Stacked",
-  DataBarExpStk: "GS1 DataBar Expanded Stacked",
-};
-/** The GS1 names a symbology identifier gives the same symbols (General Specifications 5.1.3, table 5-2). */
-const GS1_NAMES: Record<string, string> = { "]d2": "GS1 DataMatrix", "]Q3": "GS1 QR Code", "]C1": "GS1-128", "]I1": "ITF-14" };
-
-/** A symbol's name for the list: its GS1 name when its identifier gives one, else the decoder's. */
+/** A symbol's name for the list: its GS1 name when its identifier gives one, else the decoder's (the core's names). */
 export function symbolName(reading: Reading): string {
-  const id = reading.symbologyIdentifier ?? "";
-  return GS1_NAMES[id] ?? FORMAT_NAMES[reading.format ?? ""] ?? reading.format ?? t("A symbol");
+  return (reading.carrier === "barcode" ? symbologyName(reading) : reading.format) ?? t("A symbol");
 }
 
 const ACCEPT = "image/*";

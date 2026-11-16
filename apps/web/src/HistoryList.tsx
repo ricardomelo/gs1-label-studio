@@ -1,5 +1,5 @@
 import type { Reading, Verdict } from "@gs1-label-studio/core";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { changedOnRecheck, filterHistory, HISTORY_LIMIT, isPersonal, overLimit, type HistoryEntry, type HistoryFilter, type HistorySession, type Releases } from "./history.ts";
 import { en, locale, t } from "./i18n.ts";
 import { symbolName, VERDICT_ICONS, VERDICT_WORDS } from "./Picture.tsx";
@@ -38,17 +38,46 @@ interface Props {
   onNoBarcode: () => void;
   onDelete: (ids: number[]) => void;
   onDeleteAll: () => void;
+  /** A report or a file of the entries listed (7.1 k); `title` names the session, or says the list is filtered. */
+  onExport: (kind: ExportKind, listed: HistoryEntry[], title: string, delimiter: "," | ";") => void;
+  /** A readings file chosen to open: its readings join the history. */
+  onImport: (file: File) => void;
+  /** What the last export or import said: done, or why not. */
+  message: string | null;
 }
 
-export function HistoryList({ entries, sessions, kept, off, onOff, session, onSession, verdictNow, releases, onOpen, onNoBarcode, onDelete, onDeleteAll }: Props) {
+/** What the history exports (section 7.2 and 7.3). */
+export type ExportKind = "report" | "readings" | "findings" | "json";
+
+const EXPORTS: readonly { kind: ExportKind; text: string }[] = [
+  { kind: "report", text: en("Session report (PDF)") },
+  { kind: "readings", text: en("Readings (CSV)") },
+  { kind: "findings", text: en("Findings (CSV)") },
+  { kind: "json", text: en("All the data (JSON)") },
+];
+
+export function HistoryList({ entries, sessions, kept, off, onOff, session, onSession, verdictNow, releases, onOpen, onNoBarcode, onDelete, onDeleteAll, onExport, onImport, message }: Props) {
   const [filter, setFilter] = useState<HistoryFilter>({ verdict: "", session: "", search: "" });
   const [shown, setShown] = useState(PAGE);
   const [name, setName] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [semicolon, setSemicolon] = useState(false);
+  // A share or an export that includes personal data asks once (section 7.1, privacy): the export waiting for the answer
+  const [asking, setAsking] = useState<ExportKind | null>(null);
+  const [personalOk, setPersonalOk] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const listed = filterHistory(entries, filter);
   const old = overLimit(entries);
   const current = sessions.find((s) => s.id === session);
   const time = new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" });
+  const filtered = Boolean(filter.verdict || filter.search?.trim() || filter.code);
+  const chosen = typeof filter.session === "number" ? sessions.find((s) => s.id === filter.session)?.name : undefined;
+  const title = chosen ?? (filter.session === "none" ? t("Readings outside a session") : t("All readings"));
+  const run = (kind: ExportKind, confirmed = personalOk) => {
+    if (!confirmed && listed.some(isPersonal)) return setAsking(kind);
+    setAsking(null);
+    onExport(kind, listed, filtered ? `${title} (${t("filtered")})` : title, semicolon ? ";" : ",");
+  };
 
   return (
     <section className="card check-history" aria-labelledby="check-history-title">
@@ -115,6 +144,38 @@ export function HistoryList({ entries, sessions, kept, off, onOff, session, onSe
             </select>
           </label>
         )}
+      </div>
+      <div className="history-export" role="group" aria-label={t("Export what is listed")}>
+        <p className="hint">{t("Export what is listed ({n} readings): the report counts what the filters show.", { n: String(listed.length) })}</p>
+        <div className="check-row">
+          {EXPORTS.map((e) => (
+            <button key={e.kind} type="button" className="btn" disabled={!listed.length} onClick={() => run(e.kind)}>{t(e.text)}</button>
+          ))}
+          <label className="history-off">
+            <input type="checkbox" checked={semicolon} onChange={(e) => setSemicolon(e.target.checked)} /> {t("CSV with semicolons")}
+          </label>
+          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>{t("Open a readings file")}</button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            aria-label={t("Open a readings file")}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImport(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        {asking && (
+          <p className="check-row" role="alert">
+            <span>{t("Some of these readings carry a serial number or a person's number. Export them all the same?")}</span>
+            <button type="button" className="btn primary" onClick={() => { setPersonalOk(true); run(asking, true); }}>{t("Yes, export")}</button>
+            <button type="button" className="btn" onClick={() => setAsking(null)}>{t("Cancel")}</button>
+          </p>
+        )}
+        {message && <p className="hint" role="status">{message}</p>}
       </div>
       {old.length > 0 && (
         <p className="hint" role="status">
