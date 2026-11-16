@@ -883,7 +883,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   the camera stopped when the result opens, the tab is hidden or the studio is left, torch and zoom where offered, a
   refused or missing camera said so with a picture offered instead; a picture chosen, taken, dropped or pasted, every
   symbol outlined, numbered and coloured by its verdict; what cannot be read (DotCode, a Composite's 2D part) named,
-  and a code not read recorded as fault A9*
+  and a code not read recorded as fault A9; 7.1 h done the same day: a scanner in keyboard mode told by its rhythm (a
+  scan checked at once, Ctrl+] as the separator), the scanner's three faults named rather than blamed on the code (no
+  identifier, the separator lost, another keyboard layout undone), and a fourth way in, Tag: NFC read with Web NFC on
+  Android and every record listed, an .ndef file elsewhere with what works instead said, an RFID tag's EPC pasted or
+  typed*
 
 
 ## Licence

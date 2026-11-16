@@ -105,6 +105,20 @@ to put it right.
    checked. The browser tests play the camera as a canvas stream put in the place of `getUserMedia()` rather than
    Chromium's fake device with a clip, as the project planned: it runs in the three projects and can also play a
    refused, a missing and a torch-and-zoom camera; the frames still go through the video, the worker and ZXing.
+14. **A scanner is known by its rhythm; tags are read where the browser can, and said where it cannot** (7.1 h). In
+   the text field, four or more keystrokes no more than 50 ms apart ended by Enter are a scan (`wedge.ts`): it is
+   checked at once and marked as a scanner's, its Enter leaves no line break, and Ctrl+] types a group separator. The
+   three things a scanner gets wrong are named, not blamed on the code: no identifier sent (the symbol is asked, with
+   how to switch on AIM ID), the separator lost (B3 from keyboard text says the code may lack it or the scanner may
+   drop it, with the set-up), and a US-layout scanner on another keyboard layout (AZERTY, QWERTZ, ABNT2, Spanish and
+   Italian undone; offered only when that brings back an identifier or the digits). A fourth way in, Tag, holds NFC
+   and RFID together (mock-up A of two under the owner's rule; B gave each its own button, five in a row on a phone).
+   NFC is read by Web NFC where it exists; its records are made an NDEF message again (`nfc.ts`, the core's
+   `ndefMessage()`), so that a tag from the browser and an .ndef file from an NFC app are read by the same
+   `readingFromNdef()`, and every record is listed. Without Web NFC the screen says what works instead (an iPhone
+   opens the tag's link by itself; an .ndef file) and shows no dead button. No browser reads UHF RFID: the EPC is pasted
+   or typed by a reader in keyboard mode, and a classic EPC is read with the application's own EPC tables. The tag
+   writer of 1.19 now shares the Web NFC code.
 
 ## 3. Consequences
 

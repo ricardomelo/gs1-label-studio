@@ -8202,6 +8202,14 @@
     {
      "name": "an NDEF message's records (the Check Studio, I3) › stops at the record marked last, and refuses a message cut inside a record",
      "status": "passed"
+    },
+    {
+     "name": "an NDEF message made of records (the Check Studio's NFC reading, 7.1 h) › gives the same bytes as a URI record written alone",
+     "status": "passed"
+    },
+    {
+     "name": "an NDEF message made of records (the Check Studio's NFC reading, 7.1 h) › marks the first record MB and the last ME, short records under 256 bytes, and reads back as given",
+     "status": "passed"
     }
    ],
    "area": "RFID, NFC and digital signatures"
@@ -10503,6 +10511,46 @@
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
   },
   {
+   "program": "wedge",
+   "file": "apps/web/test/wedge.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a scanner's rhythm › takes keystrokes a few milliseconds apart, ended by Enter, as a scan",
+     "status": "passed"
+    },
+    {
+     "name": "a scanner's rhythm › does not take a person's typing, a short burst or a late Enter as a scan",
+     "status": "passed"
+    },
+    {
+     "name": "a scanner's rhythm › starts again after a pause: what a person typed before the scan is not part of it",
+     "status": "passed"
+    },
+    {
+     "name": "a keyboard layout's damage › is undone character by character",
+     "status": "passed"
+    },
+    {
+     "name": "a keyboard layout's damage › is offered when undoing it brings back the identifier or the digits, layouts with the same result together",
+     "status": "passed"
+    },
+    {
+     "name": "a keyboard layout's damage › is not offered for a scan that is already well formed",
+     "status": "passed"
+    },
+    {
+     "name": "an NFC tag read by Web NFC › gives each record back as the NDEF record it was",
+     "status": "passed"
+    },
+    {
+     "name": "an NFC tag read by Web NFC › makes a message the core reads as it reads an .ndef file, the URI found where it is",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "work",
    "file": "packages/core/test/work.test.ts",
    "kind": "unit",
@@ -10721,6 +10769,86 @@
     },
     {
      "name": "the editor's Identify card links to the Check Studio with its data",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-scan",
+   "file": "apps/web/e2e/check-scan.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "a scan with ]d2 and a separator is checked as the camera's reading of the same symbol, marked as a scanner's",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a scan without its identifier asks for the symbol and says how to switch AIM ID on",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "Ctrl+] typed by hand puts a group separator where the cursor is",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a lost separator is told as the code's or the scanner's, with the scanner's set-up",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a scan typed on another keyboard layout is offered as the scanner meant it",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "an NFC tag held to the phone: its records listed, a link not first is fault I3",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "without Web NFC the screen says what works instead, shows no dead button, and opens an .ndef file",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a pasted SGTIN-96 shows its GTIN and serial, and its GS1 Digital Link URI in the expert view",
      "status": "listed",
      "projects": [
       "desktop",

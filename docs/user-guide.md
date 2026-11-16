@@ -76,8 +76,8 @@ another studio.
 ![The Check Studio with the worked example: the verdict, what the code says and three cards](images/guide/check.png)
 
 1. Open **Check Studio** on the start page (or `#/check`). Under **Read a code**, three buttons choose how the code
-   comes in: **Camera**, **Picture** and **Type or paste**. A phone or a tablet opens on the camera, a computer on the
-   text.
+   comes in: **Camera**, **Picture**, **Tag** and **Type or paste**. A phone or a tablet opens on the camera, a
+   computer on the text.
 2. With **Camera**, press **Start the camera** and allow it when the browser asks; point it at the code, which is read
    by itself, with a tone and a vibration where the phone allows. The result opens below and the camera pauses;
    **Scan another** starts it again. Where the phone offers them, **Torch** lights the code and **Zoom** brings it
@@ -92,21 +92,34 @@ another studio.
 
 ![A picture of three symbols: each outlined, numbered and coloured by its verdict, the second chosen](images/guide/check-picture.png)
 
-4. With **Type or paste**, under **What the code holds**, paste or type what the code carries, or scan it with a scanner connected as a
+4. With **Tag**, read an NFC tag or an RFID tag's EPC. On an Android phone with Chrome, press **Read an NFC tag** and
+   hold the tag to the back of the phone: every record on it is listed, and its link is checked (a link that is not
+   the tag's first record, or not https, is reported). Other browsers cannot read NFC tags; the screen says so: on an
+   iPhone, hold the tag near the top of the phone, which opens its link, and paste that link under **Type or paste**;
+   or press **Open an .ndef file** for the file an NFC app saved. For an RFID tag, paste its EPC as hexadecimal
+   (`3034…`) or as a URI (`urn:epc:…`), or read it with an RFID reader set as a keyboard: the key and the serial it
+   carries are shown, and its GS1 Digital Link URI in the expert view.
+5. With **Type or paste**, under **What the code holds**, paste or type what the code carries, or scan it with a scanner connected as a
    keyboard. A separator can be typed as `<GS>`, `{GS}` or `\x1D`. **Try an example** fills in the example of the
    project: an ordinary Data Matrix with the brackets encoded and a month 13.
-5. Under **The symbol it came from**, say which symbol it was, when you know; a scanner that sends its symbology
+   A scanner connected as a keyboard is recognised by its speed: the code is checked as soon as it sends Enter, and
+   *Read from a scanner in keyboard mode* says so. When the scanner sends no symbology identifier, the studio asks
+   which symbol it was and says how to switch on the scanner's *AIM ID* setting. When a separator seems missing, the
+   card says the code may lack it or the scanner may drop it, and how to set the scanner up. When the scanner types on a
+   different keyboard layout (`+d2…` or `$d2…` instead of `]d2…`, or French AZERTY's `&é"'(` instead of digits), the
+   studio offers what it meant: **Use this**.
+6. Under **The symbol it came from**, say which symbol it was, when you know; a scanner that sends its symbology
    identifier (`]d2`, `]Q3`, `]C1`…) at the start says it by itself. *Not known* lets the data decide.
-6. Under **Where is it scanned?**, choose the place: a shop, a medicine or medical device (then the pharmacy, the
+7. Under **Where is it scanned?**, choose the place: a shop, a medicine or medical device (then the pharmacy, the
    pharmacy and warehouse, or a hospital), a case, a pallet, the part itself, a phone, an asset, or *I do not know*.
    Changing it checks the same data again. Without it, whether the symbol suits its place is listed as not checked.
-7. **The result** opens in the **Simple** view: the verdict with its icon and word (*Follows the GS1 rules*, *Works,
+8. **The result** opens in the **Simple** view: the verdict with its icon and word (*Follows the GS1 rules*, *Works,
    with remarks*, *Does not follow the GS1 rules*, *Not a GS1 code*), what the code says (each data title in your
    language with its value, a date written out), then a card per problem, the worst first, each saying what is wrong,
    where (the code's text with the part highlighted), why it matters and how to fix it, and who does it. When the data
    can be made right, **Make it right** opens the Barcode Studio with it. **What was not checked** ends the list; print
    quality is never graded here, since that needs a barcode verifier.
-8. **Expert** shows the same result in detail: the reading (the symbology identifier and the repairs tried), the raw
+9. **Expert** shows the same result in detail: the reading (the symbology identifier and the repairs tried), the raw
    bytes in hexadecimal and as text with the problems' bytes highlighted and three copy buttons, the element strings,
    the other syntaxes (bracketed, the engine's notation, the GS1 Digital Link URI) when the data is valid, each finding
    with its code, the General Specifications sections, the GS1 Barcode Syntax Engine's own message in English beside
