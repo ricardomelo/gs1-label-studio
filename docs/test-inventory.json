@@ -1051,6 +1051,46 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "camera",
+   "file": "apps/web/test/camera.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the camera's problems › name a refused, missing or busy camera from the error's name",
+     "status": "passed"
+    },
+    {
+     "name": "the track's controls › offer a torch and a zoom only where the capabilities say so",
+     "status": "passed"
+    },
+    {
+     "name": "the same reading within three seconds › counts once; again after the interval; another symbol at once",
+     "status": "passed"
+    },
+    {
+     "name": "the same reading within three seconds › tells symbols apart by their identifier and bytes",
+     "status": "passed"
+    },
+    {
+     "name": "the readings of a frame or a picture › keep the decoder's bytes, identifier, corners and the picture's size",
+     "status": "passed"
+    },
+    {
+     "name": "the readings of a frame or a picture › say when a linear symbol read by the camera or in a picture may have a Composite part left out",
+     "status": "passed"
+    },
+    {
+     "name": "the readings of a frame or a picture › name each symbol as a person knows it",
+     "status": "passed"
+    },
+    {
+     "name": "a picture's size › is kept up to the limit, and scaled down to it on the longest side",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "check",
    "file": "packages/core/test/check.test.ts",
    "kind": "unit",
@@ -10557,6 +10597,86 @@
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
+   "program": "check-camera",
+   "file": "apps/web/e2e/check-camera.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "on a touch screen the studio opens on the camera, with a mouse on the text",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the camera reads a code, opens its result and stops; Scan another starts it again",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the camera stops when the tab is hidden, starts again when it is shown, and stops when the studio is left",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a torch and a zoom where the camera offers them",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a refused camera says so and offers a picture; a missing one says there is none",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a picture of three symbols: each outlined and numbered with its verdict, one chosen shows its result",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a picture with no barcode says what cannot be read; There is a code here gives fault A9",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a picture pasted or dropped on the studio is read",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
   },
   {
    "program": "check-result",

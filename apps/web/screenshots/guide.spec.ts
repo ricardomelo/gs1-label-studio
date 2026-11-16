@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // The user guide's screenshots (docs/user-guide.md; ADR 0005), from the built application, each a step the guide
@@ -50,6 +51,20 @@ test("the Check Studio: the worked example's result, simple and expert", async (
   await studio.getByRole("radio", { name: "Expert" }).click();
   await studio.locator(".expert").scrollIntoViewIfNeeded();
   await shot(studio.locator(".check-result"), "check-expert");
+});
+
+test("the Check Studio: a picture of three symbols, outlined and numbered", async ({ page }) => {
+  const symbol = (file: string) =>
+    readFileSync(new URL(`../e2e/fixtures/${file}`, import.meta.url), "utf8").trim().replace(/<svg([^>]*?) width="[^"]*" height="[^"]*"/, '<svg$1 width="320" height="320"');
+  const inner = ["gs1-datamatrix.svg", "datamatrix-brackets.svg", "ean13.svg"].map((f, i) => symbol(f).replace("<svg", `<svg x="${20 + i * 360}" y="40"`)).join("");
+  const picture = `<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="400" viewBox="0 0 1120 400"><rect width="100%" height="100%" fill="#f4efe6"/>${inner}</svg>`;
+  await page.goto("/#/check");
+  const studio = page.getByRole("main", { name: "Check Studio" });
+  await studio.getByRole("button", { name: "Picture", exact: true }).click();
+  await studio.getByLabel("Picture", { exact: true }).setInputFiles({ name: "pack.svg", mimeType: "image/svg+xml", buffer: Buffer.from(picture) });
+  await studio.getByRole("list", { name: "The symbols found" }).getByRole("button", { name: /\bData Matrix/ }).click();
+  await expect(studio.locator(".verdict")).toHaveAttribute("data-verdict", "does-not-follow");
+  await shot(studio.locator(".check-input"), "check-picture");
 });
 
 test("the editor at a glance", async ({ page }) => {

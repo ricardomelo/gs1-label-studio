@@ -90,6 +90,21 @@ to put it right.
    catalogue's texts stay the expert's, in English, shown as such in the expert view beside the engine's English
    message and its translation. *Make it right* opens the Barcode Studio with the data a repair made valid; the
    editor's Identify card links to the studio with its data, as a GS1 DataMatrix would carry it (`#/check?s=]d2&d=`).
+13. **The camera first on a phone, pictures read whole, what cannot be read said** (7.1 g). Three buttons under the
+   reading area choose the way in: Camera, Picture, Type or paste; a touch screen opens on the camera (the project's
+   Q3, mock-up A of two taken under the owner's rule; B, a menu of the ways in, cost a tap before every reading), a
+   mouse on the text a scanner types. The camera starts on a press, so that no page asks for it unasked; frames are
+   read every 200 ms in a worker (`decode.worker.ts`, ZXing with `textMode: "Plain"` and up to 16 symbols), the
+   same symbol counts once within three seconds, a tone and a vibration mark a reading. The stream stops when the
+   result opens, when the tab is hidden and when the studio is left; no frame is kept. Torch and zoom come from the
+   track's capabilities where offered. A picture (chosen, taken, dropped or pasted, SVG included) is drawn at most
+   2,400 pixels on its longest side and read harder; every symbol is outlined and numbered on it, coloured by its
+   verdict, and one chosen shows its result. When nothing is read, the studio names what it cannot read (DotCode, a
+   Composite's 2D part: docs/conformance.md, 3.1) and the user can record a code not read, which `check()` reports as
+   A9; a linear symbol that may host a Composite Component, read by the camera or in a picture, lists that part as not
+   checked. The browser tests play the camera as a canvas stream put in the place of `getUserMedia()` rather than
+   Chromium's fake device with a clip, as the project planned: it runs in the three projects and can also play a
+   refused, a missing and a torch-and-zoom camera; the frames still go through the video, the worker and ZXing.
 
 ## 3. Consequences
 

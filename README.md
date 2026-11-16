@@ -877,7 +877,13 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   an icon and a word, what the code says, a card per fault with what, where, why and how to fix, *Make it right*, what
   was not checked) and the expert view (the reading, the bytes with copy buttons, the element strings, the other
   syntaxes, the findings with their codes, sections and the engine's message, the context, the versions); the 77
-  faults told in plain words in six languages; the editor's Identify card links to it*
+  faults told in plain words in six languages; the editor's Identify card links to it; 7.1 g done on 16 November:
+  the camera and pictures (mock-up A of two: on a phone the studio opens on the camera, with Camera, Picture and Type
+  or paste under it): frames read by ZXing in a worker, the same symbol once in three seconds, a tone and a vibration,
+  the camera stopped when the result opens, the tab is hidden or the studio is left, torch and zoom where offered, a
+  refused or missing camera said so with a picture offered instead; a picture chosen, taken, dropped or pasted, every
+  symbol outlined, numbered and coloured by its verdict; what cannot be read (DotCode, a Composite's 2D part) named,
+  and a code not read recorded as fault A9*
 
 
 ## Licence

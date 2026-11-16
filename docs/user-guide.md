@@ -75,22 +75,38 @@ another studio.
 
 ![The Check Studio with the worked example: the verdict, what the code says and three cards](images/guide/check.png)
 
-1. Open **Check Studio** on the start page (or `#/check`).
-2. Under **What the code holds**, paste or type what the code carries, or scan it with a scanner connected as a
+1. Open **Check Studio** on the start page (or `#/check`). Under **Read a code**, three buttons choose how the code
+   comes in: **Camera**, **Picture** and **Type or paste**. A phone or a tablet opens on the camera, a computer on the
+   text.
+2. With **Camera**, press **Start the camera** and allow it when the browser asks; point it at the code, which is read
+   by itself, with a tone and a vibration where the phone allows. The result opens below and the camera pauses;
+   **Scan another** starts it again. Where the phone offers them, **Torch** lights the code and **Zoom** brings it
+   closer. The camera also stops when you switch to another tab or leave the studio, and no picture of it is kept. If
+   the camera is refused or missing, the studio says so and offers a picture instead.
+3. With **Picture**, press **Take or choose a picture** (on a phone this can take a photograph), or drop a picture on
+   the box, or paste one anywhere in the studio (Ctrl+V). Every symbol found is outlined on it and numbered, coloured by
+   its verdict; when there are several, choose one in the list under the picture to see its result. When none is
+   found, the studio says what it cannot read: a GS1 DotCode, and the 2D part of a Composite symbol, which no decoder
+   here reads (for an EAN-13, a GS1-128 or a GS1 DataBar read this way, *What was not checked* says so).
+   **There is a code here that is not read** records that, with fault A9 (*This type of symbol cannot be read here*).
+
+![A picture of three symbols: each outlined, numbered and coloured by its verdict, the second chosen](images/guide/check-picture.png)
+
+4. With **Type or paste**, under **What the code holds**, paste or type what the code carries, or scan it with a scanner connected as a
    keyboard. A separator can be typed as `<GS>`, `{GS}` or `\x1D`. **Try an example** fills in the example of the
    project: an ordinary Data Matrix with the brackets encoded and a month 13.
-3. Under **The symbol it came from**, say which symbol it was, when you know; a scanner that sends its symbology
+5. Under **The symbol it came from**, say which symbol it was, when you know; a scanner that sends its symbology
    identifier (`]d2`, `]Q3`, `]C1`…) at the start says it by itself. *Not known* lets the data decide.
-4. Under **Where is it scanned?**, choose the place: a shop, a medicine or medical device (then the pharmacy, the
+6. Under **Where is it scanned?**, choose the place: a shop, a medicine or medical device (then the pharmacy, the
    pharmacy and warehouse, or a hospital), a case, a pallet, the part itself, a phone, an asset, or *I do not know*.
    Changing it checks the same data again. Without it, whether the symbol suits its place is listed as not checked.
-5. **The result** opens in the **Simple** view: the verdict with its icon and word (*Follows the GS1 rules*, *Works,
+7. **The result** opens in the **Simple** view: the verdict with its icon and word (*Follows the GS1 rules*, *Works,
    with remarks*, *Does not follow the GS1 rules*, *Not a GS1 code*), what the code says (each data title in your
    language with its value, a date written out), then a card per problem, the worst first, each saying what is wrong,
    where (the code's text with the part highlighted), why it matters and how to fix it, and who does it. When the data
    can be made right, **Make it right** opens the Barcode Studio with it. **What was not checked** ends the list; print
    quality is never graded here, since that needs a barcode verifier.
-6. **Expert** shows the same result in detail: the reading (the symbology identifier and the repairs tried), the raw
+8. **Expert** shows the same result in detail: the reading (the symbology identifier and the repairs tried), the raw
    bytes in hexadecimal and as text with the problems' bytes highlighted and three copy buttons, the element strings,
    the other syntaxes (bracketed, the engine's notation, the GS1 Digital Link URI) when the data is valid, each finding
    with its code, the General Specifications sections, the GS1 Barcode Syntax Engine's own message in English beside
