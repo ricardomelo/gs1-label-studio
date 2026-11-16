@@ -1,14 +1,14 @@
 {
   "date": "2026-11-16",
-  "head": "c5207b5",
+  "head": "754be0e",
   "commits": {
-    "total": 514,
+    "total": 518,
     "first": "2026-10-28",
     "last": "2026-11-16",
     "daysWithCommits": 17,
     "calendarDays": 20,
     "perDay": {
-      "2026-11-16": 10,
+      "2026-11-16": 14,
       "2026-11-15": 61,
       "2026-11-14": 41,
       "2026-11-13": 21,
@@ -34,28 +34,28 @@
     },
     "docs": {
       "files": 23,
-      "lines": 20734
+      "lines": 20875
     },
     "excluded": {
-      "files": 40,
-      "lines": 17203
+      "files": 42,
+      "lines": 18456
     },
     "tests": {
-      "files": 78,
-      "lines": 17264
+      "files": 80,
+      "lines": 17402
     },
     "code": {
-      "files": 124,
-      "lines": 25377
+      "files": 126,
+      "lines": 26408
     },
     "data": {
       "files": 18,
-      "lines": 32334
+      "lines": 33914
     },
     "generated": {
       "files": 16,
       "lines": 2196
     }
   },
-  "tests": 2518
+  "tests": 2521
 }
