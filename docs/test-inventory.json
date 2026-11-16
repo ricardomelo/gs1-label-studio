@@ -9451,6 +9451,30 @@
    "area": "Exports and prepress: SVG, PNG, PDF, EPS, zip"
   },
   {
+   "program": "routes",
+   "file": "apps/web/test/routes.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "parseRoute › the root, with or without a hash, is the start page",
+     "status": "passed"
+    },
+    {
+     "name": "parseRoute › each studio by its address, a trailing slash allowed, its query read",
+     "status": "passed"
+    },
+    {
+     "name": "parseRoute › an unknown address is the start page; an anchor without the slash stays in the editor, as before routes",
+     "status": "passed"
+    },
+    {
+     "name": "routeHash › writes what parseRoute reads",
+     "status": "passed"
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
    "program": "said",
    "file": "apps/web/test/said.test.ts",
    "kind": "unit",
@@ -11672,6 +11696,59 @@
     },
     {
      "name": "the installed app opens on the icon with the name until the page is drawn; a browser's tab never shows it",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "studios",
+   "file": "apps/web/e2e/studios.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "the root offers the studios, each named, the ones to come not links; one tap reaches the editor",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the keyboard reaches each studio, and Enter opens it",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "back and forward move between studios, and what was typed survives the visit",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a studio still to come says so at its own address, with the way back",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the installed application offers each studio as a shortcut",
      "status": "listed",
      "projects": [
       "desktop",

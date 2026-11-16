@@ -28,7 +28,7 @@ export const AREAS = [
   ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian", ["i18n"]],
   ["The documents", ["docs"]],
-  ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour"]],
+  ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour", "routes", "studios"]],
 ];
 
 const programOf = (file) => basename(file).replace(/\.(test|spec)\.tsx?$/, "");

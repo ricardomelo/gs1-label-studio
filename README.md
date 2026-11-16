@@ -868,7 +868,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   partition; an NFC tag's URI first, in a URI record, with https) and several carriers of one item (`checkGroup.ts`:
   the matrix, one row per AI and one column per carrier; different keys or values, an EPC or NFC tag that disagrees
   with the barcodes, attributes whose key is in another symbol, a retail pack without its linear symbol, a case's
-  GS1-128 data missing from its 2D symbol, a logistic label that contradicts itself)*
+  GS1-128 data missing from its 2D symbol, a logistic label that contradicts itself); 7.1 e done the same day: the
+  start page offering the studios (mock-up A of two, cards; the RFID and Check Studios marked coming soon until their
+  screens exist) and hash routes, `#/label` today's editor unchanged, `#/barcode` the same editor with the barcode
+  alone, `#/rfid` and `#/check` reserved; the editor kept drawn behind another studio so that what was typed
+  survives; the installed application's shortcuts*
 
 
 ## Licence
