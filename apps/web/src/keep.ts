@@ -1,18 +1,28 @@
-// What this browser keeps for its user: GS1's GCP length table, loaded once (about 9 MB of XML, kept as compact text).
-// IndexedDB, as localStorage is too small; it may be unavailable (private windows, blocked storage), and then the
-// table only lasts until the page is closed.
+// What this browser keeps for its user: GS1's GCP length table, loaded once (about 9 MB of XML, kept as compact text),
+// and the Check Studio's history (history.ts). IndexedDB, as localStorage is too small; it may be unavailable (private
+// windows, blocked storage), and then what was loaded only lasts until the page is closed.
 
 const DATABASE = "gs1-label-studio";
 const STORE = "kept";
+/** Version 2 (backlog 7.1 j) adds the history's stores; the upgrade leaves version 1's store and what it holds. */
+const VERSION = 2;
 
-function open(): Promise<IDBDatabase> {
+/** Opens the application's database, creating or upgrading its stores. */
+export function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(DATABASE, VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains("readings")) db.createObjectStore("readings", { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains("sessions")) db.createObjectStore("sessions", { keyPath: "id", autoIncrement: true });
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
+
+const open = openDatabase;
 
 export async function keep(name: string, value: string | null): Promise<boolean> {
   try {

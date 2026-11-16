@@ -19,13 +19,13 @@ async function scan(page: Page, text: string) {
 test("a scan with ]d2 and a separator is checked as the camera's reading of the same symbol, marked as a scanner's", async ({ page }) => {
   await page.goto("/#/check");
   await way(page, "Type or paste").click();
-  await studio(page).getByRole("textbox").focus();
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).focus();
   await scan(page, "]d2010950600013435210ABC123|17271231");
   await expect(studio(page).getByText("Read from a scanner in keyboard mode.")).toBeVisible();
   await expect(studio(page).locator(".verdict")).toHaveAttribute("data-verdict", "follows");
   await expect(studio(page).locator(".says")).toContainText("BATCH/LOT");
   // The Enter ends the scan: no line break is left in the field
-  await expect(studio(page).getByRole("textbox")).not.toHaveValue(/\n/);
+  await expect(studio(page).getByRole("textbox", { name: /Paste or type it/ })).not.toHaveValue(/\n/);
   await studio(page).getByRole("radio", { name: "Expert" }).click();
   await expect(studio(page).locator(".expert .pairs").first()).toContainText("A scanner in keyboard mode");
 });
@@ -33,20 +33,20 @@ test("a scan with ]d2 and a separator is checked as the camera's reading of the 
 test("a scan without its identifier asks for the symbol and says how to switch AIM ID on", async ({ page }) => {
   await page.goto("/#/check");
   await way(page, "Type or paste").click();
-  await studio(page).getByRole("textbox").focus();
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).focus();
   await scan(page, "0109506000134352");
   await expect(studio(page).locator(".scanner-help")).toContainText("“AIM ID”");
   await studio(page).getByLabel("The symbol it came from").selectOption("]d2");
   await expect(studio(page).locator(".scanner-help")).toHaveCount(0);
   // Typed or pasted by hand, data is not a scanner's
-  await studio(page).getByRole("textbox").fill("0195012345678903");
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).fill("0195012345678903");
   await expect(studio(page).getByText("Read from a scanner in keyboard mode.")).toHaveCount(0);
 });
 
 test("Ctrl+] typed by hand puts a group separator where the cursor is", async ({ page }) => {
   await page.goto("/#/check");
   await way(page, "Type or paste").click();
-  const field = studio(page).getByRole("textbox");
+  const field = studio(page).getByRole("textbox", { name: /Paste or type it/ });
   await field.fill("]d2010950600013435210ABC123");
   await field.press("Control+BracketRight");
   await field.pressSequentially("17271231", { delay: 80 });
@@ -57,7 +57,7 @@ test("Ctrl+] typed by hand puts a group separator where the cursor is", async ({
 test("a lost separator is told as the code's or the scanner's, with the scanner's set-up", async ({ page }) => {
   await page.goto("/#/check");
   await way(page, "Type or paste").click();
-  await studio(page).getByRole("textbox").focus();
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).focus();
   await scan(page, "]d2010950600013435210ABC12317271231");
   const card = studio(page).locator('.finding[data-code="B3"]');
   await expect(card).toContainText("Either the code lacks a separator after a value whose length varies, or your scanner removes it.");
@@ -67,11 +67,11 @@ test("a lost separator is told as the code's or the scanner's, with the scanner'
 test("a scan typed on another keyboard layout is offered as the scanner meant it", async ({ page }) => {
   await page.goto("/#/check");
   await way(page, "Type or paste").click();
-  await studio(page).getByRole("textbox").fill("+d201095060001343521727123110ABC123");
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).fill("+d201095060001343521727123110ABC123");
   const help = studio(page).locator(".scanner-help").filter({ hasText: "another keyboard layout" });
   await expect(help).toContainText("QWERTZ (Germany, Austria), QWERTY (Spain), QWERTY (Italy)");
   await help.getByRole("button", { name: "Use this" }).click();
-  await expect(studio(page).getByRole("textbox")).toHaveValue("]d201095060001343521727123110ABC123");
+  await expect(studio(page).getByRole("textbox", { name: /Paste or type it/ })).toHaveValue("]d201095060001343521727123110ABC123");
   await expect(studio(page).locator(".verdict")).toHaveAttribute("data-verdict", "follows");
 });
 

@@ -115,11 +115,11 @@ test("the project's example 5.3 built by the camera then a tag shows J7 on the d
 test("two GTINs that differ in the indicator only ask whether one is the box's code, and a scanner's code joins by itself", async ({ page }) => {
   await page.goto("/#/check");
   await studio(page).getByRole("button", { name: "Type or paste", exact: true }).click();
-  await studio(page).getByRole("textbox").fill("]d20109506000134352");
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).fill("]d20109506000134352");
   await studio(page).getByRole("button", { name: "Add another code from this item" }).click();
-  await expect(studio(page).getByRole("textbox")).toHaveValue("");
+  await expect(studio(page).getByRole("textbox", { name: /Paste or type it/ })).toHaveValue("");
   // A scanner in keyboard mode: keystrokes a few milliseconds apart, ended by Enter
-  await studio(page).getByRole("textbox").focus();
+  await studio(page).getByRole("textbox", { name: /Paste or type it/ }).focus();
   await page.keyboard.type("]I119506000134359", { delay: 5 });
   await page.keyboard.press("Enter");
   await expect(group(page).locator(".group-members li")).toHaveCount(2);

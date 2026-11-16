@@ -6,7 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
 // Studio with the data made right; the texts follow the interface's language.
 
 const studio = (page: Page) => page.getByRole("main", { name: "Check Studio" });
-const data = (page: Page) => studio(page).getByRole("textbox");
+const data = (page: Page) => studio(page).getByRole("textbox", { name: /Paste or type it/ });
 /** The studio with its text field: on a touch screen it opens on the camera (7.1 g), so Type or paste is chosen. */
 async function openTyped(page: Page) {
   await page.goto("/#/check");

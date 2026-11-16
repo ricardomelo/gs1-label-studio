@@ -7,6 +7,10 @@ import { Camera } from "./Camera.tsx";
 import { decodeImage, mayHaveComposite, picturePixels, readingsOf } from "./camera.ts";
 import { guessKind, memberName, sameReading, type Member } from "./group.ts";
 import { GroupMatrix } from "./GroupMatrix.tsx";
+import {
+  addEntry, addSession, deleteAll, deleteEntries, entryOf, historyOff, loadHistory, sameAsLast, setHistoryOff, type HistoryEntry, type HistorySession,
+} from "./history.ts";
+import { HistoryList } from "./HistoryList.tsx";
 import { SIMPLE_TEXTS } from "./checkTexts.ts";
 import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
@@ -24,6 +28,7 @@ import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
 // versions. Both are drawn from the same findings, so they cannot disagree. A code comes in three ways (7.1 g): the
 // camera, first on a phone (the project's Q3), a picture, or typed and pasted text. Several codes of one item are
 // checked together (7.1 i): after any reading the next one joins the group, or every symbol of a picture at once.
+// Every code checked is kept in the history on this device (7.1 j), unless History is off.
 
 /** The symbols a pasted text can say it came from (the scanner's identifier, ISO/IEC 15424), the GS1 ones first. */
 const SYMBOLS: readonly { id: string; name: string }[] = [
@@ -305,10 +310,15 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   const repairs = useMemo(() => (data.trim() ? layoutRepairs(data.trim()) : []), [data]);
   const scanned = way === "camera" ? camReadings : way === "picture" ? (picture?.readings ?? []) : [];
   const current = way === "type" ? typed : way === "tag" ? tagReading : (unreadable ?? scanned[chosen] ?? null);
-  const reading = selected !== null && members[selected] ? members[selected].reading : current;
+  // A reading opened from the history (7.1 j), shown until another code is read
+  const [opened, setOpened] = useState<Reading | null>(null);
+  const reading = selected !== null && members[selected] ? members[selected].reading : (opened ?? current);
   // A new reading is shown rather than the member chosen before it; read while awaiting, it joins the group, unless
   // it is text still being typed (it joins on a press) or a code already in the group
-  useEffect(() => setSelected(null), [current]);
+  useEffect(() => {
+    setSelected(null);
+    setOpened(null);
+  }, [current]);
   const inGroup = (r: Reading) => members.some((m) => sameReading(m.reading, r));
   const join = (r: Reading) => {
     if (inGroup(r)) return;
@@ -358,6 +368,94 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   const memberResults = useMemo<(CheckResult | null)[]>(
     () => members.map((m) => (engine ? check(engine, m.reading, { environment: environment ?? null, epcSchemes: schemes }) : null)),
     [engine, members, environment, schemes],
+  );
+  // The history (7.1 j): loaded once; each code read is kept, typed text once it has rested for two seconds
+  const releases = useMemo(() => ({ engine: SYNTAX_ENGINE.release, dictionary: SYNTAX_ENGINE.dictionary }), []);
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [sessions, setSessions] = useState<HistorySession[]>([]);
+  const [kept, setKept] = useState(true);
+  const [off, setOff] = useState(historyOff);
+  const [session, setSession] = useState<number | null>(null);
+  const memoryId = useRef(-1);
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
+  const environmentRef = useRef(environment);
+  environmentRef.current = environment;
+  useEffect(() => {
+    void loadHistory().then((h) => {
+      if (!h) return setKept(false);
+      setEntries(h.entries);
+      setSessions(h.sessions);
+    });
+  }, []);
+  const store = (entry: Omit<HistoryEntry, "id">) => {
+    void addEntry(entry).then((id) => {
+      if (id === null) setKept(false);
+      const full = { ...entry, id: id ?? memoryId.current-- };
+      setEntries((list) => [...list, full]);
+    });
+  };
+  // Kept when a code is read, not when History is switched on, a session starts or everything is deleted
+  const offRef = useRef(off);
+  offRef.current = off;
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  useEffect(() => {
+    if (!engine || !current) return;
+    const timer = setTimeout(() => {
+      const env = environmentRef.current ?? null;
+      if (offRef.current || sameAsLast(entriesRef.current, current, env)) return;
+      store(entryOf(current, check(engine, current, { environment: env, epcSchemes: schemes }), env, sessionRef.current, releases));
+    }, current.source === "paste" ? 2000 : 0);
+    return () => clearTimeout(timer);
+  }, [current, engine]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Each entry checked again under the current release, the newest 200 (section 7.1, re-check)
+  const nowVerdicts = useMemo(() => {
+    const map = new Map<number, Verdict>();
+    if (!engine) return map;
+    for (const e of [...entries].sort((a, b) => b.id - a.id).slice(0, 200)) {
+      if (e.reading) map.set(e.id, check(engine, e.reading, { environment: e.environment, epcSchemes: schemes }).verdict);
+    }
+    return map;
+  }, [engine, entries, schemes]);
+  const history = (
+    <HistoryList
+      entries={entries}
+      sessions={sessions}
+      kept={kept}
+      off={off}
+      onOff={(value) => {
+        setHistoryOff(value);
+        setOff(value);
+      }}
+      session={session}
+      onSession={(name) => {
+        if (name === null) return setSession(null);
+        void addSession(name).then((id) => {
+          const s = { id: id ?? memoryId.current--, name, at: new Date().toISOString() };
+          setSessions((list) => [...list, s]);
+          setSession(s.id);
+        });
+      }}
+      verdictNow={(e) => nowVerdicts.get(e.id) ?? null}
+      releases={releases}
+      onOpen={(e) => {
+        setSelected(null);
+        setOpened(e.reading);
+        setTimeout(() => resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+      }}
+      onNoBarcode={() => store(entryOf(null, null, environment ?? null, session, releases))}
+      onDelete={(ids) => {
+        void deleteEntries(ids);
+        setEntries((list) => list.filter((e) => !ids.includes(e.id)));
+      }}
+      onDeleteAll={() => {
+        void deleteAll();
+        setEntries([]);
+        setSessions([]);
+        setSession(null);
+      }}
+    />
   );
   const kind = chosenKind ?? guessKind(members.filter((m) => m.on).map((m) => m.reading));
   const group = useMemo<GroupResult | null>(() => {
@@ -584,6 +682,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         {input}
         {groupCard}
         {!engine && reading && <p className="hint">{t("Loading…")}</p>}
+        {history}
       </main>
     );
   }
@@ -596,7 +695,9 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   // The code shown: a member of the group, a code read to join it, or a code alone
   const memberShown = selected !== null && members[selected] ? selected : members.findIndex((m) => sameReading(m.reading, reading));
   const groupLine =
-    memberShown >= 0 ? (
+    opened && reading === opened && selected === null ? (
+      <p className="hint">{t("A reading from the history, read on {date}, checked again now.", { date: new Date(opened.at).toLocaleString(lang) })}</p>
+    ) : memberShown >= 0 ? (
       <p className="hint">{t("The result of one code of this item: {name}.", { name: memberName(reading, undefined) })}</p>
     ) : members.length > 0 ? (
       <div className="check-row">
@@ -701,6 +802,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         {groupLine}
         {view === "simple" ? simple : <Expert result={result} reading={reading} environment={environment} />}
       </section>
+      {history}
     </main>
   );
 }
