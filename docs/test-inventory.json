@@ -1423,6 +1423,86 @@
    "area": "The Check Studio: a code read to be checked"
   },
   {
+   "program": "check-group",
+   "file": "packages/core/test/check-group.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "group F: the reading context › the same reading gives different verdicts in different contexts, and not assessed findings without one",
+     "status": "passed"
+    },
+    {
+     "name": "group F: the reading context › F1 lists the symbols allowed for this data, recommended first, exactly as step 2 of the Label Studio does",
+     "status": "passed"
+    },
+    {
+     "name": "group F: the reading context › F1 for an EAN/UPC on a logistic unit and a GS1 QR Code nowhere a table names it; a Data Matrix with a URI where GS1 DataMatrix is allowed",
+     "status": "passed"
+    },
+    {
+     "name": "group F: the reading context › F2, F3, F4: attributes asked of an EAN/UPC, a 2D symbol alone at a retail till, an add-on",
+     "status": "passed"
+    },
+    {
+     "name": "group I: tags › an SGTIN-96 decodes to its key and serial, which go through the engine and the own rules",
+     "status": "passed"
+    },
+    {
+     "name": "group I: tags › I1: a header no GS1 scheme has is a note; a GS1 header whose fields do not decode, an error",
+     "status": "passed"
+    },
+    {
+     "name": "group I: tags › I2: a reserved filter, and a partition the GCP table contradicts",
+     "status": "passed"
+    },
+    {
+     "name": "group I: tags › an EPC+ needs no schemes and keeps a serial's leading zeros",
+     "status": "passed"
+    },
+    {
+     "name": "group I: tags › I3: the URI not in the first record, not in a URI record, or not https; I4: the URI itself, as group G",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › an EAN-13, a GS1 DataMatrix and an SGTIN-96 that lost the serial's leading zeros: J7 and the matrix of section 5.3",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J7: a tag of another scheme than the barcode's key",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J1, with the question of packaging levels when the GTINs differ in the indicator only; J2",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › C9 and E1 of a reading are resolved, with J3, when a companion in the group carries the key",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J4: a retail consumer pack's 2D symbol with no linear one, F3 then answered by J4; not assessed without a context",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J6: a case's GS1-128 element strings missing from its supplemental 2D symbol",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J8 compares host, scheme, key and each data element of an NFC URI with a QR Code's",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J9: a logistic label with two SSCCs, or (02) without (37) or the SSCC on any of its symbols; its symbols' associations answered by the label",
+     "status": "passed"
+    },
+    {
+     "name": "group J: several carriers on one item › J10: a symbol that is not a GS1 one on the pack",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "checkDigit",
    "file": "packages/core/test/checkDigit.test.ts",
    "kind": "unit",
@@ -8053,6 +8133,14 @@
     },
     {
      "name": "an NDEF URI record › writes a long record with a four-byte length, and reads one with an ID",
+     "status": "passed"
+    },
+    {
+     "name": "an NDEF message's records (the Check Studio, I3) › lists every record in its order, and finds the first URI record wherever it is",
+     "status": "passed"
+    },
+    {
+     "name": "an NDEF message's records (the Check Studio, I3) › stops at the record marked last, and refuses a message cut inside a record",
      "status": "passed"
     }
    ],

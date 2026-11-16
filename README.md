@@ -861,7 +861,14 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   century rule; a batch or serial number likely to be mis-keyed; a measure of zero), the associations with their data
   titles, GS1 Digital Link URIs (short names, compressed, a raw slash or percent sign, qualifiers out of order, an
   attribute in the path, http, the canonical form, each URI mended), and every engine message named by a fault or
-  listed with its reason (`docs/conformance.md`, 3.2, lists the 77 faults and their sources)*
+  listed with its reason (`docs/conformance.md`, 3.2, lists the 77 faults and their sources); 7.1 d done on 16
+  November: the reading context (the symbol against the context's specification table, with the symbols allowed for
+  the data recommended first as step 2 lists them; a 2D symbol alone at a retail till; an add-on; "I do not know"
+  listed as not assessed, never as passed), tags (an RFID tag's EPC decoded, classic or EPC+, its header, filter and
+  partition; an NFC tag's URI first, in a URI record, with https) and several carriers of one item (`checkGroup.ts`:
+  the matrix, one row per AI and one column per carrier; different keys or values, an EPC or NFC tag that disagrees
+  with the barcodes, attributes whose key is in another symbol, a retail pack without its linear symbol, a case's
+  GS1-128 data missing from its 2D symbol, a logistic label that contradicts itself)*
 
 
 ## Licence
