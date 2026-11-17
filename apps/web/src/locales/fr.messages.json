@@ -762,5 +762,9 @@
  "Not in the GCP table": "Absent de la table des GCP",
  "This link is incomplete: ask for it again, or copy all of it.": "Ce lien est incomplet : demandez-le à nouveau ou copiez-le en entier.",
  "This link was made by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Ce lien a été créé par une version plus récente de GS1 Label Studio : rechargez la page pour la mettre à jour, puis rouvrez-le.",
- "the width must be more than 0": "la largeur doit être supérieure à 0"
+ "the width must be more than 0": "la largeur doit être supérieure à 0",
+ "An EPC of {epcBits} bits does not fit the Length field (1 to 31 words).": "Un EPC de {epcBits} bits ne tient pas dans le champ Length (1 à 31 mots).",
+ "Attribute bits {attributes} are not 0 to 255.": "Les bits d'attribut {attributes} ne sont pas entre 0 et 255.",
+ "The EPC is not hexadecimal.": "L'EPC n'est pas hexadécimal.",
+ "{bits} bits do not match an EPC of {clean} hexadecimal digits.": "{bits} bits ne correspondent pas à un EPC de {clean} chiffres hexadécimaux."
 }

@@ -34,6 +34,10 @@ import {
   zplPage,
   zplTurnedField,
   zplWithWork,
+  epcBank,
+  zplRfidCommands,
+  zplRfidLabel,
+  zplWithRfid,
   readWork,
   turnedRect,
   type DesignPage,
@@ -753,5 +757,34 @@ describe.skipIf(!enabled)("ZPL printed by Labelary and read back", () => {
       if (Number(printed) !== dark[i]) differ++;
     }
     expect(differ).toBe(0);
+  });
+});
+
+// RFID printers (backlog 6.12 c, ADR 0008 decision 3): Labelary does not write tags, but its linter checks every ^RS and
+// ^RF parameter and answers the faults in the X-Warnings header; the bytes and the data are checked in rfid.test.ts.
+describe.skipIf(!enabled)("ZPL for an RFID printer, through Labelary's linter", () => {
+  async function warnings(zpl: string): Promise<string | null> {
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetch("https://api.labelary.com/v1/printers/8dpmm/labels/2x1/0/", {
+        method: "POST",
+        headers: { Accept: "image/png", "Content-Type": "application/x-www-form-urlencoded", "X-Linter": "On" },
+        body: zpl,
+      });
+      if (response.status === 429 && attempt < 5) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+        continue;
+      }
+      expect(response.status).toBe(200);
+      return response.headers.get("x-warnings");
+    }
+  }
+  it("takes the tag's commands, written from the PC or with the PC set by the printer, with no warning", { timeout: 30000 }, async () => {
+    const bank = epcBank("3034257BF7194E4000001A85", 96, { attributes: 1 });
+    for (const from of ["pc", "auto"] as const) {
+      expect(await warnings(zplRfidLabel(bank, ["urn:epc:tag:sgtin-96:1.0614141.812345.6789"], { dpi: 203, from }))).toBeNull();
+    }
+    expect(await warnings(zplWithRfid("^XA\n^FO20,20^A0N,30,30^FDLabel^FS\n^XZ", bank))).toBeNull();
+    // the linter does see a wrong memory bank or format: the check above can fail
+    expect(await warnings(zplRfidCommands(bank).replace(",1^FD", ",9^FD").replace(/^/, "^XA\n") + "\n^XZ")).toContain("^RF");
   });
 });

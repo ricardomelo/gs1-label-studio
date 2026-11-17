@@ -374,4 +374,6 @@ export {
 } from "./readings.ts";
 export { REPORT_PAGE, reportPages, reportPdf, textWidth, winAnsiCode, wrapText, type ReportBlock, type ReportDocument } from "./checkReport.ts";
 export { distanceBetween, ESTIMATE_CODES, ESTIMATE_NOTE, estimateRules, measureSymbol, modulesAcross, RULER_MM, scaleFromWidth, type Pixels, type SizeEstimate } from "./estimate.ts";
+export { crc16, EPC_MEMORY_LIMITS, epcBank, pcWord, readEpcBank, readPc, type BankRead, type BankWord, type EpcBank, type PcFields, type PcRead } from "./tagMemory.ts";
+export { readZplRfid, zplRfidCommands, zplRfidLabel, zplWithRfid, type RfidWrite, type RfidWriteFrom } from "./rfidZpl.ts";
 export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";
