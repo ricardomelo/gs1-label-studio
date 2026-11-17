@@ -168,6 +168,26 @@ to put it right.
    item's report is made from the group on screen. The buttons sit in a row under the history's filters, visible
    (mock-up A of two; B, one *Export* button with a menu, hid what can be exported), and a *Report (PDF)* button closes
    the result and the group.
+18. **One Share button, the device's sheet first, links in the fragment** (7.1 l, the project's section 7.4 and Q12 as
+   recommended). `share.ts` in the core packs what a link carries as compact JSON, deflate-compressed with the
+   browser's own `CompressionStream` (no library) and written in base64url: a reading (its bytes, identifier, decoder's
+   symbology, carrier, source, what the decoder said of the symbol, its NFC record, the text when it is not the bytes,
+   the place chosen) in `#/check?r=…`, a work (the work file) in `#/label?w=…` or `#/barcode?w=…`. A link longer than
+   2,000 characters is not offered. Opening a reading's link checks it again under the release that opens it; a link
+   cut or changed is refused with a message, a newer version's asks for a reload, a work's goes through `readWork()`'s
+   checks. The web's `share.ts` and `ShareButton.tsx` give one button (mock-up A of two; B, the ways in a row under the
+   result, put five buttons on every card): the tap calls `navigator.share()` with the file when `canShare()` takes
+   it; otherwise a menu, as the split buttons' (a sheet on a phone), offers WhatsApp (`wa.me`, text only), e-mail
+   (`mailto:`, text only, the file saved first and the body saying to attach it), Copy the text, Copy the link and
+   Download. What is shared is prepared as the pointer comes near, so that the sheet opens within the tap's
+   activation. The texts are the reports' words (`reports.ts`): one reading, an item, what the history lists (counts
+   and the five most frequent faults); the generators' text has the data titles and values, the element string and the
+   Digital Link URI (`workShareText()`). Files: the reading's, item's and session's PDF reports; the label's PNG. Two
+   departures from the project, recorded here: one Share button after the Export step's downloads rather than one
+   beside each download and beside *Save* (the PNG is the file every share sheet takes; the link carries the work), and
+   a session shares its report alone (the CSV files stay in the export row). The share and the exports ask once a
+   visit, together, before data with a serial number or a person's number leaves the page. Bulk work and the NFC
+   writer's `.ndef` file have no Share (the RFID Studio is item 7.1 m's).
 
 ## 3. Consequences
 

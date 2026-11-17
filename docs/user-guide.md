@@ -166,6 +166,16 @@ another studio.
     everything, and **Open a readings file** brings it back on this or another device. When the readings carry a serial
     number or a person's number, the studio asks once before it exports them. The reports are in the language of the
     page; the files' columns stay in English.
+13. **Share.** **Share…** sits beside **Report (PDF)**, beside **Item report (PDF)** and in the history's row. On a
+    phone (and in browsers that have one) it opens the device's share sheet with the PDF and a text that is enough on
+    its own: the verdict, what the code says, each fault in one line with its code, the element string. Elsewhere it
+    offers a menu: **WhatsApp** (the text and the link; the file is sent from the phone), **E-mail** (the PDF is saved
+    first: attach it to the message), **Copy the text**, **Copy the link** and **Download**. The link of one reading
+    carries the code itself in the part of the address after `#`, which the web server never sees; whoever opens it
+    sees the same result, checked again. When the data would make a link longer than 2,000 characters there is no
+    link, only the file. A share that includes a serial number or a person's number asks once.
+
+![Share without a share sheet: the menu under the button](images/guide/check-share.png)
 
 In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
 with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.
@@ -706,6 +716,10 @@ correctly is refused with the reason, never printed wrong (section 17). How to u
    would (in bulk, take the spreadsheet again); **Start anew** forgets it. Nothing comes back unasked, and nothing is
    kept over it until you answer. **Start over** forgets it too. A private window, or a browser that blocks storage,
    keeps nothing; the work file of step 1 is still the way to keep a work for good or take it to another computer.
+6. **Share…** in the Export step sends the label as a PNG with a text of its data (each data title and value, the
+   element string, the GS1 Digital Link URI) and a link `#/label?w=…` that opens the same work in any browser: the
+   data, the choices and the label, as **Open…** does with the file. As in the Check Studio, the device's share sheet
+   is used where there is one, else WhatsApp, e-mail, copy and download; past 2,000 characters there is no link.
 
 ## 9. The GS1 Logistic Label
 

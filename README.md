@@ -899,7 +899,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   the standard fonts, in the page's language (one reading in two pages at most, an item with its matrix, a session
   counted by verdict, kind, symbology, fault and company prefix), and readings.csv, findings.csv and readings.json of
   what the history lists, the JSON opened again on any device, an export with personal data asking once (mock-up A of
-  two: the buttons in a row under the history's filters)*
+  two: the buttons in a row under the history's filters); 7.1 l done on 17 November: one Share button in the Check
+  Studio's result, group and history and in the editor's Export step, the device's share sheet with the PDF or PNG
+  and a text that is enough alone, else WhatsApp, e-mail, copy and download (mock-up A of two), links that carry a
+  reading (`#/check?r=…`, checked again on opening) or a work (`#/label?w=…`) compressed in the address's fragment,
+  none past 2,000 characters*
 
 
 ## Licence

@@ -1,5 +1,5 @@
 {
- "date": "2026-11-16",
+ "date": "2026-11-17",
  "skipped": 0,
  "programs": [
   {
@@ -9779,6 +9779,106 @@
    "area": "In bulk: rows, the report, sequences, generation"
   },
   {
+   "program": "share",
+   "file": "packages/core/test/share.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a reading's link › a GS1 DataMatrix with a fault comes back the same, and is checked the same",
+     "status": "passed"
+    },
+    {
+     "name": "a reading's link › typed text without an identifier comes back the same, and is checked the same",
+     "status": "passed"
+    },
+    {
+     "name": "a reading's link › an NFC tag comes back the same, and is checked the same",
+     "status": "passed"
+    },
+    {
+     "name": "a reading's link › an RFID EPC comes back the same, and is checked the same",
+     "status": "passed"
+    },
+    {
+     "name": "a reading's link › carries no place when none was chosen, and fits well within the limit for a usual code",
+     "status": "passed"
+    },
+    {
+     "name": "a reading's link › is refused with a message when it was cut, changed or made by a newer version",
+     "status": "passed"
+    },
+    {
+     "name": "packing › compresses: a repetitive text gets much shorter, and any text comes back",
+     "status": "passed"
+    },
+    {
+     "name": "packing › offers a link of 2,000 characters and not one of 2,001",
+     "status": "passed"
+    },
+    {
+     "name": "a work's link › opens the same work as its file does",
+     "status": "passed"
+    },
+    {
+     "name": "a work's link › refuses a link that holds something other than a work",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
+   "program": "sharing",
+   "file": "apps/web/test/sharing.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the fallbacks' addresses › WhatsApp gets the text and the link, URL-encoded, and no contact",
+     "status": "passed"
+    },
+    {
+     "name": "the fallbacks' addresses › e-mail gets the title as its subject and a body that says to attach the file saved",
+     "status": "passed"
+    },
+    {
+     "name": "the fallbacks' addresses › leaves the link out when there is none",
+     "status": "passed"
+    },
+    {
+     "name": "the device's share sheet › gets the file and the text together when it takes the file",
+     "status": "passed"
+    },
+    {
+     "name": "the device's share sheet › is not used when it does not take the file, nor where there is none: the menu is offered",
+     "status": "passed"
+    },
+    {
+     "name": "the device's share sheet › counts a share cancelled by the person as done, and a failure as a reason for the menu",
+     "status": "passed"
+    },
+    {
+     "name": "links › are offered up to 2,000 characters",
+     "status": "passed"
+    },
+    {
+     "name": "the texts › one reading: the verdict, the symbol, what the code says, each finding in one line with its code, the element string",
+     "status": "passed"
+    },
+    {
+     "name": "the texts › an item: its verdict, the codes compared, each code's verdict",
+     "status": "passed"
+    },
+    {
+     "name": "the texts › a session: the counts by verdict and the most frequent faults",
+     "status": "passed"
+    },
+    {
+     "name": "the texts › a label: each data title and value, the element string, the Digital Link URI",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "sign",
    "file": "packages/core/test/sign.test.ts",
    "kind": "unit",
@@ -11149,6 +11249,59 @@
     },
     {
      "name": "a pasted SGTIN-96 shows its GTIN and serial, and its GS1 Digital Link URI in the expert view",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-share",
+   "file": "apps/web/e2e/check-share.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "without a share sheet: the menu sends the text and the link to WhatsApp, copies them and downloads the PDF",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "with a share sheet: the PDF and the text go together; the link, opened elsewhere, shows the same result",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a link cut on its way is refused with a message",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a share that includes a serial number asks once a visit",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the editor's Share sends the PNG and a link that opens the same work",
      "status": "listed",
      "projects": [
       "desktop",
