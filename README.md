@@ -824,7 +824,18 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
 - 6.12 A destination of its own for RFID (assessment first; the owner, 15 November 2026): the EPC card, EPC+ and EPC++,
   +AIDC data, an EPC pasted and NFC grown past step 3's card; a menu of its own beside the label's, with its own steps
   (the key and data, the scheme, the tag's memory, writing and reading back). Mock-ups first, after an ideation round
-  with the owner (7.1).
+  with the owner (7.1) — *assessed on 17 November 2026 (ADR 0008): option A of three taken under the owner's rule (a
+  studio at `#/rfid` with its own steps; B, a carrier switch in the editor, and C, a converter, set aside), then
+  mock-up A of two (the editor's two columns: steps 1 and 2 on the left, the tag's memory and writing on the right; B,
+  one step at a time); items a to f: a, the studio's screen — done 17 November: `#/rfid` offered by the start page and
+  as a shortcut, the editor's step 1 with the scheme shared with the editor's card, which links to it; b, the tag's
+  memory — done the same day (`tagMemory.ts`: the StoredCRC of Gen2 Annex F, the StoredPC's Length, user memory
+  indicator and hazardous material bit, the bank word by word from 00h, 10h or 20h, a bank read back); c, writing —
+  done the same day (`rfidZpl.ts`: `^RS8` and `^RFW,H,1,n,1` from bit 10h on any Gen2 printer, or `^RFW,H,,,A` on
+  the ZD500R, ZT400 and ZT600; a label of its own or the Label Studio's label with its tag; Labelary's linter and the
+  EPC read back in the tests); d, many tags at once (a serial sequence as a file an encoder takes, and ZPL with a tag
+  per label); e, reading back (what a reader returned compared with what was meant); f, the documents and the test
+  plan after d and e*
 - 6.13 More pictograms (the owner, 15 November 2026): **+ Pictogram** with an arrow beside it to choose among
   pictograms by segment (healthcare, food, textiles, logistics and others), rather than adding UDI alone. Each
   pictogram from a standard whose symbols may be drawn freely (ISO 15223-1 for medical devices, ISO 7000 / ISO 780

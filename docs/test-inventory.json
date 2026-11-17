@@ -8158,6 +8158,10 @@
     {
      "name": "ZPL printed by Labelary and read back › prints a compressed graphic field dot for dot: repeat counts, row fills and repeated rows",
      "status": "passed"
+    },
+    {
+     "name": "ZPL for an RFID printer, through Labelary's linter › takes the tag's commands, written from the PC or with the PC set by the printer, with no warning",
+     "status": "passed"
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
@@ -9767,6 +9771,30 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "rfid",
+   "file": "packages/core/test/rfid.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "ZPL's ^RF › writes the StoredPC and the EPC from block 1 of the EPC bank, the bytes counted",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL's ^RF › writes what decodes to the same EPC, classic and EPC+, whatever its length",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL's ^RF › joins every label of a file, after its ^XA, the label's own commands unchanged",
+     "status": "passed"
+    },
+    {
+     "name": "ZPL's ^RF › prints the lines in text, a caret or tilde in them made a space",
+     "status": "passed"
+    }
+   ],
+   "area": "RFID, NFC and digital signatures"
+  },
+  {
    "program": "roundtrip",
    "file": "packages/core/test/roundtrip.test.ts",
    "kind": "unit",
@@ -10869,6 +10897,62 @@
     }
    ],
    "area": "In bulk: rows, the report, sequences, generation"
+  },
+  {
+   "program": "tagMemory",
+   "file": "packages/core/test/tagMemory.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the StoredCRC › is Gen2's CRC-16",
+     "status": "passed"
+    },
+    {
+     "name": "the StoredCRC › leaves Annex F's residue over the data and itself",
+     "status": "passed"
+    },
+    {
+     "name": "the StoredPC › counts the EPC's words and carries the user memory indicator and attribute bits",
+     "status": "passed"
+    },
+    {
+     "name": "the StoredPC › refuses what the Length cannot count and attribute bits beyond a byte",
+     "status": "passed"
+    },
+    {
+     "name": "the StoredPC › is read back field by field",
+     "status": "passed"
+    },
+    {
+     "name": "the EPC bank › lays out an SGTIN-96 word by word, its CRC first",
+     "status": "passed"
+    },
+    {
+     "name": "the EPC bank › fills an EPC to the word, the Length counting the words",
+     "status": "passed"
+    },
+    {
+     "name": "the EPC bank › refuses a length that does not match the digits",
+     "status": "passed"
+    },
+    {
+     "name": "the EPC bank › takes an EPC+ with +AIDC data, whose words the PC counts",
+     "status": "passed"
+    },
+    {
+     "name": "a bank read back › is read whole, from the PC, or with a CRC that does not match",
+     "status": "passed"
+    },
+    {
+     "name": "a bank read back › keeps the words after the EPC that the Length does not count",
+     "status": "passed"
+    },
+    {
+     "name": "a bank read back › refuses what no Length fits",
+     "status": "passed"
+    }
+   ],
+   "area": "RFID, NFC and digital signatures"
   },
   {
    "program": "templates",
@@ -12695,12 +12779,38 @@
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
   },
   {
+   "program": "rfid-studio",
+   "file": "apps/web/e2e/rfid-studio.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "step 1's data, encoded, laid out in the tag's memory and written by an RFID printer",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "the editor's card and the RFID Studio share the scheme chosen",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
    "program": "studios",
    "file": "apps/web/e2e/studios.spec.ts",
    "kind": "browser",
    "tests": [
     {
-     "name": "the root offers the studios, each named, the ones to come not links; one tap reaches the editor",
+     "name": "the root offers the four studios, each named and a link; one tap reaches the editor",
      "status": "listed",
      "projects": [
       "desktop",
@@ -12719,15 +12829,6 @@
     },
     {
      "name": "back and forward move between studios, and what was typed survives the visit",
-     "status": "listed",
-     "projects": [
-      "desktop",
-      "phone",
-      "tablet"
-     ]
-    },
-    {
-     "name": "a studio still to come says so at its own address, with the way back",
      "status": "listed",
      "projects": [
       "desktop",

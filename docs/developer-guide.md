@@ -308,13 +308,15 @@ that say what is true; together they are the [inventory of features](test-invent
 | `environments` | the resolver's scanning environments, its 2,970 answers | 4 |
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 165 |
 | `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 1,108 |
+| `tagMemory` | the EPC memory bank of a Gen2 tag: the StoredCRC against Python's CRC-CCITT and Annex F's residue, the StoredPC's Length and control bits, the bank word by word, a bank read back whole or from the PC | 12 |
+| `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 4 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriFormat` | the human readable text's format: AI, data titles, both, one's own; in the SVG and every printer language, still read | 14 |
 | `hriplace` | the human readable text's position and height, still read | 12 |
 | `identifiers` | every identification key, (03), attributes of element strings only | 5 |
 | `identify` | the editor's identification, one list, parameters, several keys | 24 |
-| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 75 |
+| `labelary` | ZPL printed by Labelary and read back (LABELARY=1) | 76 |
 | `labelsvg` | the label's SVG drawn by resvg and read back | 6 |
 | `layout` | EAN/UPC and the label's layout against the resolver | 45 |
 | `logistic` | the GS1 Logistic Label | 13 |
@@ -366,7 +368,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `editor` | the editor in a browser, desktop, phone and tablet (Playwright) | 118 |
 | `layouts` | the computer's, the phone's and the tablet's layouts, installing the app, About (Playwright) | 10 |
 | `routes` | the studios' addresses: the start page, each studio, a shared link's query, the editor's anchors (apps/web/test) | 4 |
-| `studios` | the start page and the studios' addresses in a browser: one tap to the editor, the keyboard, back and forward, what was typed kept, the shortcuts (Playwright) | 5 |
+| `studios` | the start page and the studios' addresses in a browser: one tap to the editor, the keyboard, back and forward, what was typed kept, the shortcuts (Playwright) | 4 |
 | `check-result` | the Check Studio's result in a browser: the worked example's verdict, cards and expert panels, the place re-running the checks, Make it right, Portuguese, the Identify card's link (Playwright) | 5 |
 | `check-camera` | the Check Studio's camera and pictures in a browser: the camera first on a touch screen, a code read and the camera stopped, hidden and shown, left; torch and zoom; refused and missing; a picture of three symbols outlined and numbered; no barcode and fault A9; pasted and dropped (Playwright, a canvas stream as the camera) | 8 |
 | `check-scan` | the Check Studio's scanner, NFC tags and EPCs in a browser: a scan with ]d2 and a separator, a scan without identifier and AIM ID, Ctrl+] by hand, a lost separator told as the scanner's, another keyboard layout, an NFC tag's records and I3, no Web NFC and an .ndef file, a pasted SGTIN-96 (Playwright, a stand-in NDEFReader) | 8 |
@@ -374,6 +376,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check-history` | the Check Studio's history in a browser: codes kept through a reload and opened again, typed text kept once it rests, search and filter; version 1 of the database upgraded keeping the GCP table, a session, Delete all read back; a reading of an older release marked; a browser that keeps nothing; History off remembered, an item with no barcode (Playwright, IndexedDB) | 5 |
 | `check-report` | the Check Studio's reports and files in a browser: one reading's report in two pages at most; readings.csv with one row per listed reading, filtered as the list is, and the session report counting the same; findings.csv; readings.json opened again after Delete all giving the same list, a file that is not one refused; an export with a serial number asking once; an item's report (Playwright, downloads) | 4 |
 | `check-estimate` | Size estimates in a browser: the margins at once, the X-dimension within its tolerance from one symbol's printed width typed with a comma, a grade named only in the sentence saying there is none, a wrong width refused; a size outside a shop's range a finding with its estimate and the table's grade (Playwright) | 2 |
+| `rfid-studio` | The RFID Studio in a browser: step 1's data encoded, the bank's words, the hazardous material bit changing the PC and its CRC, ZPL alone and joined to the label, from bit 20h; the editor's card sharing the scheme (Playwright) | 2 |
 | `check-share` | Share in a browser: without a share sheet, the menu (WhatsApp with the text and the link, Copy the text, Download, Escape); with one, the PDF and the text together and the link opened in another browser giving the same verdict and faults; a link cut on its way refused; a serial asking once a visit; the editor's Share sending the PNG and a link that opens the same work (Playwright, fakes for the share sheet, the clipboard and window.open) | 5 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |

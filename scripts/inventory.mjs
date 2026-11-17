@@ -23,12 +23,12 @@ export const AREAS = [
   ["Exports and prepress: SVG, PNG, PDF, EPS, zip", ["render", "prepress", "roundtrip"]],
   ["In bulk: rows, the report, sequences, generation", ["table", "bulk", "report", "sequence", "batch"]],
   ["Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB", ["dots", "printer", "zpl", "labelary", "printlangs", "argox"]],
-  ["RFID, NFC and digital signatures", ["epc", "epcPlus", "ndef", "sign"]],
+  ["RFID, NFC and digital signatures", ["epc", "epcPlus", "tagMemory", "rfid", "ndef", "sign"]],
   ["The Check Studio: a code read to be checked", ["reading", "faults", "check", "engine-map", "check-group", "check-studio", "camera", "wedge", "group", "history", "readings", "checkReport", "reports", "share", "sharing", "estimate", "estimates"]],
   ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian", ["i18n"]],
   ["The documents", ["docs"]],
-  ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour", "routes", "studios", "check-result", "check-camera", "check-scan", "check-matrix", "check-history", "check-report", "check-share", "check-estimate"]],
+  ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour", "routes", "studios", "check-result", "check-camera", "check-scan", "check-matrix", "check-history", "check-report", "check-share", "check-estimate", "rfid-studio"]],
 ];
 
 const programOf = (file) => basename(file).replace(/\.(test|spec)\.tsx?$/, "");

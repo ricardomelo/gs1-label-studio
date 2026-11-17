@@ -840,6 +840,39 @@ opens this section and brings it into view.
   Android has; hold the tag to the phone when asked.
 - Elsewhere, **NDEF file** saves the NDEF message (NFC Forum URI record, the prefix abbreviated) for a tag writer app.
 
+### The RFID Studio: the tag's memory and writing it
+
+The start page's **RFID Studio** (or *Open in the RFID Studio* in the card above) gives the tag its own steps. Step 1
+is the editor's: what is typed in one studio is there in the other, and so are the scheme and filter chosen.
+
+![The RFID Studio: step 1, the encoding, the tag's memory word by word](images/guide/rfid-studio.png)
+
+1. **What does the code identify?** Type or paste the data as in the editor; an EPC's hexadecimal or URI pasted fills it
+   in too.
+2. **How is it encoded?** The scheme (Classic, EPC+ or EPC++), the company prefix's length or GS1's table, a DSGTIN's
+   date, the filter and +AIDC data, as in the card above.
+3. **The tag's memory**: the tag drawn with its EPC memory as a bar (the dashed line at 464 bits is the most a tag with
+   an XPC_W1 word holds; 496 bits without one), then the EPC bank word by word from bit 00h: the **StoredCRC** (grey;
+   the tag computes it itself, shown so that you can compare it with what a reader returns), the **StoredPC** (orange;
+   its Length counts the EPC's 16-bit words) and the **EPC** (blue), zero-filled to the word. Under **Control bits in the
+   StoredPC**, *Hazardous material* sets the attribute bit x01 (Gen2 version 1 tags) and *User memory holds data* the
+   user memory indicator; both change the StoredPC and its CRC. The EPC's forms follow (hexadecimal, base 64, URIs,
+   links for NFC).
+4. **Writing and reading back**: a browser cannot write or read a UHF tag, so this step gives what an encoder or an RFID
+   printer takes:
+
+![Step 4: the EPC for an encoder, ZPL for an RFID printer, the NFC tag](images/guide/rfid-write.png)
+
+- *EPC, from bit 20h* for most encoders and readers; *StoredPC and EPC, from bit 10h* for one that writes the PC too;
+  *The whole bank, from bit 00h* as a reader that dumps the bank shows it; the tag URI with the control bits
+  (`urn:epc:tag:[att=x01]:sgtin-96:…`). Each with **Copy**.
+- **RFID printer (ZPL)**: *From bit 10h* (the StoredPC and the EPC, right on any Gen2 printer) or *From bit 20h* (the
+  printer sets the PC; Zebra ZD500R, ZT400 and ZT600 series only). **The tag and its EPC in text (.zpl)** prints a label
+  with the EPC and its pure identity URI while writing the tag; **The tag with the Label Studio's label (.zpl)** adds
+  the commands to the label made in the Label Studio, so that one pass prints the label and writes its tag. See the
+  [printing guide](printing-guide.md#rfid-printers).
+- **NFC tag**, as in the card above.
+
 ## 12. Digital signature (GS1, JWS)
 
 Signs the code's data as the GS1 Digital Signatures Technical Implementation Guideline 1.1.0 (section 4) describes: a

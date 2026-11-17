@@ -95,6 +95,23 @@ scan it before a production run.
 To see a ZPL file without a printer, paste it into Labelary's viewer (<https://labelary.com/viewer.html>) with the
 printer's resolution (8 dpmm is 203 dpi, 12 dpmm is 300 dpi).
 
+### RFID printers
+
+An RFID printer (a Zebra with an RFID encoder) writes a UHF tag while it prints the label. The RFID Studio's step 4
+gives the ZPL:
+
+- `^RS8` (a Gen2 tag), then `^RFW,H,1,n,1^FD…^FS`: n bytes of hexadecimal written to the EPC bank from its block 1,
+  bit 10h: the StoredPC and the EPC together, so that the PC's Length matches the EPC on any Gen2 printer, whatever
+  the EPC's length (an SGTIN-96 is 14 bytes, an SGTIN-198 28).
+- Or `^RFW,H,,,A^FD…^FS`: the EPC alone from bit 20h, the printer adjusting the PC; Zebra's guide (P1134473-11EN,
+  `^RF`) says only the ZD500R and the ZT400 and ZT600 series take it.
+- **The tag and its EPC in text** is a label of its own; **The tag with the Label Studio's label** puts the commands
+  after each `^XA` of the label's ZPL, its printing unchanged.
+
+Labelary prints the label but does not write tags: its linter finds no fault in these commands (a test checks this),
+and the tests read what `^RF` writes back to the same EPC. Lock and passwords are not written: a wrong one makes a tag
+unusable. Before a run, write one tag and read it with a reader: its EPC (from bit 20h) must be the one in step 4.
+
 ## 5. ZPL templates for systems
 
 *ZPL template* writes the same label with placeholders where the values go — `{{01}}`, `{{10}}`, `{{17}}`, `{{21}}` or
