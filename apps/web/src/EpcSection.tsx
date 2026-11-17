@@ -189,6 +189,8 @@ export function EpcControls({ choices, onChange, epc, gcp, onGcp, idPrefix = "ep
 }) {
   const [gcpMessage, setGcpMessage] = useState<string | null>(null);
   const { form, prefix: prefixChoice, withData } = choices;
+  // The editor's card keeps the field's id from before the RFID Studio (its tests and links name it)
+  const gcpId = idPrefix === "epc" ? "gcp-file" : `${idPrefix}-gcp-file`;
   const { result, filter, hostname, dates, date } = epc;
   async function load(file: File | undefined) {
     if (!file) return;
@@ -264,8 +266,8 @@ export function EpcControls({ choices, onChange, epc, gcp, onGcp, idPrefix = "ep
         </div>
       </div>
       {form === "classic" && <div className="gcp">
-        <label htmlFor={`${idPrefix}-gcp-file`}>{t("GS1's GCP length table (GCPPrefixFormatList.xml)")}</label>
-        <input id={`${idPrefix}-gcp-file`} type="file" accept=".xml,.gz,application/xml,text/xml" onChange={(e) => void load(e.target.files?.[0])} />
+        <label htmlFor={gcpId}>{t("GS1's GCP length table (GCPPrefixFormatList.xml)")}</label>
+        <input id={gcpId} type="file" accept=".xml,.gz,application/xml,text/xml" onChange={(e) => void load(e.target.files?.[0])} />
         <div className="hint">
           {gcpMessage ??
             (gcp
