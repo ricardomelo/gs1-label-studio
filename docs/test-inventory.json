@@ -6979,6 +6979,194 @@
    "area": "RFID, NFC and digital signatures"
   },
   {
+   "program": "estimate",
+   "file": "packages/core/test/estimate.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the X-dimension estimate › ean13, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › ean13, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › ean13, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › ean13, 5 pixels a module, turned 8°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › ean13, 5 pixels a module, turned 15°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-128, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-128, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-128, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-128, 5 pixels a module, turned 8°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-datamatrix, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-datamatrix, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-datamatrix, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-datamatrix, 5 pixels a module, turned 8°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-datamatrix, 5 pixels a module, turned 15°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-qrcode, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-qrcode, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-qrcode, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-qrcode, 5 pixels a module, turned 8°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › gs1-qrcode, 5 pixels a module, turned 15°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › databar-expanded, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › databar-expanded, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › databar-expanded, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › itf14, 4 pixels a module, turned 0°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › itf14, 3 pixels a module, turned 0°, scaled 1.6: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › itf14, 3 pixels a module, turned 90°, scaled 1: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › itf14, 5 pixels a module, turned 8°, scaled 1.3: within its tolerance",
+     "status": "passed"
+    },
+    {
+     "name": "the X-dimension estimate › takes the scale from one symbol's printed width as a ruler gives it",
+     "status": "passed"
+    },
+    {
+     "name": "H1: the X-dimension outside the context's range › is found below the least X and above the most, and not in range",
+     "status": "passed"
+    },
+    {
+     "name": "H1: the X-dimension outside the context's range › is not assessed without a scale or without a context",
+     "status": "passed"
+    },
+    {
+     "name": "H1: the X-dimension outside the context's range › is not said on a guess: an interval that reaches the range is not a finding",
+     "status": "passed"
+    },
+    {
+     "name": "H2: the quiet zone › is found on the side something dark intrudes, and only there",
+     "status": "passed"
+    },
+    {
+     "name": "H2: the quiet zone › is not found with clear margins, and a margin cut by the picture's edge is not judged",
+     "status": "passed"
+    },
+    {
+     "name": "H2: the quiet zone › is found round a 2D symbol on all four sides",
+     "status": "passed"
+    },
+    {
+     "name": "H3: bars truncated › finds an EAN-13 whose bars are cut short, with or without a scale",
+     "status": "passed"
+    },
+    {
+     "name": "H3: bars truncated › is not found at full height",
+     "status": "passed"
+    },
+    {
+     "name": "H3: bars truncated › follows the bars of a turned picture, whose corners ZXing gives along the picture's rows",
+     "status": "passed"
+    },
+    {
+     "name": "H4: light on dark, or mirrored › is a warning, a note in direct part marking, and needs no picture measure",
+     "status": "passed"
+    },
+    {
+     "name": "J5: the 2D symbol far from the linear one › is found at 60 mm and not at 40 mm",
+     "status": "passed"
+    },
+    {
+     "name": "J5: the 2D symbol far from the linear one › stays not assessed without a scale",
+     "status": "passed"
+    },
+    {
+     "name": "never a grade › says it is an estimate, and no estimate or finding carries a grade",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
+   "program": "estimates",
+   "file": "apps/web/test/estimates.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "the printed width › is read with a point or a comma, and refused when it is not a number above 0",
+     "status": "passed"
+    },
+    {
+     "name": "the picture's scale › comes from one symbol's width and goes to every symbol measured, none to one without a measure",
+     "status": "passed"
+    },
+    {
+     "name": "a size finding in plain words › says the estimate, what is allowed, and that it is not a grade",
+     "status": "passed"
+    }
+   ],
+   "area": "The Check Studio: a code read to be checked"
+  },
+  {
    "program": "faults",
    "file": "packages/core/test/faults.test.ts",
    "kind": "unit",
@@ -10984,6 +11172,32 @@
     },
     {
      "name": "a picture pasted or dropped on the studio is read",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "check-estimate",
+   "file": "apps/web/e2e/check-estimate.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "the margins at once, the X-dimension from one symbol's printed width, each an estimate",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "a size outside the place's range is a finding with its estimate, and the place's table is named",
      "status": "listed",
      "projects": [
       "desktop",

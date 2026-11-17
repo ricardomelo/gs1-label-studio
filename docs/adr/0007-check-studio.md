@@ -71,7 +71,7 @@ to put it right.
    reading that the group answers (C9 or E1 whose key or companion another carrier holds, F3 beside a linear symbol)
    is listed as resolved, by J3 where 4.15 still asks for one symbol. The columns are data (carrier, symbol name,
    identifier, EPC scheme), not text: the screen heads them in the user's language (7.1 f). J5, the 50 mm distance,
-   is not assessed until the estimates (7.1 m).
+   is not assessed until the estimates (7.1 m, decision 19).
 
 11. **The studios have addresses** (7.1 e). Hash routes, which GitHub Pages serves without configuration and which
    never reach the server: `#/` the start page, `#/label` and `#/barcode` the editor (the second with the barcode
@@ -188,6 +188,29 @@ to put it right.
    a session shares its report alone (the CSV files stay in the export row). The share and the exports ask once a
    visit, together, before data with a serial number or a person's number leaves the page. Bulk work and the NFC
    writer's `.ndef` file have no Share (the RFID Studio is item 7.1 m's).
+19. **Size estimates from a picture, with the scale the user measures; never a grade** (7.1 m, the project's section 4,
+   group H, and J5). The core's `estimate.ts` measures each symbol of a picture once, in its pixels (`measureSymbol`):
+   its width along its own axis, its light margins (left and right; all four sides of a 2D symbol, the least of three
+   lines across each) and a linear symbol's bar height. ZXing gives a linear symbol's corners on the rows it scanned,
+   so the bars' direction is found from the pixels (the direction, within 8° of the corners', along which the centre
+   line's pattern holds farthest). The measure is kept with the reading (`Reading.measure`), so the history checks it
+   again without the picture. The width in modules comes from a Data Matrix's version, a QR Code's, a linear symbol's
+   data encoded again, or an ITF-14's bars (48 narrow and 29 wide elements, the ratio measured). Scale-free, the
+   margins in modules give H2 and an EAN/UPC's height against its width gives H3; with a scale they give the
+   X-dimension in mm (H1, against the context's table) and the distance from the linear symbol's centre to the
+   farthest point of the 2D symbol's quiet zone (J5, against 50 mm). The scale is the printed width of one symbol, typed
+   in mm (mock-up A of two; B, a line dragged over something of known size in the picture, needs two precise drags on
+   a phone and a reference object): `scaleFromWidth()` gives millimetres a pixel with a tolerance of half a ruler's
+   division and a pixel at each edge (2 % more for an ITF-14's ratio). A finding is reported only when the whole
+   interval is outside the table's range, and a margin or height only when it is short by more than a tenth (the
+   estimate's own uncertainty); a side cut by the picture's edge is not judged. H4 (inverted or mirrored) needs no
+   picture: a warning, a note in direct part marking. Every size finding and the estimates' table carry the sentence
+   "Estimate from a photograph. For a quality grade, have the symbol verified." and the grade the table asks a
+   verifier for; no result, report or export carries a grade. Not done: the scale given after a reading has been kept
+   in the history is not added to the kept entry (the margins and height are); a shared link carries no measure.
+   Found on the way: zxing-wasm 3 names GS1 DataBar's forms DataBarOmni, DataBarStk, DataBarStkOmni, DataBarExp,
+   DataBarExpStk and DataBarLtd, which `symbolsOf()` did not know; it now does, so a GS1 DataBar Expanded is told from
+   its stacked form.
 
 ## 3. Consequences
 

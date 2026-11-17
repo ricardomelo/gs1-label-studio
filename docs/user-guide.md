@@ -177,6 +177,17 @@ another studio.
 
 ![Share without a share sheet: the menu under the button](images/guide/check-share.png)
 
+14. **Size estimates from a picture.** Under a picture, **Size estimates** shows each symbol's clear margins in modules
+    and a linear symbol's bar height at once. For the X-dimension (the width of the narrowest bar or module), measure
+    one symbol's width with a ruler, the bars or modules only without the margins, choose it under **Symbol**, type the
+    width in **Printed width (mm)** and press **Estimate**: every symbol of the picture is then estimated, each with
+    its tolerance and the range the place allows. A size outside that range, a margin too narrow, bars cut short, a
+    symbol printed light on dark or mirrored, and, for a pack checked as one item, a 2D symbol more than 50 mm from
+    the linear one, appear as findings. These are estimates from a photograph: hold the camera square to the pack. They
+    are never a print quality grade, which only a verifier gives; the table names the grade a verifier must find.
+
+![Size estimates under a picture, with one symbol's printed width typed](images/guide/check-estimates.png)
+
 In the editor, once the data is checked, **Check this in the Check Studio** under the Identify step opens the studio
 with that data, as a GS1 DataMatrix would carry it. Nothing you check leaves the page.
 

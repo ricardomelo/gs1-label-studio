@@ -903,7 +903,10 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   Studio's result, group and history and in the editor's Export step, the device's share sheet with the PDF or PNG
   and a text that is enough alone, else WhatsApp, e-mail, copy and download (mock-up A of two), links that carry a
   reading (`#/check?r=…`, checked again on opening) or a work (`#/label?w=…`) compressed in the address's fragment,
-  none past 2,000 characters*
+  none past 2,000 characters; 7.1 m done the same day, the last item of the Check Studio's project: size estimates
+  from a picture (mock-up A of two: one symbol's printed width typed in mm), each symbol's margins in modules and an
+  EAN/UPC's bar height at once, the X-dimension with its tolerance once a width is given, H1 to H4 and J5 found only
+  when the whole estimate is outside the table, labelled estimates and never a grade*
 
 
 ## Licence

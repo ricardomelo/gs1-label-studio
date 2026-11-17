@@ -117,6 +117,24 @@ test("the Check Studio's Share without a share sheet: the menu", async ({ page }
   await shot(page, "check-share");
 });
 
+test("the Check Studio's size estimates from a picture", async ({ page }) => {
+  const fixture = (file: string, width: number, height: number) =>
+    readFileSync(new URL(`../e2e/fixtures/${file}`, import.meta.url), "utf8").trim()
+      .replace(/<svg([^>]*?) width="[^"]*" height="[^"]*"/, `<svg$1 width="${width}" height="${height}"`);
+  // An EAN-13 and a GS1 DataMatrix at the same scale, 4 pixels a module
+  const picture = `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="280"><rect width="100%" height="100%" fill="#fff"/>${fixture("ean13.svg", 428, 200).replace("<svg", '<svg x="20" y="40"')}${fixture("gs1-datamatrix.svg", 128, 128).replace("<svg", '<svg x="520" y="70"')}</svg>`;
+  await page.goto("/#/check");
+  const studio = page.getByRole("main", { name: "Check Studio" });
+  await studio.getByRole("button", { name: "Picture", exact: true }).click();
+  await studio.getByLabel("Picture", { exact: true }).setInputFiles({ name: "pack.svg", mimeType: "image/svg+xml", buffer: Buffer.from(picture) });
+  const estimates = studio.getByRole("region", { name: "Size estimates" });
+  await estimates.getByLabel("Printed width (mm)").fill("47.5");
+  await estimates.getByRole("button", { name: "Estimate" }).click();
+  await expect(estimates.getByRole("row").nth(1)).toContainText("mm ±");
+  await page.evaluate(() => document.querySelector(".estimates")?.scrollIntoView({ block: "center" }));
+  await shot(page, "check-estimates");
+});
+
 test("the editor at a glance", async ({ page }) => {
   await shot(page, "editor");
 });
