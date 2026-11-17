@@ -1,4 +1,5 @@
 import { formatDate, type Finding, type Reading, type Verdict } from "@gs1-label-studio/core";
+import { estimateLines } from "./estimates.ts";
 import { en, locale, t } from "./i18n.ts";
 
 // The words of the Check Studio's result (backlog 7.1 f), shared by the screen and the reports (7.1 k), so that a
@@ -33,7 +34,9 @@ export const NOT_CHECKED: Record<string, string> = {
   F3: en("Whether a 2D symbol alone suits a shop till: that needs the place."),
   I1: en("The tag's EPC: that needs the EPC tables."),
   I2: en("The tag's EPC: that needs the EPC tables."),
-  H1: en("Sizes and margins: those need a picture with a known scale."),
+  H1: en("The X-dimension: that needs a picture, the printed width of one of its symbols and the place."),
+  H2: en("The clear margins: those need a picture of the symbol."),
+  H3: en("The bars' height: that needs a picture of the symbol."),
   J5: en("The distance between symbols: that needs a picture with a known scale."),
 };
 export const SEVERITIES: Record<Finding["severity"], string> = {
@@ -77,5 +80,6 @@ export function detailLines(finding: Finding): string[] {
   if (d.allowed) lines.push(t("Symbols allowed here: {allowed}", { allowed: d.allowed }));
   if (d.uri) lines.push(t("The address made right: {uri}", { uri: d.uri }));
   else if (d.canonical) lines.push(t("In GS1's standard form: {canonical}", { canonical: d.canonical }));
+  lines.push(...estimateLines(finding));
   return lines;
 }

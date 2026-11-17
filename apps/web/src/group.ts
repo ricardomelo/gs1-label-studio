@@ -1,4 +1,5 @@
 import type { GroupColumn, GroupFinding, GroupKind, Reading } from "@gs1-label-studio/core";
+import { estimateLines } from "./estimates.ts";
 import { en, t } from "./i18n.ts";
 import { symbolName } from "./Picture.tsx";
 
@@ -63,5 +64,6 @@ export function groupDetailLines(finding: GroupFinding): string[] {
   if (d.ais) lines.push(t("Missing from the 2D symbol: {ais}", { ais: d.ais.split(", ").map((ai) => `(${ai})`).join(", ") }));
   if (d.reason === "missing" && d.ai) lines.push(t("Missing from the label: ({ai})", { ai: d.ai }));
   if (d.reason === "sscc") lines.push(t("A logistic label carries one SSCC."));
+  lines.push(...estimateLines(finding));
   return lines;
 }

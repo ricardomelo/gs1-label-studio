@@ -829,3 +829,15 @@ a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offse
   .says dd { margin-bottom: 6px; }
   .check { padding: 0 8px; }
 }
+
+/* The size estimates of a picture's symbols (backlog 7.1 m) */
+.estimates { overflow-x: auto; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.estimates h4 { margin: 0 0 6px; }
+.estimates .hint { margin: 0 0 8px; }
+.estimates-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; margin-bottom: 8px; }
+.estimates-form label { display: flex; flex-direction: column; gap: 2px; }
+.estimates table { width: 100%; border-collapse: collapse; }
+.estimates th, .estimates td { border-top: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+.estimates td small { display: block; color: var(--muted); }
+.estimate-ok { color: var(--ok); }
+.estimate-bad { color: #9a6700; font-weight: bold; }

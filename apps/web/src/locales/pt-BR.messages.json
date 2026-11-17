@@ -761,5 +761,6 @@
  "Text without a symbology identifier": "Texto sem identificador de simbologia",
  "Not in the GCP table": "Fora da tabela de GCP",
  "This link is incomplete: ask for it again, or copy all of it.": "Este link está incompleto: peça-o de novo ou copie-o inteiro.",
- "This link was made by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Este link foi feito por uma versão mais nova do GS1 Label Studio: recarregue a página para atualizá-la e abra-o de novo."
+ "This link was made by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Este link foi feito por uma versão mais nova do GS1 Label Studio: recarregue a página para atualizá-la e abra-o de novo.",
+ "the width must be more than 0": "a largura deve ser maior que 0"
 }

@@ -1,6 +1,6 @@
 import {
   findingsCsv, parseReadingsJson, readingFromParam, readingParam, readingsCsv, readingsJson, reportPdf, surveyCounts, type CheckedRecord, type ReportDocument,
-  bytesToHex, check, checkGroup, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult,
+  bytesToHex, check, checkGroup, measureSymbol, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult,
   type Finding, type EpcScheme, type GroupKind, type GroupResult, type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -22,6 +22,8 @@ import { en, locale, t, tm } from "./i18n.ts";
 import { routeHash } from "./routes.ts";
 import { Picture, SymbolList, type PictureRead } from "./Picture.tsx";
 import { Segmented } from "./Segmented.tsx";
+import { scaledReadings } from "./estimates.ts";
+import { SizeEstimates } from "./SizeEstimates.tsx";
 import { Tag } from "./Tag.tsx";
 import { layoutRepairs, WedgeListener } from "./wedge.ts";
 import { aiTitle, ENVIRONMENT_NAMES } from "./texts.ts";
@@ -168,6 +170,8 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   const [way, setWay] = useState<Way>(() => (params.d !== undefined || !prefersCamera() ? "type" : "camera"));
   const [camReadings, setCamReadings] = useState<Reading[]>([]);
   const [picture, setPicture] = useState<PictureRead | null>(null);
+  // The printed width of one of the picture's symbols, which gives it a scale (7.1 m)
+  const [pictureScale, setPictureScale] = useState<{ index: number; mm: number } | null>(null);
   const [pictureBusy, setPictureBusy] = useState(false);
   const [pictureFailed, setPictureFailed] = useState(false);
   const [chosen, setChosen] = useState(0);
@@ -197,10 +201,17 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     setUnreadable(null);
     try {
       const { pixels, url, width, height } = await picturePixels(file);
+      // The decoder takes the pixels' buffer to its worker: the measures are made on a copy (7.1 m)
+      const kept = { width, height, data: new Uint8ClampedArray(pixels.data) };
       const symbols = await decodeImage(pixels, true);
       if (pictureUrl.current) URL.revokeObjectURL(pictureUrl.current);
       pictureUrl.current = url;
-      setPicture({ url, width, height, readings: readingsOf(symbols, "image", { width, height }) });
+      // Each symbol measured in the picture's pixels, once: the size estimates are made from these (7.1 m)
+      const readings = readingsOf(symbols, "image", { width, height }).map((r) => ({
+        ...r, measure: measureSymbol(r, kept, engine ? (check(engine, r).forms?.elementString ?? null) : null),
+      }));
+      setPicture({ url, width, height, readings });
+      setPictureScale(null);
       setChosen(0);
     } catch {
       setPictureFailed(true);
@@ -320,11 +331,21 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     const context: CheckContext = { environment, epcSchemes: schemes };
     return check(engine, reading, context);
   }, [engine, reading, unplaced, environment, schemes]);
-  // Each symbol of a picture or a frame with its verdict, for the numbered list
-  const verdicts = useMemo<Verdict[]>(
-    () => (engine ? scanned.map((r) => check(engine, r, { environment: environment ?? null }).verdict) : []),
+  // Each symbol of a picture or a frame checked, for the numbered list's verdicts and the size estimates
+  const scannedResults = useMemo<CheckResult[]>(
+    () => (engine ? scanned.map((r) => check(engine, r, { environment: environment ?? null })) : []),
     [engine, scanned, environment],
   );
+  const verdicts = useMemo<Verdict[]>(() => scannedResults.map((r) => r.verdict), [scannedResults]);
+  /** Gives the picture's readings the scale of one symbol's printed width (or none), in the group as well. */
+  const scalePicture = (scale: { index: number; mm: number } | null) => {
+    if (!picture) return;
+    const readings = scaledReadings(picture.readings, scale?.index ?? 0, scale?.mm ?? null);
+    const replaced = new Map(picture.readings.map((r, i) => [r, readings[i]!]));
+    setPicture({ ...picture, readings });
+    setPictureScale(scale);
+    setMembers((ms) => ms.map((m) => (replaced.has(m.reading) ? { ...m, reading: replaced.get(m.reading)! } : m)));
+  };
   // The group: each member checked alone, then the ticked ones together (the project's section 5)
   const memberResults = useMemo<(CheckResult | null)[]>(
     () => members.map((m) => (engine ? check(engine, m.reading, { environment: environment ?? null, epcSchemes: schemes }) : null)),
@@ -631,6 +652,9 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           onChoose={(i) => { setChosen(i); setUnreadable(null); }}
           onUnreadable={notRead}
         />
+      )}
+      {way === "picture" && picture && (
+        <SizeEstimates key={picture.url} readings={picture.readings} results={scannedResults} scale={pictureScale} onScale={scalePicture} />
       )}
       {(way === "camera" || way === "picture") && scanned.length >= 2 && members.length === 0 && (
         <div className="check-row">
