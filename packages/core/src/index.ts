@@ -373,3 +373,4 @@ export {
   RECORD_VERDICTS, recordVerdict, surveyCounts, symbologyName, type CheckedRecord, type ReadingRecord, type RecordVerdict, type SurveyCounts,
 } from "./readings.ts";
 export { REPORT_PAGE, reportPages, reportPdf, textWidth, winAnsiCode, wrapText, type ReportBlock, type ReportDocument } from "./checkReport.ts";
+export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";

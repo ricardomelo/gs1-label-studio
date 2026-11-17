@@ -759,5 +759,7 @@
  "RFID tag": "Tag RFID",
  "NFC tag": "Tag NFC",
  "Text without a symbology identifier": "Testo senza identificatore di simbologia",
- "Not in the GCP table": "Non nella tabella dei GCP"
+ "Not in the GCP table": "Non nella tabella dei GCP",
+ "This link is incomplete: ask for it again, or copy all of it.": "Questo link è incompleto: richiedilo di nuovo o copialo per intero.",
+ "This link was made by a newer version of GS1 Label Studio: reload the page to update it, then open it again.": "Questo link è stato creato da una versione più recente di GS1 Label Studio: ricarica la pagina per aggiornarla, poi riaprilo."
 }
