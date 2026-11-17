@@ -39,6 +39,25 @@ export interface Reading {
   nfc: { serialNumber: string | null; recordIndex: number; recordType: string } | null;
   /** True when nothing said which symbology carried the data: a scanner's text without an identifier, a paste. */
   identifierAssumed: boolean;
+  /** A picture's symbol as measured in its pixels (estimate.ts, `measureSymbol`), and the picture's scale once given. */
+  measure?: Measure | null;
+}
+
+/**
+ * What a picture shows of a symbol's size, in its pixels (backlog 7.1 m): kept with the reading, so that checking it
+ * again gives the same estimates without the picture.
+ */
+export interface Measure {
+  /** The symbol's width in pixels along its own axis, first dark module to last. */
+  across: number;
+  /** Its width in modules; null when nothing tells. */
+  modules: number | null;
+  /** Each side's light margin in pixels before something dark; null where the picture's edge comes first. */
+  quiet: { left: number | null; right: number | null; top?: number | null; bottom?: number | null };
+  /** A linear symbol's bar height in pixels; null for a 2D symbol. */
+  barHeight: number | null;
+  /** The picture's scale, from a length the user gave: millimetres a pixel and its relative tolerance. */
+  scale?: { mmPerPixel: number; tolerance: number } | null;
 }
 
 /** A decoder's result as the Check Studio needs it (ZXing's `ReadResult` has these fields). */

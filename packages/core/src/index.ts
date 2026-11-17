@@ -346,7 +346,7 @@ export {
 export { firstUriRecord, ndefMessage, ndefRecords, ndefRecordUri, ndefUri, ndefUriMessage, URI_PREFIXES, type NdefRecord } from "./ndef.ts";
 export {
   bytesToHex, bytesToText, readingFromDecoder, readingFromEpc, readingFromNdef, readingFromText, withControlPictures,
-  type DecodedSymbol, type Reading, type ReadingCarrier, type ReadingOptions, type ReadingSource,
+  type DecodedSymbol, type Measure, type Reading, type ReadingCarrier, type ReadingOptions, type ReadingSource,
 } from "./reading.ts";
 export { GENERIC_PROFILES, languageOf, moduleChoice, printWidthProblem, profileProblem, type ModuleChoice, type PrinterProfile } from "./printer.ts";
 export {
@@ -373,4 +373,5 @@ export {
   RECORD_VERDICTS, recordVerdict, surveyCounts, symbologyName, type CheckedRecord, type ReadingRecord, type RecordVerdict, type SurveyCounts,
 } from "./readings.ts";
 export { REPORT_PAGE, reportPages, reportPdf, textWidth, winAnsiCode, wrapText, type ReportBlock, type ReportDocument } from "./checkReport.ts";
+export { distanceBetween, ESTIMATE_CODES, ESTIMATE_NOTE, estimateRules, measureSymbol, modulesAcross, RULER_MM, scaleFromWidth, type Pixels, type SizeEstimate } from "./estimate.ts";
 export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";

@@ -20,10 +20,18 @@ const RETAIL = new Set(["retail", "retail-gd"]);
 const TWO_D: ReadonlySet<SpecSymbol> = new Set(["gs1-datamatrix", "gs1-qrcode", "dl-datamatrix", "dl-qrcode", "gs1-dotcode"]);
 const EAN_UPC: ReadonlySet<SpecSymbol> = new Set(["ean13", "upca", "ean8", "upce"]);
 
+// ZXing's names: the older family names, and those of zxing-wasm 3, which tell the stacked forms apart (not GS1
+// DataBar Truncated from Omnidirectional, which differ only in height)
 const DATABAR_BY_FORMAT: Readonly<Record<string, SpecSymbol[]>> = {
   DataBar: ["databar-omni", "databar-truncated", "databar-stacked", "databar-stacked-omni"],
   DataBarExpanded: ["databar-expanded", "databar-expanded-stacked"],
   DataBarLimited: ["databar-limited"],
+  DataBarOmni: ["databar-omni", "databar-truncated"],
+  DataBarStk: ["databar-stacked"],
+  DataBarStkOmni: ["databar-stacked-omni"],
+  DataBarExp: ["databar-expanded"],
+  DataBarExpStk: ["databar-expanded-stacked"],
+  DataBarLtd: ["databar-limited"],
 };
 
 const isUri = (text: string) => /^https?:\/\//i.test(text);

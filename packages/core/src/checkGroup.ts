@@ -2,6 +2,7 @@ import type { CheckResult, Finding, Verdict } from "./check.ts";
 import { verdictOf } from "./check.ts";
 import { isPointOfSaleLinear, isTwoD, symbolsOf } from "./checkContext.ts";
 import { aiEntry } from "./dictionary.ts";
+import { distanceBetween } from "./estimate.ts";
 import { fault, SEVERITY_RANK, type Severity } from "./faults.ts";
 import { isKey } from "./identify.ts";
 import type { Reading } from "./reading.ts";
@@ -15,6 +16,9 @@ import { SPEC_SYMBOL_NAMES } from "./specifications.ts";
 // group faults by itself.
 
 /** What the user says the group is: the rules differ. */
+/** For retail POS the whole 2D symbol should lie within this radius of the linear symbol's centre (6.3.3.1). */
+export const J5_RADIUS_MM = 50;
+
 export type GroupKind = "consumer-pack" | "case" | "logistic-label" | "tag-and-code";
 
 export interface GroupMember {
@@ -58,7 +62,7 @@ export interface GroupResult {
   findings: GroupFinding[];
   /** A reading's finding the group answers: C9 or E1 whose key or companion another carrier holds, F3 beside a linear symbol. */
   resolved: { column: number; code: string; by: string }[];
-  /** Codes that could not be assessed: J4 without a context, J5 until the estimates (item 7.1 m). */
+  /** Codes that could not be assessed: J4 without a context, J5 without one picture with a scale. */
   notChecked: string[];
 }
 
@@ -187,8 +191,18 @@ export function checkGroup(members: readonly GroupMember[], kind: GroupKind, con
     if (typeof environment !== "string") notChecked.add("J4");
     else if (LINEAR_RETAIL_CONTEXTS.has(environment) && linear.length === 0) add("J4", twoD);
     if (linear.length) {
-      add("J5", [...twoD, ...linear], null, { severity: "not-assessed" }); // the distance needs a picture with a scale (7.1 m)
-      notChecked.add("J5");
+      // The distance needs one picture with a scale (estimate.ts): the farthest of the 2D symbols from each linear one
+      let farthest: { distance: number; pair: number[] } | null = null;
+      for (const l of linear) for (const d of twoD) {
+        const distance = distanceBetween(members[l]!.reading, members[d]!.reading);
+        if (distance !== null && (!farthest || distance > farthest.distance)) farthest = { distance, pair: [d, l] };
+      }
+      if (!farthest) {
+        add("J5", [...twoD, ...linear], null, { severity: "not-assessed" });
+        notChecked.add("J5");
+      } else if (farthest.distance > J5_RADIUS_MM) {
+        add("J5", farthest.pair, null, { details: { distance: farthest.distance.toFixed(1), radius: String(J5_RADIUS_MM) } });
+      }
     }
     for (const i of twoD) {
       if (members[i]!.result.findings.some((f) => f.code === "F3")) resolved.push({ column: i, code: "F3", by: linear.length ? "group" : "J4" });

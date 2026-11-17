@@ -1,6 +1,7 @@
 import { contextRules } from "./checkContext.ts";
 import { checkTag, type TagEpc } from "./checkTag.ts";
 import { checkUri, uriValueRange } from "./checkUri.ts";
+import { estimateRules, type SizeEstimate } from "./estimate.ts";
 import { expectedCheckDigit, hasKey, reorderedDate, valueRules, withTitles, type AddFinding, type CheckContext, type Located } from "./checkValues.ts";
 import { aiEntry } from "./dictionary.ts";
 import { faultOfEngineMessage } from "./engineFaults.ts";
@@ -20,7 +21,7 @@ import type { EngineFault, SyntaxEngine } from "./syntax.ts";
 // the structure (group B); (5) the own rules on keys, values and associations (groups C to E, checkValues.ts) and on
 // GS1 Digital Link URIs (group G, checkUri.ts); (6) the reading context (group F, checkContext.ts). An RFID tag's EPC is
 // decoded first (group I, checkTag.ts) and an NFC tag's record placed (I3). Several readings of one item are
-// checkGroup.ts (group J); the estimates (group H) are item 7.1 m. Every finding points at the reading's own bytes.
+// checkGroup.ts (group J); the size estimates from a picture (group H) are estimate.ts. Every finding points at the reading's own bytes.
 
 /** The four verdicts of the simple view, and one for a reading nothing could be checked of. */
 export type Verdict = "follows" | "remarks" | "does-not-follow" | "not-gs1" | "not-assessed";
@@ -65,6 +66,8 @@ export interface CheckResult {
   notChecked: string[];
   /** An RFID tag's EPC as decoded: its scheme, filter and partition; null for anything else. */
   tag: TagEpc | null;
+  /** A picture's symbol's size estimates (group H), with their tolerances; null without a picture. Never a grade. */
+  estimate: SizeEstimate | null;
 }
 
 export type { CheckContext } from "./checkValues.ts";
@@ -88,11 +91,15 @@ export function check(engine: SyntaxEngine, reading: Reading, context: CheckCont
   };
   let tag: TagEpc | null = null;
   const result = (elements: CheckedElement[] = [], forms: CheckResult["forms"] = null): CheckResult => {
+    let estimate: SizeEstimate | null = null;
     if (reading.carrier === "barcode" && !findings.some((f) => f.code === "A8" || f.code === "A9")) {
       for (const code of contextRules(engine, reading, context, forms?.elementString ?? null, add)) notChecked.add(code);
+      const sizes = estimateRules(reading, context, add);
+      estimate = sizes.estimate;
+      for (const code of sizes.notChecked) notChecked.add(code);
     }
     findings.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || order(a) - order(b));
-    return { verdict: verdictOf(findings, elements.length), findings, elements, repairs, forms, notChecked: [...notChecked], tag };
+    return { verdict: verdictOf(findings, elements.length), findings, elements, repairs, forms, notChecked: [...notChecked], tag, estimate };
   };
   /** An engine message on one element string, named, with what explains it. */
   const engineFinding = (ai: string, value: string, message: string, ranges: Range[], valueRange: Range) => {
