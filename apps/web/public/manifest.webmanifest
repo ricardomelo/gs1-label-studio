@@ -49,6 +49,17 @@
       ]
     },
     {
+      "name": "RFID Studio",
+      "url": "./#/rfid",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Check Studio",
       "url": "./#/check",
       "icons": [

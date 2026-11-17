@@ -6,19 +6,16 @@ import { expect, test, type Page } from "@playwright/test";
 
 const studios = (page: Page) => page.getByRole("main", { name: "Choose a studio" });
 
-test("the root offers the studios, each named, the ones to come not links; one tap reaches the editor", async ({ page }) => {
+test("the root offers the four studios, each named and a link; one tap reaches the editor", async ({ page }) => {
   await page.goto("/");
   const start = studios(page);
   await expect(start.getByRole("listitem")).toHaveCount(4);
-  await expect(start.getByRole("link")).toHaveCount(3);
+  await expect(start.getByRole("link")).toHaveCount(4);
   await expect(start.getByRole("link", { name: /^Label Studio/ })).toHaveAttribute("href", "#/label");
   await expect(start.getByRole("link", { name: /^Barcode Studio/ })).toHaveAttribute("href", "#/barcode");
   await expect(start.getByRole("link", { name: /^Check Studio/ })).toHaveAttribute("href", "#/check");
-  for (const name of ["RFID Studio"]) {
-    const card = start.getByRole("listitem").filter({ hasText: name });
-    await expect(card.getByRole("link")).toHaveCount(0);
-    await expect(card).toContainText("Coming soon");
-  }
+  await expect(start.getByRole("link", { name: /^RFID Studio/ })).toHaveAttribute("href", "#/rfid");
+  await expect(start).not.toContainText("Coming soon");
   // The editor's controls are not shown beside the start page
   await expect(page.locator("#paste")).toBeHidden();
   await start.getByRole("link", { name: /^Label Studio/ }).click();
@@ -58,19 +55,12 @@ test("back and forward move between studios, and what was typed survives the vis
   await expect(page.locator("#paste")).toHaveValue("(01)09506000134352(10)LOT42");
 });
 
-test("a studio still to come says so at its own address, with the way back", async ({ page }) => {
-  await page.goto("/#/rfid?r=abc");
-  const main = page.getByRole("main", { name: "RFID Studio" });
-  await expect(main).toContainText("Coming soon");
-  await main.getByRole("link", { name: "All studios" }).click();
-  await expect(studios(page)).toBeVisible();
-});
-
 test("the installed application offers each studio as a shortcut", async ({ page, baseURL }) => {
   const manifest = await (await page.request.get(`${baseURL}/manifest.webmanifest`)).json();
   expect(manifest.shortcuts.map((s: { name: string; url: string }) => [s.name, s.url])).toEqual([
     ["Label Studio", "./#/label"],
     ["Barcode Studio", "./#/barcode"],
+    ["RFID Studio", "./#/rfid"],
     ["Check Studio", "./#/check"],
   ]);
 });

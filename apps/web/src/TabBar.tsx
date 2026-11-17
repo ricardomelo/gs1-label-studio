@@ -8,7 +8,10 @@ import { PANES, type Pane } from "./layout.ts";
 // 13 November 2026): Scan read as reading a barcode, and Where with a map pin would be confused with the GLN.
 
 // Called at each drawing, so that a change of language shows at once
-const names = (): Record<Pane, string> => ({ data: t("Data"), scan: t("Use"), label: t("Label"), export: t("Export"), more: t("More") });
+// The RFID Studio names its own steps (ADR 0008): the encoding, the tag and writing
+const names = (rfid: boolean): Record<Pane, string> => rfid
+  ? { data: t("Data"), scan: t("Encoding"), label: t("Tag"), export: t("Write"), more: t("More") }
+  : { data: t("Data"), scan: t("Use"), label: t("Label"), export: t("Export"), more: t("More") };
 
 const ICONS: Record<Pane, ReactNode> = {
   data: <path d="M4 6h16M4 12h10M4 18h7" />,
@@ -37,8 +40,8 @@ const ICONS: Record<Pane, ReactNode> = {
   ),
 };
 
-export function TabBar({ tab, onTab, alerts }: { tab: Pane; onTab: (pane: Pane) => void; alerts: Partial<Record<Pane, boolean>> }) {
-  const label = names();
+export function TabBar({ tab, onTab, alerts, rfid = false }: { tab: Pane; onTab: (pane: Pane) => void; alerts: Partial<Record<Pane, boolean>>; rfid?: boolean }) {
+  const label = names(rfid);
   return (
     <nav className="tabs" aria-label={t("Sections")}>
       {PANES.map((pane) => (

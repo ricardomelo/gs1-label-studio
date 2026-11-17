@@ -109,7 +109,8 @@ import { answersText, Assistant, examplesText } from "./Assistant.tsx";
 import { Tour } from "./Tour.tsx";
 import { COMPUTER_TOUR, TABBED_TOUR } from "./tour.ts";
 import { BulkCard } from "./BulkCard.tsx";
-import { EpcSection } from "./EpcSection.tsx";
+import { EPC_CHOICES, EpcSection, useEpc, type EpcChoices } from "./EpcSection.tsx";
+import { bankOf, RfidEncodingCard, RfidPrinter, RfidTagCard } from "./RfidStudio.tsx";
 import { SignSection } from "./SignSection.tsx";
 import { keepProfiles, keptProfiles, PrinterSection } from "./PrinterSection.tsx";
 import { DEFAULT_STEM, openedSettings, savedSettings, START_SETTINGS } from "./work.ts";
@@ -185,7 +186,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // shown, so that what was typed survives the visit. Coming from the start page, the Label Studio asks for a label and
   // the Barcode Studio for the barcode only; an address opened directly leaves the editor as it was.
   const route = useRoute();
-  const inEditor = route.studio === "label" || route.studio === "barcode";
+  const inEditor = route.studio === "label" || route.studio === "barcode" || route.studio === "rfid";
+  const rfid = route.studio === "rfid";
   const [labelRequest, setLabelRequest] = useState<{ label: boolean; at: number } | null>(null);
   const lastStudio = useRef(route.studio);
   useEffect(() => {
@@ -201,6 +203,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const [picked, setPicked] = useState<Choice | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [gcp, setGcp] = useState<GcpTable | null>(null);
+  // The EPC's choices, shared by the editor's card and the RFID Studio (ADR 0008).
+  const [epcChoices, setEpcChoices] = useState<EpcChoices>(EPC_CHOICES);
   // The printer the ZPL files are for (backlog 3.1): its profile, and the module's whole dots chosen (null: the nearest
   // within the table's range).
   const [profiles, setProfiles] = useState<PrinterProfile[]>(keptProfiles);
@@ -239,7 +243,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const [templated, setTemplated] = useState<{ id: string; examples: [string, string][] } | null>(null);
   const firstVisit = useRef(true);
   useEffect(() => {
-    if (offer === "reading" || !firstVisit.current) return;
+    // The assistant sets up a label: not offered by itself in the RFID Studio (ADR 0008)
+    if (offer === "reading" || !firstVisit.current || rfid) return;
     firstVisit.current = false;
     if (offer !== null) return;
     try {
@@ -265,7 +270,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     () => (engine && edited ? checkRows(engine, edited, mapping, fixed, settings.stem.trim() || DEFAULT_STEM) : []),
     [engine, edited, mapping, fixed, settings.stem],
   );
-  const bulk = mode === "bulk";
+  // The RFID Studio has one code for now (backlog 6.12 d brings many tags)
+  const bulk = mode === "bulk" && !rfid;
   const current = bulk ? rows[Math.min(rowIndex, rows.length - 1)] : undefined;
   // The row shown's cells by their column's header (backlog 4.2: fields bound to spreadsheet columns)
   const cellsOf = (index: number) => (edited?.rows[index] ? rowCells(edited.headers, edited.rows[index]) : undefined);
@@ -313,6 +319,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const chosenSymbol = choice ? (choice.with ?? choice.symbol) : settings.symbology;
   // A key a GS1 Digital Link URI cannot carry ((03), backlog 1.11) is drawn in GS1 DataMatrix, not a symbol for a URI.
   // A GS1 Logistic Label (backlog 4.1) for an SSCC: GS1-128 at table 5's row, whatever step 2 says.
+  // The RFID Studio's EPC (ADR 0008): step 1's data with the choices shared with the editor's card
+  const epc = useEpc({ id: active, stem: settings.stem, gcp, elements: checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? [], choices: epcChoices }, rfid);
+  const rfidBank = rfid ? bankOf(epc, epcChoices) : null;
   const logisticOn = active.key === "00" && settings.logistic !== "none" && !settings.designer;
   const symbology: SymbologyId = logisticOn ? "gs1-128"
     : !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
@@ -541,6 +550,19 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       setFileError(null);
     } catch (error) {
       setFileError(tm(errorText(error)));
+    }
+  }
+
+  /** The label as ZPL for the RFID Studio's printer (backlog 6.12 c), whatever language the printer's profile names. */
+  function labelZpl(): { zpl: string } | { error: string } {
+    try {
+      const d = drawn();
+      if (!d) return { error: view.error ?? t("The label is not ready.") };
+      const file = printFileFor("zpl", d, design, settings.dpi, module?.chosen.dots);
+      if (zplWidthProblem) return { error: zplWidthProblem };
+      return typeof file === "string" ? { zpl: file } : { error: t("The label is not ready.") };
+    } catch (error) {
+      return { error: tm(errorText(error)) };
     }
   }
 
@@ -1274,6 +1296,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           )}
           </div>
           <div data-pane="scan" data-tour="scan">
+          {rfid ? (
+            <RfidEncodingCard epc={epc} choices={epcChoices} onChoices={setEpcChoices} gcp={gcp} onGcp={setGcp} />
+          ) : (
           <ScanCard
             identifierKey={active.key}
             walked={walked}
@@ -1297,8 +1322,23 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               setSettings(expert ? { ...settings, expert, symbology, linear: linearChoice, environment: environment ?? settings.environment } : { ...settings, expert })
             }
           />
+          )}
           </div>
         </div>
+        {rfid ? (
+          <RfidTagCard epc={epc} choices={epcChoices} onChoices={setEpcChoices} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download}>
+            {rfidBank && (
+              <RfidPrinter
+                bank={rfidBank}
+                lines={[rfidBank.fromEpc, epc.result.epc?.pureIdentity ?? epc.result.link ?? checked.identified?.digitalLinkUri ?? ""].filter(Boolean)}
+                stem={name}
+                dpi={settings.dpi}
+                labelZpl={labelZpl}
+                download={download}
+              />
+            )}
+          </RfidTagCard>
+        ) : (
         <LabelCard
           labelRequest={labelRequest}
           settings={effective}
@@ -1377,9 +1417,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
               <InstallApp />
             </div>
           )}
-          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} elements={checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? []} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
+          <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} choices={epcChoices} onChoices={setEpcChoices} elements={checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? []} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>
+        )}
       </main>
       <About />
       {assistant && (
@@ -1396,6 +1437,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             if (tabbed) showPane("more"); // where it was opened from
           }} />}
       <TabBar
+        rfid={rfid}
         tab={tab}
         onTab={(next) => showPane(next)}
         alerts={{ data: Boolean(bulk ? tableError : checked.error), label: Boolean(view.error && !checked.error) }}

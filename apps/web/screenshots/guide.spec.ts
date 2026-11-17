@@ -309,6 +309,15 @@ test("printer, RFID and NFC, signature", async ({ page }) => {
   await shot(page.locator("details.sign"), "signature");
 });
 
+test("the RFID Studio: the tag's memory and the RFID printer", async ({ page }) => {
+  await page.goto("/#/rfid");
+  await paste(page, "(01)09506000134376(21)1001");
+  await page.selectOption("#rfid-prefix", "7");
+  await expect(page.locator("ol.words li")).toHaveCount(8);
+  await shot(page, "rfid-studio");
+  await shot(page.locator(".rfid-write"), "rfid-write");
+});
+
 test("in bulk", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();
   await shot(page.locator("section[aria-labelledby='rows-title']"), "bulk-start");

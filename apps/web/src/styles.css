@@ -662,8 +662,8 @@ header.top .assistant-open { margin-left: 8px; background: #fff; color: #002c6c;
 
 /* The start page and the studios' addresses (backlog 7.1 e, mock-up A): the editor stays in the page, hidden, while
    another studio is shown, so that what was typed survives; in the header only the name and the language. */
-.app:not([data-studio="label"]):not([data-studio="barcode"]) > :not(header):not(.start):not(.check):not(.update-ready) { display: none !important; }
-.app:not([data-studio="label"]):not([data-studio="barcode"]) .top > :not(.brand):not(.lang):not(.tagline) { display: none !important; }
+.app:not([data-studio="label"]):not([data-studio="barcode"]):not([data-studio="rfid"]) > :not(header):not(.start):not(.check):not(.update-ready) { display: none !important; }
+.app:not([data-studio="label"]):not([data-studio="barcode"]):not([data-studio="rfid"]) .top > :not(.brand):not(.lang):not(.tagline) { display: none !important; }
 .brand h1 a { color: inherit; text-decoration: none; }
 .brand h1 a:hover { text-decoration: underline; }
 .start { max-width: 960px; margin: 24px auto; padding: 0 16px; }
@@ -841,3 +841,35 @@ a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offse
 .estimates td small { display: block; color: var(--muted); }
 .estimate-ok { color: var(--ok); }
 .estimate-bad { color: #9a6700; font-weight: bold; }
+
+/* The RFID Studio (backlog 6.12, ADR 0008): the editor's step 1, then the encoding, the tag's memory and writing in the
+   places of step 2, the label and the export; one code for now, so neither the mode nor the label's miniature. */
+.app[data-studio="rfid"] .mode, .app[data-studio="rfid"] .mini-bar { display: none !important; }
+.rfid-tag .stage { min-width: 0; position: static !important; }
+.rfid-write { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; }
+.tag-picture { width: 100%; max-width: 520px; display: block; margin: 4px 0 10px; }
+.tag-picture .inlay { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.tag-picture .antenna { fill: none; stroke: #b07a1f; stroke-width: 3; stroke-linejoin: round; }
+.tag-picture .chip { fill: var(--navy); }
+.tag-picture .mem.crc { fill: #8a94a6; }
+.tag-picture .mem.pc { fill: #f26334; }
+.tag-picture .mem.epc { fill: var(--navy); }
+.tag-picture .mem.fill { fill: #c9d3e6; }
+.tag-picture .mem.frame { fill: none; stroke: var(--ink); stroke-width: 1; }
+.tag-picture .limit { stroke: var(--ink); stroke-dasharray: 3 2; }
+.tag-picture text { fill: var(--muted); font-size: 10px; }
+ol.words { list-style: none; padding: 0; margin: 6px 0 4px; display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 4px; max-width: 560px; }
+ol.words li { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); border-top: 4px solid var(--navy); border-radius: 4px; padding: 2px 0; }
+ol.words li.crc { border-top-color: #8a94a6; }
+ol.words li.pc { border-top-color: #f26334; }
+ol.words .address { font-size: 10px; color: var(--muted); }
+ol.words code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.legend .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 2px 0 8px; background: var(--navy); vertical-align: -1px; }
+.legend .key.crc { background: #8a94a6; margin-left: 0; }
+.legend .key.pc { background: #f26334; }
+fieldset.pc-bits { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+fieldset.pc-bits label.check { display: flex; gap: 6px; align-items: center; font-weight: 400; margin: 4px 0; }
+fieldset.pc-bits input { width: auto; }
+.rfid-printer h3 { font-size: 15px; margin: 16px 0 6px; }
+.rfid-printer pre.zpl-rfid { background: var(--bg, #f3f5f9); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+.rfid-printer .buttons { display: flex; flex-wrap: wrap; gap: 8px; }

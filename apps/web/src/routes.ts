@@ -1,7 +1,7 @@
 // The studios' addresses (backlog 7.1 e; the check studio's project, section 8.3): hash routes, which GitHub Pages
 // serves without configuration and which never reach the server. "#/" is the start page that offers the studios;
-// "#/label" today's editor, unchanged; "#/barcode" the same editor with the barcode only; "#/rfid" and "#/check" the
-// studios to come; a query after the route ("#/check?r=…", "#/label?w=…") carries what a shared link holds. A hash
+// "#/label" today's editor, unchanged; "#/barcode" the same editor with the barcode only; "#/rfid" the editor's step 1 with
+// the RFID Studio's steps (ADR 0008); "#/check" the Check Studio; a query after the route ("#/check?r=…", "#/label?w=…") carries what a shared link holds. A hash
 // without the slash is an anchor of the editor ("#about-title"), as before routes existed: it stays in the editor.
 
 import { useEffect, useState } from "react";
@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 export const STUDIOS = ["label", "barcode", "rfid", "check"] as const;
 export type Studio = (typeof STUDIOS)[number];
 /** The studios the application has today; the others are offered as coming soon. */
-export const READY: ReadonlySet<Studio> = new Set(["label", "barcode", "check"]);
+export const READY: ReadonlySet<Studio> = new Set(["label", "barcode", "rfid", "check"]);
 
 export interface Route {
   /** "start" for the start page. */

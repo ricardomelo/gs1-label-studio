@@ -52,18 +52,6 @@ const FILTERS = [
   en("Unit inside a trade item, not sold on its own"),
 ];
 
-interface Props {
-  id: Identification;
-  stem: string;
-  gcp: GcpTable | null;
-  onGcp: (table: GcpTable | null) => void;
-  /** The label's GS1 Digital Link URI, for an NFC tag (backlog 1.19). */
-  uri?: string;
-  /** The data's element strings as the barcode carries them, for +AIDC data after an EPC+ (backlog 6.7 B). */
-  elements?: [string, string][];
-  download: (name: string, content: Uint8Array<ArrayBuffer>, type: string) => void;
-}
-
 function Copyable({ text }: { text: string }) {
   return (
     <code>
@@ -75,22 +63,48 @@ function Copyable({ text }: { text: string }) {
   );
 }
 
-export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download }: Props) {
+/** What the person chooses for the EPC, kept by the application so that the editor's card and the RFID Studio agree. */
+export interface EpcChoices {
+  form: Form;
+  prefix: number | null;
+  filter: number | null;
+  date: string;
+  withData: boolean;
+  /** The StoredPC's user memory indicator and hazardous material attribute bit, as the RFID Studio's step 3 sets them. */
+  umi: boolean;
+  hazmat: boolean;
+}
+
+export const EPC_CHOICES: EpcChoices = { form: "classic", prefix: null, filter: null, date: "", withData: false, umi: false, hazmat: false };
+
+export interface EpcInput {
+  id: Identification;
+  stem: string;
+  gcp: GcpTable | null;
+  /** The data's element strings as the barcode carries them, for +AIDC data after an EPC+ (backlog 6.7 B). */
+  elements?: [string, string][];
+  choices: EpcChoices;
+}
+
+export type EpcResult = {
+  message?: string;
+  epc?: ReturnType<typeof encodeEpc>;
+  source?: string;
+  plus?: ReturnType<typeof encodeEpcPlus>;
+  link?: string;
+  after?: [string, string][];
+  left?: string[];
+};
+
+/** The EPC of the data with the person's choices: the schemes loaded once, then every form computed as data change. */
+export function useEpc({ id, stem, gcp, elements = [], choices }: EpcInput, load = true) {
   const [schemes, setSchemes] = useState<Record<string, EpcScheme> | null>(null);
-  const [open, setOpen] = useState(true);
-  const [prefixChoice, setPrefixChoice] = useState<number | null>(null);
-  const [filterChoice, setFilterChoice] = useState<number | null>(null);
-  const [form, setForm] = useState<Form>("classic");
-  const [dateChoice, setDateChoice] = useState("");
-  const [withData, setWithData] = useState(false);
-  const [gcpMessage, setGcpMessage] = useState<string | null>(null);
-
   useEffect(() => {
-    if (open && !schemes) epcSchemes().then(setSchemes, (e: unknown) => console.error(e));
-  }, [open, schemes]);
-
+    if (load && !schemes) epcSchemes().then(setSchemes, (e: unknown) => console.error(e));
+  }, [load, schemes]);
+  const { form, prefix: prefixChoice, withData } = choices;
   const value = normaliseKeyValue(id.key, id.value);
-  const filter = filterChoice ?? defaultFilter(id.key);
+  const filter = choices.filter ?? defaultFilter(id.key);
   const base = (stem.trim() || "https://id.gs1.org").replace(/\/$/, "");
   const hostname = (() => {
     try {
@@ -101,9 +115,9 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
   })();
   // A DSGTIN's dates: those of the data a DSGTIN can carry, as six digits
   const dates = id.key === "01" ? id.attributes.filter(([ai, v]) => (PRIORITISED_DATES as readonly string[]).includes(ai) && /^\d{6}$/.test(v.trim())) : [];
-  const date = dates.find(([ai]) => ai === dateChoice);
+  const date = dates.find(([ai]) => ai === choices.date);
 
-  const result = useMemo(() => {
+  const result: EpcResult = useMemo((): EpcResult => {
     if (!(id.key in KEY_SCHEMES)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
     if (!schemes) return { message: t("Loading the EPC schemes…") };
     const qualifiers = Object.fromEntries(Object.entries(id.qualifiers).map(([ai, v]) => [ai, v.trim()]).filter(([, v]) => v));
@@ -159,7 +173,23 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
       return { message: tm(error instanceof EpcError ? error.message : String(error)) };
     }
   }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, form, hostname, date?.[0], date?.[1], withData, JSON.stringify(elements), locale()]);
+  return { result, filter, base, hostname, dates, date };
+}
 
+type Change = (next: Partial<EpcChoices>) => void;
+
+/** The choices of the encoding: the scheme, the company prefix and GS1's list, a DSGTIN's date, the filter, +AIDC data. */
+export function EpcControls({ choices, onChange, epc, gcp, onGcp, idPrefix = "epc" }: {
+  choices: EpcChoices;
+  onChange: Change;
+  epc: ReturnType<typeof useEpc>;
+  gcp: GcpTable | null;
+  onGcp: (table: GcpTable | null) => void;
+  idPrefix?: string;
+}) {
+  const [gcpMessage, setGcpMessage] = useState<string | null>(null);
+  const { form, prefix: prefixChoice, withData } = choices;
+  const { result, filter, hostname, dates, date } = epc;
   async function load(file: File | undefined) {
     if (!file) return;
     setGcpMessage(t("Checking the list…"));
@@ -175,14 +205,11 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
     }
   }
 
+
   return (
-    <details className="epc" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
-      <summary>{t("RFID and NFC (EPC)")}</summary>
-      <div className="hint">
-        {t("The key's EPC as the EPC Tag Data Standard encodes it (SGTIN, SSCC, SGLN, GRAI, GIAI…), for RFID and NFC tags, and the compressed GS1 Digital Link an NFC tag emits.")}
-      </div>
+    <>
       <Segmented<Form>
-        id="epc-form"
+        id={`${idPrefix}-form`}
         label={t("Scheme")}
         value={form}
         options={[
@@ -194,15 +221,15 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
             detail: t("EPC Tag Data Standard 2.3: EPC+ with the GS1 Digital Link URI's hostname, {host}. Older readers may not know it.", { host: hostname }),
           },
         ]}
-        onChange={setForm}
+        onChange={(next) => onChange({ form: next })}
       />
       <div className="grid">
         {form === "classic" && <div>
-          <label htmlFor="epc-prefix">{t("Company prefix length")}</label>
+          <label htmlFor={`${idPrefix}-prefix`}>{t("Company prefix length")}</label>
           <select
-            id="epc-prefix"
+            id={`${idPrefix}-prefix`}
             value={prefixChoice ?? ""}
-            onChange={(e) => setPrefixChoice(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => onChange({ prefix: e.target.value ? Number(e.target.value) : null })}
           >
             <option value="">{t("Automatic (GS1's GCP length table)")}</option>
             {PARTITION_LENGTHS.map((n) => (
@@ -214,8 +241,8 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
         </div>}
         {form !== "classic" && dates.length > 0 && (
           <div>
-            <label htmlFor="epc-date">{t("Date in the EPC")}</label>
-            <select id="epc-date" value={date?.[0] ?? ""} onChange={(e) => setDateChoice(e.target.value)}>
+            <label htmlFor={`${idPrefix}-date`}>{t("Date in the EPC")}</label>
+            <select id={`${idPrefix}-date`} value={date?.[0] ?? ""} onChange={(e) => onChange({ date: e.target.value })}>
               <option value="">{t("None (SGTIN)")}</option>
               {dates.map(([ai]) => (
                 <option key={ai} value={ai}>
@@ -226,8 +253,8 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
           </div>
         )}
         <div>
-          <label htmlFor="epc-filter">{t("Filter")}</label>
-          <select id="epc-filter" value={filter} onChange={(e) => setFilterChoice(Number(e.target.value))}>
+          <label htmlFor={`${idPrefix}-filter`}>{t("Filter")}</label>
+          <select id={`${idPrefix}-filter`} value={filter} onChange={(e) => onChange({ filter: Number(e.target.value) })}>
             {FILTERS.map((name, n) => (
               <option key={n} value={n}>
                 {n} — {t(name)}
@@ -237,8 +264,8 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
         </div>
       </div>
       {form === "classic" && <div className="gcp">
-        <label htmlFor="gcp-file">{t("GS1's GCP length table (GCPPrefixFormatList.xml)")}</label>
-        <input id="gcp-file" type="file" accept=".xml,.gz,application/xml,text/xml" onChange={(e) => void load(e.target.files?.[0])} />
+        <label htmlFor={`${idPrefix}-gcp-file`}>{t("GS1's GCP length table (GCPPrefixFormatList.xml)")}</label>
+        <input id={`${idPrefix}-gcp-file`} type="file" accept=".xml,.gz,application/xml,text/xml" onChange={(e) => void load(e.target.files?.[0])} />
         <div className="hint">
           {gcpMessage ??
             (gcp
@@ -265,7 +292,7 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
       {result.plus && (result.after?.length || result.left?.length) ? (
         <div className="epc-aidc">
           <label className="check">
-            <input type="checkbox" checked={withData} disabled={!result.after?.length} onChange={(e) => setWithData(e.target.checked)} />{" "}
+            <input type="checkbox" checked={withData} disabled={!result.after?.length} onChange={(e) => onChange({ withData: e.target.checked })} />{" "}
             {t("The data's other element strings after the EPC (+AIDC data)")}
           </label>
           <div className="hint">
@@ -276,6 +303,15 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
           </div>
         </div>
       ) : null}
+    </>
+  );
+}
+
+/** What the EPC is in each form, each with a copy button. */
+export function EpcFacts({ epc }: { epc: ReturnType<typeof useEpc> }) {
+  const { result, base } = epc;
+  return (
+    <>
       {result.plus ? (
         <div className="kv">
           <span>{t("Scheme")}</span>
@@ -288,7 +324,7 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
           <span>{t("EPC (hexadecimal, as on the tag)")}</span>
           <Copyable text={result.plus.hex} />
           <span>{t("GS1 Digital Link URI it carries")}</span>
-          <Copyable text={result.link} />
+          <Copyable text={result.link ?? ""} />
         </div>
       ) : result.epc ? (
         <>
@@ -313,13 +349,40 @@ export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], download 
       ) : (
         <p className="hint epc-message">{result.message}</p>
       )}
-      <NfcWriter
-        choices={[
-          ...(uri ? [[t("The GS1 Digital Link URI"), uri] as [string, string]] : []),
-          ...(result.epc ? [[t("The link for NFC (EPC, hexadecimal)"), `${base}/eh${result.epc.linkHex}`] as [string, string]] : []),
-        ]}
-        download={download}
-      />
+    </>
+  );
+}
+
+interface Props extends Omit<EpcInput, "choices"> {
+  choices: EpcChoices;
+  onChoices: (choices: EpcChoices) => void;
+  onGcp: (table: GcpTable | null) => void;
+  /** The label's GS1 Digital Link URI, for an NFC tag (backlog 1.19). */
+  uri?: string;
+  download: (name: string, content: Uint8Array<ArrayBuffer>, type: string) => void;
+}
+
+/** The NFC tag's choices: the GS1 Digital Link URI, or the link with the EPC. */
+export function nfcChoices(epc: ReturnType<typeof useEpc>, uri?: string): [string, string][] {
+  return [
+    ...(uri ? [[t("The GS1 Digital Link URI"), uri] as [string, string]] : []),
+    ...(epc.result.epc ? [[t("The link for NFC (EPC, hexadecimal)"), `${epc.base}/eh${epc.result.epc.linkHex}`] as [string, string]] : []),
+  ];
+}
+
+export function EpcSection({ id, stem, gcp, onGcp, uri, elements = [], choices, onChoices, download }: Props) {
+  const [open, setOpen] = useState(true);
+  const epc = useEpc({ id, stem, gcp, elements, choices }, open);
+  return (
+    <details className="epc" open={open} onToggle={(event) => setOpen((event.target as HTMLDetailsElement).open)}>
+      <summary>{t("RFID and NFC (EPC)")}</summary>
+      <div className="hint">
+        {t("The key's EPC as the EPC Tag Data Standard encodes it (SGTIN, SSCC, SGLN, GRAI, GIAI…), for RFID and NFC tags, and the compressed GS1 Digital Link an NFC tag emits.")}{" "}
+        <a href="#/rfid">{t("Open in the RFID Studio")}</a>
+      </div>
+      <EpcControls choices={choices} onChange={(next) => onChoices({ ...choices, ...next })} epc={epc} gcp={gcp} onGcp={onGcp} />
+      <EpcFacts epc={epc} />
+      <NfcWriter choices={nfcChoices(epc, uri)} download={download} />
     </details>
   );
 }
