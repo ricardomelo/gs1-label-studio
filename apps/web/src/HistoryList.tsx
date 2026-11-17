@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 import { changedOnRecheck, filterHistory, HISTORY_LIMIT, isPersonal, overLimit, type HistoryEntry, type HistoryFilter, type HistorySession, type Releases } from "./history.ts";
 import { en, locale, t } from "./i18n.ts";
 import { symbolName, VERDICT_ICONS, VERDICT_WORDS } from "./Picture.tsx";
+import { allowPersonal, personalAsked, type ShareContent } from "./share.ts";
+import { ShareButton } from "./ShareButton.tsx";
 
 // The Check Studio's history on screen (backlog 7.1 j; the check studio's project, section 7.1; ADR 0007 decision 16):
 // the codes checked on this device, newest first, filtered by verdict, session or fault and searched by any value;
@@ -42,6 +44,8 @@ interface Props {
   onExport: (kind: ExportKind, listed: HistoryEntry[], title: string, delimiter: "," | ";") => void;
   /** A readings file chosen to open: its readings join the history. */
   onImport: (file: File) => void;
+  /** What a share of the listed readings sends (7.1 l): the counts and the worst findings, the report and the CSV. */
+  onShare: (listed: HistoryEntry[], title: string) => Promise<ShareContent>;
   /** What the last export or import said: done, or why not. */
   message: string | null;
 }
@@ -56,7 +60,7 @@ const EXPORTS: readonly { kind: ExportKind; text: string }[] = [
   { kind: "json", text: en("All the data (JSON)") },
 ];
 
-export function HistoryList({ entries, sessions, kept, off, onOff, session, onSession, verdictNow, releases, onOpen, onNoBarcode, onDelete, onDeleteAll, onExport, onImport, message }: Props) {
+export function HistoryList({ entries, sessions, kept, off, onOff, session, onSession, verdictNow, releases, onOpen, onNoBarcode, onDelete, onDeleteAll, onExport, onImport, onShare, message }: Props) {
   const [filter, setFilter] = useState<HistoryFilter>({ verdict: "", session: "", search: "" });
   const [shown, setShown] = useState(PAGE);
   const [name, setName] = useState("");
@@ -64,7 +68,6 @@ export function HistoryList({ entries, sessions, kept, off, onOff, session, onSe
   const [semicolon, setSemicolon] = useState(false);
   // A share or an export that includes personal data asks once (section 7.1, privacy): the export waiting for the answer
   const [asking, setAsking] = useState<ExportKind | null>(null);
-  const [personalOk, setPersonalOk] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const listed = filterHistory(entries, filter);
   const old = overLimit(entries);
@@ -73,7 +76,7 @@ export function HistoryList({ entries, sessions, kept, off, onOff, session, onSe
   const filtered = Boolean(filter.verdict || filter.search?.trim() || filter.code);
   const chosen = typeof filter.session === "number" ? sessions.find((s) => s.id === filter.session)?.name : undefined;
   const title = chosen ?? (filter.session === "none" ? t("Readings outside a session") : t("All readings"));
-  const run = (kind: ExportKind, confirmed = personalOk) => {
+  const run = (kind: ExportKind, confirmed = personalAsked()) => {
     if (!confirmed && listed.some(isPersonal)) return setAsking(kind);
     setAsking(null);
     onExport(kind, listed, filtered ? `${title} (${t("filtered")})` : title, semicolon ? ";" : ",");
@@ -151,6 +154,11 @@ export function HistoryList({ entries, sessions, kept, off, onOff, session, onSe
           {EXPORTS.map((e) => (
             <button key={e.kind} type="button" className="btn" disabled={!listed.length} onClick={() => run(e.kind)}>{t(e.text)}</button>
           ))}
+          <ShareButton
+            disabled={!listed.length}
+            personal={listed.some(isPersonal)}
+            prepare={() => onShare(listed, filtered ? `${title} (${t("filtered")})` : title)}
+          />
           <label className="history-off">
             <input type="checkbox" checked={semicolon} onChange={(e) => setSemicolon(e.target.checked)} /> {t("CSV with semicolons")}
           </label>
@@ -171,7 +179,7 @@ export function HistoryList({ entries, sessions, kept, off, onOff, session, onSe
         {asking && (
           <p className="check-row" role="alert">
             <span>{t("Some of these readings carry a serial number or a person's number. Export them all the same?")}</span>
-            <button type="button" className="btn primary" onClick={() => { setPersonalOk(true); run(asking, true); }}>{t("Yes, export")}</button>
+            <button type="button" className="btn primary" onClick={() => { allowPersonal(); run(asking, true); }}>{t("Yes, export")}</button>
             <button type="button" className="btn" onClick={() => setAsking(null)}>{t("Cancel")}</button>
           </p>
         )}

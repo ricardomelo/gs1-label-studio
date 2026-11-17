@@ -253,3 +253,47 @@ export function sessionReport(name: string, records: readonly CheckedRecord[], c
   });
   return { title: t("Session report"), footer: footer(releases, now), blocks };
 }
+
+// The share texts (backlog 7.1 l; the check studio's project, section 7.4): what a message says, enough to act on
+// without the file, in the interface's language as the reports are. The link, when one fits, goes under it.
+
+const wrongLines = (findings: readonly { code: string }[]) =>
+  [...new Set(findings.map((f) => f.code))].map((code) => `• ${code} — ${SIMPLE_TEXTS[code] ? t(SIMPLE_TEXTS[code]!.what) : code}`);
+
+/** One reading: the verdict, the symbol, what the code says, each finding in one line with its code, the element string. */
+export function readingShareText(reading: Reading, result: CheckResult): string {
+  const today = new Date();
+  const verdict = VERDICTS[result.verdict];
+  const lines = [`${t(verdict.word)}. ${t(verdict.line)}`, `${t("Symbol")}: ${readingName(reading)}`];
+  if (result.elements.length) {
+    lines.push("", `${t("What the code says")}:`, ...result.elements.map((e) => `${aiTitle(e.ai, e.title)} (${e.ai}): ${readable(e.ai, e.value, today)}`));
+  }
+  const judged = result.findings.filter((f) => f.severity !== "not-assessed");
+  if (judged.length) lines.push("", `${t("What is wrong")} (${judged.length}):`, ...wrongLines(judged));
+  if (result.forms) lines.push("", `${t("Element string")}: ${result.forms.elementString}`);
+  lines.push("", t("Checked with GS1 Label Studio."));
+  return lines.join("\n");
+}
+
+/** One item: its kind and verdict, the codes compared, the item's findings, each code's verdict. */
+export function itemShareText(members: readonly ReportMember[], group: GroupResult, kind: GroupKind): string {
+  const kindText = t(GROUP_KINDS.find((k) => k.value === kind)?.text ?? kind);
+  const lines = [`${t("Item report")}: ${kindText}`, `${t(VERDICTS[group.verdict].word)}. ${t(VERDICTS[group.verdict].line)}`, `${t("Codes compared")}: ${members.length}`];
+  if (group.findings.length) lines.push("", `${t("What is wrong with the item")} (${group.findings.length}):`, ...wrongLines(group.findings));
+  lines.push("", `${t("Each code")}:`, ...members.map((m, i) => `${i + 1}. ${memberName(m.reading, group.columns[i])} — ${t(VERDICTS[m.result.verdict].word)}`));
+  lines.push("", t("Checked with GS1 Label Studio."));
+  return lines.join("\n");
+}
+
+/** A session or what the history lists: the counts by verdict and by kind, the most frequent faults. */
+export function sessionShareText(name: string, counts: SurveyCounts): string {
+  const total = counts.total;
+  const lines = [`${t("Session report")}: ${name}`, `${t("Readings")}: ${total}`, ""];
+  for (const v of RECORD_VERDICTS) if (counts.verdicts[v] > 0) lines.push(`${verdictWord(v)}: ${counts.verdicts[v]} (${share(counts.verdicts[v], total)})`);
+  lines.push("", `${t("A code with GS1 data")}: ${counts.gs1} · ${t("A code without GS1 data")}: ${counts.nonGs1} · ${t(NO_BARCODE)}: ${counts.noBarcode}`);
+  if (counts.faults.length) {
+    lines.push("", `${t("The most frequent faults")}:`, ...counts.faults.slice(0, 5).map(([code, n]) => `• ${code} — ${SIMPLE_TEXTS[code] ? t(SIMPLE_TEXTS[code]!.what) : code}: ${n}`));
+  }
+  lines.push("", t("Checked with GS1 Label Studio."));
+  return lines.join("\n");
+}

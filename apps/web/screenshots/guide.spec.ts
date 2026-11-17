@@ -104,6 +104,19 @@ test("the Check Studio: the history, a session and four readings", async ({ page
   await shot(history, "check-history");
 });
 
+test("the Check Studio's Share without a share sheet: the menu", async ({ page }) => {
+  await page.addInitScript(() => {
+    delete (Navigator.prototype as { share?: unknown }).share;
+    delete (Navigator.prototype as { canShare?: unknown }).canShare;
+  });
+  await page.goto(`/#/check?s=]d1&d=${encodeURIComponent("0109506000134352172712311" + "0ABC123")}`);
+  const result = page.getByRole("main", { name: "Check Studio" }).locator(".check-result");
+  await result.getByRole("button", { name: "Share…" }).click();
+  await expect(result.getByRole("menu")).toBeVisible();
+  await page.evaluate(() => document.querySelector(".check-report")?.scrollIntoView({ block: "center" }));
+  await shot(page, "check-share");
+});
+
 test("the editor at a glance", async ({ page }) => {
   await shot(page, "editor");
 });

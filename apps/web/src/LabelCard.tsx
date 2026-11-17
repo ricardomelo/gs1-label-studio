@@ -173,6 +173,8 @@ interface Props {
   onDownload: (kind: FileKind) => void;
   /** Opens the printer's section and brings it into view (backlog 6.3 i): its print files are downloaded there. */
   onPrinter: () => void;
+  /** The Share button (7.1 l), after the downloads. */
+  share?: React.ReactNode;
   /** Opens a work saved as a file: the third kind of label (backlog 6.3 g). */
   onOpenWork: () => void;
   /** Chooses a template by segment (backlog 6.5); what it asks first, if anything, shows under the cards. */
@@ -244,7 +246,7 @@ function OptionLabel({ htmlFor, name, help }: { htmlFor: string; name: string; h
   );
 }
 
-export function LabelCard({ labelRequest = null, byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, onOpenWork, onTemplate, templateQuestion, fileError, rows }: Props) {
+export function LabelCard({ labelRequest = null, byDefault, children, generate, printer, settings: s, onChange, view, onDownload, onPrinter, share, onOpenWork, onTemplate, templateQuestion, fileError, rows }: Props) {
   const set = <K extends keyof LabelSettings>(name: K, value: LabelSettings[K]) => onChange({ ...s, [name]: value });
   // The data's element strings, for a barcode on a label of one's own to carry and a text to show (backlog 4.2)
   const aiList = (() => {
@@ -534,6 +536,7 @@ export function LabelCard({ labelRequest = null, byDefault, children, generate, 
                   {t("Label printer…")}
                 </button>
               )}
+              {share}
             </div>
           </div>
           {generate && <div data-pane="export">{generate}</div>}

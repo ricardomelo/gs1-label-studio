@@ -46,7 +46,7 @@ export interface HistorySession {
 /** The most readings kept: past it, the oldest are offered for deletion (section 7.1). */
 export const HISTORY_LIMIT = 5000;
 /** AIs whose values can identify a person or a dispensed medicine: readings that carry them are marked (section 7.1). */
-const PERSONAL_AIS = new Set(["21", "8017", "8018", "235", "250"]);
+export const PERSONAL_AIS = new Set(["21", "8017", "8018", "235", "250"]);
 const KEY_AIS = ["01", "00", "414", "8017", "8018", "253", "255", "8003", "8004", "401", "402", "417", "8006", "8010", "8013"];
 
 /** What is kept of a reading and its result. */

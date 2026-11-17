@@ -1,5 +1,5 @@
 import {
-  findingsCsv, parseReadingsJson, readingsCsv, readingsJson, reportPdf, surveyCounts, type CheckedRecord, type ReportDocument,
+  findingsCsv, parseReadingsJson, readingFromParam, readingParam, readingsCsv, readingsJson, reportPdf, surveyCounts, type CheckedRecord, type ReportDocument,
   bytesToHex, check, checkGroup, epcSchemes, fault, formatDate, readingFromDecoder, readingFromText, SYNTAX_ENGINE, type CheckContext, type CheckResult,
   type Finding, type EpcScheme, type GroupKind, type GroupResult, type Reading, type SyntaxEngine, type Verdict,
 } from "@gs1-label-studio/core";
@@ -9,11 +9,13 @@ import { decodeImage, mayHaveComposite, picturePixels, readingsOf } from "./came
 import { guessKind, memberName, sameReading, type Member } from "./group.ts";
 import { GroupMatrix } from "./GroupMatrix.tsx";
 import {
-  addEntry, addSession, deleteAll, deleteEntries, entryOf, historyOff, loadHistory, putEntries, sameAsLast, setHistoryOff, type HistoryEntry, type HistorySession,
+  addEntry, addSession, deleteAll, deleteEntries, entryOf, historyOff, isPersonal, loadHistory, putEntries, sameAsLast, setHistoryOff, type HistoryEntry, type HistorySession,
 } from "./history.ts";
 import { HistoryList, type ExportKind } from "./HistoryList.tsx";
 import { download } from "./download.ts";
-import { itemReport, readingReport, sessionReport } from "./reports.ts";
+import { itemReport, itemShareText, readingName, readingReport, readingShareText, sessionReport, sessionShareText } from "./reports.ts";
+import { studioLink, type ShareContent } from "./share.ts";
+import { ShareButton } from "./ShareButton.tsx";
 import { SIMPLE_TEXTS } from "./checkTexts.ts";
 import { B3_KEYBOARD, detailLines, NOT_CHECKED, readable, SEVERITIES, SOURCE_NAMES, VERDICTS } from "./checkWords.ts";
 import { en, locale, t, tm } from "./i18n.ts";
@@ -149,7 +151,7 @@ function Marked({ reading, ranges }: { reading: Reading; ranges: readonly (reado
 
 interface Props {
   engine: SyntaxEngine | null;
-  /** What the address carries: the data (d) and the symbol's identifier (s). */
+  /** What the address carries: the data (d) and the symbol's identifier (s), or a shared reading (r, 7.1 l). */
   params?: Record<string, string>;
   /** Opens the Barcode Studio with this data (a bracketed element string). */
   onMakeRight: (elementString: string) => void;
@@ -244,12 +246,33 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   const current = way === "type" ? typed : way === "tag" ? tagReading : (unreadable ?? scanned[chosen] ?? null);
   // A reading opened from the history (7.1 j), shown until another code is read
   const [opened, setOpened] = useState<Reading | null>(null);
+  // A shared link (7.1 l): the reading it carries, checked again here, with the place it was checked against
+  const [linkPlace, setLinkPlace] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!params.r) return;
+    let live = true;
+    readingFromParam(params.r).then(
+      ({ reading: linked, environment: env }) => {
+        if (!live) return;
+        setLinkError(null);
+        setOpened(linked);
+        setLinkPlace(env);
+        setTimeout(() => resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+      },
+      (error: unknown) => live && setLinkError(tm(error instanceof Error ? error.message : String(error))),
+    );
+    return () => {
+      live = false;
+    };
+  }, [params.r]);
   const reading = selected !== null && members[selected] ? members[selected].reading : (opened ?? current);
   // A new reading is shown rather than the member chosen before it; read while awaiting, it joins the group, unless
   // it is text still being typed (it joins on a press) or a code already in the group
   useEffect(() => {
     setSelected(null);
     setOpened(null);
+    setLinkPlace(null);
   }, [current]);
   const inGroup = (r: Reading) => members.some((m) => sameReading(m.reading, r));
   const join = (r: Reading) => {
@@ -290,7 +313,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   }, [way, camReadings]);
   // Checked once without a place, whose elements say which place an asset's is, then against the place chosen
   const unplaced = useMemo(() => (engine && reading ? check(engine, reading, { environment: null, epcSchemes: schemes }) : null), [engine, reading, schemes]);
-  const environment = place === null ? undefined : environmentOf(place, follow, unplaced?.elements.map((e) => e.ai) ?? []);
+  const environment = linkPlace && opened ? linkPlace : place === null ? undefined : environmentOf(place, follow, unplaced?.elements.map((e) => e.ai) ?? []);
   const result = useMemo<CheckResult | null>(() => {
     if (!engine || !reading || !unplaced) return null;
     if (!environment) return unplaced;
@@ -391,6 +414,13 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     else download("readings.json", readingsJson(records), "application/json");
     setExportMessage(t("{n} readings exported.", { n: String(records.length) }));
   };
+  // Shares (7.1 l): the text, the PDF report as the file, and for one reading a link that checks it again
+  const pdfFile = async (doc: ReportDocument, name: string) => new File([await reportPdf(doc)], name, { type: "application/pdf" });
+  const shareHistory = async (listed: HistoryEntry[], title: string): Promise<ShareContent> => {
+    const records = recordsOf(listed);
+    const counts = surveyCounts(records);
+    return { title: `${t("Session report")}: ${title}`, text: sessionShareText(title, counts), link: null, file: await pdfFile(sessionReport(title, records, counts, releases), "session-report.pdf") };
+  };
   const importReadings = async (file: File) => {
     try {
       const records = parseReadingsJson(await file.text());
@@ -438,6 +468,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
       onOpen={(e) => {
         setSelected(null);
         setOpened(e.reading);
+        setLinkPlace(null);
         setTimeout(() => resultRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
       }}
       onNoBarcode={() => store(entryOf(null, null, environment ?? null, session, releases))}
@@ -446,6 +477,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
         setEntries((list) => list.filter((e) => !ids.includes(e.id)));
       }}
       onExport={exportHistory}
+      onShare={shareHistory}
       onImport={(file) => void importReadings(file)}
       message={exportMessage}
       onDeleteAll={() => {
@@ -457,6 +489,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     />
   );
   const kind = chosenKind ?? guessKind(members.filter((m) => m.on).map((m) => m.reading));
+  const membersOn = () => members.flatMap((m, i) => (m.on && memberResults[i] ? [{ reading: m.reading, result: memberResults[i]! }] : []));
   const group = useMemo<GroupResult | null>(() => {
     const on = members.flatMap((m, i) => (m.on && memberResults[i] ? [{ reading: m.reading, result: memberResults[i]! }] : []));
     return on.length >= 2 ? checkGroup(on, kind, { environment: environment ?? null }) : null;
@@ -673,9 +706,19 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
       onClose={closeGroup}
       onReport={() => {
         if (!group) return;
-        const on = members.flatMap((m, i) => (m.on && memberResults[i] ? [{ reading: m.reading, result: memberResults[i]! }] : []));
-        savePdf(itemReport(on, group, kind, releases), "item-report.pdf");
+        savePdf(itemReport(membersOn(), group, kind, releases), "item-report.pdf");
       }}
+      share={group && (
+        <ShareButton
+          personal={membersOn().some((m) => isPersonal({ ais: m.result.elements.map((e) => e.ai) }))}
+          prepare={async () => ({
+            title: t("Item report"),
+            text: itemShareText(membersOn(), group, kind),
+            link: null,
+            file: await pdfFile(itemReport(membersOn(), group, kind, releases), "item-report.pdf"),
+          })}
+        />
+      )}
       verdictBox={verdictOf}
     />
   );
@@ -684,6 +727,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
     return (
       <main className="check" lang={lang} aria-label={t("Check Studio")}>
         {input}
+        {linkError && <p className="error" role="alert">{linkError}</p>}
         {groupCard}
         {!engine && reading && <p className="hint">{t("Loading…")}</p>}
         {history}
@@ -793,6 +837,7 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
   return (
     <main className="check" lang={lang} aria-label={t("Check Studio")}>
       {input}
+      {linkError && <p className="error" role="alert">{linkError}</p>}
       {groupCard}
       <section ref={resultRef} className="card check-result" aria-labelledby="check-result-title">
         <h2 id="check-result-title">{t("The result")}</h2>
@@ -809,6 +854,19 @@ export function CheckStudio({ engine, onMakeRight, params = {} }: Props) {
           <button type="button" className="btn" onClick={() => savePdf(readingReport(reading, result, environment ?? null, releases), "check-report.pdf")}>
             {t("Report (PDF)")}
           </button>
+          <ShareButton
+            personal={isPersonal({ ais: result.elements.map((e) => e.ai) })}
+            prepare={async () => {
+              const link = studioLink("check", "r", await readingParam(reading, environment ?? null));
+              return {
+                title: `${t("Check report")}: ${readingName(reading)}`,
+                text: readingShareText(reading, result),
+                link,
+                linkTooLong: !link,
+                file: await pdfFile(readingReport(reading, result, environment ?? null, releases), "check-report.pdf"),
+              };
+            }}
+          />
           <span className="hint">{t("The simple view and the expert details, to print or send.")}</span>
         </div>
       </section>

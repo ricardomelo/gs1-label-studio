@@ -97,6 +97,8 @@ import {
   type SyntaxEngine,
   type SymbologyId,
   readWork,
+  workFromParam,
+  workParam,
   workFile,
   zplWithWork,
   type Work,
@@ -122,7 +124,8 @@ import { hriFormatOf } from "./HriFormatFields.tsx";
 import { LabelCard, type FileKind, type LabelSettings, type LabelView } from "./LabelCard.tsx";
 import { chosen, ScanCard, type Choice } from "./ScanCard.tsx";
 import { choicePictures } from "./choicePictures.ts";
-import { aiText, BULK_TEXTS, GUIDE_TEXTS, KEY_TEXTS } from "./texts.ts";
+import { aiText, aiTitle, BULK_TEXTS, GUIDE_TEXTS, KEY_TEXTS } from "./texts.ts";
+import { PERSONAL_AIS } from "./history.ts";
 import { TabBar } from "./TabBar.tsx";
 import { InstallApp } from "./InstallApp.tsx";
 import { onUpdateReady, updateReady } from "./update.ts";
@@ -130,6 +133,8 @@ import { paneOf, PHONE_QUERY, TABLET_QUERY, useMedia, type Pane } from "./layout
 import { LOCALES, locale, t, tm, formatNumber, type Locale } from "./i18n.ts";
 import { download } from "./download.ts";
 import { routeHash, useRoute } from "./routes.ts";
+import { studioLink, workShareText, type ShareContent } from "./share.ts";
+import { ShareButton } from "./ShareButton.tsx";
 import { checkAddress, CheckStudio } from "./CheckStudio.tsx";
 import { ComingStudio, StartPage } from "./StartPage.tsx";
 
@@ -595,6 +600,23 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     }
   }
 
+  // Share (7.1 l): the data in words, the PNG just made, and a link that opens the same work (#/label?w=…)
+  async function shareLabel(): Promise<ShareContent> {
+    const { layout } = label;
+    if (!layout || !font) throw new Error("no label");
+    const chosen = settings.pngResolution ? pngAt(layout, settings.pngResolution) : null;
+    const png = chosen ? await labelPng(layout, font, chosen.pixelsPerModule, chosen.dpi) : await labelPng(layout, font);
+    const link = studioLink(route.studio === "barcode" ? "barcode" : "label", "w", await workParam(currentWork()));
+    const elements = checked.identified?.elements.map((e) => ({ ai: e.ai, title: aiTitle(e.ai, e.title), value: e.value })) ?? [];
+    return {
+      title: tm(SYMBOLOGIES[symbology].name),
+      text: workShareText(tm(SYMBOLOGIES[symbology].name), elements, view.elementString, view.uri),
+      link,
+      linkTooLong: !link,
+      file: new File([png], `${name}.png`, { type: "image/png" }),
+    };
+  }
+
   // In bulk: every row ready or fixed drawn with the label's design, in one zip (backlog 2.4).
   const batchRows: BatchRow[] = rows.map((row, index) => ({
     row: row.row, ...(row.identified ? { identified: row.identified } : {}), ...(row.error ? { error: row.error } : {}),
@@ -716,6 +738,25 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       error: false,
     });
   }
+  // A shared work's link (7.1 l): "#/label?w=…" or "#/barcode?w=…" opens the work it carries
+  const sharedWork = inEditor ? route.params.w : undefined;
+  const takeWorkRef = useRef(takeWork);
+  takeWorkRef.current = takeWork;
+  useEffect(() => {
+    if (!sharedWork) return;
+    let live = true;
+    workFromParam(sharedWork).then(
+      (work) => {
+        if (!live) return;
+        takeWorkRef.current(work);
+        setWorkNote({ text: t("Opened the work the link carries."), error: false });
+      },
+      (error: unknown) => live && setWorkNote({ text: tm(errorText(error)), error: true }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [sharedWork]);
   /** A work opened from a file or from this browser: the data, the answers, the label, the printer and the columns. */
   function takeWork(work: Work) {
     setOffer(null);
@@ -1271,6 +1312,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
             : undefined}
           onDownload={(kind) => void downloadFile(kind)}
           onPrinter={openPrinter}
+          share={!bulk && <ShareButton disabled={!view.svg} personal={checked.identified?.elements.some((e) => PERSONAL_AIS.has(e.ai))} prepare={shareLabel} />}
           onOpenWork={() => openInput.current?.click()}
           onTemplate={chooseTemplate}
           templateQuestion={templateQuestion}

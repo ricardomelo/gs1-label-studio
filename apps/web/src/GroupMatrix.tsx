@@ -33,10 +33,12 @@ interface Props {
   onClose: () => void;
   /** The item's report as a PDF (7.1 k). */
   onReport: () => void;
+  /** The item's Share button (7.1 l). */
+  share?: ReactNode;
   verdictBox: (verdict: Verdict) => ReactNode;
 }
 
-export function GroupMatrix({ members, results, group, kind, onKind, selected, onSelect, onToggle, onRemove, awaiting, onAdd, onClose, onReport, verdictBox }: Props) {
+export function GroupMatrix({ members, results, group, kind, onKind, selected, onSelect, onToggle, onRemove, awaiting, onAdd, onClose, onReport, share, verdictBox }: Props) {
   // The ticked members, as the matrix's columns: column c is member on[c]
   const on = members.flatMap((m, i) => (m.on ? [i] : []));
   const [split, setSplit] = useState<boolean | null>(null);
@@ -82,6 +84,7 @@ export function GroupMatrix({ members, results, group, kind, onKind, selected, o
         </button>
         <button type="button" className="btn" onClick={onClose}>{t("Check codes one at a time")}</button>
         {group && <button type="button" className="btn" onClick={onReport}>{t("Item report (PDF)")}</button>}
+        {share}
       </div>
       {awaiting && <p className="hint" role="status">{t("Read the next code in any way above: it joins this item.")}</p>}
       {!group && !awaiting && <p className="hint">{t("Tick at least two codes to compare them.")}</p>}
