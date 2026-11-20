@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Resvg } from "@resvg/resvg-js";
@@ -140,5 +140,20 @@ describe("the bundle Node runs", () => {
     const epc = gs1ls("epc", "(01)09506000134352(21)12345", "--prefix-length", "7");
     expect([epc.status, epc.stderr.toString()]).toEqual([0, ""]);
     expect(epc.stdout.toString()).toContain("EPC Pure Identity URI: urn:epc:id:sgtin:9506000.013435.12345\n");
+  });
+
+  it("serves the API until stopped, on the port it names (backlog 5.1 c)", async () => {
+    const child = spawn(process.execPath, [BUNDLE, "serve", "--port", "0"], { env });
+    try {
+      const line = await new Promise<string>((resolve, reject) => {
+        child.stderr.on("data", (chunk: Buffer) => resolve(chunk.toString()));
+        child.once("exit", (code) => reject(new Error(`gs1ls serve stopped with ${code}`)));
+      });
+      const url = line.match(/^gs1ls serving on (http:\/\/127\.0\.0\.1:\d+\/v1\/) /)![1];
+      const out = await (await fetch(`${url}check`, { method: "POST", body: JSON.stringify({ data: DATA }) })).json();
+      expect(out.verdict).toBe("follows");
+    } finally {
+      child.kill();
+    }
   });
 });

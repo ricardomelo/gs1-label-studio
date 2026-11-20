@@ -3,10 +3,11 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { HriFont, InputError, parseGcpTable, syntaxEngine, type BatchFile, type RfidWriteFrom, type SymbologyId } from "@gs1-label-studio/core";
+import { GcpError, HriFont, InputError, parseGcpTable, syntaxEngine, type BatchFile, type RfidWriteFrom, type SymbologyId } from "@gs1-label-studio/core";
 import {
   bulkFile, checkData, checkStatus, checkText, epcData, epcText, epcZpl, FORMATS, makeLabel, UsageError, type BulkRequest, type EpcRequest, type Format,
 } from "./commands.ts";
+import { serve } from "./serve.ts";
 
 export const HELP = `gs1ls — GS1 Label Studio from the command line (everything stays on this machine)
 
@@ -30,6 +31,9 @@ Usage:
       Every row's label, as the editor's bulk generation makes them, in one zip with generated.csv.
       The columns are found from their headers, such as GTIN or (01). With --rfid, each row's tag is
       written by the ZPL file and listed in tags.csv for an encoder.
+  gs1ls serve [--port 8080] [--host 127.0.0.1]
+      The same as a local HTTP API: POST /v1/check, /v1/label, /v1/epc and /v1/bulk; the OpenAPI document
+      at /v1/openapi.json. No authentication: keep it on this machine or behind your own gateway.
   gs1ls --help | --version
 
 Examples:
@@ -65,6 +69,8 @@ const OPTIONS = {
   print: { type: "string" },
   pattern: { type: "string" },
   rfid: { type: "boolean" },
+  port: { type: "string" },
+  host: { type: "string" },
   help: { type: "boolean", short: "h" },
   version: { type: "boolean" },
 } as const;
@@ -104,6 +110,13 @@ export async function run(argv: readonly string[], write: (name: string, bytes: 
     if (values.version) return { status: 0, stdout: `gs1ls ${__VERSION__}\n`, stderr: "" };
     if (values.help || !command) return { status: values.help ? 0 : 2, stdout: values.help ? HELP : "", stderr: values.help ? "" : HELP };
     if (command === "bulk") return await bulk(rest, values, write);
+    if (command === "serve") {
+      const host = values.host ?? "127.0.0.1";
+      const server = await serve(await syntaxEngine(), loadFont(), { host, port: number(values.port, "port") ?? 8080 });
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : values.port;
+      return { status: 0, stdout: "", stderr: `gs1ls serving on http://${host.includes(":") ? `[${host}]` : host}:${port}/v1/ (the document: /v1/openapi.json); Ctrl+C stops it\n` };
+    }
     const data = rest.join(" ");
     if (!data.trim()) throw new UsageError(`gs1ls ${command} needs the data: an element string, a GS1 Digital Link URI or a scanner's text.`);
     const engine = await syntaxEngine();
@@ -135,12 +148,12 @@ export async function run(argv: readonly string[], write: (name: string, bytes: 
       write(name, bytes);
       return { status: 0, stdout: "", stderr: `${name}\n` };
     }
-    throw new UsageError(`Unknown command: ${command}. Use check, label, epc or bulk (gs1ls --help).`);
+    throw new UsageError(`Unknown command: ${command}. Use check, label, epc, bulk or serve (gs1ls --help).`);
   } catch (error) {
     if (error instanceof InputError) return { status: 1, stdout: "", stderr: `${error.message}\n` };
     const message = error instanceof Error ? error.message : String(error);
     // parseArgs's own refusals (an unknown option, a missing value) are usage errors too
-    if (error instanceof UsageError || (error as { code?: string }).code?.startsWith("ERR_PARSE_ARGS")) {
+    if (error instanceof UsageError || error instanceof GcpError || (error as { code?: string }).code?.startsWith("ERR_PARSE_ARGS")) {
       return { status: 2, stdout: "", stderr: `${message}\n` };
     }
     return { status: 1, stdout: "", stderr: `${message}\n` };

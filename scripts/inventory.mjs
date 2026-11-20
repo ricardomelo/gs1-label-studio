@@ -26,7 +26,7 @@ export const AREAS = [
   ["RFID, NFC and digital signatures", ["epc", "epcPlus", "epcChoices", "tagMemory", "rfid", "ndef", "sign"]],
   ["The Check Studio: a code read to be checked", ["reading", "faults", "check", "engine-map", "check-group", "check-studio", "camera", "wedge", "group", "history", "readings", "checkReport", "reports", "share", "sharing", "estimate", "estimates"]],
   ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
-  ["The command line and the local API (gs1ls)", ["labelDesign", "cli", "epc-bulk"]],
+  ["The command line and the local API (gs1ls)", ["labelDesign", "cli", "epc-bulk", "serve"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian", ["i18n"]],
   ["The documents", ["docs"]],
   ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour", "routes", "studios", "check-result", "check-camera", "check-scan", "check-matrix", "check-history", "check-report", "check-share", "check-estimate", "rfid-studio"]],
