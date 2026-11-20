@@ -766,5 +766,10 @@
  "An EPC of {epcBits} bits does not fit the Length field (1 to 31 words).": "Un EPC di {epcBits} bit non entra nel campo Length (da 1 a 31 parole).",
  "Attribute bits {attributes} are not 0 to 255.": "I bit di attributo {attributes} non sono tra 0 e 255.",
  "The EPC is not hexadecimal.": "L'EPC non è esadecimale.",
- "{bits} bits do not match an EPC of {clean} hexadecimal digits.": "{bits} bit non corrispondono a un EPC di {clean} cifre esadecimali."
+ "{bits} bits do not match an EPC of {clean} hexadecimal digits.": "{bits} bit non corrispondono a un EPC di {clean} cifre esadecimali.",
+ "The data has no GS1 key, such as (01) GTIN or (00) SSCC.": "I dati non hanno una chiave GS1, come (01) GTIN o (00) SSCC.",
+ "Unknown scanning environment: {environment}. Use one of: {ENVIRONMENTS}.": "Ambiente di lettura sconosciuto: {environment}. Usane uno di questi: {ENVIRONMENTS}.",
+ "({key}) is not scanned in the environment {environment}: use {environments}.": "({key}) non viene letto nell'ambiente {environment}: usa {environments}.",
+ "Step 2's table recommends no symbol the studio draws for this data in {environment}: name one.": "La tabella del passo 2 non raccomanda alcun simbolo che lo studio disegni per questi dati in {environment}: indicane uno.",
+ "The table of {environment} has no row for {name}: choose another environment or symbol.": "La tabella di {environment} non ha una riga per {name}: scegli un altro ambiente o simbolo."
 }

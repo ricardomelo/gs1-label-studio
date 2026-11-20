@@ -378,3 +378,4 @@ export { compareReadBack, crc16, EPC_MEMORY_LIMITS, epcBank, pcWord, readEpcBank
 export { readZplRfid, zplRfidCommands, zplRfidLabel, zplWithCommands, zplWithRfid, type RfidWrite, type RfidWriteFrom } from "./rfidZpl.ts";
 export { encoderCsv, ENCODER_COLUMNS, zplRfidLabels, type RfidTagRow } from "./rfidBatch.ts";
 export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";
+export { designFor, type DesignChoice } from "./labelDesign.ts";
