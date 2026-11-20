@@ -48,6 +48,13 @@
    same catalogues as the page (`apps/web/src/locales/*.messages.json`) follows in item d.
 6. **Items** (backlog 5.1 a to d): a, the package, the bundle, `check` and `label`; b, `bulk` and `epc`; c, `serve`
    and its OpenAPI document; d, `--lang`, the documents (a guide for integrators), the inventory and the test plan.
+7. **`bulk` and `epc`** (5.1 b, 20 November 2026): the EPC with the person's choices moved from the page into the core
+   (`epcOf`, `bankFor`, `tagFor`, `EPC_CHOICES`; its messages in English, which the page translates with the core's
+   other messages), so that the editor's card, the RFID Studio and `gs1ls epc` cannot drift apart. `gs1ls bulk` finds
+   the columns from their headers (`guessMapping`), takes one design for all the rows from the first row that passes
+   (as the editor takes step 2's from its data), and writes `generateBatch`'s zip; its exit status is 1 when a row was
+   left out, so that a script notices. `--rfid` joins each row's tag to its label in the ZPL file and adds `tags.csv`,
+   the RFID Studio's CSV for an encoder.
 
 ## 4. Consequences
 

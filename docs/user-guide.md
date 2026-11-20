@@ -1123,6 +1123,19 @@ For a system or a script that makes labels without a browser, `gs1ls` does what 
   `--hri full|key|none`, `--stem` for the GS1 Digital Link URI's domain. Formats: `svg`, `png`, `pdf`, `eps` and the
   printer languages `zpl`, `tspl`, `epl2`, `dpl`, `ppla`, `pplb` (`--dpi 152|203|300|600`). The file is named after
   the symbol and the key (`dl-qrcode_09506000134376.pdf`), or as `-o` says; `-o -` writes it to standard output.
+- `gs1ls epc "<data>" --prefix-length 7` gives the EPC an RFID tag carries, as the RFID Studio writes it: the EPC from
+  bit 20h, the StoredPC and EPC from bit 10h, the StoredCRC, the EPC Pure Identity and Tag URIs. `--gcp <file.xml>`
+  takes the prefix's length from GS1's GCP length table instead; `--scheme plus` or `plusplus` writes an EPC+ or
+  EPC++ (`--date 17` puts a DSGTIN's date first, `--with-data` adds the data's other element strings); `--filter`,
+  `--umi` and `--hazmat` as in the studio's step 3; `--json` for a program. `--zpl` writes a label for an RFID printer
+  that writes the tag (`--write-from pc`, from bit 10h, or `epc`, from bit 20h; `--dpi`).
+- `gs1ls bulk products.xlsx --files pdf --print zpl` makes every row's label as the editor's bulk generation does, in
+  one zip (`labels.zip`, or as `-o` says) with `generated.csv`: the columns are found from their headers (GTIN,
+  Batch, (17)…), the design is the one step 2 recommends for the first row unless `--symbol` or `--environment` say
+  otherwise; `--files svg,png,pdf,eps` a file of each kind for each row, `--pdf` one PDF with a label a page,
+  `--print <language> --dpi` one print file, `--pattern` the files' names (`{row}`, `{symbol}`, `{key}`, an AI such as
+  `{10}`, a column's header). `--rfid` with the EPC options writes each row's tag in the ZPL file and lists the tags
+  in `tags.csv` for an encoder. The exit status is 1 when a row was left out (its reason is in `generated.csv`).
 
 ```text
 $ gs1ls check "(01)09506000134377(10)B42"

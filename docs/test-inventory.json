@@ -1654,6 +1654,10 @@
     {
      "name": "the bundle Node runs › draws a label to standard output, read back, and says its version and usage",
      "status": "passed"
+    },
+    {
+     "name": "the bundle Node runs › writes a tag's EPC with the schemes bundled (backlog 5.1 b)",
+     "status": "passed"
     }
    ],
    "area": "The command line and the local API (gs1ls)"
@@ -2569,6 +2573,82 @@
     },
     {
      "name": "a classic EPC read back from its hexadecimal or its URIs › reads TDS's own examples",
+     "status": "passed"
+    }
+   ],
+   "area": "RFID, NFC and digital signatures"
+  },
+  {
+   "program": "epc-bulk",
+   "file": "packages/cli/test/epc-bulk.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "gs1ls epc › gives the tag the RFID Studio writes: the core's EPC, bank and URIs, decoded back to the data",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls epc › writes EPC+ and EPC++ with the data's dates and +AIDC data, the StoredPC's bits, in JSON too",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls epc › takes the prefix length from GS1's GCP length table and says so",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls epc › writes a ZPL label for an RFID printer, the tag written from bit 10h or 20h",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls epc › gives the reason there is no EPC (1) and refuses a choice it cannot understand (2)",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls bulk › makes every row's label as the editor's bulk generation does, each read back, the row in error left out",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls bulk › reads a workbook, and writes one PDF and one print file for all the rows",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls bulk › with --rfid, writes each row's tag after each ^XA of the ZPL and lists the tags in tags.csv",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls bulk › refuses what it cannot do as a usage error",
+     "status": "passed"
+    }
+   ],
+   "area": "The command line and the local API (gs1ls)"
+  },
+  {
+   "program": "epcChoices",
+   "file": "packages/core/test/epcChoices.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "epcOf › encodes the classic EPC with the prefix length chosen, the key's filter by default",
+     "status": "passed"
+    },
+    {
+     "name": "epcOf › takes the prefix length from GS1's list and says so; a range that is no prefix, or none listed, gives the reason",
+     "status": "passed"
+    },
+    {
+     "name": "epcOf › names what the key lacks before anything else, and a key with no EPC scheme",
+     "status": "passed"
+    },
+    {
+     "name": "epcOf › writes an EPC+ that decodes to the GS1 Digital Link URI, with +AIDC data and a DSGTIN's date when chosen",
+     "status": "passed"
+    },
+    {
+     "name": "tagFor and bankFor › gives the row's bank and URIs, the tag URI with the control fields step 3's bits set",
+     "status": "passed"
+    },
+    {
+     "name": "tagFor and bankFor › gives the reason when there is no EPC, and refuses an EPC larger than the memory",
      "status": "passed"
     }
    ],

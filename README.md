@@ -650,7 +650,11 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   b, `bulk` and `epc`; c, `serve` and its OpenAPI document; d, `--lang`, a guide for integrators, the inventory and the
   test plan; a done the same day: `designFor()` in the core (the label step 2 recommends from the data alone), and
   `gs1ls check` (the Check Studio's verdict and findings, text or JSON, exit status 0, 1 or 2) and `gs1ls label` (SVG,
-  PNG, PDF, EPS or a printer's language, to a file or standard output), bundled into `packages/cli/dist/gs1ls.mjs`*
+  PNG, PDF, EPS or a printer's language, to a file or standard output), bundled into `packages/cli/dist/gs1ls.mjs`;
+  b done the same day: the EPC with the person's choices moved from the page into the core (`epcOf`, `tagFor`),
+  `gs1ls epc` (the tag's EPC, bank and URIs, EPC+ and EPC++, GS1's GCP length table, ZPL for an RFID printer) and
+  `gs1ls bulk` (a CSV or a workbook as the editor's bulk generation: the zip with `generated.csv`, one PDF, one print
+  file, each row's tag with `--rfid` and `tags.csv`)*
 
 **Phase 6 — the owner's review of 11 November 2026** (twelve points, then the owner's comments of 11 and 13
 November, assessed and ordered; to start when the week's quota starts again). Recommended order: 6.1, 6.2 and 6.9 (small, seen at once), then the
