@@ -1,5 +1,5 @@
 {
- "date": "2026-11-17",
+ "date": "2026-11-20",
  "skipped": 0,
  "programs": [
   {
@@ -10950,6 +10950,18 @@
     {
      "name": "a bank read back › refuses what no Length fits",
      "status": "passed"
+    },
+    {
+     "name": "a tag read back, compared with the bank meant › takes the EPC alone, from the PC or the whole bank, and finds them the same",
+     "status": "passed"
+    },
+    {
+     "name": "a tag read back, compared with the bank meant › names what differs: the EPC, the Length, the attribute bits, the toggle, a CRC that does not match",
+     "status": "passed"
+    },
+    {
+     "name": "a tag read back, compared with the bank meant › refuses what is not whole words of hexadecimal",
+     "status": "passed"
     }
    ],
    "area": "RFID, NFC and digital signatures"
@@ -12794,6 +12806,15 @@
     },
     {
      "name": "the editor's card and the RFID Studio share the scheme chosen",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "what a reader returned, pasted in step 4, compared with the tag meant",
      "status": "listed",
      "projects": [
       "desktop",

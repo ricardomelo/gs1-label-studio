@@ -871,6 +871,10 @@ is the editor's: what is typed in one studio is there in the other, and so are t
   with the EPC and its pure identity URI while writing the tag; **The tag with the Label Studio's label (.zpl)** adds
   the commands to the label made in the Label Studio, so that one pass prints the label and writes its tag. See the
   [printing guide](printing-guide.md#rfid-printers).
+- **Reading back**: paste what the reader returned after writing a tag, in hexadecimal: the EPC alone (what most
+  readers show), or the bank from bit 10h or from bit 00h. *The tag holds what was meant* — or each difference, with
+  what to do: another EPC, a Length that does not count the EPC's words (write from bit 10h), the attribute bits, the
+  toggle, a CRC that does not match (read again).
 - **NFC tag**, as in the card above.
 
 ## 12. Digital signature (GS1, JWS)
