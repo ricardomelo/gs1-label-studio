@@ -1,0 +1,30 @@
+{
+  "name": "@gs1-label-studio/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "gs1ls: GS1 Label Studio's checks, labels and print files from the command line and a local HTTP API",
+  "bin": {
+    "gs1ls": "dist/gs1ls.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "vite build",
+    "test": "vite build && vitest run"
+  },
+  "dependencies": {
+    "gs1encoder": "1.4.1"
+  },
+  "devDependencies": {
+    "@gs1-label-studio/core": "workspace:*",
+    "bwip-js": "4.11.4",
+    "opentype.js": "^2.0.0",
+    "qrcode": "1.5.4",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "zxing-wasm": "^3.1.6"
+  }
+}

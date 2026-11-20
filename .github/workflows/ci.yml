@@ -30,6 +30,8 @@ jobs:
           LABELARY: "1"   # ZPL rendered by labelary.com and read back (packages/core/test/labelary.test.ts)
       # The web application's unit tests: every text in each language (apps/web/test).
       - run: pnpm --filter @gs1-label-studio/web test
+      # gs1ls, the command line (ADR 0009): built, then its tests, which run the bundle too.
+      - run: pnpm --filter @gs1-label-studio/cli test
       - run: pnpm build
       # The editor in a browser (apps/web/e2e), desktop and phone widths, against the build above.
       - run: pnpm --filter @gs1-label-studio/web exec playwright install --with-deps chromium
