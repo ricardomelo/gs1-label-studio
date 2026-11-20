@@ -873,3 +873,6 @@ fieldset.pc-bits input { width: auto; }
 .rfid-printer h3 { font-size: 15px; margin: 16px 0 6px; }
 .rfid-printer pre.zpl-rfid { background: var(--bg, #f3f5f9); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
 .rfid-printer .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.read-back h3 { font-size: 15px; margin: 16px 0 6px; }
+.read-back input { width: 100%; box-sizing: border-box; }
+.read-back .ok { color: #1b7a3a; }

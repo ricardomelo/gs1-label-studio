@@ -1,4 +1,4 @@
-import { epcBank, EPC_MEMORY_LIMITS, zplRfidCommands, zplRfidLabel, zplWithRfid, type EpcBank, type GcpTable, type RfidWriteFrom } from "@gs1-label-studio/core";
+import { compareReadBack, epcBank, EPC_MEMORY_LIMITS, type ReadDifference, zplRfidCommands, zplRfidLabel, zplWithRfid, type EpcBank, type GcpTable, type RfidWriteFrom } from "@gs1-label-studio/core";
 import { useState, type ReactNode } from "react";
 import { Segmented } from "./Segmented.tsx";
 import { EpcControls, EpcFacts, nfcChoices, type EpcChoices, type useEpc } from "./EpcSection.tsx";
@@ -171,6 +171,7 @@ export function RfidTagCard({ epc, choices, onChoices, uri, download, children }
           </p>
         )}
         {children}
+        {bank && <ReadBack bank={bank} />}
         <NfcWriter choices={nfcChoices(epc, uri)} download={download} />
         </div>
       </div>
@@ -228,6 +229,39 @@ export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download }: {
       </div>
       {error && <p className="error small">{error}</p>}
       <p className="hint">{t("Printed at {dpi} dpi. Check one tag with a reader before a whole run.", { dpi })}</p>
+    </div>
+  );
+}
+
+/** What each difference between the tag read and the bank meant says (backlog 6.12 e). */
+const DIFFERENCES = (): Record<ReadDifference, string> => ({
+  epc: t("The EPC read is not the one meant: the tag was written with other data, or not written."),
+  length: t("The StoredPC's Length counts other than the EPC's words: write from bit 10h, or let the printer set the PC."),
+  attributes: t("The attribute bits differ (the hazardous material bit in step 3)."),
+  toggle: t("The toggle bit says the tag holds no EPC but an ISO identifier."),
+  crc: t("The StoredCRC does not match the PC and EPC read: read the tag again."),
+});
+
+/** Step 4's reading back: what a reader returned, pasted, compared with the bank. */
+function ReadBack({ bank }: { bank: EpcBank }) {
+  const [text, setText] = useState("");
+  const comparison = text.trim() ? compareReadBack(bank, text) : null;
+  const texts = DIFFERENCES();
+  const forms = { epc: t("the EPC alone"), pc: t("from the StoredPC"), bank: t("the whole bank, CRC first") };
+  return (
+    <div className="read-back">
+      <h3>{t("Reading back")}</h3>
+      <label htmlFor="rfid-read">{t("What the reader returned (hexadecimal: the EPC, or the bank from bit 10h or 00h)")}</label>
+      <input id="rfid-read" className="mono" value={text} onChange={(e) => setText(e.target.value)} spellCheck={false} autoComplete="off" />
+      {text.trim() && !comparison && <p className="error small">{t("Not an EPC or an EPC bank: hexadecimal in whole 16-bit words (4 digits each).")}</p>}
+      {comparison && (comparison.differences.length === 0
+        ? <p className="ok" role="status">✓ {t("The tag holds what was meant ({form}).", { form: forms[comparison.form] })}</p>
+        : (
+          <div role="alert">
+            <p className="error">{t("The tag does not hold what was meant ({form}):", { form: forms[comparison.form] })}</p>
+            <ul className="small">{comparison.differences.map((d) => <li key={d}>{texts[d]}</li>)}</ul>
+          </div>
+        ))}
     </div>
   );
 }

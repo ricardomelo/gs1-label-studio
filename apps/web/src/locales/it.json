@@ -1466,5 +1466,18 @@
  "Writing and reading back": "Scrivere e rileggere",
  "{bits} bits of EPC: a tag with at least {memory} bits of EPC memory.": "{bits} bit di EPC: un tag con almeno {memory} bit di memoria EPC.",
  "{bits} bits, {words} words": "{bits} bit, {words} parole",
- "{n} bits": "{n} bit"
+ "{n} bits": "{n} bit",
+ "Not an EPC or an EPC bank: hexadecimal in whole 16-bit words (4 digits each).": "Né un EPC né un banco EPC: esadecimale in parole intere di 16 bit (4 cifre ciascuna).",
+ "Reading back": "Rileggere",
+ "The EPC read is not the one meant: the tag was written with other data, or not written.": "L'EPC letto non è quello previsto: il tag è stato scritto con altri dati, o non è stato scritto.",
+ "The StoredCRC does not match the PC and EPC read: read the tag again.": "Lo StoredCRC non corrisponde a PC ed EPC letti: rileggete il tag.",
+ "The StoredPC's Length counts other than the EPC's words: write from bit 10h, or let the printer set the PC.": "Il Length dello StoredPC non conta le parole dell'EPC: scrivete dal bit 10h, o lasciate che la stampante imposti il PC.",
+ "The attribute bits differ (the hazardous material bit in step 3).": "I bit di attributo differiscono (il bit di materiale pericoloso al passo 3).",
+ "The tag does not hold what was meant ({form}):": "Il tag non contiene ciò che era previsto ({form}):",
+ "The tag holds what was meant ({form}).": "Il tag contiene ciò che era previsto ({form}).",
+ "The toggle bit says the tag holds no EPC but an ISO identifier.": "Il bit toggle dice che il tag non contiene un EPC ma un identificativo ISO.",
+ "What the reader returned (hexadecimal: the EPC, or the bank from bit 10h or 00h)": "Ciò che il lettore ha restituito (esadecimale: l'EPC, o il banco dal bit 10h o 00h)",
+ "from the StoredPC": "dallo StoredPC",
+ "the EPC alone": "solo l'EPC",
+ "the whole bank, CRC first": "l'intero banco, CRC per primo"
 }

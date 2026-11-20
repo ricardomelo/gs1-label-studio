@@ -65,3 +65,30 @@ test("the editor's card and the RFID Studio share the scheme chosen", async ({ p
   await page.locator("details.epc").getByRole("link", { name: "Open in the RFID Studio" }).click();
   await expect(page).toHaveURL(/#\/rfid$/);
 });
+
+test("what a reader returned, pasted in step 4, compared with the tag meant", async ({ page }) => {
+  await page.goto("/#/rfid");
+  await page.fill("#paste", "(01)09506000134376(21)1001");
+  await page.press("#paste", "Enter");
+  await show(page, "Encoding");
+  await page.selectOption("#rfid-prefix", "7");
+  await show(page, "Write");
+  const read = page.locator("#rfid-read");
+  const box = page.locator(".read-back");
+  // the EPC alone, as most readers report it
+  await read.fill("3036 4433 400D 1F40 0000 03E9");
+  await expect(box.getByRole("status")).toHaveText("✓ The tag holds what was meant (the EPC alone).");
+  // the whole bank, CRC first: B7E6 is the CRC Python's binascii gives for 3000 and this EPC
+  await read.fill("B7E6300030364433400D1F40000003E9");
+  await expect(box.getByRole("status")).toContainText("the whole bank, CRC first");
+  // the hazardous material bit meant but not written
+  await show(page, "Tag");
+  await page.getByLabel("Hazardous material (attribute bit, Gen2 version 1 tags)").check();
+  await show(page, "Write");
+  await expect(box.getByRole("alert")).toContainText("The attribute bits differ");
+  // another serial number, and text that is no EPC
+  await read.fill("30364433400D1F40000003EA");
+  await expect(box.getByRole("alert")).toContainText("The EPC read is not the one meant");
+  await read.fill("hello");
+  await expect(box).toContainText("Not an EPC or an EPC bank");
+});
