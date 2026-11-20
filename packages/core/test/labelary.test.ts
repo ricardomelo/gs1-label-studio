@@ -37,6 +37,7 @@ import {
   epcBank,
   zplRfidCommands,
   zplRfidLabel,
+  zplRfidLabels,
   zplWithRfid,
   readWork,
   turnedRect,
@@ -784,6 +785,9 @@ describe.skipIf(!enabled)("ZPL for an RFID printer, through Labelary's linter", 
       expect(await warnings(zplRfidLabel(bank, ["urn:epc:tag:sgtin-96:1.0614141.812345.6789"], { dpi: 203, from }))).toBeNull();
     }
     expect(await warnings(zplWithRfid("^XA\n^FO20,20^A0N,30,30^FDLabel^FS\n^XZ", bank))).toBeNull();
+    // many tags (backlog 6.12 d): one file with a label a tag
+    const many = [1, 2, 3].map((n) => ({ row: n, bank: epcBank(`3034257BF7194E400000000${n}`, 96), identity: `row ${n}` }));
+    expect(await warnings(zplRfidLabels(many, { dpi: 203 }))).toBeNull();
     // the linter does see a wrong memory bank or format: the check above can fail
     expect(await warnings(zplRfidCommands(bank).replace(",1^FD", ",9^FD").replace(/^/, "^XA\n") + "\n^XZ")).toContain("^RF");
   });

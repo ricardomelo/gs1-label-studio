@@ -25,6 +25,7 @@ import { dplPage } from "./dpl.ts";
 import { pplaPage, pplbLogisticLabel, pplbPage } from "./argox.ts";
 import { gs1128FieldData, gs1128Modules, gs1128StackDots, zplLogisticLabel, zplPage, zplTextAbove, ZplUnsupportedError, type ZplLabelOptions } from "./zpl.ts";
 import { parseElementString } from "./elementString.ts";
+import { zplWithCommands } from "./rfidZpl.ts";
 import { PRINTER_LANGUAGES, printLabel, printTestLabel, type PrinterLanguage } from "./printFile.ts";
 
 // One label designed once and drawn for any identification (backlog 2.4): the editor's label for the code typed or
@@ -362,6 +363,11 @@ export interface BatchRow {
   /** Why the row cannot be drawn (the Syntax Engine's message), or that it was skipped. */
   error?: string;
   skipped?: boolean;
+  /**
+   * The RFID Studio's tag for the row (backlog 6.12 d): ZPL's ^RS and ^RF commands (`zplRfidCommands`), written after
+   * each ^XA of the row's label in a ZPL print file; another printer language prints the label without it and says so.
+   */
+  rfid?: string;
 }
 
 export interface BatchRequest {
@@ -537,7 +543,12 @@ export async function generateBatch(rows: readonly BatchRow[], request: BatchReq
     }
     if (request.zplDpi) {
       try {
-        zpl.push(printFileFor(language, d.label!, design, request.zplDpi, request.zplDots));
+        const file = printFileFor(language, d.label!, design, request.zplDpi, request.zplDots);
+        if (d.row.rfid && language === "zpl" && typeof file === "string") zpl.push(zplWithCommands(file, d.row.rfid));
+        else {
+          if (d.row.rfid) note(d.row, `RFID: the tag is written in ZPL only; the ${languageName} file prints the label without it`);
+          zpl.push(file);
+        }
       } catch (error) {
         note(d.row, `${languageName}: ${error instanceof Error ? error.message : String(error)}`);
       }

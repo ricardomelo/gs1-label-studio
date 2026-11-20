@@ -31,6 +31,9 @@ import {
   type LabelDesign,
   type LabelSheet,
   type SyntaxEngine,
+  epcBank,
+  readZplRfid,
+  zplRfidCommands,
 } from "../src/index.ts";
 import { drawPdf, textFile, unzip } from "./files.ts";
 import { hriFont } from "./font.ts";
@@ -246,6 +249,23 @@ describe("generating every row", () => {
     const zpl = new TextDecoder().decode(files.get("labels_dl-qrcode_203dpi.zpl"));
     expect(zpl.match(/\^XA/g)).toHaveLength(3);
     expect(zpl).toContain("09506000134352");
+  }, SLOW);
+
+  // The RFID Studio in bulk (backlog 6.12 d): each row's tag written after its label's ^XA in ZPL; another language
+  // prints the label without the tag and says so in generated.csv.
+  it("writes each row's RFID tag with its label in ZPL, and says another language leaves it out", async () => {
+    const rows = batchRows([4]).map((row, i) => ({ ...row, rfid: zplRfidCommands(epcBank(`30340000000000000000000${i}`, 96)) }));
+    const zpl = new TextDecoder().decode(unzip((await generateBatch(rows, { design: QR, files: [], pattern: "{01}", pdf: false, zplDpi: 203 }, font)).zip)
+      .get("labels_dl-qrcode_203dpi.zpl"));
+    const labels = zpl.split("^XA").slice(1);
+    expect(labels).toHaveLength(3);
+    // the rows at 0, 1 and 3 are drawn (2 has an error, 4 is skipped): each label writes its own row's tag, then its symbol
+    expect(labels.map((label) => readZplRfid(`^XA${label}`).map((w) => w.hex.slice(-1)))).toEqual([["0"], ["1"], ["3"]]);
+    for (const label of labels) expect(label.indexOf("^RFW")).toBeLessThan(label.indexOf("^BQ"));
+    const tspl = await generateBatch(rows, { design: QR, files: [], pattern: "{01}", pdf: false, zplDpi: 203, printLanguage: "tspl" }, font);
+    const csv = tspl.csv.split("\r\n");
+    expect(csv[1]).toMatch(/^2,generated,labels_dl-qrcode_203dpi\.prn,.*,RFID: the tag is written in ZPL only; the TSPL file prints the label without it$/);
+    expect(new TextDecoder().decode(unzip(tspl.zip).get("labels_dl-qrcode_203dpi.prn"))).not.toContain("RFW");
   }, SLOW);
 
   // The print file in the profile's language (ADR 0002): TSPL, one label after another, named .prn

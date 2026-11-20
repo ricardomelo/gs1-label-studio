@@ -23,7 +23,11 @@ export function zplRfidCommands(bank: EpcBank, from: RfidWriteFrom = "pc"): stri
  * printer writes the tag in the same pass. A file with no ^XA is returned as it was.
  */
 export function zplWithRfid(zpl: string, bank: EpcBank, from: RfidWriteFrom = "pc"): string {
-  const commands = zplRfidCommands(bank, from);
+  return zplWithCommands(zpl, zplRfidCommands(bank, from));
+}
+
+/** Commands, one per line, added right after each ^XA of a ZPL file; a file with no ^XA is returned as it was. */
+export function zplWithCommands(zpl: string, commands: string): string {
   return zpl.replace(/\^XA(\r?\n)?/g, (start, newline: string | undefined) => `${start}${newline ? "" : "\n"}${commands}\n`);
 }
 
