@@ -3,6 +3,27 @@
 // the tests share them; reading files, arguments and sockets is main.ts's.
 
 import {
+  checkRows,
+  encoderCsv,
+  EPC_CHOICES,
+  epcOf,
+  epcSchemes,
+  generateBatch,
+  guessMapping,
+  parseTableFile,
+  patternProblem,
+  tagFor,
+  unzip,
+  zipArchive,
+  zplRfidCommands,
+  zplRfidLabel,
+  DEFAULT_PATTERN,
+  type BatchFile,
+  type BatchRow,
+  type EpcChoices,
+  type GcpTable,
+  type RfidTagRow,
+  type RfidWriteFrom,
   check,
   designFor,
   ENVIRONMENTS,
@@ -20,6 +41,7 @@ import {
   PRINTER_LANGUAGES,
   readingFromText,
   SYMBOLOGIES,
+  InputError,
   type CheckResult,
   type HriFont,
   type PrinterLanguage,
@@ -181,3 +203,197 @@ export function checkText(out: CheckOut): string {
 export function checkStatus(out: CheckOut): number {
   return out.verdict === "follows" || out.verdict === "remarks" ? 0 : 1;
 }
+
+/** The EPC choices as gs1ls takes them: the scheme by name, the rest as the RFID Studio's steps 2 and 3. */
+export interface EpcRequest {
+  scheme?: "classic" | "plus" | "plusplus";
+  prefixLength?: number;
+  filter?: number;
+  /** A DSGTIN's date by its AI, such as 17. */
+  date?: string;
+  withData?: boolean;
+  umi?: boolean;
+  hazmat?: boolean;
+  stem?: string;
+  gcp?: GcpTable | null;
+}
+
+const FORMS = { classic: "classic", plus: "+", plusplus: "++" } as const;
+
+/** The choices of a request, or a usage error. */
+export function epcChoices(request: EpcRequest): EpcChoices {
+  if (request.scheme && !(request.scheme in FORMS)) throw new UsageError("The EPC scheme is classic, plus or plusplus.");
+  if (request.prefixLength !== undefined && !(Number.isInteger(request.prefixLength) && request.prefixLength >= 6 && request.prefixLength <= 12)) {
+    throw new UsageError("The company prefix length is 6 to 12 digits.");
+  }
+  if (request.filter !== undefined && !(Number.isInteger(request.filter) && request.filter >= 0 && request.filter <= 7)) {
+    throw new UsageError("The filter is 0 to 7.");
+  }
+  return {
+    ...EPC_CHOICES, form: FORMS[request.scheme ?? "classic"], prefix: request.prefixLength ?? null, filter: request.filter ?? null,
+    date: request.date ?? "", withData: Boolean(request.withData), umi: Boolean(request.umi), hazmat: Boolean(request.hazmat),
+  };
+}
+
+/** The tag of one datum as gs1ls epc gives it. */
+export interface EpcOut {
+  scheme: string;
+  filter: number;
+  bits: number;
+  /** The EPC from bit 20h, zero-filled to the word: what most readers report and ZPL's ^RF writes when the printer sets the PC. */
+  epc: string;
+  /** The StoredPC and the EPC, from bit 10h. */
+  pcAndEpc: string;
+  storedPc: string;
+  storedCrc: string;
+  pureIdentity?: string;
+  tagUri?: string;
+  digitalLinkUri?: string;
+  /** Where the company prefix's length came from, when GS1's list gave it. */
+  source?: string;
+  /** +AIDC data the EPC+ could not carry, with the reasons. */
+  left?: string[];
+  tag: RfidTagRow;
+}
+
+const hex4 = (n: number) => n.toString(16).toUpperCase().padStart(4, "0");
+
+/**
+ * The EPC of one element string, URI or scanner's text with the choices, as the RFID Studio writes it: the core's
+ * `epcOf` and `tagFor`. An `InputError` when the data are refused; the reason there is no EPC as an `InputError` too.
+ */
+export async function epcData(engine: SyntaxEngine, data: string, request: EpcRequest): Promise<EpcOut> {
+  const choices = epcChoices(request);
+  const id = fieldsOf(engine.parse(data.trim()));
+  const identified = identify(engine, id, request.stem?.trim() || null);
+  const elements = identified.elements.map((e) => [e.ai, e.value] as [string, string]);
+  const { result, filter } = epcOf({ id, stem: request.stem ?? "", gcp: request.gcp ?? null, elements, choices }, await epcSchemes());
+  const tag = tagFor(1, result, choices);
+  if (!tag.bank) throw new InputError(tag.error ?? "No EPC.");
+  const scheme = result.epc?.scheme ?? (choices.form === "+" ? "epc+" : "epc++");
+  return {
+    scheme, filter, bits: tag.bank.bits, epc: tag.bank.fromEpc, pcAndEpc: tag.bank.fromPc, storedPc: hex4(tag.bank.pc), storedCrc: hex4(tag.bank.crc),
+    ...(tag.identity && result.epc ? { pureIdentity: tag.identity } : {}),
+    ...(tag.tagUri ? { tagUri: tag.tagUri } : {}),
+    ...(result.link ? { digitalLinkUri: result.link } : {}),
+    ...(result.source ? { source: result.source } : {}),
+    ...(result.left?.length ? { left: result.left } : {}),
+    tag,
+  };
+}
+
+/** The tag as text for a terminal. */
+export function epcText(out: EpcOut): string {
+  const lines = [
+    `EPC (from bit 20h): ${out.epc}`,
+    `StoredPC and EPC (from bit 10h): ${out.pcAndEpc}`,
+    `Scheme: ${out.scheme}, filter ${out.filter}, ${out.bits} bits`,
+    `StoredCRC: ${out.storedCrc}  StoredPC: ${out.storedPc}`,
+  ];
+  if (out.pureIdentity) lines.push(`EPC Pure Identity URI: ${out.pureIdentity}`);
+  if (out.tagUri) lines.push(`EPC Tag URI: ${out.tagUri}`);
+  if (out.digitalLinkUri) lines.push(`GS1 Digital Link URI: ${out.digitalLinkUri}`);
+  if (out.source) lines.push(out.source);
+  for (const reason of out.left ?? []) lines.push(`Not carried: ${reason}`);
+  return lines.join("\n") + "\n";
+}
+
+/** A ZPL label that writes the tag and prints its EPC and identity, for an RFID printer (the RFID Studio's step 4). */
+export function epcZpl(out: EpcOut, options: { dpi?: number; from?: RfidWriteFrom }): Uint8Array {
+  const bank = out.tag.bank!;
+  return text(zplRfidLabel(bank, [bank.fromEpc, out.tag.identity ?? ""].filter(Boolean), { dpi: options.dpi ?? 203, from: options.from ?? "pc" }));
+}
+
+export interface BulkRequest {
+  /** A file of each kind for every row: svg, png, pdf, eps. */
+  files?: BatchFile[];
+  /** One PDF with a label a page. */
+  pdf?: boolean;
+  /** One print file with every label, in this printer language, at `dpi`. */
+  print?: Exclude<Format, (typeof IMAGE_FORMATS)[number]>;
+  dpi?: number;
+  pattern?: string;
+  symbology?: SymbologyId;
+  environment?: string;
+  size?: number;
+  hri?: "full" | "key" | "none";
+  stem?: string;
+  /** Each row's tag: written after each ^XA of the ZPL file, and as tags.csv for an encoder. */
+  rfid?: EpcRequest & { from?: RfidWriteFrom };
+}
+
+export interface BulkOut {
+  zip: Uint8Array;
+  rows: number;
+  generated: number;
+  left: number;
+  /** generated.csv: each row, what was made of it or why nothing was. */
+  csv: string;
+}
+
+/**
+ * Every row of a CSV or Excel file as the editor's bulk generation makes it: the columns guessed from their headers
+ * (`guessMapping`), each row checked (`checkRows`), one design for all from the first row that passes (`designFor`
+ * with the choices), then `generateBatch`'s zip. With `rfid`, each row's tag as the RFID Studio writes many.
+ */
+export async function bulkFile(engine: SyntaxEngine, font: HriFont, bytes: Uint8Array, request: BulkRequest): Promise<BulkOut> {
+  const files = request.files ?? (request.print || request.pdf ? [] : ["svg"]);
+  const unknown = files.find((f) => !(IMAGE_FORMATS as readonly string[]).includes(f));
+  if (unknown) throw new UsageError(`Unknown file kind: ${unknown}. Use svg, png, pdf or eps.`);
+  if (request.print && !(request.print in PRINTER_LANGUAGES)) throw new UsageError(`Unknown printer language: ${request.print}. Use one of: ${Object.keys(PRINTER_LANGUAGES).join(", ")}.`);
+  const problem = labelProblem({ data: "", format: "svg", ...pick(request) });
+  if (problem) throw new UsageError(problem);
+  if (request.rfid && request.print && request.print !== "zpl") throw new UsageError("RFID tags are written in ZPL only: use --print zpl.");
+  const table = await parseTableFile(bytes);
+  const pattern = request.pattern ?? DEFAULT_PATTERN;
+  const patternError = patternProblem(pattern, table.headers);
+  if (patternError) throw new UsageError(patternError);
+  const mapping = guessMapping(table.headers);
+  const checked = checkRows(engine, table, mapping, [], request.stem?.trim() || null);
+  const first = checked.find((row) => row.identified);
+  if (!first) throw new InputError(checked[0]?.error ?? "The file has no rows.");
+  const design = designFor(first.identified!, {
+    ...(request.symbology ? { symbology: request.symbology } : {}),
+    ...(request.environment ? { environment: request.environment } : {}),
+    ...(request.size !== undefined ? { size: request.size } : {}),
+    ...(request.hri ? { hri: request.hri } : {}),
+  });
+  const cellsOf = (index: number) => Object.fromEntries(table.headers.map((h, i) => [h, table.rows[index]?.[i]?.trim() ?? ""]).filter(([h]) => h!.trim()));
+  let tags: RfidTagRow[] = [];
+  if (request.rfid) {
+    const choices = epcChoices(request.rfid);
+    const schemes = await epcSchemes();
+    tags = checked.map((row) => {
+      if (!row.id || !row.identified) return { row: row.row, error: row.error ?? "Not checked" };
+      const elements = row.identified.elements.map((e) => [e.ai, e.value] as [string, string]);
+      return tagFor(row.row, epcOf({ id: row.id, stem: request.stem ?? "", gcp: request.rfid!.gcp ?? null, elements, choices }, schemes).result, choices);
+    });
+  }
+  const rows: BatchRow[] = checked.map((row, index) => {
+    const tag = tags[index]?.bank;
+    return {
+      row: row.row, cells: cellsOf(index),
+      ...(row.identified ? { identified: row.identified } : { error: row.error ?? "Not checked" }),
+      ...(tag ? { rfid: zplRfidCommands(tag, request.rfid?.from ?? "pc") } : {}),
+    };
+  });
+  const print = request.print ?? (request.rfid ? "zpl" : undefined);
+  const result = await generateBatch(rows, {
+    design, files, pattern, pdf: Boolean(request.pdf),
+    ...(print ? { zplDpi: request.dpi ?? 203, printLanguage: print } : {}),
+  }, font);
+  let zip: Uint8Array = result.zip;
+  if (request.rfid) {
+    const entries = [...(await unzip(result.zip))].map(([name, content]) => ({ name, bytes: content }));
+    zip = await zipArchive([...entries, { name: "tags.csv", bytes: text(encoderCsv(tags)) }]);
+  }
+  return { zip, rows: checked.length, generated: result.generated, left: result.left, csv: result.csv };
+}
+
+const pick = (request: BulkRequest) => ({
+  ...(request.symbology ? { symbology: request.symbology } : {}),
+  ...(request.environment ? { environment: request.environment } : {}),
+  ...(request.size !== undefined ? { size: request.size } : {}),
+  ...(request.hri ? { hri: request.hri } : {}),
+  ...(request.dpi !== undefined ? { dpi: request.dpi } : {}),
+});

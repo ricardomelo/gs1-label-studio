@@ -135,4 +135,10 @@ describe("the bundle Node runs", () => {
     expect([bad.status, bad.stdout.toString().split("\n")[0]]).toEqual([1, "Does not follow the GS1 rules."]);
     expect(gs1ls("label", DATA, "--format", "gif").status).toBe(2);
   });
+
+  it("writes a tag's EPC with the schemes bundled (backlog 5.1 b)", () => {
+    const epc = gs1ls("epc", "(01)09506000134352(21)12345", "--prefix-length", "7");
+    expect([epc.status, epc.stderr.toString()]).toEqual([0, ""]);
+    expect(epc.stdout.toString()).toContain("EPC Pure Identity URI: urn:epc:id:sgtin:9506000.013435.12345\n");
+  });
 });
