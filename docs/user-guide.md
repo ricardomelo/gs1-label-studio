@@ -1136,6 +1136,15 @@ For a system or a script that makes labels without a browser, `gs1ls` does what 
   `--print <language> --dpi` one print file, `--pattern` the files' names (`{row}`, `{symbol}`, `{key}`, an AI such as
   `{10}`, a column's header). `--rfid` with the EPC options writes each row's tag in the ZPL file and lists the tags
   in `tags.csv` for an encoder. The exit status is 1 when a row was left out (its reason is in `generated.csv`).
+- `gs1ls serve` offers the same as a local HTTP API on `http://127.0.0.1:8080/v1/` (`--port`, `--host`), for a system
+  that would rather call it than start a command: `POST /v1/check`, `/v1/label` and `/v1/epc` take JSON with the
+  options above (`{"data": "(01)…", "format": "zpl", "dpi": 300}`), `/v1/bulk` takes the CSV or workbook itself as the
+  body and its options in the query (`/v1/bulk?files=pdf&print=zpl`). The OpenAPI document at `/v1/openapi.json`
+  lists every route and option. It has no password: keep it on this machine, or behind your own gateway.
+
+```text
+$ curl -X POST http://127.0.0.1:8080/v1/label -d '{"data": "(01)09506000134376(10)B42", "format": "png"}' -o label.png
+```
 
 ```text
 $ gs1ls check "(01)09506000134377(10)B42"

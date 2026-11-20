@@ -55,6 +55,11 @@
    (as the editor takes step 2's from its data), and writes `generateBatch`'s zip; its exit status is 1 when a row was
    left out, so that a script notices. `--rfid` joins each row's tag to its label in the ZPL file and adds `tags.csv`,
    the RFID Studio's CSV for an encoder.
+8. **`serve`** (5.1 c, 20 November 2026): `POST /v1/check`, `/v1/label` and `/v1/epc` take JSON; `/v1/bulk` takes the
+   file itself as the body (a CSV or a workbook, up to 32 MB) and its choices in the query, and gives the zip with the
+   rows' counts in `X-Rows`, `X-Generated` and `X-Left`. A request the API cannot understand is a 400, data the GS1
+   rules refuse a 422 (the command line's exit statuses 2 and 1). The OpenAPI document lists its choices from the same
+   tables the commands check, and a test sends every property it names.
 
 ## 4. Consequences
 

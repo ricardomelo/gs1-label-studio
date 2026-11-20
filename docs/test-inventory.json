@@ -1658,6 +1658,10 @@
     {
      "name": "the bundle Node runs › writes a tag's EPC with the schemes bundled (backlog 5.1 b)",
      "status": "passed"
+    },
+    {
+     "name": "the bundle Node runs › serves the API until stopped, on the port it names (backlog 5.1 c)",
+     "status": "passed"
     }
    ],
    "area": "The command line and the local API (gs1ls)"
@@ -10137,6 +10141,42 @@
     }
    ],
    "area": "In bulk: rows, the report, sequences, generation"
+  },
+  {
+   "program": "serve",
+   "file": "packages/cli/test/serve.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "gs1ls serve › listens on 127.0.0.1 unless told otherwise",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › checks one reading as gs1ls check does",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › draws a label in the format asked, read back, named in Content-Disposition",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › gives the tag as gs1ls epc does, or the RFID printer's ZPL",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › makes a CSV's labels in a zip, the counts in its headers, each tag in the ZPL",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › refuses with the status that says whose the fault is",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve › describes itself in OpenAPI 3.1: the routes it serves, the formats and languages the commands take",
+     "status": "passed"
+    }
+   ],
+   "area": "The command line and the local API (gs1ls)"
   },
   {
    "program": "share",

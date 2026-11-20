@@ -63,7 +63,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `apps/web/src/` | The application (section 6) |
 | `apps/web/e2e/` | Playwright browser tests of the editor |
 | `apps/web/test/` | Vitest unit tests of the web application: its languages |
-| `packages/cli/` | `gs1ls`, the command line (ADR 0009): `src/commands.ts` (each command a thin layer over the core), `src/main.ts` (arguments, files, exit status), `vite.config.ts` (the bundle `dist/gs1ls.mjs`, the HRI font beside it), `test/` (its commands from the sources and from the bundle, every symbol read back) |
+| `packages/cli/` | `gs1ls`, the command line (ADR 0009): `src/commands.ts` (each command a thin layer over the core), `src/main.ts` (arguments, files, exit status), `src/serve.ts` (`gs1ls serve`, the local HTTP API over the same commands) and `src/openapi.ts` (its OpenAPI document), `vite.config.ts` (the bundle `dist/gs1ls.mjs`, the HRI font beside it), `test/` (its commands from the sources and from the bundle, every symbol read back) |
 | `apps/web/screenshots/` | The user guide's screenshots, written to `docs/images/guide/` |
 | `apps/web/offline.ts` | The Vite plugin that writes the service worker |
 | `apps/web/public/` | Web app manifest and icons |
@@ -312,8 +312,9 @@ that say what is true; together they are the [inventory of features](test-invent
 | `epcChoices` | the EPC with the person's choices, shared by the editor, the RFID Studio and `gs1ls epc`: the prefix length chosen or from GS1's list, the reasons there is none, EPC+ and EPC++ with dates and +AIDC data, a row's tag with its control fields | 6 |
 | `tagMemory` | the EPC memory bank of a Gen2 tag: the StoredCRC against Python's CRC-CCITT and Annex F's residue, the StoredPC's Length and control bits, the bank word by word, a bank read back whole or from the PC, and compared with the bank meant | 15 |
 | `labelDesign` | a label's design from its data alone: the symbol step 2 recommends in an environment, or the one named, sized as the editor sizes it; what to choose when neither gives one | 3 |
-| `cli` | `gs1ls` (packages/cli): `check` as text, JSON and exit status; `label` in every format from the sources and from the bundle, every symbol read back, the print files the core's own; usage errors; `epc` from the bundle | 7 |
+| `cli` | `gs1ls` (packages/cli): `check` as text, JSON and exit status; `label` in every format from the sources and from the bundle, every symbol read back, the print files the core's own; usage errors; `epc` and `serve` from the bundle | 8 |
 | `epc-bulk` | `gs1ls epc`: the core's EPC, bank and URIs decoded back, EPC+ and EPC++, GS1's GCP length table, ZPL for an RFID printer from bit 10h or 20h, reasons and usage errors; `gs1ls bulk`: a CSV and a workbook as the editor's bulk generation, every symbol read back, the PDF and print file for all, each row's tag in the ZPL and tags.csv | 9 |
+| `serve` | `gs1ls serve` through fetch: 127.0.0.1 by default; `/v1/check`, `/v1/label`, `/v1/epc` and `/v1/bulk` giving what the commands give, every symbol read back and every tag decoded; the refusals as 400, 422, 404, 405 and 413; the OpenAPI document naming the routes, formats and options the routes take | 7 |
 | `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 6 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
