@@ -38,7 +38,7 @@ export const OPENAPI = {
   info: {
     title: "GS1 Label Studio local API (gs1ls serve)",
     version: "1",
-    description: "GS1 Label Studio's checks, labels, bulk generation and RFID tags on this machine (ADR 0009). No authentication: keep it on 127.0.0.1 or behind the system's own gateway. Files and messages are in English.",
+    description: "GS1 Label Studio's checks, labels, bulk generation and RFID tags on this machine (ADR 0009). No authentication: keep it on 127.0.0.1 or behind the system's own gateway. What is said about the data (plain words, refusals, an EPC's reasons) follows the request's Accept-Language (en, pt-BR, es, fr, de, it), else gs1ls serve's --lang; codes, the catalogue's texts and the files made stay in English.",
     license: { name: "Apache-2.0" },
   },
   paths: {
@@ -143,6 +143,7 @@ export const OPENAPI = {
             code: { type: "string" }, severity: { type: "string" }, ai: { type: ["string", "null"] }, what: { type: "string" }, fix: { type: "string" },
             sections: { type: "array", items: { type: "string" } }, fixedData: { type: "string" }, engineMessage: { type: "string" },
             details: { type: "object", additionalProperties: { type: "string" } },
+            plain: { type: "object", description: "The Check Studio's plain words, in the language asked", properties: { what: { type: "string" }, why: { type: "string" }, fix: { type: "string" } } },
           } } },
           elements: { type: "array", items: { type: "object", properties: { ai: { type: "string" }, value: { type: "string" }, title: { type: "string" } } } },
           forms: { type: ["object", "null"], properties: { elementString: { type: "string" }, dataStr: { type: "string" }, digitalLinkUri: { type: "string" } } },

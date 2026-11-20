@@ -5,6 +5,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { GcpError, InputError, parseGcpTable, type HriFont, type SyntaxEngine } from "@gs1-label-studio/core";
 import { bulkFile, checkData, epcData, epcZpl, makeLabel, UsageError, type BulkRequest, type EpcRequest, type LabelRequest } from "./commands.ts";
+import { language } from "./lang.ts";
 import { OPENAPI } from "./openapi.ts";
 
 /** A request body larger than this is refused (413): a workbook of many thousand rows fits. */
@@ -100,16 +101,20 @@ const sendJson = (response: ServerResponse, status: number, value: unknown, head
 const attachment = (name: string) => ({ "Content-Disposition": `attachment; filename="${name.replace(/["\\]/g, "_")}"` });
 
 /** The routes, over the engine and font loaded once. */
-export function apiHandler(engine: SyntaxEngine, font: HriFont): (request: IncomingMessage, response: ServerResponse) => Promise<void> {
+export function apiHandler(engine: SyntaxEngine, font: HriFont, defaultLang?: string): (request: IncomingMessage, response: ServerResponse) => Promise<void> {
   return async (request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
+    // The language of what is said about the data: the request's Accept-Language, else gs1ls serve's --lang
+    // ("*", which fetch sends by default, or a language it does not speak, leaves it to --lang)
+    const header = request.headers["accept-language"];
+    const lang = language(header && /(^|,)\s*(en|pt|es|fr|de|it)\b/i.test(header) ? header : defaultLang);
     const route = `${request.method} ${url.pathname.replace(/\/$/, "")}`;
     try {
       switch (route) {
         case "GET /v1/openapi.json":
           return sendJson(response, 200, OPENAPI);
         case "POST /v1/check":
-          return sendJson(response, 200, checkData(engine, data(await json(request))));
+          return sendJson(response, 200, checkData(engine, data(await json(request)), lang));
         case "POST /v1/label": {
           const fields = await json(request);
           const label: LabelRequest = defined({
@@ -127,7 +132,7 @@ export function apiHandler(engine: SyntaxEngine, font: HriFont): (request: Incom
         }
         case "POST /v1/epc": {
           const fields = await json(request);
-          const out = await epcData(engine, data(fields), epcRequest(fields));
+          const out = await epcData(engine, data(fields), epcRequest(fields), lang);
           const format = string(fields.format, "format") ?? "json";
           if (format === "zpl") {
             return send(response, 200, "text/plain; charset=utf-8", epcZpl(out, defined({ dpi: number(fields.dpi, "dpi"), from: writeFrom(fields.writeFrom) })),
@@ -172,14 +177,14 @@ export function apiHandler(engine: SyntaxEngine, font: HriFont): (request: Incom
       const status = error instanceof HttpError ? error.status
         : error instanceof UsageError || error instanceof GcpError ? 400
         : error instanceof InputError ? 422 : 500;
-      sendJson(response, status, { error: message });
+      sendJson(response, status, { error: status === 422 ? lang.tm(message) : message }, { "Content-Language": lang.locale });
     }
   };
 }
 
 /** The API listening: on 127.0.0.1 unless `host` says otherwise; port 0 takes a free one (the tests). */
-export function serve(engine: SyntaxEngine, font: HriFont, options: { host?: string; port?: number } = {}): Promise<Server> {
-  const handle = apiHandler(engine, font);
+export function serve(engine: SyntaxEngine, font: HriFont, options: { host?: string; port?: number; lang?: string } = {}): Promise<Server> {
+  const handle = apiHandler(engine, font, options.lang);
   const server = createServer((request, response) => void handle(request, response));
   return new Promise((resolve, reject) => {
     server.once("error", reject);

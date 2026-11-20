@@ -47,7 +47,12 @@ import {
   type PrinterLanguage,
   type SymbologyId,
   type SyntaxEngine,
+  type Translator,
 } from "@gs1-label-studio/core";
+import { ENGLISH } from "./lang.ts";
+// The Check Studio's plain words for each finding, as the page shows them (ADR 0007 decision 8): the page's own texts,
+// translated by its catalogues, which --lang reads too
+import { SIMPLE_TEXTS } from "../../../apps/web/src/checkTexts.ts";
 
 /** A usage error: what was asked cannot be understood (exit status 2), as opposed to data that fails a check (1). */
 export class UsageError extends Error {}
@@ -146,6 +151,8 @@ export interface FindingOut {
   engineMessage?: string;
   /** What explains it: the check digit that would be right, the date a day 00 stands for… */
   details?: Record<string, string>;
+  /** The Check Studio's plain words: what is wrong, why it matters, how to fix it and who does it, in the language asked. */
+  plain?: { what: string; why: string; fix: string };
 }
 
 export interface CheckOut {
@@ -157,7 +164,7 @@ export interface CheckOut {
 }
 
 /** The Check Studio's check of one reading typed or pasted (a scanner's text, an element string, a URI). */
-export function checkData(engine: SyntaxEngine, data: string): CheckOut {
+export function checkData(engine: SyntaxEngine, data: string, lang: Translator = ENGLISH): CheckOut {
   const result = check(engine, readingFromText(data, { source: "paste" }));
   return {
     verdict: result.verdict,
@@ -165,8 +172,9 @@ export function checkData(engine: SyntaxEngine, data: string): CheckOut {
       const entry = fault(f.code);
       return {
         code: f.code, severity: f.severity, ai: f.ai, what: entry.texts.what, fix: entry.texts.fix, sections: f.sections,
-        ...(f.fixedData ? { fixedData: f.fixedData } : {}), ...(f.engineMessage ? { engineMessage: f.engineMessage } : {}),
+        ...(f.fixedData ? { fixedData: f.fixedData } : {}), ...(f.engineMessage ? { engineMessage: lang.tm(f.engineMessage) } : {}),
         ...(f.details && Object.keys(f.details).length ? { details: f.details } : {}),
+        ...(SIMPLE_TEXTS[f.code] ? { plain: { what: lang.t(SIMPLE_TEXTS[f.code]!.what), why: lang.t(SIMPLE_TEXTS[f.code]!.why), fix: lang.t(SIMPLE_TEXTS[f.code]!.fix) } } : {}),
       };
     }),
     elements: result.elements.map(({ ai, value, title }) => ({ ai, value, title })),
@@ -184,17 +192,22 @@ const VERDICTS: Record<CheckResult["verdict"], string> = {
 };
 
 /** The check as text for a terminal: the verdict, each finding with how to fix it, the data's other forms. */
-export function checkText(out: CheckOut): string {
-  const lines = [VERDICTS[out.verdict]];
+export function checkText(out: CheckOut, lang: Translator = ENGLISH): string {
+  const lines = [lang.t(VERDICTS[out.verdict])];
   for (const f of out.findings) {
-    lines.push("", `${f.code} (${f.severity})${f.ai ? ` AI (${f.ai})` : ""}: ${f.what}`, `  How to fix: ${f.fix}`);
+    // In English the catalogue's expert texts, as before; in another language the Check Studio's plain words, which the
+    // page translates (the catalogue's stay in English)
+    const words = lang.locale !== "en" && f.plain ? f.plain : null;
+    lines.push("", `${f.code} (${f.severity})${f.ai ? ` AI (${f.ai})` : ""}: ${words ? words.what : f.what}`);
+    if (words) lines.push(`  ${lang.t("Why it matters:")} ${words.why}`);
+    lines.push(`  ${lang.t("How to fix:")} ${words ? words.fix : f.fix}`);
     if (f.details) lines.push(...Object.entries(f.details).map(([name, value]) => `  ${name}: ${value}`));
-    if (f.fixedData) lines.push(`  Made right: ${f.fixedData}`);
+    if (f.fixedData) lines.push(`  ${lang.t("Made right: {data}", { data: f.fixedData })}`);
   }
   if (out.elements.length) lines.push("", ...out.elements.map((e) => `(${e.ai}) ${e.title}: ${e.value}`));
   if (out.forms) {
-    lines.push("", `Element string: ${out.forms.elementString}`);
-    if (out.forms.digitalLinkUri) lines.push(`GS1 Digital Link URI: ${out.forms.digitalLinkUri}`);
+    lines.push("", lang.t("Element string: {value}", { value: out.forms.elementString }));
+    if (out.forms.digitalLinkUri) lines.push(lang.t("GS1 Digital Link URI: {value}", { value: out.forms.digitalLinkUri }));
   }
   return lines.join("\n") + "\n";
 }
@@ -262,39 +275,39 @@ const hex4 = (n: number) => n.toString(16).toUpperCase().padStart(4, "0");
  * The EPC of one element string, URI or scanner's text with the choices, as the RFID Studio writes it: the core's
  * `epcOf` and `tagFor`. An `InputError` when the data are refused; the reason there is no EPC as an `InputError` too.
  */
-export async function epcData(engine: SyntaxEngine, data: string, request: EpcRequest): Promise<EpcOut> {
+export async function epcData(engine: SyntaxEngine, data: string, request: EpcRequest, lang: Translator = ENGLISH): Promise<EpcOut> {
   const choices = epcChoices(request);
   const id = fieldsOf(engine.parse(data.trim()));
   const identified = identify(engine, id, request.stem?.trim() || null);
   const elements = identified.elements.map((e) => [e.ai, e.value] as [string, string]);
   const { result, filter } = epcOf({ id, stem: request.stem ?? "", gcp: request.gcp ?? null, elements, choices }, await epcSchemes());
   const tag = tagFor(1, result, choices);
-  if (!tag.bank) throw new InputError(tag.error ?? "No EPC.");
+  if (!tag.bank) throw new InputError(lang.tm(tag.error ?? "No EPC for this row."));
   const scheme = result.epc?.scheme ?? (choices.form === "+" ? "epc+" : "epc++");
   return {
     scheme, filter, bits: tag.bank.bits, epc: tag.bank.fromEpc, pcAndEpc: tag.bank.fromPc, storedPc: hex4(tag.bank.pc), storedCrc: hex4(tag.bank.crc),
     ...(tag.identity && result.epc ? { pureIdentity: tag.identity } : {}),
     ...(tag.tagUri ? { tagUri: tag.tagUri } : {}),
     ...(result.link ? { digitalLinkUri: result.link } : {}),
-    ...(result.source ? { source: result.source } : {}),
-    ...(result.left?.length ? { left: result.left } : {}),
+    ...(result.source ? { source: lang.tm(result.source) } : {}),
+    ...(result.left?.length ? { left: result.left.map(lang.tm) } : {}),
     tag,
   };
 }
 
 /** The tag as text for a terminal. */
-export function epcText(out: EpcOut): string {
+export function epcText(out: EpcOut, lang: Translator = ENGLISH): string {
   const lines = [
-    `EPC (from bit 20h): ${out.epc}`,
-    `StoredPC and EPC (from bit 10h): ${out.pcAndEpc}`,
-    `Scheme: ${out.scheme}, filter ${out.filter}, ${out.bits} bits`,
-    `StoredCRC: ${out.storedCrc}  StoredPC: ${out.storedPc}`,
+    lang.t("EPC (from bit 20h): {epc}", { epc: out.epc }),
+    lang.t("StoredPC and EPC (from bit 10h): {hex}", { hex: out.pcAndEpc }),
+    lang.t("Scheme: {scheme}, filter {filter}, {bits} bits", { scheme: out.scheme, filter: out.filter, bits: out.bits }),
+    lang.t("StoredCRC: {crc}  StoredPC: {pc}", { crc: out.storedCrc, pc: out.storedPc }),
   ];
-  if (out.pureIdentity) lines.push(`EPC Pure Identity URI: ${out.pureIdentity}`);
-  if (out.tagUri) lines.push(`EPC Tag URI: ${out.tagUri}`);
-  if (out.digitalLinkUri) lines.push(`GS1 Digital Link URI: ${out.digitalLinkUri}`);
+  if (out.pureIdentity) lines.push(lang.t("EPC Pure Identity URI: {uri}", { uri: out.pureIdentity }));
+  if (out.tagUri) lines.push(lang.t("EPC Tag URI: {uri}", { uri: out.tagUri }));
+  if (out.digitalLinkUri) lines.push(lang.t("GS1 Digital Link URI: {value}", { value: out.digitalLinkUri }));
   if (out.source) lines.push(out.source);
-  for (const reason of out.left ?? []) lines.push(`Not carried: ${reason}`);
+  for (const reason of out.left ?? []) lines.push(lang.t("Not carried: {reason}", { reason }));
   return lines.join("\n") + "\n";
 }
 

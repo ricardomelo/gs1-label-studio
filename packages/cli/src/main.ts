@@ -3,10 +3,11 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { GcpError, HriFont, InputError, parseGcpTable, syntaxEngine, type BatchFile, type RfidWriteFrom, type SymbologyId } from "@gs1-label-studio/core";
+import { GcpError, HriFont, InputError, parseGcpTable, syntaxEngine, type BatchFile, type RfidWriteFrom, type SymbologyId, type Translator } from "@gs1-label-studio/core";
 import {
   bulkFile, checkData, checkStatus, checkText, epcData, epcText, epcZpl, FORMATS, makeLabel, UsageError, type BulkRequest, type EpcRequest, type Format,
 } from "./commands.ts";
+import { ENGLISH, language, LANGUAGES } from "./lang.ts";
 import { serve } from "./serve.ts";
 
 export const HELP = `gs1ls — GS1 Label Studio from the command line (everything stays on this machine)
@@ -35,6 +36,9 @@ Usage:
       The same as a local HTTP API: POST /v1/check, /v1/label, /v1/epc and /v1/bulk; the OpenAPI document
       at /v1/openapi.json. No authentication: keep it on this machine or behind your own gateway.
   gs1ls --help | --version
+
+  --lang pt-BR|es|fr|de|it  says what the data's check, refusals and tags mean in that language (findings,
+      how to fix them, the core's messages); the help, usage errors and the files made stay in English.
 
 Examples:
   gs1ls check "(01)09506000134376(10)B42(17)271231"
@@ -71,6 +75,7 @@ const OPTIONS = {
   rfid: { type: "boolean" },
   port: { type: "string" },
   host: { type: "string" },
+  lang: { type: "string" },
   help: { type: "boolean", short: "h" },
   version: { type: "boolean" },
 } as const;
@@ -104,15 +109,20 @@ const number = (text: string | undefined, name: string): number | undefined => {
 
 /** One run of gs1ls with its arguments; files named with -o are written, everything else is returned. */
 export async function run(argv: readonly string[], write: (name: string, bytes: Uint8Array) => void = writeFileSync): Promise<Run> {
+  let lang = ENGLISH;
   try {
     const { values, positionals } = parseArgs({ args: [...argv], options: OPTIONS, allowPositionals: true });
     const [command, ...rest] = positionals;
     if (values.version) return { status: 0, stdout: `gs1ls ${__VERSION__}\n`, stderr: "" };
+    if (values.lang !== undefined) {
+      if (!/^(en|pt|es|fr|de|it)([-_]|$)/i.test(values.lang)) throw new UsageError(`--lang is one of: ${LANGUAGES.join(", ")}.`);
+      lang = language(values.lang);
+    }
     if (values.help || !command) return { status: values.help ? 0 : 2, stdout: values.help ? HELP : "", stderr: values.help ? "" : HELP };
-    if (command === "bulk") return await bulk(rest, values, write);
+    if (command === "bulk") return await bulk(rest, values, write, lang);
     if (command === "serve") {
       const host = values.host ?? "127.0.0.1";
-      const server = await serve(await syntaxEngine(), loadFont(), { host, port: number(values.port, "port") ?? 8080 });
+      const server = await serve(await syntaxEngine(), loadFont(), { host, port: number(values.port, "port") ?? 8080, ...(values.lang ? { lang: values.lang } : {}) });
       const address = server.address();
       const port = typeof address === "object" && address ? address.port : values.port;
       return { status: 0, stdout: "", stderr: `gs1ls serving on http://${host.includes(":") ? `[${host}]` : host}:${port}/v1/ (the document: /v1/openapi.json); Ctrl+C stops it\n` };
@@ -121,8 +131,8 @@ export async function run(argv: readonly string[], write: (name: string, bytes: 
     if (!data.trim()) throw new UsageError(`gs1ls ${command} needs the data: an element string, a GS1 Digital Link URI or a scanner's text.`);
     const engine = await syntaxEngine();
     if (command === "check") {
-      const out = checkData(engine, data);
-      return { status: checkStatus(out), stdout: values.json ? JSON.stringify(out, null, 2) + "\n" : checkText(out), stderr: "" };
+      const out = checkData(engine, data, lang);
+      return { status: checkStatus(out), stdout: values.json ? JSON.stringify(out, null, 2) + "\n" : checkText(out, lang), stderr: "" };
     }
     if (command === "label") {
       const file = await makeLabel(engine, loadFont(), {
@@ -140,8 +150,8 @@ export async function run(argv: readonly string[], write: (name: string, bytes: 
       return { status: 0, stdout: "", stderr: `${name}\n` };
     }
     if (command === "epc") {
-      const out = await epcData(engine, data, epcRequest(values));
-      if (!values.zpl) return { status: 0, stdout: values.json ? JSON.stringify({ ...out, tag: undefined }, null, 2) + "\n" : epcText(out), stderr: "" };
+      const out = await epcData(engine, data, epcRequest(values), lang);
+      if (!values.zpl) return { status: 0, stdout: values.json ? JSON.stringify({ ...out, tag: undefined }, null, 2) + "\n" : epcText(out, lang), stderr: "" };
       const bytes = epcZpl(out, { ...(values.dpi !== undefined ? { dpi: number(values.dpi, "dpi")! } : {}), from: writeFrom(values["write-from"]) });
       if (values.output === "-") return { status: 0, stdout: bytes, stderr: "" };
       const name = values.output ?? `epc_${out.epc}.zpl`;
@@ -150,7 +160,7 @@ export async function run(argv: readonly string[], write: (name: string, bytes: 
     }
     throw new UsageError(`Unknown command: ${command}. Use check, label, epc, bulk or serve (gs1ls --help).`);
   } catch (error) {
-    if (error instanceof InputError) return { status: 1, stdout: "", stderr: `${error.message}\n` };
+    if (error instanceof InputError) return { status: 1, stdout: "", stderr: `${lang.tm(error.message)}\n` };
     const message = error instanceof Error ? error.message : String(error);
     // parseArgs's own refusals (an unknown option, a missing value) are usage errors too
     if (error instanceof UsageError || error instanceof GcpError || (error as { code?: string }).code?.startsWith("ERR_PARSE_ARGS")) {
@@ -184,7 +194,7 @@ function epcRequest(values: Values): EpcRequest {
 }
 
 /** gs1ls bulk: the file read, the zip written (labels.zip unless -o names another; - for standard output). */
-async function bulk(rest: string[], values: Values, write: (name: string, bytes: Uint8Array) => void): Promise<Run> {
+async function bulk(rest: string[], values: Values, write: (name: string, bytes: Uint8Array) => void, lang: Translator): Promise<Run> {
   const [path, ...more] = rest;
   if (!path || more.length) throw new UsageError("gs1ls bulk needs one file: a CSV or an Excel workbook (.xlsx).");
   const request: BulkRequest = {
@@ -201,7 +211,8 @@ async function bulk(rest: string[], values: Values, write: (name: string, bytes:
     ...(values.rfid ? { rfid: { ...epcRequest(values), from: writeFrom(values["write-from"]) } } : {}),
   };
   const out = await bulkFile(await syntaxEngine(), loadFont(), new Uint8Array(readFileSync(path)), request);
-  const summary = `${out.generated} of ${out.rows} rows generated${out.left ? `; ${out.left} left out (their reasons are in generated.csv)` : ""}\n`;
+  const counts = { generated: out.generated, rows: out.rows, left: out.left };
+  const summary = `${out.left ? lang.t("{generated} of {rows} rows generated; {left} left out (their reasons are in generated.csv)", counts) : lang.t("{generated} of {rows} rows generated", counts)}\n`;
   if (values.output === "-") return { status: out.left ? 1 : 0, stdout: out.zip, stderr: summary };
   const name = values.output ?? "labels.zip";
   write(name, out.zip);
