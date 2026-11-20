@@ -45,7 +45,7 @@
    and data); printer files through Labelary where the core's tests already use it; mutations prove the checks can
    fail.
 5. **Languages**: the command line's messages are the core's English ones, as the files made are; `--lang` with the
-   same catalogues as the page (`apps/web/src/locales/*.messages.json`) follows in item d.
+   same catalogues as the page (`apps/web/src/locales/*.messages.json`) follows in item d (decision 9).
 6. **Items** (backlog 5.1 a to d): a, the package, the bundle, `check` and `label`; b, `bulk` and `epc`; c, `serve`
    and its OpenAPI document; d, `--lang`, the documents (a guide for integrators), the inventory and the test plan.
 7. **`bulk` and `epc`** (5.1 b, 20 November 2026): the EPC with the person's choices moved from the page into the core
@@ -60,6 +60,15 @@
    rows' counts in `X-Rows`, `X-Generated` and `X-Left`. A request the API cannot understand is a 400, data the GS1
    rules refuse a 422 (the command line's exit statuses 2 and 1). The OpenAPI document lists its choices from the same
    tables the commands check, and a test sends every property it names.
+9. **`--lang`** (5.1 d, 20 November 2026; the recommended option taken under the owner's rule): what is said about
+   the data is in the page's languages — the verdict, each finding in the Check Studio's plain words (the page's
+   `checkTexts.ts`, also in JSON as `plain`), the refusals of the core and the Syntax Engine, an EPC's reasons and the
+   text's labels — from the page's catalogues, with the translator moved into the core (`translator`) so that the
+   page and the command line cannot read a message differently; the command line's own labels are in
+   `packages/cli/src/locales.json`, checked by a test in five languages. Codes, severities, the catalogue's expert
+   texts, the help, the usage errors and the files made stay in English (a program relies on them). `gs1ls serve`
+   follows `Accept-Language`, else its `--lang`. Set aside: translating the help and usage errors (a person at a
+   terminal reads the options' names anyway).
 
 ## 4. Consequences
 

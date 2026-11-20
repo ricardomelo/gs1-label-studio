@@ -24,6 +24,7 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 
 | Document | What it holds |
 |---|---|
+| [Integrators' guide](integrators-guide.md) | `gs1ls`, the command line, and `gs1ls serve`, its local HTTP API: running it from a clone, each command and route with its options, exit and HTTP statuses, languages, what to rely on |
 | [The core's API reference](core-api.md) | every name `@gs1-label-studio/core` exports, module by module, with its declaration and description, generated from the sources |
 | [Printing guide](printing-guide.md), section 5 | ZPL templates with placeholders, for an ERP or a WMS |
 

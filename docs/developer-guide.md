@@ -63,7 +63,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `apps/web/src/` | The application (section 6) |
 | `apps/web/e2e/` | Playwright browser tests of the editor |
 | `apps/web/test/` | Vitest unit tests of the web application: its languages |
-| `packages/cli/` | `gs1ls`, the command line (ADR 0009): `src/commands.ts` (each command a thin layer over the core), `src/main.ts` (arguments, files, exit status), `src/serve.ts` (`gs1ls serve`, the local HTTP API over the same commands) and `src/openapi.ts` (its OpenAPI document), `vite.config.ts` (the bundle `dist/gs1ls.mjs`, the HRI font beside it), `test/` (its commands from the sources and from the bundle, every symbol read back) |
+| `packages/cli/` | `gs1ls`, the command line (ADR 0009): `src/commands.ts` (each command a thin layer over the core), `src/main.ts` (arguments, files, exit status), `src/serve.ts` (`gs1ls serve`, the local HTTP API over the same commands), `src/openapi.ts` (its OpenAPI document), `src/lang.ts` and `src/locales.json` (`--lang`: the page's catalogues and the command line's own labels), `vite.config.ts` (the bundle `dist/gs1ls.mjs`, the HRI font beside it), `test/` (its commands from the sources and from the bundle, every symbol read back) |
 | `apps/web/screenshots/` | The user guide's screenshots, written to `docs/images/guide/` |
 | `apps/web/offline.ts` | The Vite plugin that writes the service worker |
 | `apps/web/public/` | Web app manifest and icons |
@@ -165,6 +165,7 @@ Each module, in the order of the flow above.
 | `hriFormat.ts` | `hriText`, `hriJoiner`, `checkHriPattern`, `dataTitle`, `secondTitle`: how the human readable text writes an element string, the AI in parentheses, data titles in six languages, both (figure 4-8) or a pattern of one's own (backlog 6.11); the layout and every printer language take it |
 | `dates.ts` | `formatDate`, `DATE_FORMATS`, `MONTH_NAMES`: a YYMMDD date (or YYYYMMDD, with its time) in a format of DD, MM, MMM, YY, YYYY, hh, mm and ss, for a text field and the human readable text |
 | `pyformat.ts` | `pyFixed`: Python's `%.3f` with ties to even, so the SVG equals the resolver's |
+| `translate.ts` | `translator`, `localeFor`, `fillText`, `LOCALE_TAGS`: texts in another language from the page's catalogues (exact, then the messages' templates, a hint part by part), shared by the page and `gs1ls --lang` (backlog 5.1 d, moved from the page) |
 | `scan.ts` | `expectedReads`: the symbology identifier and data each symbol of a label should read as |
 
 ### Exports
@@ -202,6 +203,7 @@ Each module, in the order of the flow above.
 | `epc.ts` | Every EPC scheme for a key (the resolver's `epc.py`, schemes loaded lazily, BigInt), hexadecimal in 16-bit words, base 64, tag and pure identity URIs, NFC links |
 | `epcPlus.ts` | `encodeEpcPlus`, `decodeEpcPlus`: the '+' and '++' EPC schemes of TDS 2.x (backlog 6.7), the key four bits a digit (no company prefix length), six encodings for a serial, the DSGTIN's date, the '++' hostname with TDS's optimisation tables (`data/epc_hostname.json`); hexadecimal in 16-bit words |
 | `gcp.ts` | `GcpTable`: GS1's GCP length table read without a DOM, kept compact |
+| `epcChoices.ts` | `epcOf`, `epcBits`, `bankFor`, `tagFor`, `EPC_CHOICES`: the EPC with the person's choices (backlog 5.1 b, moved from the page), shared by the editor's card, the RFID Studio and `gs1ls epc`; its reasons in English |
 | `check.ts` | `check`: the Check Studio's check of one reading (backlog 7.1 b to d, ADR 0007): the carrier (group A), the named repairs, every element string through the Syntax Engine alone and then the whole message, the structure (group B), then the own rules of `checkValues.ts` and `checkUri.ts`; each finding with its code, severity, the reading's bytes, the AI, the engine's message, what explains it and the data made right; what could not be assessed |
 | `checkContext.ts` | `contextRules`, `symbolsOf`, `isTwoD`, `isPointOfSaleLinear`, `CONTEXT_CODES`: the Check Studio's checks of the reading context (group F, 7.1 d): the symbol against the context's specification table with the symbols allowed for the data, recommended first as step 2 of the Label Studio lists them (`guidance()`), a 2D symbol alone at a retail till, an EAN/UPC asked for attributes; "I do not know" gives F5 and the context's checks not assessed |
 | `checkGroup.ts` | `checkGroup`: several carriers of one item (group J, 7.1 d): the matrix, one row per AI and one column per carrier, values compared character by character; different keys or attributes, an EPC or an NFC tag that disagrees with the barcodes, attributes whose key is in another symbol, a retail pack's 2D symbol without a linear one, a case's or logistic label's GS1-128 data missing from its 2D symbol, a logistic label that contradicts itself; the readings' findings the group answers |
@@ -249,7 +251,7 @@ Each module, in the order of the flow above.
 | `src/keep.ts` | IndexedDB for the GCP table and the last work |
 | `src/lastwork.ts` | The last work kept in this browser: kept once it is not a first visit's, read back with its time, its key's element string to tell it apart |
 | `src/texts.ts` | The page's texts kept apart from the code (keys, qualifiers, environments, guide, bulk), in English; `aiText`, `aiTitle` |
-| `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
+| `src/i18n.ts` | The languages: `t()` for the page's texts, `en()` to mark a constant, `tm()` for the core's and the engine's messages (the core's `translator`: exact, then by template, a hint part by part), `setLocale`, `initialLocale`, `formatNumber` |
 | `src/locales/` | `pt-BR.json`, `es.json` (the page), `pt-BR.messages.json`, `es.messages.json` (the core and the Syntax Engine), `ai-titles.pt-BR.json` (the AIs' Portuguese names, the resolver's) |
 | `test/i18n.test.ts`, `test/texts.ts` | Every text in each language: the page's `t()`/`en()` literals and texts.ts, the core's messages found in its sources, the engine's (`packages/core/src/data/engine_messages.json`, release 1.4.1) |
 | `src/styles.css` | Light and dark; the computer's layout, the phone's (one destination, a tab bar) and the tablet's (a rail, the label beside), by `data-pane` and `data-beside` |
@@ -314,6 +316,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `labelDesign` | a label's design from its data alone: the symbol step 2 recommends in an environment, or the one named, sized as the editor sizes it; what to choose when neither gives one | 3 |
 | `cli` | `gs1ls` (packages/cli): `check` as text, JSON and exit status; `label` in every format from the sources and from the bundle, every symbol read back, the print files the core's own; usage errors; `epc` and `serve` from the bundle | 8 |
 | `epc-bulk` | `gs1ls epc`: the core's EPC, bank and URIs decoded back, EPC+ and EPC++, GS1's GCP length table, ZPL for an RFID printer from bit 10h or 20h, reasons and usage errors; `gs1ls bulk`: a CSV and a workbook as the editor's bulk generation, every symbol read back, the PDF and print file for all, each row's tag in the ZPL and tags.csv | 9 |
+| `lang` | `gs1ls --lang`: the verdict and the Check Studio's plain words in text and JSON, the core's and the engine's refusals, an EPC's reasons and labels, a bulk run's counts, an unknown language refused; every label in five languages; `gs1ls serve` by Accept-Language, else its --lang | 6 |
 | `serve` | `gs1ls serve` through fetch: 127.0.0.1 by default; `/v1/check`, `/v1/label`, `/v1/epc` and `/v1/bulk` giving what the commands give, every symbol read back and every tag decoded; the refusals as 400, 422, 404, 405 and 413; the OpenAPI document naming the routes, formats and options the routes take | 7 |
 | `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 6 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
@@ -363,6 +366,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `zpl` | ZPL with the printer's commands, templates, GS1 DataBar, bearer bars | 16 |
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 15 |
+| `translate` | the translator the page and `gs1ls` share: exact texts and placeholders, the template with the most fixed text, values translated in turn, hints part by part, English left alone, a language among a browser's or an Accept-Language header's | 4 |
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
 | `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another; the arrow keys on its outline; moving held within the label (apps/web/test) | 9 |

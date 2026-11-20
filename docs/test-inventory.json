@@ -8339,6 +8339,38 @@
    "area": "Symbols and the label's layout"
   },
   {
+   "program": "lang",
+   "file": "packages/cli/test/lang.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "gs1ls --lang › checks in the language asked: the verdict, the plain words of the page, in text and JSON",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls --lang › says the core's and the engine's refusals, the EPC's reasons and its labels in the language asked",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls --lang › counts a bulk run's rows in the language asked; the files stay in English",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls --lang › refuses a language it does not speak; a region of one it does is taken",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls --lang › has every label the command line says in each of the five languages, with the same placeholders",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls serve's languages › follows the request's Accept-Language, else its own --lang",
+     "status": "passed"
+    }
+   ],
+   "area": "The command line and the local API (gs1ls)"
+  },
+  {
    "program": "lastwork",
    "file": "apps/web/test/lastwork.test.ts",
    "kind": "unit",
@@ -11245,6 +11277,30 @@
     }
    ],
    "area": "The editor in the browser (Playwright, desktop, phone and tablet)"
+  },
+  {
+   "program": "translate",
+   "file": "packages/core/test/translate.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "translator › looks the page's texts up exactly and fills their placeholders",
+     "status": "passed"
+    },
+    {
+     "name": "translator › translates a message through the template with the most fixed text, its values in turn",
+     "status": "passed"
+    },
+    {
+     "name": "translator › leaves English as it is",
+     "status": "passed"
+    },
+    {
+     "name": "translator › picks ours among a browser's languages or an Accept-Language header",
+     "status": "passed"
+    }
+   ],
+   "area": "The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian"
   },
   {
    "program": "wedge",

@@ -1141,6 +1141,10 @@ For a system or a script that makes labels without a browser, `gs1ls` does what 
   options above (`{"data": "(01)…", "format": "zpl", "dpi": 300}`), `/v1/bulk` takes the CSV or workbook itself as the
   body and its options in the query (`/v1/bulk?files=pdf&print=zpl`). The OpenAPI document at `/v1/openapi.json`
   lists every route and option. It has no password: keep it on this machine, or behind your own gateway.
+- `--lang pt-BR` (or `es`, `fr`, `de`, `it`) says what the check, the refusals and the tags mean in that language: the
+  verdict, each finding in the Check Studio's plain words, the reasons; the API follows the request's
+  `Accept-Language`. Codes, the help and the files stay in English. Integrators will find more in the
+  [integrators' guide](integrators-guide.md).
 
 ```text
 $ curl -X POST http://127.0.0.1:8080/v1/label -d '{"data": "(01)09506000134376(10)B42", "format": "png"}' -o label.png

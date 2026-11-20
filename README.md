@@ -656,7 +656,8 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
   `gs1ls bulk` (a CSV or a workbook as the editor's bulk generation: the zip with `generated.csv`, one PDF, one print
   file, each row's tag with `--rfid` and `tags.csv`); c done the same day: `gs1ls serve`, the same as a local HTTP API
   (`POST /v1/check`, `/v1/label`, `/v1/epc`, `/v1/bulk`, on 127.0.0.1) with its OpenAPI document at
-  `/v1/openapi.json`*
+  `/v1/openapi.json`; d done the same day: `--lang` (the page's catalogues through the core's `translator`, the
+  Check Studio's plain words for each finding, `Accept-Language` on the API) and the integrators' guide; 5.1 closed*
 
 **Phase 6 — the owner's review of 11 November 2026** (twelve points, then the owner's comments of 11 and 13
 November, assessed and ordered; to start when the week's quota starts again). Recommended order: 6.1, 6.2 and 6.9 (small, seen at once), then the
