@@ -380,3 +380,4 @@ export { encoderCsv, ENCODER_COLUMNS, zplRfidLabels, type RfidTagRow } from "./r
 export { bankFor, EPC_CHOICES, epcBits, epcOf, tagFor, type EpcChoices, type EpcForm, type EpcInput, type EpcOutcome, type EpcResult } from "./epcChoices.ts";
 export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";
 export { designFor, type DesignChoice } from "./labelDesign.ts";
+export { fillText, LOCALE_TAGS, localeFor, translator, type Locale, type Translator } from "./translate.ts";
