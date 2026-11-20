@@ -644,7 +644,11 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 
 **Phase 5 — beyond the browser** (if needed)
 
-- 5.1 CLI and HTTP API from the same core
+- 5.1 CLI and HTTP API from the same core — *assessed on 20 November 2026 (ADR 0009): option A of three taken under
+  the owner's rule (a command line, `gs1ls`, in `packages/cli`, and `gs1ls serve`, an HTTP API on 127.0.0.1; B, a
+  hosted API, and C, nothing until asked, set aside); items a to d: a, the package, its bundle, `check` and `label`;
+  b, `bulk` and `epc`; c, `serve` and its OpenAPI document; d, `--lang`, a guide for integrators, the inventory and the
+  test plan*
 
 **Phase 6 — the owner's review of 11 November 2026** (twelve points, then the owner's comments of 11 and 13
 November, assessed and ordered; to start when the week's quota starts again). Recommended order: 6.1, 6.2 and 6.9 (small, seen at once), then the

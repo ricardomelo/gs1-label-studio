@@ -52,6 +52,7 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 | [ADR 0006](adr/0006-assistant-for-first-time-users.md) | an assistant for first-time users: one question per screen, a need written in one's own words read by keywords offline, the answers given to step 2's decision tree, the rules for the artwork; what stays out of an offline tool |
 | [ADR 0007](adr/0007-check-studio.md) | a studio that checks what it is given: its scope and what stays out, one reading record whatever the way in, the symbol's bytes and identifier rather than text, what the decoder cannot read measured, the logic in the core and no server |
 | [ADR 0008](adr/0008-rfid-studio.md) | a studio of its own for RFID: what exists, three options from the ideation round and the one taken, the tag's memory and printing in the core, ZPL's RFID commands only as far as a test proves, nothing pretending to touch a UHF tag |
+| [ADR 0009](adr/0009-command-line-and-local-api.md) | a command line, `gs1ls`, and a local HTTP API from the same core: three options and the one taken, the commands as thin layers over the core, the API on 127.0.0.1 with no authentication, every output read back |
 
 The documentation is written in British English only.
 
