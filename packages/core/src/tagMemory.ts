@@ -163,3 +163,40 @@ export function readEpcBank(hex: string): BankRead | null {
   if (whole?.crc?.ok) return whole;
   return from(0) ?? whole;
 }
+
+/** What differs between a tag read back and the bank meant (backlog 6.12 e). */
+export type ReadDifference = "epc" | "length" | "attributes" | "toggle" | "crc";
+
+/** A reader's output compared with the bank meant: how it was given, and what differs. */
+export interface ReadComparison {
+  /** "epc": the EPC alone (from bit 20h); "pc": from bit 10h; "bank": from bit 00h, the CRC first. */
+  form: "epc" | "pc" | "bank";
+  /** The EPC read, as the PC's Length counts it (or as given). */
+  epc: string;
+  differences: ReadDifference[];
+  read: BankRead | null;
+}
+
+/**
+ * Compares what a reader returned with the bank meant: the EPC alone (the most common report), or the bank from bit
+ * 10h or 00h. The PC's Length, attribute bits and toggle are compared; its user memory and XPC indicators are not,
+ * since a tag may compute them. A StoredCRC that does not match its own PC and EPC is a difference too. Null when the
+ * text is not hexadecimal in whole words, or no reading of it fits.
+ */
+export function compareReadBack(bank: EpcBank, text: string): ReadComparison | null {
+  const clean = text.replace(/[\s:-]+/g, "").toUpperCase();
+  if (!/^([0-9A-F]{4})+$/.test(clean)) return null;
+  if (clean.length === bank.epc.length && !(readEpcBank(clean)?.crc?.ok)) {
+    return { form: "epc", epc: clean, differences: clean === bank.epc ? [] : ["epc"], read: null };
+  }
+  const read = readEpcBank(clean);
+  if (!read) return null;
+  const meant = readPc(bank.pc);
+  const differences: ReadDifference[] = [];
+  if (read.epc !== bank.epc) differences.push("epc");
+  if (read.pc.words !== meant.words) differences.push("length");
+  if (read.pc.toggle !== meant.toggle) differences.push("toggle");
+  else if (read.pc.attributes !== meant.attributes) differences.push("attributes");
+  if (read.crc && !read.crc.ok) differences.push("crc");
+  return { form: read.crc ? "bank" : "pc", epc: read.epc, differences, read };
+}

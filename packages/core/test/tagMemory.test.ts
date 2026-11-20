@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { crc16, encodeEpc, encodeEpcPlus, epcBank, epcSchemes, pcWord, readEpcBank, readPc, type EpcScheme } from "../src/index.ts";
+import { compareReadBack, crc16, encodeEpc, encodeEpcPlus, epcBank, epcSchemes, pcWord, readEpcBank, readPc, type EpcScheme } from "../src/index.ts";
 
 // The EPC memory bank (backlog 6.12 b, ADR 0008). The CRC values were computed apart from this code, with Python's
 // binascii.crc_hqx (CRC-CCITT, preset FFFFh) inverted, as Gen2 Annex F describes the StoredCRC; 123456789's D64E is
@@ -116,5 +116,30 @@ describe("a bank read back", () => {
     expect(readEpcBank("XYZ")).toBeNull();
     expect(readEpcBank("123")).toBeNull();
     expect(readEpcBank("0000")).toBeNull();
+  });
+});
+
+describe("a tag read back, compared with the bank meant", () => {
+  const bank = epcBank("3034257BF7194E4000001A85", 96);
+  it("takes the EPC alone, from the PC or the whole bank, and finds them the same", () => {
+    expect(compareReadBack(bank, "3034 257B F719 4E40 0000 1A85")).toMatchObject({ form: "epc", differences: [] });
+    expect(compareReadBack(bank, "30003034257BF7194E4000001A85")).toMatchObject({ form: "pc", differences: [] });
+    expect(compareReadBack(bank, "ee2c30003034257bf7194e4000001a85")).toMatchObject({ form: "bank", differences: [] });
+    // a tag that computes its user memory indicator, or carries an XPC word, is still the same
+    expect(compareReadBack(bank, "34003034257BF7194E4000001A85")!.differences).toEqual([]);
+    expect(compareReadBack(bank, "32003034257BF7194E4000001A850004")!.differences).toEqual([]);
+  });
+  it("names what differs: the EPC, the Length, the attribute bits, the toggle, a CRC that does not match", () => {
+    expect(compareReadBack(bank, "3034257BF7194E4000001A86")!.differences).toEqual(["epc"]);
+    expect(compareReadBack(bank, "30013034257BF7194E4000001A85")!.differences).toEqual(["attributes"]);
+    expect(compareReadBack(bank, "31003034257BF7194E4000001A85")!.differences).toEqual(["toggle"]);
+    const longer = compareReadBack(bank, "38003034257BF7194E4000001A850000")!;
+    expect(longer.differences).toEqual(["epc", "length"]);
+    expect(compareReadBack(bank, "EE2D30003034257BF7194E4000001A85")!.differences).toEqual(["crc"]);
+    expect(compareReadBack(epcBank("3034257BF7194E4000001A85", 96, { attributes: 1 }), "30003034257BF7194E4000001A85")!.differences).toEqual(["attributes"]);
+  });
+  it("refuses what is not whole words of hexadecimal", () => {
+    expect(compareReadBack(bank, "3034257BF7194E4000001A8")).toBeNull();
+    expect(compareReadBack(bank, "hello")).toBeNull();
   });
 });
