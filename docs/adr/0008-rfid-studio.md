@@ -53,6 +53,14 @@ A: step 4's *read back* takes any of the forms C would, and step 1 accepts anyth
 5. **Items** (backlog 6.12 a to f): a, the studio's screen with steps 1 and 2 (mock-ups first); b, the tag's memory
    (step 3); c, writing (step 4: encoder, ZPL, NFC); d, many tags at once; e, reading back; f, the documents, the
    inventory and the test plan.
+6. **Many tags at once** (item d; mock-up A of two, as Playwright screenshots of the application in Portuguese): the
+   editor's *In bulk* mode in the studio too, step 1's rows (a spreadsheet, pasted rows or a serial sequence) each a
+   tag with step 2's and step 3's choices, and in step 4, above the RFID printer, a *Many tags* panel: a CSV an encoder
+   takes (`encoderCsv`: each row's EPC from bit 20h, its StoredPC and EPC from bit 10h, its length and URIs, a row with
+   no tag kept with its reason in English), one ZPL file with a label a tag (`zplRfidLabels`), and each row's label of
+   the Label Studio with its tag (the bulk generator, `BatchRow.rfid` written after each label's `^XA`, in ZPL only).
+   B, a step 5 of its own under step 2, put the run far from the printer's choice of bit 10h or 20h, which both use, and
+   was set aside.
 
 ## 4. Consequences
 

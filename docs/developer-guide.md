@@ -299,7 +299,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `attributes` | data attributes and decimal families, against the resolver | 29 |
 | `assistant` | the assistant's scenarios reaching step 2's table and symbol, read back by ZXing; a need read by keywords | 38 |
 | `bars` | ITF-14, GS1-128 and GS1 DataBar laid out by their table, read back from SVG, PNG and PDF | 20 |
-| `batch` | label sheets, several-page PDF, file names, generating every row | 17 |
+| `batch` | label sheets, several-page PDF, file names, generating every row | 18 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |
 | `checkDigit` | the GS1 check digit | 5 |
 | `docs` | the documents in step with the code and the tests | 7 |
@@ -309,7 +309,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 165 |
 | `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 1,108 |
 | `tagMemory` | the EPC memory bank of a Gen2 tag: the StoredCRC against Python's CRC-CCITT and Annex F's residue, the StoredPC's Length and control bits, the bank word by word, a bank read back whole or from the PC, and compared with the bank meant | 15 |
-| `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 4 |
+| `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 6 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |
 | `hriFormat` | the human readable text's format: AI, data titles, both, one's own; in the SVG and every printer language, still read | 14 |
@@ -376,7 +376,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check-history` | the Check Studio's history in a browser: codes kept through a reload and opened again, typed text kept once it rests, search and filter; version 1 of the database upgraded keeping the GCP table, a session, Delete all read back; a reading of an older release marked; a browser that keeps nothing; History off remembered, an item with no barcode (Playwright, IndexedDB) | 5 |
 | `check-report` | the Check Studio's reports and files in a browser: one reading's report in two pages at most; readings.csv with one row per listed reading, filtered as the list is, and the session report counting the same; findings.csv; readings.json opened again after Delete all giving the same list, a file that is not one refused; an export with a serial number asking once; an item's report (Playwright, downloads) | 4 |
 | `check-estimate` | Size estimates in a browser: the margins at once, the X-dimension within its tolerance from one symbol's printed width typed with a comma, a grade named only in the sentence saying there is none, a wrong width refused; a size outside a shop's range a finding with its estimate and the table's grade (Playwright) | 2 |
-| `rfid-studio` | The RFID Studio in a browser: step 1's data encoded, the bank's words, the hazardous material bit changing the PC and its CRC, ZPL alone and joined to the label, from bit 20h; a reader's output compared; the editor's card sharing the scheme (Playwright) | 3 |
+| `rfid-studio` | The RFID Studio in a browser: step 1's data encoded, the bank's words, the hazardous material bit changing the PC and its CRC, ZPL alone and joined to the label, from bit 20h; a reader's output compared; the editor's card sharing the scheme (Playwright) | 4 |
 | `check-share` | Share in a browser: without a share sheet, the menu (WhatsApp with the text and the link, Copy the text, Download, Escape); with one, the PDF and the text together and the link opened in another browser giving the same verdict and faults; a link cut on its way refused; a serial asking once a visit; the editor's Share sending the PNG and a link that opens the same work (Playwright, fakes for the share sheet, the clipboard and window.open) | 5 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |

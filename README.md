@@ -833,8 +833,11 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   indicator and hazardous material bit, the bank word by word from 00h, 10h or 20h, a bank read back); c, writing —
   done the same day (`rfidZpl.ts`: `^RS8` and `^RFW,H,1,n,1` from bit 10h on any Gen2 printer, or `^RFW,H,,,A` on
   the ZD500R, ZT400 and ZT600; a label of its own or the Label Studio's label with its tag; Labelary's linter and the
-  EPC read back in the tests); d, many tags at once (a serial sequence as a file an encoder takes, and ZPL with a tag
-  per label); e, reading back — done 20 November (`compareReadBack()`: what a reader returned, the EPC alone or the
+  EPC read back in the tests); d, many tags at once — done 20 November (mock-up A of two: *Many tags* in step 4 above
+  the RFID printer; B, a step 5 of its own): *In bulk* in the studio, each row of step 1 a tag; a CSV an encoder takes
+  (`encoderCsv`: the EPC from bit 20h, the StoredPC and EPC from bit 10h, the URIs, a row with no tag kept with its
+  reason), one ZPL file with a label a tag (`zplRfidLabels`), and every row's Label Studio label with its tag in ZPL (the
+  bulk generator's `BatchRow.rfid`); e, reading back — done 20 November (`compareReadBack()`: what a reader returned, the EPC alone or the
   bank from bit 10h or 00h, compared with the tag meant, each difference named with what to do); f, the documents and
   the test plan after d*
 - 6.13 More pictograms (the owner, 15 November 2026): **+ Pictogram** with an arrow beside it to choose among

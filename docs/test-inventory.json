@@ -532,6 +532,10 @@
      "status": "passed"
     },
     {
+     "name": "generating every row › writes each row's RFID tag with its label in ZPL, and says another language leaves it out",
+     "status": "passed"
+    },
+    {
      "name": "generating every row › writes the print file in the printer's language: TSPL, each label its own SIZE and PRINT",
      "status": "passed"
     },
@@ -9790,6 +9794,14 @@
     {
      "name": "ZPL's ^RF › prints the lines in text, a caret or tilde in them made a space",
      "status": "passed"
+    },
+    {
+     "name": "many tags › writes a CSV line a row, the EPC from bit 20h and 10h, a row with no tag given its reason",
+     "status": "passed"
+    },
+    {
+     "name": "many tags › writes one ZPL file with a label a tag, in order, each read back to its row's EPC",
+     "status": "passed"
     }
    ],
    "area": "RFID, NFC and digital signatures"
@@ -12815,6 +12827,15 @@
     },
     {
      "name": "what a reader returned, pasted in step 4, compared with the tag meant",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    },
+    {
+     "name": "in bulk, every row's tag: a CSV for an encoder, ZPL a tag a label, and each row's label with its tag",
      "status": "listed",
      "projects": [
       "desktop",

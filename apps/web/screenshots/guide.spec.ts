@@ -318,6 +318,16 @@ test("the RFID Studio: the tag's memory and the RFID printer", async ({ page }) 
   await shot(page.locator(".rfid-write"), "rfid-write");
 });
 
+test("the RFID Studio in bulk: many tags at once", async ({ page }) => {
+  await page.goto("/#/rfid");
+  await page.getByRole("button", { name: "In bulk" }).click();
+  await page.fill("#rows-paste", "GTIN\tSerial\n" + Array.from({ length: 12 }, (_, i) => `09506000134376\t${1000 + i}`).join("\n") + "\n09506000134376\t\n");
+  await page.getByRole("button", { name: "Use the pasted rows" }).click();
+  await page.selectOption("#rfid-prefix", "7");
+  await expect(page.locator(".rfid-many tbody tr")).toHaveCount(4);
+  await shot(page.locator(".rfid-many"), "rfid-many");
+});
+
 test("in bulk", async ({ page }) => {
   await page.getByRole("button", { name: "In bulk" }).click();
   await shot(page.locator("section[aria-labelledby='rows-title']"), "bulk-start");

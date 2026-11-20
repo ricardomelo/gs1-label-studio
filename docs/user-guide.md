@@ -62,12 +62,12 @@ English.
 
 ### The start page: the studios
 
-![The start page: the Label Studio, the Barcode Studio and the Check Studio, the RFID Studio coming soon](images/guide/start.png)
+![The start page: the Label Studio, the Barcode Studio, the Check Studio and the RFID Studio](images/guide/start.png)
 
 The address of the tool opens on its studios. **Label Studio** opens the editor below with the kinds of label shown;
 **Barcode Studio** opens the same editor with the barcode alone; **Check Studio** checks a code you already have (see
-below). The **RFID Studio** is marked *Coming soon*. Each studio has its own address, to bookmark or to open from the
-installed application's shortcuts: `#/label`, `#/barcode`, `#/check`. The name in the header always leads back to the
+below); **RFID Studio** gives an RFID tag its own steps (see [the RFID Studio](#the-rfid-studio-the-tags-memory-and-writing-it)). Each studio has its own address, to bookmark or to open from the
+installed application's shortcuts: `#/label`, `#/barcode`, `#/check`, `#/rfid`. The name in the header always leads back to the
 studios; the browser's Back and Forward move between them, and what you typed in the editor is kept while you look at
 another studio.
 
@@ -876,6 +876,24 @@ is the editor's: what is typed in one studio is there in the other, and so are t
   what to do: another EPC, a Length that does not count the EPC's words (write from bit 10h), the attribute bits, the
   toggle, a CRC that does not match (read again).
 - **NFC tag**, as in the card above.
+
+#### Many tags at once
+
+**In bulk** in the header works in the RFID Studio too: step 1 takes a spreadsheet, pasted rows or a serial sequence
+(as in [bulk](#13-in-bulk-rows-from-a-spreadsheet)), and steps 2 to 4 show the row chosen. Every row gets its tag with the same scheme,
+filter and control bits. Step 4 then shows **Many tags**, above the RFID printer: how many tags are ready, one a row,
+how many rows are left out (an error, skipped, or data with no EPC, such as a GTIN with no serial number), and the first
+EPCs.
+
+![Step 4 in bulk: many tags at once](images/guide/rfid-many.png)
+
+- **For an encoder (.csv)**: a line a row of the spreadsheet, in its order: *Row*, *EPC* (from bit 20h), *PC and EPC*
+  (from bit 10h), *EPC bits*, *Pure identity*, *Tag URI*, and the *Reason* a row has no tag (in English, as the files
+  made are). Most encoders and RFID printers' software import a column of EPCs in hexadecimal.
+- **Each tag with its EPC in text (.zpl)**: one ZPL file, a label a tag, each printing its EPC and identity while it
+  writes it, from bit 10h or 20h as the RFID printer's choice below says.
+- **Each tag with the Label Studio's label (.zip)**: every row's label as the Label Studio designs it, in one ZPL file
+  with its own tag written in the same pass, and `generated.csv` naming the rows left out and why.
 
 ## 12. Digital signature (GS1, JWS)
 

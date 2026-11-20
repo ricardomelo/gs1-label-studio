@@ -107,6 +107,10 @@ gives the ZPL:
   `^RF`) says only the ZD500R and the ZT400 and ZT600 series take it.
 - **The tag and its EPC in text** is a label of its own; **The tag with the Label Studio's label** puts the commands
   after each `^XA` of the label's ZPL, its printing unchanged.
+- In bulk, **Many tags** writes the same for every row: one ZPL file with a label a tag, or every row's label from the
+  Label Studio with its own tag (in the zip, with `generated.csv`); and a CSV for an encoder with each row's EPC from
+  bit 20h and its StoredPC and EPC from bit 10h. The labels with their tags are written in ZPL whatever the printer's
+  profile says; another language would print the labels without the tags.
 
 Labelary prints the label but does not write tags: its linter finds no fault in these commands (a test checks this),
 and the tests read what `^RF` writes back to the same EPC. Lock and passwords are not written: a wrong one makes a tag
