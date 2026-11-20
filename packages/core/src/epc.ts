@@ -99,6 +99,9 @@ const EPC_MESSAGES: Record<string, string> = {
   "epc.aidcValue": "The value of ({ai}) does not fit its encoding after the EPC (EPC Tag Data Standard, table F).",
   "epc.aidcTwice": "({ai}) is already in the EPC.",
   "epc.notGcp": "GS1's list says this key's range is not a GS1 Company Prefix: choose the prefix's length to write an EPC.",
+  "epc.notListed": "GS1's list of {date} has no entry for this key: choose the company prefix length.",
+  "epc.choosePrefix": "Choose the company prefix length, or load GS1's GCP length table.",
+  "epc.prefixFromList": "A company prefix of {n} digits, from GS1's list of {date}.",
 };
 
 export interface Epc {

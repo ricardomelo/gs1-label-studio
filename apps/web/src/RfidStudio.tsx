@@ -1,4 +1,4 @@
-import { compareReadBack, encoderCsv, epcBank, EPC_MEMORY_LIMITS, type ReadDifference, zplRfidCommands, zplRfidLabel, zplRfidLabels, zplWithRfid, type EpcBank, type GcpTable, type RfidTagRow, type RfidWriteFrom } from "@gs1-label-studio/core";
+import { bankFor, compareReadBack, encoderCsv, epcBits, EPC_MEMORY_LIMITS, tagFor, type ReadDifference, zplRfidCommands, zplRfidLabel, zplRfidLabels, zplWithRfid, type EpcBank, type GcpTable, type RfidTagRow, type RfidWriteFrom } from "@gs1-label-studio/core";
 import { useState, type ReactNode } from "react";
 import { Segmented } from "./Segmented.tsx";
 import { EpcControls, EpcFacts, nfcChoices, type EpcChoices, type useEpc } from "./EpcSection.tsx";
@@ -34,34 +34,13 @@ export function RfidEncodingCard({ epc, choices, onChoices, gcp, onGcp }: {
 }
 
 /** The EPC's hexadecimal and length, whichever form step 2 chose; null while there is none. */
-export function epcOf(epc: Pick<Epc, "result">): { hex: string; bits: number } | null {
-  if (epc.result.plus) return { hex: epc.result.plus.hex, bits: epc.result.plus.bits };
-  if (epc.result.epc) return { hex: epc.result.epc.hex, bits: epc.result.epc.bits.length };
-  return null;
-}
+export const epcOf = (epc: Pick<Epc, "result">) => epcBits(epc.result);
 
 /** The bank for step 2's EPC and step 3's control bits; null while there is no EPC or it does not fit. */
-export function bankOf(epc: Pick<Epc, "result">, choices: EpcChoices): EpcBank | null {
-  const own = epcOf(epc);
-  if (!own || own.bits > EPC_MEMORY_LIMITS.withoutXpc) return null;
-  return epcBank(own.hex, own.bits, { umi: choices.umi, attributes: choices.hazmat ? 1 : 0 });
-}
+export const bankOf = (epc: Pick<Epc, "result">, choices: EpcChoices): EpcBank | null => bankFor(epc.result, choices);
 
-/**
- * A row's tag in bulk (backlog 6.12 d): its bank with step 3's control bits, its identity and tag URIs, or why it has
- * none (the EPC's message, or more than an EPC memory holds), in English for the files.
- */
-export function tagOf(row: number, epc: Pick<Epc, "result">, choices: EpcChoices): RfidTagRow {
-  const bank = bankOf(epc, choices);
-  // The reason goes to the files, which stay in English (epcFor's english)
-  if (!bank) return { row, error: epc.result.message ?? (epcOf(epc) ? "More than the 496 bits (31 words) an EPC memory can hold." : "No EPC for this row.") };
-  const tagUri = epc.result.epc?.tagUri;
-  const identity = epc.result.epc?.pureIdentity ?? epc.result.link;
-  return {
-    row, bank, ...(identity ? { identity } : {}),
-    ...(tagUri ? { tagUri: bank.controls ? tagUri.replace(/^urn:epc:tag:/, `urn:epc:tag:${bank.controls}:`) : tagUri } : {}),
-  };
-}
+/** A row's tag in bulk (backlog 6.12 d), the core's `tagFor`: its reason in English for the files (epcFor's english). */
+export const tagOf = (row: number, epc: Pick<Epc, "result">, choices: EpcChoices): RfidTagRow => tagFor(row, epc.result, choices);
 
 const FIELD_NAMES = (): Record<string, string> => ({ crc: t("StoredCRC"), pc: t("StoredPC"), epc: "EPC" });
 

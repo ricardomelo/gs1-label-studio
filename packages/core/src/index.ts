@@ -377,5 +377,6 @@ export { distanceBetween, ESTIMATE_CODES, ESTIMATE_NOTE, estimateRules, measureS
 export { compareReadBack, crc16, EPC_MEMORY_LIMITS, epcBank, pcWord, readEpcBank, readPc, type BankRead, type BankWord, type EpcBank, type PcFields, type PcRead, type ReadComparison, type ReadDifference } from "./tagMemory.ts";
 export { readZplRfid, zplRfidCommands, zplRfidLabel, zplWithCommands, zplWithRfid, type RfidWrite, type RfidWriteFrom } from "./rfidZpl.ts";
 export { encoderCsv, ENCODER_COLUMNS, zplRfidLabels, type RfidTagRow } from "./rfidBatch.ts";
+export { bankFor, EPC_CHOICES, epcBits, epcOf, tagFor, type EpcChoices, type EpcForm, type EpcInput, type EpcOutcome, type EpcResult } from "./epcChoices.ts";
 export { LINK_LIMIT, linkWithin, packText, readingFromParam, readingParam, unpackText, workFromParam, workParam, type LinkedReading } from "./share.ts";
 export { designFor, type DesignChoice } from "./labelDesign.ts";

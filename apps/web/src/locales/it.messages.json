@@ -771,5 +771,10 @@
  "Unknown scanning environment: {environment}. Use one of: {ENVIRONMENTS}.": "Ambiente di lettura sconosciuto: {environment}. Usane uno di questi: {ENVIRONMENTS}.",
  "({key}) is not scanned in the environment {environment}: use {environments}.": "({key}) non viene letto nell'ambiente {environment}: usa {environments}.",
  "Step 2's table recommends no symbol the studio draws for this data in {environment}: name one.": "La tabella del passo 2 non raccomanda alcun simbolo che lo studio disegni per questi dati in {environment}: indicane uno.",
- "The table of {environment} has no row for {name}: choose another environment or symbol.": "La tabella di {environment} non ha una riga per {name}: scegli un altro ambiente o simbolo."
+ "The table of {environment} has no row for {name}: choose another environment or symbol.": "La tabella di {environment} non ha una riga per {name}: scegli un altro ambiente o simbolo.",
+ "A company prefix of {n} digits, from GS1's list of {date}.": "Un prefisso aziendale di {n} cifre, dall’elenco di GS1 del {date}.",
+ "Choose the company prefix length, or load GS1's GCP length table.": "Scegli la lunghezza del prefisso aziendale, oppure carica la tabella delle lunghezze dei GCP di GS1.",
+ "GS1's list of {date} has no entry for this key: choose the company prefix length.": "L’elenco di GS1 del {date} non ha una voce per questa chiave: scegli la lunghezza del prefisso aziendale.",
+ "More than the 496 bits (31 words) an EPC memory can hold.": "Più dei 496 bit (31 parole) che una memoria EPC può contenere.",
+ "No EPC for this row.": "Nessun EPC per questa riga."
 }

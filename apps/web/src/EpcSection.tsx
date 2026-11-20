@@ -1,25 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  companyPart,
-  decodeEpcPlus,
-  defaultFilter,
-  encodeEpc,
-  encodeEpcPlus,
-  EpcError,
-  EPC_QUALIFIERS,
-  epcMissing,
+  EPC_CHOICES,
+  type EpcForm,
+  epcOf,
   epcSchemes,
   GcpError,
-  gcpLengthOf,
   KEY_SCHEMES,
-  normaliseKeyValue,
   PARTITION_LENGTHS,
   parseGcpTable,
   PLUS_KEYS,
-  PRIORITISED_DATES,
+  type EpcChoices,
+  type EpcInput,
+  type EpcOutcome,
+  type EpcResult,
   type EpcScheme,
   type GcpTable,
-  type Identification,
 } from "@gs1-label-studio/core";
 import { fileText, keep } from "./keep.ts";
 import { NfcWriter } from "./NfcWriter.tsx";
@@ -31,8 +26,6 @@ import { en, formatNumber, inEnglish, locale, t, tm, t as say, tm as sayMessage 
 // choice, or GS1's GCP length table, which the person loads once and this browser keeps. The schemes new to TDS 2.x,
 // EPC+ and EPC++ (backlog 6.7, mock-up A of two: buttons at the top of the card, B a list beside the filter), need no
 // prefix length; EPC++ carries the GS1 Digital Link URI's hostname, a DSGTIN a date of the data before its GTIN.
-
-type Form = "classic" | "+" | "++";
 
 /** The dates a DSGTIN can put first, by their AI (TDS 14.5.3). */
 const DATE_NAMES: Record<string, string> = {
@@ -63,38 +56,7 @@ function Copyable({ text }: { text: string }) {
   );
 }
 
-/** What the person chooses for the EPC, kept by the application so that the editor's card and the RFID Studio agree. */
-export interface EpcChoices {
-  form: Form;
-  prefix: number | null;
-  filter: number | null;
-  date: string;
-  withData: boolean;
-  /** The StoredPC's user memory indicator and hazardous material attribute bit, as the RFID Studio's step 3 sets them. */
-  umi: boolean;
-  hazmat: boolean;
-}
-
-export const EPC_CHOICES: EpcChoices = { form: "classic", prefix: null, filter: null, date: "", withData: false, umi: false, hazmat: false };
-
-export interface EpcInput {
-  id: Identification;
-  stem: string;
-  gcp: GcpTable | null;
-  /** The data's element strings as the barcode carries them, for +AIDC data after an EPC+ (backlog 6.7 B). */
-  elements?: [string, string][];
-  choices: EpcChoices;
-}
-
-export type EpcResult = {
-  message?: string;
-  epc?: ReturnType<typeof encodeEpc>;
-  source?: string;
-  plus?: ReturnType<typeof encodeEpcPlus>;
-  link?: string;
-  after?: [string, string][];
-  left?: string[];
-};
+export { EPC_CHOICES, type EpcChoices, type EpcInput, type EpcResult };
 
 /** The EPC of the data with the person's choices: the schemes loaded once, then every form computed as data change. */
 export function useEpc(input: EpcInput, load = true) {
@@ -112,85 +74,27 @@ export function useEpc(input: EpcInput, load = true) {
 }
 
 /**
- * The EPC of one identification with the choices (`useEpc` for the data shown, and each row of the RFID Studio in bulk),
- * its messages in English with `english`.
+ * The EPC of one identification with the choices, the core's `epcOf` (`useEpc` for the data shown, and each row of the
+ * RFID Studio in bulk): its messages in the page's language, or in English with `english` (the files).
  */
-export function epcFor({ id, stem, gcp, elements = [], choices }: EpcInput, schemes: Record<string, EpcScheme> | null, english = false) {
-  // The messages in English for a file (the RFID Studio's CSV of many tags), else in the page's language
-  const t = english ? inEnglish : say;
+export function epcFor(input: EpcInput, schemes: Record<string, EpcScheme> | null, english = false): EpcOutcome {
   const tm = english ? (message: string) => message : sayMessage;
-  const { form, prefix: prefixChoice, withData } = choices;
-  const value = normaliseKeyValue(id.key, id.value);
-  const filter = choices.filter ?? defaultFilter(id.key);
-  const base = (stem.trim() || "https://id.gs1.org").replace(/\/$/, "");
-  const hostname = (() => {
-    try {
-      return new URL(base).hostname;
-    } catch {
-      return "";
-    }
-  })();
-  // A DSGTIN's dates: those of the data a DSGTIN can carry, as six digits
-  const dates = id.key === "01" ? id.attributes.filter(([ai, v]) => (PRIORITISED_DATES as readonly string[]).includes(ai) && /^\d{6}$/.test(v.trim())) : [];
-  const date = dates.find(([ai]) => ai === choices.date);
-
-  const result: EpcResult = ((): EpcResult => {
-    if (!(id.key in KEY_SCHEMES)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
-    if (!schemes) return { message: t("Loading the EPC schemes…") };
-    const qualifiers = Object.fromEntries(Object.entries(id.qualifiers).map(([ai, v]) => [ai, v.trim()]).filter(([, v]) => v));
-    // What the key lacks comes first, as the resolver's route checked it: no prefix length would help.
-    const need = epcMissing(id.key, value, qualifiers);
-    if (need) return { message: tm(new EpcError(need.qualifier ? "epc.needsQualifier" : "epc.needsSerial", need as Record<string, string | number>).message) };
-    if (form !== "classic") {
-      if (!(id.key in PLUS_KEYS)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
-      try {
-        const options = {
-          form, filter, ...(form === "++" ? { hostname } : {}), ...(date ? { date: [date[0], date[1].trim()] as [string, string] } : {}),
-        };
-        const own: [string, string][] = [[id.key, value], ...(Object.entries(qualifiers) as [string, string][])];
-        const plain = encodeEpcPlus(own, options);
-        // +AIDC data: the data's other element strings, each that table F can write; the others said
-        const carried = new Set([id.key, ...EPC_QUALIFIERS, ...(date ? [date[0]] : [])]);
-        const after: [string, string][] = [];
-        const left: string[] = [];
-        for (const element of elements.filter(([ai]) => !carried.has(ai))) {
-          try {
-            encodeEpcPlus(own, { ...options, aidc: [element] });
-            after.push(element);
-          } catch (error) {
-            left.push(tm(error instanceof EpcError ? error.message : String(error)));
-          }
-        }
-        const plus = withData && after.length ? encodeEpcPlus(own, { ...options, aidc: after }) : plain;
-        return { plus, link: decodeEpcPlus(plus.hex)?.digitalLink ?? "", after, left };
-      } catch (error) {
-        return { message: tm(error instanceof EpcError ? error.message : String(error)) };
-      }
-    }
-    let length = prefixChoice;
-    let source = "";
-    if (length === null) {
-      const listed = gcp ? gcpLengthOf(gcp, companyPart(id.key, value)) : null;
-      if (listed === 0) {
-        return { message: t("GS1's list says this key's range is not a GS1 Company Prefix: choose the prefix's length to write an EPC.") };
-      }
-      if (!listed) {
-        return {
-          message: gcp
-            ? t("GS1's list of {date} has no entry for this key: choose the company prefix length.", { date: gcp.date.slice(0, 10) })
-            : t("Choose the company prefix length, or load GS1's GCP length table."),
-        };
-      }
-      length = listed;
-      source = t("A company prefix of {n} digits, from GS1's list of {date}.", { n: listed, date: gcp!.date.slice(0, 10) });
-    }
-    try {
-      return { epc: encodeEpc(schemes, id.key, value, qualifiers, length, filter), source };
-    } catch (error) {
-      return { message: tm(error instanceof EpcError ? error.message : String(error)) };
-    }
-  })();
-  return { result, filter, base, hostname, dates, date };
+  if (!schemes) {
+    const outcome = epcOf(input, {});
+    const loading = english ? inEnglish("Loading the EPC schemes…") : t("Loading the EPC schemes…");
+    return { ...outcome, result: { message: input.id.key in KEY_SCHEMES ? loading : tm(outcome.result.message ?? "") } };
+  }
+  const outcome = epcOf(input, schemes);
+  const { result } = outcome;
+  return {
+    ...outcome,
+    result: {
+      ...result,
+      ...(result.message ? { message: tm(result.message) } : {}),
+      ...(result.source ? { source: tm(result.source) } : {}),
+      ...(result.left ? { left: result.left.map(tm) } : {}),
+    },
+  };
 }
 
 type Change = (next: Partial<EpcChoices>) => void;
@@ -227,7 +131,7 @@ export function EpcControls({ choices, onChange, epc, gcp, onGcp, idPrefix = "ep
 
   return (
     <>
-      <Segmented<Form>
+      <Segmented<EpcForm>
         id={`${idPrefix}-form`}
         label={t("Scheme")}
         value={form}
