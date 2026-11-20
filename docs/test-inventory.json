@@ -1627,6 +1627,38 @@
    "area": "The Check Studio: a code read to be checked"
   },
   {
+   "program": "cli",
+   "file": "packages/cli/test/cli.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "gs1ls check › says whether the data follows the rules, how to fix each fault, as text or JSON, in its exit status",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls label › draws the symbol step 2 recommends, read back in SVG, PNG and PDF; EPS is the core's",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls label › takes the symbol, environment, size and text named",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls label › writes each printer language as the core does for the same design",
+     "status": "passed"
+    },
+    {
+     "name": "gs1ls label › refuses what it cannot do: a usage error 2, data or a design refused 1, in the core's words",
+     "status": "passed"
+    },
+    {
+     "name": "the bundle Node runs › draws a label to standard output, read back, and says its version and usage",
+     "status": "passed"
+    }
+   ],
+   "area": "The command line and the local API (gs1ls)"
+  },
+  {
    "program": "design",
    "file": "packages/core/test/design.test.ts",
    "kind": "unit",
@@ -8169,6 +8201,26 @@
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
+   "program": "labelDesign",
+   "file": "packages/core/test/labelDesign.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "a label's design from its data › takes the symbol step 2 recommends in the key's first scanning environment",
+     "status": "passed"
+    },
+    {
+     "name": "a label's design from its data › takes the symbol named, a linear one at its table's row, a Digital Link one for a key no URI carries in DataMatrix",
+     "status": "passed"
+    },
+    {
+     "name": "a label's design from its data › names what to choose when nothing gives a symbol",
+     "status": "passed"
+    }
+   ],
+   "area": "The command line and the local API (gs1ls)"
   },
   {
    "program": "labelsvg",

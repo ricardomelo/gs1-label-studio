@@ -63,6 +63,7 @@ apps/web (React 19 + Vite)          packages/core (TypeScript, no user interface
 | `apps/web/src/` | The application (section 6) |
 | `apps/web/e2e/` | Playwright browser tests of the editor |
 | `apps/web/test/` | Vitest unit tests of the web application: its languages |
+| `packages/cli/` | `gs1ls`, the command line (ADR 0009): `src/commands.ts` (each command a thin layer over the core), `src/main.ts` (arguments, files, exit status), `vite.config.ts` (the bundle `dist/gs1ls.mjs`, the HRI font beside it), `test/` (its commands from the sources and from the bundle, every symbol read back) |
 | `apps/web/screenshots/` | The user guide's screenshots, written to `docs/images/guide/` |
 | `apps/web/offline.ts` | The Vite plugin that writes the service worker |
 | `apps/web/public/` | Web app manifest and icons |
@@ -309,6 +310,8 @@ that say what is true; together they are the [inventory of features](test-invent
 | `epc` | EPC against the resolver and read back by epc-tds; the GCP length table | 165 |
 | `epcPlus` | the 24 '+' and '++' examples of TDS 2.3 E.3 encoded and decoded; the six encodings; hostnames; refusals | 1,108 |
 | `tagMemory` | the EPC memory bank of a Gen2 tag: the StoredCRC against Python's CRC-CCITT and Annex F's residue, the StoredPC's Length and control bits, the bank word by word, a bank read back whole or from the PC, and compared with the bank meant | 15 |
+| `labelDesign` | a label's design from its data alone: the symbol step 2 recommends in an environment, or the one named, sized as the editor sizes it; what to choose when neither gives one | 3 |
+| `cli` | `gs1ls` (packages/cli): `check` as text, JSON and exit status; `label` in every format from the sources and from the bundle, every symbol read back, the print files the core's own; usage errors | 6 |
 | `rfid` | ZPL for an RFID printer: `^RS8` and `^RF` from bit 10h or 20h, the bytes counted, what is written read back to the same EPC, classic and EPC++; joined to every label of a file | 6 |
 | `gs1128` | GS1-128 over several symbols, in the label and in ZPL | 6 |
 | `guide` | the decision tree, the carriers, the recommendation, GS1-128's 48 characters | 38 |

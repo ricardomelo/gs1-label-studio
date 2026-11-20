@@ -28,6 +28,7 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 16. [Shortcuts worth knowing](#16-shortcuts-worth-knowing)
 17. [Messages and what to do](#17-messages-and-what-to-do)
 18. [Glossary](#18-glossary)
+19. [From the command line (gs1ls)](#19-from-the-command-line-gs1ls)
 
 ## 1. What the studio does
 
@@ -1105,3 +1106,30 @@ showing to someone new to the tool.
 | JWS, JWK | JSON Web Signature, JSON Web Key |
 | ZPL | Zebra Programming Language, the printer language of Zebra printers and many others |
 | dpi | Dots per inch: a printer's resolution |
+
+## 19. From the command line (gs1ls)
+
+For a system or a script that makes labels without a browser, `gs1ls` does what the studios do, on the same machine
+([ADR 0009](adr/0009-command-line-and-local-api.md)). From a clone of the repository, after `pnpm install` and
+`pnpm build`, it is `node packages/cli/dist/gs1ls.mjs` (Node 22 or later).
+
+- `gs1ls check "<data>"` checks an element string, a GS1 Digital Link URI or a scanner's text as the Check Studio
+  does: the verdict, then each finding with its code, how to fix it and its details (such as the check digit that
+  would be right), and the data's other forms. `--json` gives the same as JSON. The exit status is 0 when the data
+  follows the GS1 rules checked (remarks included), 1 when it does not, 2 when the command itself is wrong.
+- `gs1ls label "<data>" --format pdf` draws the label as the studio would on a first visit: the symbol step 2
+  recommends in the key's first scanning environment (`--environment` names another: retail, distribution,
+  healthcare, logistics…), or `--symbol` (such as `gs1-datamatrix`, `gs1-128`, `dl-qrcode`); `--size` in percent,
+  `--hri full|key|none`, `--stem` for the GS1 Digital Link URI's domain. Formats: `svg`, `png`, `pdf`, `eps` and the
+  printer languages `zpl`, `tspl`, `epl2`, `dpl`, `ppla`, `pplb` (`--dpi 152|203|300|600`). The file is named after
+  the symbol and the key (`dl-qrcode_09506000134376.pdf`), or as `-o` says; `-o -` writes it to standard output.
+
+```text
+$ gs1ls check "(01)09506000134377(10)B42"
+Does not follow the GS1 rules.
+
+C1 (error) AI (01): Wrong check digit (GTIN, SSCC, GLN, GRAI, GSRN, GDTI…)
+  How to fix: The studio shows the digit that would be right, …
+  expected: 6
+```
+

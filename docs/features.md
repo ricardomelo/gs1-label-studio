@@ -305,6 +305,13 @@ Which standard each follows: [conformance](conformance.md).
 | French, German and Italian | Français, Deutsch and Italiano in the same menu, a browser's fr-*, de-* or it-* on a first visit; every text of the page and every message of the core and of the Syntax Engine in each (the owner, 8 November 2026; ADR 0003); also the GS1 Logistic Label's data titles, a text block's months and the headers guessed in bulk (rows above and below) | `2b07192` | `editor`: the interface in French, German and Italian · `editor`: a browser in German, French or Italian opens the studio in its language · `i18n`: chooses the browser's language · `i18n`: fr: every text of the page · `i18n`: it: every message of the core |
 | Every text translated | Every text of the page and every message of the core and of the Syntax Engine in each language, with the same placeholders; messages translated by template where they are shown; the engine's and the keys' texts from the resolver | `04f4973` | `i18n`: every text of the page · `i18n`: every message of the core and of the Syntax Engine · `i18n`: translates a core or engine message by its template |
 
+## Beyond the browser: gs1ls
+
+| Feature | What it does | Since | Tests |
+|---|---|---|---|
+| A label's design from its data | Backlog 5.1 a, ADR 0009: `designFor()`, the symbol step 2 recommends for the data in the key's first scanning environment or the one named (the QR code with the EAN-13 beside it for a batch and a date at the point of sale, GS1-128 at table 5's row for an SSCC), or the symbol named, sized by the environment or its table's row; what to choose named when neither gives a symbol | `f1cb17b` | `labelDesign`: takes the symbol step 2 recommends · `labelDesign`: takes the symbol named · `labelDesign`: names what to choose |
+| gs1ls check and label | Backlog 5.1 a, ADR 0009: `gs1ls`, a command line built into one file (`packages/cli/dist/gs1ls.mjs`): `check` gives the Check Studio's verdict, each finding with how to fix it and its details, as text or JSON, in its exit status (0 follows, 1 does not, 2 a usage error); `label` draws one label in SVG, PNG, PDF, EPS or a printer's language, to a file or standard output | `76f6351` | `cli`: says whether the data follows the rules · `cli`: draws the symbol step 2 recommends · `cli`: takes the symbol, environment, size and text named · `cli`: writes each printer language as the core does · `cli`: refuses what it cannot do · `cli`: draws a label to standard output |
+
 ## Tests, indicators and documents
 
 | Feature | What it does | Since | Tests |
