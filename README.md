@@ -839,7 +839,8 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   reason), one ZPL file with a label a tag (`zplRfidLabels`), and every row's Label Studio label with its tag in ZPL (the
   bulk generator's `BatchRow.rfid`); e, reading back — done 20 November (`compareReadBack()`: what a reader returned, the EPC alone or the
   bank from bit 10h or 00h, compared with the tag meant, each difference named with what to do); f, the documents and
-  the test plan after d*
+  the test plan — done 20 November, closing 6.12: ADR 0008's decisions 1 to 6, the features, the user and printing
+  guides, the inventory and the owner's test plan (sections 43 to 45)*
 - 6.13 More pictograms (the owner, 15 November 2026): **+ Pictogram** with an arrow beside it to choose among
   pictograms by segment (healthcare, food, textiles, logistics and others), rather than adding UDI alone. Each
   pictogram from a standard whose symbols may be drawn freely (ISO 15223-1 for medical devices, ISO 7000 / ISO 780
