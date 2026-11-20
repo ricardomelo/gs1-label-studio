@@ -24,7 +24,7 @@ import {
 import { fileText, keep } from "./keep.ts";
 import { NfcWriter } from "./NfcWriter.tsx";
 import { Segmented } from "./Segmented.tsx";
-import { en, formatNumber, locale, t, tm } from "./i18n.ts";
+import { en, formatNumber, inEnglish, locale, t, tm, t as say, tm as sayMessage } from "./i18n.ts";
 
 // RFID and NFC (EPC), as the resolver's label panel had it (ADR 0004; item 1.8): the key's EPC as the EPC Tag Data
 // Standard encodes it, and the compressed GS1 Digital Link an NFC tag emits. The company prefix's length: the person's
@@ -97,11 +97,28 @@ export type EpcResult = {
 };
 
 /** The EPC of the data with the person's choices: the schemes loaded once, then every form computed as data change. */
-export function useEpc({ id, stem, gcp, elements = [], choices }: EpcInput, load = true) {
+export function useEpc(input: EpcInput, load = true) {
   const [schemes, setSchemes] = useState<Record<string, EpcScheme> | null>(null);
   useEffect(() => {
     if (load && !schemes) epcSchemes().then(setSchemes, (e: unknown) => console.error(e));
   }, [load, schemes]);
+  const { id, stem, gcp, elements = [], choices } = input;
+  const epc = useMemo(
+    () => epcFor(input, schemes),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [schemes, id.key, id.value, JSON.stringify(id.qualifiers), JSON.stringify(id.attributes), stem, gcp, JSON.stringify(elements), JSON.stringify(choices), locale()],
+  );
+  return { ...epc, schemes };
+}
+
+/**
+ * The EPC of one identification with the choices (`useEpc` for the data shown, and each row of the RFID Studio in bulk),
+ * its messages in English with `english`.
+ */
+export function epcFor({ id, stem, gcp, elements = [], choices }: EpcInput, schemes: Record<string, EpcScheme> | null, english = false) {
+  // The messages in English for a file (the RFID Studio's CSV of many tags), else in the page's language
+  const t = english ? inEnglish : say;
+  const tm = english ? (message: string) => message : sayMessage;
   const { form, prefix: prefixChoice, withData } = choices;
   const value = normaliseKeyValue(id.key, id.value);
   const filter = choices.filter ?? defaultFilter(id.key);
@@ -117,7 +134,7 @@ export function useEpc({ id, stem, gcp, elements = [], choices }: EpcInput, load
   const dates = id.key === "01" ? id.attributes.filter(([ai, v]) => (PRIORITISED_DATES as readonly string[]).includes(ai) && /^\d{6}$/.test(v.trim())) : [];
   const date = dates.find(([ai]) => ai === choices.date);
 
-  const result: EpcResult = useMemo((): EpcResult => {
+  const result: EpcResult = ((): EpcResult => {
     if (!(id.key in KEY_SCHEMES)) return { message: t("This key has no EPC scheme in the EPC Tag Data Standard.") };
     if (!schemes) return { message: t("Loading the EPC schemes…") };
     const qualifiers = Object.fromEntries(Object.entries(id.qualifiers).map(([ai, v]) => [ai, v.trim()]).filter(([, v]) => v));
@@ -172,7 +189,7 @@ export function useEpc({ id, stem, gcp, elements = [], choices }: EpcInput, load
     } catch (error) {
       return { message: tm(error instanceof EpcError ? error.message : String(error)) };
     }
-  }, [schemes, id.key, value, id.qualifiers, prefixChoice, gcp, filter, form, hostname, date?.[0], date?.[1], withData, JSON.stringify(elements), locale()]);
+  })();
   return { result, filter, base, hostname, dates, date };
 }
 

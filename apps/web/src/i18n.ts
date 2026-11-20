@@ -111,6 +111,11 @@ export function t(english: string, params?: Record<string, string | number>): st
   return fill(catalogue[english] ?? messages[english] ?? english, params);
 }
 
+/** The text in English whatever the page's language, its {placeholders} filled: for the files made, which stay English. */
+export function inEnglish(english: string, params?: Record<string, string | number>): string {
+  return fill(english, params);
+}
+
 /**
  * A message the core or the Syntax Engine wrote in English, in the current language: an exact entry, else the first
  * template that matches, its placeholders' values translated in turn (an engine message quoting a linter's).

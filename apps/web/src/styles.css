@@ -844,7 +844,7 @@ a.studio:focus-visible { outline: 2px solid var(--focus, #1a73e8); outline-offse
 
 /* The RFID Studio (backlog 6.12, ADR 0008): the editor's step 1, then the encoding, the tag's memory and writing in the
    places of step 2, the label and the export; one code for now, so neither the mode nor the label's miniature. */
-.app[data-studio="rfid"] .mode, .app[data-studio="rfid"] .mini-bar { display: none !important; }
+.app[data-studio="rfid"] .mini-bar { display: none !important; }
 .rfid-tag .stage { min-width: 0; position: static !important; }
 .rfid-write { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; }
 .tag-picture { width: 100%; max-width: 520px; display: block; margin: 4px 0 10px; }
@@ -873,6 +873,13 @@ fieldset.pc-bits input { width: auto; }
 .rfid-printer h3 { font-size: 15px; margin: 16px 0 6px; }
 .rfid-printer pre.zpl-rfid { background: var(--bg, #f3f5f9); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
 .rfid-printer .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.rfid-many { border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px 8px; margin: 12px 0; }
+.rfid-many h3 { font-size: 15px; margin: 10px 0 6px; }
+.rfid-many .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.rfid-many .ok { color: #1b7a3a; }
+.many-tags { border-collapse: collapse; margin: 4px 0 8px; }
+.many-tags th, .many-tags td { text-align: left; padding: 2px 12px 2px 0; }
+.many-tags td.mono { word-break: break-all; }
 .read-back h3 { font-size: 15px; margin: 16px 0 6px; }
 .read-back input { width: 100%; box-sizing: border-box; }
 .read-back .ok { color: #1b7a3a; }

@@ -1479,5 +1479,16 @@
  "What the reader returned (hexadecimal: the EPC, or the bank from bit 10h or 00h)": "Lo que devolvió el lector (hexadecimal: el EPC, o el banco desde el bit 10h o 00h)",
  "from the StoredPC": "desde el StoredPC",
  "the EPC alone": "solo el EPC",
- "the whole bank, CRC first": "el banco entero, CRC primero"
+ "the whole bank, CRC first": "el banco entero, CRC primero",
+ "Many tags": "Varias etiquetas RFID",
+ "1 tag ready, one a row.": "1 etiqueta RFID lista, una por fila.",
+ "{n} tags ready, one a row.": "{n} etiquetas RFID listas, una por fila.",
+ "1 row left out, with its reason in the CSV.": "1 fila dejada fuera, con su motivo en el CSV.",
+ "{n} rows left out, each with its reason in the CSV.": "{n} filas dejadas fuera, cada una con su motivo en el CSV.",
+ "EPC, from bit 20h": "EPC, desde el bit 20h",
+ "… and {n} more": "… y {n} más",
+ "For an encoder (.csv)": "Para un codificador (.csv)",
+ "Each tag with its EPC in text (.zpl)": "Cada etiqueta RFID con su EPC en texto (.zpl)",
+ "Each tag with the Label Studio's label (.zip)": "Cada etiqueta RFID con la etiqueta del Estudio de etiquetas (.zip)",
+ "The CSV gives each row's EPC from bit 20h, its StoredPC and EPC from bit 10h and its URIs; the ZPL, a label a tag, written from where the RFID printer below writes.": "El CSV da, por fila, el EPC desde el bit 20h, el StoredPC y el EPC desde el bit 10h y sus URI; el ZPL, una etiqueta por etiqueta RFID, escrita desde donde escribe la impresora RFID de abajo."
 }

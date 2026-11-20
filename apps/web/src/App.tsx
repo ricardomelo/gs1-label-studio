@@ -102,6 +102,9 @@ import {
   workFile,
   zplWithWork,
   type Work,
+  zplRfidCommands,
+  type RfidTagRow,
+  type RfidWriteFrom,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
 import { About, buildDate } from "./About.tsx";
@@ -109,8 +112,8 @@ import { answersText, Assistant, examplesText } from "./Assistant.tsx";
 import { Tour } from "./Tour.tsx";
 import { COMPUTER_TOUR, TABBED_TOUR } from "./tour.ts";
 import { BulkCard } from "./BulkCard.tsx";
-import { EPC_CHOICES, EpcSection, useEpc, type EpcChoices } from "./EpcSection.tsx";
-import { bankOf, RfidEncodingCard, RfidPrinter, RfidTagCard } from "./RfidStudio.tsx";
+import { EPC_CHOICES, epcFor, EpcSection, useEpc, type EpcChoices } from "./EpcSection.tsx";
+import { bankOf, RfidEncodingCard, RfidMany, RfidPrinter, RfidTagCard, tagOf } from "./RfidStudio.tsx";
 import { SignSection } from "./SignSection.tsx";
 import { keepProfiles, keptProfiles, PrinterSection } from "./PrinterSection.tsx";
 import { DEFAULT_STEM, openedSettings, savedSettings, START_SETTINGS } from "./work.ts";
@@ -270,8 +273,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     () => (engine && edited ? checkRows(engine, edited, mapping, fixed, settings.stem.trim() || DEFAULT_STEM) : []),
     [engine, edited, mapping, fixed, settings.stem],
   );
-  // The RFID Studio has one code for now (backlog 6.12 d brings many tags)
-  const bulk = mode === "bulk" && !rfid;
+  // In the RFID Studio too (backlog 6.12 d): each row a tag
+  const bulk = mode === "bulk";
   const current = bulk ? rows[Math.min(rowIndex, rows.length - 1)] : undefined;
   // The row shown's cells by their column's header (backlog 4.2: fields bound to spreadsheet columns)
   const cellsOf = (index: number) => (edited?.rows[index] ? rowCells(edited.headers, edited.rows[index]) : undefined);
@@ -322,6 +325,19 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   // The RFID Studio's EPC (ADR 0008): step 1's data with the choices shared with the editor's card
   const epc = useEpc({ id: active, stem: settings.stem, gcp, elements: checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? [], choices: epcChoices }, rfid);
   const rfidBank = rfid ? bankOf(epc, epcChoices) : null;
+  // Where an RFID printer writes, for one tag and for many (backlog 6.12 c, d)
+  const [rfidFrom, setRfidFrom] = useState<RfidWriteFrom>("pc");
+  // In bulk, every row's tag with the same choices (backlog 6.12 d): a skipped row or one in error has none; the reasons
+  // in English, for the CSV and generated.csv
+  const rfidTags = useMemo((): RfidTagRow[] => {
+    if (!rfid || !bulk || !epc.schemes) return [];
+    return rows.map((row, index) => {
+      if (skipped.has(index)) return { row: row.row, error: "Skipped" };
+      if (!row.id || !row.identified) return { row: row.row, error: row.error ?? "Not checked" };
+      const elements = row.identified.elements.map((e) => [e.ai, e.value] as [string, string]);
+      return tagOf(row.row, epcFor({ id: row.id, stem: settings.stem, gcp, elements, choices: epcChoices }, epc.schemes, true), epcChoices);
+    });
+  }, [rfid, bulk, rows, skipped, epc.schemes, settings.stem, gcp, epcChoices]);
   const logisticOn = active.key === "00" && settings.logistic !== "none" && !settings.designer;
   const symbology: SymbologyId = logisticOn ? "gs1-128"
     : !isDigitalLinkKey(active.key) && SYMBOLOGIES[chosenSymbol].data === "uri" ? "gs1-datamatrix" : chosenSymbol;
@@ -647,9 +663,9 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
   const readyRows = batchRows.filter((row) => row.identified && !row.skipped);
   // Generated in a worker (backlog 2.5): the page stays usable, the progress shows, and Cancel ends the worker.
   const [worker, setWorker] = useState<Worker | null>(null);
-  function generate(choice: GenerateChoice) {
+  function generate(choice: GenerateChoice, only: BatchRow[] = batchRows) {
     setGenerated({ result: null, error: null });
-    setProgress({ done: 0, total: readyRows.length });
+    setProgress({ done: 0, total: only.filter((row) => row.identified && !row.skipped).length });
     const running = new Worker(new URL("./generate.worker.ts", import.meta.url), { type: "module" });
     setWorker(running);
     const finish = () => {
@@ -679,9 +695,20 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
       finish();
     };
     running.postMessage({
-      rows: batchRows,
-      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, cropMarks: settings.cropMarks, ...(choice.zplDpi ? { printLanguage: language.id } : {}), ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
+      rows: only,
+      request: { ...choice, design, pngResolution: settings.pngResolution, hriAsText: settings.hriAsText, cropMarks: settings.cropMarks, ...(choice.zplDpi ? { printLanguage: choice.printLanguage ?? language.id } : {}), ...(choice.zplDpi && module ? { zplDots: module.chosen.dots } : {}) },
     });
+  }
+  /** The RFID Studio in bulk (backlog 6.12 d): each row's label in ZPL with its tag; a row with no tag left out with its reason. */
+  function generateTagged() {
+    const tags = new Map(rfidTags.map((tag) => [tag.row, tag]));
+    const tagged = batchRows.map((row): BatchRow => {
+      const tag = tags.get(row.row);
+      if (!row.identified || row.skipped) return row;
+      if (!tag?.bank) return { row: row.row, error: tag?.error ?? "No EPC" };
+      return { ...row, rfid: zplRfidCommands(tag.bank, rfidFrom) };
+    });
+    generate({ files: [], pattern: "{row}", pdf: false, zplDpi: settings.dpi, printLanguage: "zpl" }, tagged);
   }
   // The destination shown on a phone or a tablet (backlog 1.21, layout.ts); a computer shows them all. Each keeps
   // where it was scrolled to, as the tabs of phone apps do; a link to a part of another destination opens it.
@@ -1013,6 +1040,17 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
     </button>
   );
 
+  // On a phone or a tablet, "More" holds the language, the work's buttons, the tour and installing: in the Label
+  // Studio's card and in the RFID Studio's, which has no label card
+  const morePane = tabbed && (
+    <div className="settings">
+      {phone && languageMenu}
+      {phone && workButtons}
+      {tourButton}
+      <InstallApp />
+    </div>
+  );
+
   function cancelGeneration() {
     worker?.terminate();
     setWorker(null);
@@ -1326,7 +1364,20 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           </div>
         </div>
         {rfid ? (
-          <RfidTagCard epc={epc} choices={epcChoices} onChoices={setEpcChoices} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download}>
+          <RfidTagCard epc={epc} choices={epcChoices} onChoices={setEpcChoices} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} more={morePane}>
+            {bulk && (
+              <RfidMany
+                tags={rfidTags}
+                stem={source.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "rows"}
+                dpi={settings.dpi}
+                from={rfidFrom}
+                download={download}
+                onLabels={generateTagged}
+                progress={progress}
+                generated={generated}
+                onCancel={cancelGeneration}
+              />
+            )}
             {rfidBank && (
               <RfidPrinter
                 bank={rfidBank}
@@ -1335,6 +1386,8 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
                 dpi={settings.dpi}
                 labelZpl={labelZpl}
                 download={download}
+                from={rfidFrom}
+                onFrom={setRfidFrom}
               />
             )}
           </RfidTagCard>
@@ -1409,14 +1462,7 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           />
           }
         >
-          {tabbed && (
-            <div className="settings">
-              {phone && languageMenu}
-              {phone && workButtons}
-              {tourButton}
-              <InstallApp />
-            </div>
-          )}
+          {morePane}
           <EpcSection id={active} stem={settings.stem} gcp={gcp} onGcp={setGcp} choices={epcChoices} onChoices={setEpcChoices} elements={checked.identified?.elements.map((e) => [e.ai, e.value] as [string, string]) ?? []} {...(checked.identified?.digitalLinkUri ? { uri: checked.identified.digitalLinkUri } : {})} download={download} />
           <SignSection {...(checked.identified ? { identified: checked.identified } : {})} name={name} download={download} />
         </LabelCard>

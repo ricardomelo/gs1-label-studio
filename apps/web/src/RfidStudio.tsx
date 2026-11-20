@@ -1,4 +1,4 @@
-import { compareReadBack, epcBank, EPC_MEMORY_LIMITS, type ReadDifference, zplRfidCommands, zplRfidLabel, zplWithRfid, type EpcBank, type GcpTable, type RfidWriteFrom } from "@gs1-label-studio/core";
+import { compareReadBack, encoderCsv, epcBank, EPC_MEMORY_LIMITS, type ReadDifference, zplRfidCommands, zplRfidLabel, zplRfidLabels, zplWithRfid, type EpcBank, type GcpTable, type RfidTagRow, type RfidWriteFrom } from "@gs1-label-studio/core";
 import { useState, type ReactNode } from "react";
 import { Segmented } from "./Segmented.tsx";
 import { EpcControls, EpcFacts, nfcChoices, type EpcChoices, type useEpc } from "./EpcSection.tsx";
@@ -34,17 +34,33 @@ export function RfidEncodingCard({ epc, choices, onChoices, gcp, onGcp }: {
 }
 
 /** The EPC's hexadecimal and length, whichever form step 2 chose; null while there is none. */
-export function epcOf(epc: Epc): { hex: string; bits: number } | null {
+export function epcOf(epc: Pick<Epc, "result">): { hex: string; bits: number } | null {
   if (epc.result.plus) return { hex: epc.result.plus.hex, bits: epc.result.plus.bits };
   if (epc.result.epc) return { hex: epc.result.epc.hex, bits: epc.result.epc.bits.length };
   return null;
 }
 
 /** The bank for step 2's EPC and step 3's control bits; null while there is no EPC or it does not fit. */
-export function bankOf(epc: Epc, choices: EpcChoices): EpcBank | null {
+export function bankOf(epc: Pick<Epc, "result">, choices: EpcChoices): EpcBank | null {
   const own = epcOf(epc);
   if (!own || own.bits > EPC_MEMORY_LIMITS.withoutXpc) return null;
   return epcBank(own.hex, own.bits, { umi: choices.umi, attributes: choices.hazmat ? 1 : 0 });
+}
+
+/**
+ * A row's tag in bulk (backlog 6.12 d): its bank with step 3's control bits, its identity and tag URIs, or why it has
+ * none (the EPC's message, or more than an EPC memory holds), in English for the files.
+ */
+export function tagOf(row: number, epc: Pick<Epc, "result">, choices: EpcChoices): RfidTagRow {
+  const bank = bankOf(epc, choices);
+  // The reason goes to the files, which stay in English (epcFor's english)
+  if (!bank) return { row, error: epc.result.message ?? (epcOf(epc) ? "More than the 496 bits (31 words) an EPC memory can hold." : "No EPC for this row.") };
+  const tagUri = epc.result.epc?.tagUri;
+  const identity = epc.result.epc?.pureIdentity ?? epc.result.link;
+  return {
+    row, bank, ...(identity ? { identity } : {}),
+    ...(tagUri ? { tagUri: bank.controls ? tagUri.replace(/^urn:epc:tag:/, `urn:epc:tag:${bank.controls}:`) : tagUri } : {}),
+  };
 }
 
 const FIELD_NAMES = (): Record<string, string> => ({ crc: t("StoredCRC"), pc: t("StoredPC"), epc: "EPC" });
@@ -84,13 +100,15 @@ function Copy({ text }: { text: string }) {
 }
 
 /** Steps 3 and 4: the tag's memory, then what writes and reads it. */
-export function RfidTagCard({ epc, choices, onChoices, uri, download, children }: {
+export function RfidTagCard({ epc, choices, onChoices, uri, download, more, children }: {
   epc: Epc;
   choices: EpcChoices;
   onChoices: (choices: EpcChoices) => void;
   /** The data's GS1 Digital Link URI, for an NFC tag. */
   uri?: string;
   download: (name: string, content: Uint8Array<ArrayBuffer>, type: string) => void;
+  /** What a phone's or a tablet's More tab holds: the language, the work's buttons, the tour. */
+  more?: ReactNode;
   children?: ReactNode;
 }) {
   const own = epcOf(epc);
@@ -175,13 +193,20 @@ export function RfidTagCard({ epc, choices, onChoices, uri, download, children }
         <NfcWriter choices={nfcChoices(epc, uri)} download={download} />
         </div>
       </div>
+      <div className="extras" data-pane="more">
+        <h2 className="pane-title">{t("More")}</h2>
+        {more}
+      </div>
     </section>
   );
 }
 
 /** Step 4's RFID printer: ZPL's ^RS and ^RF, alone with the EPC in text or added to the label's own ZPL. */
-export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download }: {
+export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download, from, onFrom }: {
   bank: EpcBank;
+  /** Where the printer writes, shared with the many tags of bulk. */
+  from: RfidWriteFrom;
+  onFrom: (from: RfidWriteFrom) => void;
   /** What the tag's own label prints in text: the EPC and what it identifies. */
   lines: string[];
   stem: string;
@@ -190,7 +215,6 @@ export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download }: {
   labelZpl: () => { zpl: string } | { error: string };
   download: (name: string, content: string, type: string) => void;
 }) {
-  const [from, setFrom] = useState<RfidWriteFrom>("pc");
   const [error, setError] = useState<string | null>(null);
   const commands = zplRfidCommands(bank, from);
   return (
@@ -204,7 +228,7 @@ export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download }: {
           { value: "pc", text: t("From bit 10h"), detail: t("The StoredPC and the EPC, so that the Length is right on any Gen2 printer.") },
           { value: "auto", text: t("From bit 20h"), detail: t("The EPC alone, the printer setting the StoredPC: Zebra ZD500R, ZT400 and ZT600 series only.") },
         ]}
-        onChange={setFrom}
+        onChange={onFrom}
       />
       <pre className="zpl-rfid">{commands}</pre>
       <div className="buttons">
@@ -229,6 +253,69 @@ export function RfidPrinter({ bank, lines, stem, dpi, labelZpl, download }: {
       </div>
       {error && <p className="error small">{error}</p>}
       <p className="hint">{t("Printed at {dpi} dpi. Check one tag with a reader before a whole run.", { dpi })}</p>
+    </div>
+  );
+}
+
+/**
+ * Step 4 in bulk (backlog 6.12 d, mock-up A of two): every row's tag at once, as a CSV an encoder takes, as ZPL with
+ * a label a tag, or with the Label Studio's label of each row (the bulk generator, a zip with its generated.csv).
+ */
+export function RfidMany({ tags, stem, dpi, from, download, onLabels, progress, generated, onCancel }: {
+  tags: readonly RfidTagRow[];
+  stem: string;
+  dpi: number;
+  from: RfidWriteFrom;
+  download: (name: string, content: string, type: string) => void;
+  /** Every row's label with its tag, generated in the worker. */
+  onLabels: () => void;
+  progress: { done: number; total: number } | null;
+  generated: { result: string | null; error: string | null };
+  onCancel: () => void;
+}) {
+  const ready = tags.filter((tag) => tag.bank);
+  const left = tags.length - ready.length;
+  const shown = ready.slice(0, 3);
+  return (
+    <div className="rfid-many" aria-labelledby="many-title">
+      <h3 id="many-title">{t("Many tags")}</h3>
+      <p className="hint" role="status">
+        {ready.length === 1 ? t("1 tag ready, one a row.") : t("{n} tags ready, one a row.", { n: formatNumber(ready.length) })}
+        {left > 0 && <> {left === 1 ? t("1 row left out, with its reason in the CSV.") : t("{n} rows left out, each with its reason in the CSV.", { n: formatNumber(left) })}</>}
+      </p>
+      {shown.length > 0 && (
+        <table className="many-tags small">
+          <thead>
+            <tr><th>{t("Row")}</th><th>{t("EPC, from bit 20h")}</th></tr>
+          </thead>
+          <tbody>
+            {shown.map((tag) => <tr key={tag.row}><td>{tag.row}</td><td className="mono">{tag.bank!.fromEpc}</td></tr>)}
+            {ready.length > shown.length && <tr><td colSpan={2}>{t("… and {n} more", { n: formatNumber(ready.length - shown.length) })}</td></tr>}
+          </tbody>
+        </table>
+      )}
+      <div className="buttons">
+        <button type="button" className="btn primary" disabled={!tags.length} onClick={() => download(`${stem}-tags.csv`, encoderCsv(tags), "text/csv")}>
+          {t("For an encoder (.csv)")}
+        </button>
+        <button type="button" className="btn" disabled={!ready.length} onClick={() => download(`${stem}-tags.zpl`, zplRfidLabels(tags, { dpi, from }), "text/plain")}>
+          {t("Each tag with its EPC in text (.zpl)")}
+        </button>
+        <button type="button" className="btn" disabled={!ready.length || Boolean(progress)} onClick={onLabels}>
+          {t("Each tag with the Label Studio's label (.zip)")}
+        </button>
+      </div>
+      {progress && (
+        <p className="hint" role="status">
+          {progress.done === progress.total && progress.total ? t("Writing the zip…") : t("Drawing {n} of {total}…", { n: progress.done, total: progress.total })}{" "}
+          <button type="button" className="link" onClick={onCancel}>{t("Cancel")}</button>
+        </p>
+      )}
+      {generated.result && <p className="ok small" role="status">{generated.result}</p>}
+      {generated.error && <p className="error small">{generated.error}</p>}
+      <p className="hint">
+        {t("The CSV gives each row's EPC from bit 20h, its StoredPC and EPC from bit 10h and its URIs; the ZPL, a label a tag, written from where the RFID printer below writes.")}
+      </p>
     </div>
   );
 }

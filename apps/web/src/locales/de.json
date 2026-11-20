@@ -1479,5 +1479,16 @@
  "What the reader returned (hexadecimal: the EPC, or the bank from bit 10h or 00h)": "Was das Lesegerät ausgab (hexadezimal: der EPC oder die Bank ab Bit 10h oder 00h)",
  "from the StoredPC": "ab dem StoredPC",
  "the EPC alone": "nur der EPC",
- "the whole bank, CRC first": "die ganze Bank, CRC zuerst"
+ "the whole bank, CRC first": "die ganze Bank, CRC zuerst",
+ "Many tags": "Viele Tags",
+ "1 tag ready, one a row.": "1 Tag bereit, einer je Zeile.",
+ "{n} tags ready, one a row.": "{n} Tags bereit, einer je Zeile.",
+ "1 row left out, with its reason in the CSV.": "1 Zeile ausgelassen, mit ihrem Grund in der CSV.",
+ "{n} rows left out, each with its reason in the CSV.": "{n} Zeilen ausgelassen, jede mit ihrem Grund in der CSV.",
+ "EPC, from bit 20h": "EPC, ab Bit 20h",
+ "… and {n} more": "… und {n} weitere",
+ "For an encoder (.csv)": "Für einen Encoder (.csv)",
+ "Each tag with its EPC in text (.zpl)": "Jeder Tag mit seinem EPC als Text (.zpl)",
+ "Each tag with the Label Studio's label (.zip)": "Jeder Tag mit dem Etikett des Etikettenstudios (.zip)",
+ "The CSV gives each row's EPC from bit 20h, its StoredPC and EPC from bit 10h and its URIs; the ZPL, a label a tag, written from where the RFID printer below writes.": "Die CSV enthält je Zeile den EPC ab Bit 20h, StoredPC und EPC ab Bit 10h und die URIs; das ZPL ein Etikett je Tag, geschrieben ab der Stelle, an der der RFID-Drucker unten schreibt."
 }
