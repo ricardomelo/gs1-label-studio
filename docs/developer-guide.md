@@ -315,6 +315,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `batch` | label sheets, several-page PDF, file names, generating every row | 18 |
 | `bulk` | columns guessed from headers, cells normalised, rows checked | 119 |
 | `checkDigit` | the GS1 check digit | 5 |
+| `release` | releases (ADR 0010): versions and their order, the package.json edit, the CHANGELOG cut and a release's notes, the repository's package.json files at one version | 4 |
 | `docs` | the documents in step with the code and the tests | 7 |
 | `designSymbol` | a barcode on a label of one's own with the options of the symbol alone, read back and in ZPL | 7 |
 | `dots` | the printer's dot grid | 3 |
@@ -377,6 +378,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `work` | the work file and the studio's ZPL carrying it, opened again; what is refused | 4 |
 | `i18n` | the interface's languages: every text translated, messages by template (apps/web/test) | 15 |
 | `translate` | the translator the page and `gs1ls` share: exact texts and placeholders, the template with the most fixed text, values translated in turn, hints part by part, English left alone, a language among a browser's or an Accept-Language header's | 4 |
+| `channel` | the two sites (ADR 0010): the stable site's storage names unchanged and develop's its own, the header's release and day or develop's commit (apps/web/test) | 3 |
 | `opened` | the label's settings of a work opened, the editor's kept where one does not fit (apps/web/test) | 2 |
 | `lastwork` | the last work kept in this browser: not a first visit's, read back with its time, nothing offered when damaged (apps/web/test) | 3 |
 | `place` | where a new element lands on a label of one's own, never on another; the arrow keys on its outline; moving held within the label (apps/web/test) | 9 |
@@ -397,6 +399,7 @@ that say what is true; together they are the [inventory of features](test-invent
 | `check-report` | the Check Studio's reports and files in a browser: one reading's report in two pages at most; readings.csv with one row per listed reading, filtered as the list is, and the session report counting the same; findings.csv; readings.json opened again after Delete all giving the same list, a file that is not one refused; an export with a serial number asking once; an item's report (Playwright, downloads) | 4 |
 | `check-estimate` | Size estimates in a browser: the margins at once, the X-dimension within its tolerance from one symbol's printed width typed with a comma, a grade named only in the sentence saying there is none, a wrong width refused; a size outside a shop's range a finding with its estimate and the table's grade (Playwright) | 2 |
 | `rfid-studio` | The RFID Studio in a browser: step 1's data encoded, the bank's words, the hazardous material bit changing the PC and its CRC, ZPL alone and joined to the label, from bit 20h; a reader's output compared; the editor's card sharing the scheme (Playwright) | 4 |
+| `channels` | Both sites built as `pages.yml` builds them and served on one origin: develop's title, theme colour, manifest, header and About, its own worker and storage, both offline each as itself (Playwright) | 1 |
 | `check-share` | Share in a browser: without a share sheet, the menu (WhatsApp with the text and the link, Copy the text, Download, Escape); with one, the PDF and the text together and the link opened in another browser giving the same verdict and faults; a link cut on its way refused; a serial asking once a visit; the editor's Share sending the PNG and a link that opens the same work (Playwright, fakes for the share sheet, the clipboard and window.open) | 5 |
 | `printlangs` | TSPL, EPL2 and DPL rendered by Labelize and read back; what they refuse | 130 |
 | `argox` | PPLA and PPLB as the DPL and EPL2 files Argox's manual allows, read back; what they refuse | 27 |
