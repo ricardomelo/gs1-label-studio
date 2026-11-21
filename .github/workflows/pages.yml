@@ -1,9 +1,12 @@
 name: Publish to GitHub Pages
 
 # Needs Settings › Pages › Source: "GitHub Actions" once in the repository.
+# Two sites in one publication (backlog 0.4, ADR 0010): main, the last release, at the site's root, and develop, the
+# work in progress, under /develop/ for the owner's tests. A push to either branch builds both, as Pages serves one
+# artifact; before develop exists, the root alone.
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -20,18 +23,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          path: main
+      - id: develop
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${{ github.repository }}.git" develop > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.develop.outputs.exists == 'true'
+        with:
+          ref: develop
+          path: develop
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: main/package.json
       - uses: actions/setup-node@v5
         with:
-          node-version-file: .nvmrc
+          node-version-file: main/.nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @gs1-label-studio/web build
+          cache-dependency-path: "*/pnpm-lock.yaml"
+      - name: The stable site (main) at the root
+        working-directory: main
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @gs1-label-studio/web build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+          CHANNEL: stable
+      - name: The work in progress (develop) under /develop/
+        if: steps.develop.outputs.exists == 'true'
+        working-directory: develop
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @gs1-label-studio/web build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/develop/
+          CHANNEL: develop
+      - run: |
+          mkdir site
+          cp -r main/apps/web/dist/. site/
+          if [ -d develop/apps/web/dist ]; then cp -r develop/apps/web/dist site/develop; fi
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: apps/web/dist
+          path: site
   deploy:
     needs: build
     runs-on: ubuntu-latest

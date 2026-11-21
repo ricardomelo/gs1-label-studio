@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths-ignore: ["**.md", "docs/**"]
   pull_request:
   # Started by syntax-engine.yml on the branch of a new Syntax Engine release (a push by a workflow's token starts no

@@ -1,0 +1,41 @@
+name: Release
+
+# A release (backlog 0.4, ADR 0010, docs/release-process.md): pushing the tag vX.Y.Z on main makes its GitHub release,
+# with the CHANGELOG's section as its notes and gs1ls's archive, installable with `npm install -g <archive>`. The tag
+# must be on main and the files at that version (scripts/release.mjs wrote them); CI has checked main's commit.
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: The tag is on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The files are at the tag's version
+        run: node scripts/release.mjs --check "${GITHUB_REF_NAME#v}"
+      - run: pnpm typecheck
+      - name: gs1ls, built and packed
+        run: |
+          pnpm --filter @gs1-label-studio/cli build
+          pnpm --filter @gs1-label-studio/cli pack --pack-destination "$PWD/release"
+          node packages/cli/dist/gs1ls.mjs --version
+      - name: The GitHub release
+        run: |
+          node scripts/release.mjs --notes "${GITHUB_REF_NAME#v}" > notes.md
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "GS1 Label Studio ${GITHUB_REF_NAME#v}" --notes-file notes.md release/*.tgz
+        env:
+          GH_TOKEN: ${{ github.token }}

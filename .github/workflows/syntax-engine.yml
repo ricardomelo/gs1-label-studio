@@ -9,6 +9,8 @@ name: Syntax Engine
 #   3. a draft pull request (or, when the repository does not let Actions open one, an issue) says what changed and
 #      what is left for a person: the new messages to translate, the tests that failed. CI runs on the branch.
 # Nothing reaches main by itself: a new release may change what is accepted, and its messages need five translations.
+# Since the first release (backlog 0.4, ADR 0010) the work in progress is on develop: the branch starts from develop and
+# its pull request is for develop, when develop exists; main only receives releases.
 
 on:
   schedule:
@@ -34,6 +36,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: The branch work lands on (develop once it exists, else main)
+        run: |
+          if git ls-remote --exit-code --heads origin develop > /dev/null; then
+            git fetch --depth 1 origin develop
+            git checkout -B develop FETCH_HEAD
+            echo "BASE=develop" >> "$GITHUB_ENV"
+          else
+            echo "BASE=main" >> "$GITHUB_ENV"
+          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
@@ -138,13 +149,13 @@ jobs:
             echo "- [ ] New or changed AIs: their titles in \`packages/core/src/data/data_titles.json\` (the GS1 Logistic Label) and anything the tests above name"
             echo "- [ ] The comparisons with the resolver (pinned at the release it was ported with, ADR 0004): differences explained in the tests, not hidden"
             echo "- [ ] CHANGELOG, \`docs/features.md\`, the inventory (\`node scripts/inventory.mjs\`) and the metrics, as for any change"
-            echo "- [ ] Merged into main by a fast-forward once \`pnpm check\` and CI pass"
+            echo "- [ ] Merged into $BASE by a fast-forward once \`pnpm check\` and CI pass"
             echo
             echo "The release named on the screen (the data check and About) and in the files made (the zip's README, the PDF's Producer, the EPS's Creator) follows from \`gs1_dictionary.json\` by itself."
           } > "$RUNNER_TEMP/body.md"
 
           title="GS1 Barcode Syntax Engine $RELEASE"
-          if ! gh pr create --draft --base main --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"; then
+          if ! gh pr create --draft --base "$BASE" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"; then
             echo "No pull request (Settings → Actions → General → 'Allow GitHub Actions to create and approve pull requests' is off): an issue instead."
             { echo "Branch: https://github.com/${{ github.repository }}/tree/$BRANCH"; echo; cat "$RUNNER_TEMP/body.md"; } > "$RUNNER_TEMP/issue.md"
             gh issue create --title "$title" --body-file "$RUNNER_TEMP/issue.md"
