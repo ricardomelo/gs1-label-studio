@@ -9,6 +9,7 @@ import it from "./locales/it.json";
 import itMessages from "./locales/it.messages.json";
 import ptBR from "./locales/pt-BR.json";
 import ptBRMessages from "./locales/pt-BR.messages.json";
+import { stored } from "./channel.ts";
 
 // The interface's languages (ADR 0003): English, Brazilian Portuguese and Spanish (the owner, 31 October 2026), French,
 // German and Italian (the owner, 8 November 2026). The
@@ -38,7 +39,7 @@ const CATALOGUES: Record<Exclude<Locale, "en">, { page: Record<string, string>; 
   de: { page: de, messages: deMessages },
   it: { page: it, messages: itMessages },
 };
-const STORAGE = "gs1-label-studio.locale";
+const STORAGE = stored("gs1-label-studio.locale");
 
 export { localeFor, type Locale };
 

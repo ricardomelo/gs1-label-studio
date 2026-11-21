@@ -1,5 +1,6 @@
 import { SYNTAX_ENGINE } from "@gs1-label-studio/core";
 import { en, t } from "./i18n.ts";
+import { CHANNEL } from "./channel.ts";
 
 // About the studio, at the foot of the page (the owner, 31 October 2026): its repository, its licence, the version
 // published, and the software of others it is made with, each with its repository (docs/third-party.md has the
@@ -51,13 +52,33 @@ export function About() {
           <a href={`${REPOSITORY}/blob/main/docs/printing-guide.md`}>{t("printing guide")}</a> ·{" "}
           <a href={`${REPOSITORY}/blob/main/docs/README.md`}>{t("all documents")}</a>
         </li>
-        {__BUILD__.commit && (
-          <li>
-            {t("Version")}:{" "}
-            <a className="mono" href={`${REPOSITORY}/commit/${__BUILD__.commit}`}>
-              {__BUILD__.commit}
-            </a>
-            {date && ` · ${date}`}
+        {/* The release and the commit it was built from; develop names itself and links to the stable site, which
+            links to develop (backlog 0.4, ADR 0010) */}
+        <li data-testid="about-version">
+          {t("Version")}:{" "}
+          {CHANNEL === "stable" ? (
+            <a className="mono" href={`${REPOSITORY}/releases/tag/v${__BUILD__.version}`}>{__BUILD__.version}</a>
+          ) : (
+            <span className="mono">develop</span>
+          )}
+          {__BUILD__.commit && (
+            <>
+              {" · "}
+              <a className="mono" href={`${REPOSITORY}/commit/${__BUILD__.commit}`}>
+                {__BUILD__.commit}
+              </a>
+            </>
+          )}
+          {date && ` · ${date}`}
+        </li>
+        {CHANNEL === "stable" ? (
+          <li data-testid="about-channel">
+            {t("The next version, still being tested")}: <a href="develop/">develop</a>
+          </li>
+        ) : (
+          <li data-testid="about-channel">
+            {t("This is the next version, still being tested. What it keeps on this device (history, printers, choices) is kept apart from the stable version's.")}{" "}
+            <a href="../">{t("Stable version")}</a>
           </li>
         )}
       </ul>

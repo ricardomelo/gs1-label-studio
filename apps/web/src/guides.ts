@@ -3,12 +3,14 @@
 // top and left, the chosen element's span marked on them; one button turns both on or off, kept in this browser. B had
 // the grid alone, from a button beside the zoom.
 
+import { stored } from "./channel.ts";
+
 /** The steps a grid line or a ruler's tick may take, in millimetres, the finest first. */
 const STEPS = [1, 2, 5, 10, 20, 50] as const;
 const GRID_GAP_PX = 6; // the closest two grid lines are drawn
 const TICK_GAP_PX = 3; // the closest two ticks of a ruler
 const NUMBER_GAP_PX = 24; // the closest two numbers of a ruler: room for "100" and a space
-const KEPT = "gs1-label-studio.guides";
+const KEPT = stored("gs1-label-studio.guides");
 
 /** The finest step whose lines stand at least this many pixels apart. */
 function stepFor(pxPerMm: number, gapPx: number): number {

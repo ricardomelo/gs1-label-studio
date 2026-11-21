@@ -107,7 +107,7 @@ import {
   type RfidWriteFrom,
 } from "@gs1-label-studio/core";
 import fontUrl from "@gs1-label-studio/core/assets/fonts/LiberationSans-Regular.ttf?url";
-import { About, buildDate } from "./About.tsx";
+import { About } from "./About.tsx";
 import { answersText, Assistant, examplesText } from "./Assistant.tsx";
 import { Tour } from "./Tour.tsx";
 import { COMPUTER_TOUR, TABBED_TOUR } from "./tour.ts";
@@ -117,6 +117,7 @@ import { bankOf, RfidEncodingCard, RfidMany, RfidPrinter, RfidTagCard, tagOf } f
 import { SignSection } from "./SignSection.tsx";
 import { keepProfiles, keptProfiles, PrinterSection } from "./PrinterSection.tsx";
 import { DEFAULT_STEM, openedSettings, savedSettings, START_SETTINGS } from "./work.ts";
+import { CHANNEL, stored, versionLabel } from "./channel.ts";
 import { keptWork, LAST_WORK, workKey, workSummary, workToKeep, type KeptWork } from "./lastwork.ts";
 import type { GenerateMessage } from "./generate.worker.ts";
 import { GeneratePanel, type GenerateChoice } from "./GeneratePanel.tsx";
@@ -151,7 +152,7 @@ const TWO_D: SymbologyId[] = ["dl-qrcode", "gs1-qrcode", "dl-datamatrix", "gs1-d
 const PNG_RESOLUTIONS = [300, 600, 1200]; // besides the PNG at the label's size (backlog 1.5)
 
 /** Kept in this browser once the assistant has opened by itself, so that it does so on a first visit only. */
-const ASSISTANT_SEEN = "gs1-label-studio.assistant-seen";
+const ASSISTANT_SEEN = stored("gs1-label-studio.assistant-seen");
 
 const START: Identification = { key: "01", value: "09506000134376", qualifiers: { "10": "B42" }, attributes: [["17", "271231"]] };
 
@@ -162,7 +163,7 @@ const errorText = (error: unknown) => (error instanceof Error ? error.message : 
 
 // In bulk, the columns chosen for a file are kept for the next file with the same headers (localStorage: a convenience
 // of this browser, never needed).
-const mappingKey = (headers: string[]) => `gs1-label-studio.columns.${headers.join("\u001f")}`;
+const mappingKey = (headers: string[]) => stored(`gs1-label-studio.columns.${headers.join("\u001f")}`);
 function rememberedColumns(headers: string[]): { mapping: ColumnMapping; fixed: FixedValue[] } | null {
   try {
     const kept = JSON.parse(localStorage.getItem(mappingKey(headers)) ?? "null") as { mapping: ColumnMapping; fixed: FixedValue[] } | null;
@@ -1066,11 +1067,10 @@ export function App({ onStartOver, onLocale }: { locale?: Locale; onStartOver?: 
           <h1>
             <a href="#/" title={t("All studios")}>GS1 Label Studio</a>
           </h1>
-          {__BUILD__.commit && (
-            <a className="version mono" href="#about-title" title={t("Version")}>
-              {buildDate() ? `${__BUILD__.commit} · ${buildDate()}` : __BUILD__.commit}
-            </a>
-          )}
+          {/* The release on the stable site, the commit on develop (backlog 0.4, ADR 0010) */}
+          <a className="version mono" href="#about-title" title={t("Version")} data-channel={CHANNEL}>
+            {versionLabel()}
+          </a>
         </span>
         {phone && startOver}
         <span className="mode" role="group" aria-label={t("Mode")} data-tour="mode">

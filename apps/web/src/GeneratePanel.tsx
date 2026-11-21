@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { GENERATE_TEXTS } from "./texts.ts";
 import { formatNumber, t, tm } from "./i18n.ts";
+import { stored } from "./channel.ts";
 
 // In bulk, under the label's Export bar (backlog 2.4, mock-up A of three, 30 October 2026): the label shown, drawn for
 // every row ready or fixed, in the files chosen, in one zip with the CSV of what was generated.
@@ -46,7 +47,7 @@ interface Props {
 const FILES: BatchFile[] = ["svg", "png", "pdf", "eps"];
 
 // The choices are kept for the next visit in this browser: a convenience, never needed.
-const KEY = "gs1-label-studio.generate";
+const KEY = stored("gs1-label-studio.generate");
 interface Kept {
   files: BatchFile[];
   pattern: string;

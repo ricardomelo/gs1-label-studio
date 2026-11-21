@@ -137,7 +137,7 @@ test("About: who developed it, the repository, the licence, the version and the 
   await expect(about.getByRole("link", { name: "github.com/ricardomelo/gs1-label-studio" })).toHaveAttribute("href", "https://github.com/ricardomelo/gs1-label-studio");
   await expect(about.getByRole("link", { name: "Apache License 2.0" })).toHaveAttribute("href", /\/blob\/main\/LICENSE$/);
   await expect(about.getByRole("link", { name: "user guide" })).toHaveAttribute("href", /docs\/user-guide\.md$/);
-  await expect(about.locator("a.mono")).toHaveAttribute("href", /\/commit\/[0-9a-f]{7,}$/);
+  await expect(about.getByTestId("about-version").locator("a.mono").nth(1)).toHaveAttribute("href", /\/commit\/[0-9a-f]{7,}$/);
   const made = about.locator(".made-with a");
   // The engine with the release that checks the data (backlog 0.6)
   await expect(made).toHaveText(["bwip-js", /^GS1 Barcode Syntax Engine \d+\.\d+\.\d+$/, "node-qrcode", "dijkstrajs", "opentype.js", "zxing-wasm", "zxing-cpp", "React", "Liberation Sans"]);
@@ -187,11 +187,15 @@ test("an iPhone is told to install from Share, Add to Home Screen; the name on t
 test("the version under the name, the same as About's, links to About", async ({ page }, info) => {
   const version = page.locator("header.top .version");
   await expect(version).toBeVisible();
-  await expect(version).toHaveText(/^[0-9a-f]{7,} · \d{4}-\d{2}-\d{2}$/);
+  // Backlog 0.4 (ADR 0010): the stable site names its release and day; About adds the commit
+  await expect(version).toHaveText(/^\d+\.\d+\.\d+ · \d{4}-\d{2}-\d{2}$/);
   const about = page.locator("footer.about");
-  const commit = (await version.textContent())!.split(" · ")[0]!;
-  await expect(about.locator("a.mono")).toHaveText(commit);
-  await expect(about).toContainText(`${commit} · ${(await version.textContent())!.split(" · ")[1]}`);
+  const [release, day] = (await version.textContent())!.split(" · ") as [string, string];
+  const line = about.getByTestId("about-version");
+  await expect(line.locator("a.mono").first()).toHaveText(release);
+  await expect(line.locator("a.mono").first()).toHaveAttribute("href", `https://github.com/ricardomelo/gs1-label-studio/releases/tag/v${release}`);
+  await expect(line.locator("a.mono").nth(1)).toHaveText(/^[0-9a-f]{7,}$/);
+  await expect(line).toContainText(` · ${day}`);
   await version.click();
   await expect(about.getByRole("heading", { name: "About GS1 Label Studio" })).toBeInViewport();
   if (info.project.name === "phone") await expect(tabs(page).getByRole("button", { name: "More" })).toHaveAttribute("aria-current", "page");

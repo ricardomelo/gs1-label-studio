@@ -2,7 +2,9 @@
 // and the Check Studio's history (history.ts). IndexedDB, as localStorage is too small; it may be unavailable (private
 // windows, blocked storage), and then what was loaded only lasts until the page is closed.
 
-const DATABASE = "gs1-label-studio";
+import { stored } from "./channel.ts";
+
+const DATABASE = stored("gs1-label-studio");
 const STORE = "kept";
 /** Version 2 (backlog 7.1 j) adds the history's stores; the upgrade leaves version 1's store and what it holds. */
 const VERSION = 2;

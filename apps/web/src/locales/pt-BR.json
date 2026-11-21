@@ -1485,5 +1485,8 @@
  "For an encoder (.csv)": "Para um codificador (.csv)",
  "Each tag with its EPC in text (.zpl)": "Cada tag com seu EPC em texto (.zpl)",
  "Each tag with the Label Studio's label (.zip)": "Cada tag com a etiqueta do Estúdio de etiquetas (.zip)",
- "The CSV gives each row's EPC from bit 20h, its StoredPC and EPC from bit 10h and its URIs; the ZPL, a label a tag, written from where the RFID printer below writes.": "O CSV traz, por linha, o EPC a partir do bit 20h, o StoredPC e o EPC a partir do bit 10h e os URIs; o ZPL, uma etiqueta por tag, gravada a partir de onde a impressora RFID abaixo grava."
+ "The CSV gives each row's EPC from bit 20h, its StoredPC and EPC from bit 10h and its URIs; the ZPL, a label a tag, written from where the RFID printer below writes.": "O CSV traz, por linha, o EPC a partir do bit 20h, o StoredPC e o EPC a partir do bit 10h e os URIs; o ZPL, uma etiqueta por tag, gravada a partir de onde a impressora RFID abaixo grava.",
+ "The next version, still being tested": "A próxima versão, ainda em testes",
+ "This is the next version, still being tested. What it keeps on this device (history, printers, choices) is kept apart from the stable version's.": "Esta é a próxima versão, ainda em testes. O que ela guarda neste dispositivo (histórico, impressoras, escolhas) fica separado do que a versão estável guarda.",
+ "Stable version": "Versão estável"
 }

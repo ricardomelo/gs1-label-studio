@@ -1,5 +1,6 @@
 import type { CheckResult, Reading, Verdict } from "@gs1-label-studio/core";
 import { openDatabase } from "./keep.ts";
+import { stored } from "./channel.ts";
 
 // The Check Studio's history (backlog 7.1 j; the check studio's project, section 7.1; ADR 0007 decision 16): every code
 // checked is kept on this device, in the application's IndexedDB database (version 2 adds the stores readings and
@@ -226,7 +227,7 @@ export async function addSession(name: string): Promise<number | null> {
 }
 
 /** History off, remembered by this browser. */
-const OFF = "gs1-label-studio.history-off";
+const OFF = stored("gs1-label-studio.history-off");
 export function historyOff(): boolean {
   try {
     return localStorage.getItem(OFF) === "1";

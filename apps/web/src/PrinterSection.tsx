@@ -2,13 +2,14 @@ import { useState } from "react";
 import { GENERIC_PROFILES, languageOf, PRINTER_LANGUAGES, profileProblem, type ModuleChoice, type PrinterLanguage, type PrinterProfile } from "@gs1-label-studio/core";
 import { PRINTER_TEXTS } from "./texts.ts";
 import { formatNumber, t, tm } from "./i18n.ts";
+import { stored } from "./channel.ts";
 
 // Printer profiles (backlog 3.1, mock-up A of two, 31 October 2026), above the EPC section: the printer the print files
 // are for — its language (ZPL, TSPL, EPL2, DPL, PPLA or PPLB; ADR 0002), resolution and print width —, the whole dots a module takes
 // within the table's range, and a test label.
 // The person's own profiles are kept in this browser (a convenience, never needed).
 
-const KEY = "gs1-label-studio.printers";
+const KEY = stored("gs1-label-studio.printers");
 
 export function keptProfiles(): PrinterProfile[] {
   try {

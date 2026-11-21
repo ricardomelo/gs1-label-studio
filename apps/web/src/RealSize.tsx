@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { formatNumber, t, tm } from "./i18n.ts";
+import { stored } from "./channel.ts";
 
 // The preview at real size (item 1.6, mock-up A of 29 October 2026): rulers in millimetres along the label, and a
 // calibration of the screen against a bank card, kept in this browser.
@@ -7,7 +8,7 @@ import { formatNumber, t, tm } from "./i18n.ts";
 /** CSS pixels per millimetre as browsers define them: 96 a inch. Real screens differ, hence the calibration. */
 export const CSS_PX_PER_MM = 96 / 25.4;
 export const CARD_MM = 53.98; // ISO/IEC 7810 ID-1: a bank card's short side (85.60 × 53.98 mm)
-const KEPT = "gs1-label-studio.px-per-mm";
+const KEPT = stored("gs1-label-studio.px-per-mm");
 
 export function keptScale(): number {
   try {
