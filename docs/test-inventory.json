@@ -1,5 +1,5 @@
 {
- "date": "2026-11-20",
+ "date": "2026-11-21",
  "skipped": 0,
  "programs": [
   {
@@ -1093,6 +1093,26 @@
     }
    ],
    "area": "The Check Studio: a code read to be checked"
+  },
+  {
+   "program": "channel",
+   "file": "apps/web/test/channel.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "channels › keeps the stable site's names as they always were and gives develop its own",
+     "status": "passed"
+    },
+    {
+     "name": "channels › this build's names are the stable site's (no CHANNEL given)",
+     "status": "passed"
+    },
+    {
+     "name": "channels › names the release and its day on the stable site, the commit on develop",
+     "status": "passed"
+    }
+   ],
+   "area": "Releases: the last release at the site's root, develop under /develop/"
   },
   {
    "program": "check",
@@ -9655,6 +9675,30 @@
    "area": "The Check Studio: a code read to be checked"
   },
   {
+   "program": "release",
+   "file": "packages/core/test/release.test.ts",
+   "kind": "unit",
+   "tests": [
+    {
+     "name": "releases › knows a release's version and their order",
+     "status": "passed"
+    },
+    {
+     "name": "releases › sets a package.json's version and nothing else",
+     "status": "passed"
+    },
+    {
+     "name": "releases › cuts 'Unreleased' into the release's section, with a new empty one above",
+     "status": "passed"
+    },
+    {
+     "name": "releases › keeps the repository's package.json files at one version, the CHANGELOG with a section for it once released",
+     "status": "passed"
+    }
+   ],
+   "area": "Releases: the last release at the site's root, develop under /develop/"
+  },
+  {
    "program": "render",
    "file": "packages/core/test/render.test.ts",
    "kind": "unit",
@@ -11437,6 +11481,23 @@
     }
    ],
    "area": "Printers: the dot grid, profiles, ZPL, TSPL, EPL2, DPL, PPLA and PPLB"
+  },
+  {
+   "program": "channels",
+   "file": "apps/web/e2e/channels.spec.ts",
+   "kind": "browser",
+   "tests": [
+    {
+     "name": "develop names itself, keeps its own storage, and both sites open offline each as itself",
+     "status": "listed",
+     "projects": [
+      "desktop",
+      "phone",
+      "tablet"
+     ]
+    }
+   ],
+   "area": "Releases: the last release at the site's root, develop under /develop/"
   },
   {
    "program": "check-camera",

@@ -259,7 +259,10 @@ Each module, in the order of the flow above.
 
 ## 7. What the browser keeps
 
-Nothing is sent anywhere. What the browser keeps, for convenience only — the page works without it:
+Nothing is sent anywhere. What the browser keeps, for convenience only — the page works without it. The names are the
+stable site's; develop, published on the same origin under `/develop/`, keeps the same things under names starting
+with `gs1-label-studio-develop` (`channel.ts`, `stored()`; [ADR 0010](adr/0010-releases-and-two-sites.md)), so that a
+develop that changes what it keeps never touches the stable site's:
 
 | What | Where | Key |
 |---|---|---|
@@ -270,24 +273,31 @@ Nothing is sent anywhere. What the browser keeps, for convenience only — the p
 | Printer profiles of one's own | localStorage | set by `PrinterSection.tsx` |
 | GS1's GCP length table | IndexedDB `gs1-label-studio` / `kept` | `gcp` |
 | The last work (its work file), offered on the next visit; emptied by *Start over* | IndexedDB `gs1-label-studio` / `kept` | `work` |
-| Every file of the application | Cache Storage | `gs1-label-studio-<hash>` |
+| Every file of the application | Cache Storage | `gs1-label-studio <base path> <hash>`, one per site (`offline.ts`) |
 
 A signing key is never kept: the person saves it as a JWK and loads it again.
 
 ## 8. Continuous integration and publication
 
-- **`ci.yml`** on every push to `main` (except documents) and every pull request: install, typecheck, install poppler
+- **`ci.yml`** on every push to `main` or `develop` (except documents) and every pull request: install, typecheck, install poppler
   and Ghostscript, the core's tests with `LABELARY=1` (failures also as annotations, for environments that cannot read
   the logs), build, then the browser tests against the build on a desktop, a phone and a tablet held horizontally.
 - **`docs.yml`** when only documents change: the documents' test (`packages/core/test/docs.test.ts`).
-- **`pages.yml`** on every push to `main`: builds with `BASE_PATH=/gs1-label-studio/` and publishes to GitHub Pages.
+- **`pages.yml`** on every push to `main` or `develop`: builds `main` with `BASE_PATH=/gs1-label-studio/` and
+  `CHANNEL=stable` and `develop` with `BASE_PATH=/gs1-label-studio/develop/` and `CHANNEL=develop`, and publishes both
+  to GitHub Pages as one site (`develop/` inside it).
+- **`release.yml`** when a tag `vX.Y.Z` is pushed: checks the tag is on `main` and the files at its version, packs
+  `gs1ls` and makes the GitHub release with the CHANGELOG's section ([release process](release-process.md)).
 - **`syntax-engine.yml`** every Monday and on demand: follows the GS1 Barcode Syntax Engine's releases (section 11,
   *A new Syntax Engine release*). `ci.yml` also runs on demand (`workflow_dispatch`), which is how this workflow
   starts it on the branch it pushes.
-- After a push that changes code, read the run (`gh run list`, `gh run view --log-failed`, or the check run's
-  annotations).
-- Releases (backlog 0.4): `main` holds the stable version and `develop` the work in progress once there is a first
-  release.
+- After a push that changes code, read the run (`gh run list --branch develop`, `gh run view --log-failed`, or the
+  check run's annotations).
+- Releases (backlog 0.4, [ADR 0010](adr/0010-releases-and-two-sites.md)): `main` holds the last release and `develop`
+  the work in progress; `scripts/release.mjs` writes a release's version into the four `package.json` files and cuts
+  the CHANGELOG; the steps are in the [release process](release-process.md). The build defines `__BUILD__` with the
+  commit, its date, the root `package.json`'s version and the channel; the header shows `X.Y.Z · <date>` on the stable
+  site and `develop · <commit>` on develop.
 
 ## 9. Tests
 
