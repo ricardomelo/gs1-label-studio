@@ -24,7 +24,7 @@ const CHANGELOG = "# Changelog\n\n## Unreleased\n\n- One.\n- Two.\n\n## 1.0.0 â€
 describe("releases", () => {
   it("knows a release's version and their order", () => {
     expect(["1.0.0", "0.10.2", "12.0.31"].map(script.isVersion)).toEqual([true, true, true]);
-    expect(["1.0", "v1.0.0", "1.0.0-rc.1", "01.0.0", "1.0.0 "].map(script.isVersion)).toEqual([false, false, false, false, false]);
+    expect(["1.0", "v1.0.0", "1.0.0-rc.1", "01.0.0", "1.00.0", "1.0.01", "1.0.0 "].map(script.isVersion)).toEqual([false, false, false, false, false, false, false]);
     expect(script.compareVersions("1.0.0", "1.0.0")).toBe(0);
     expect(script.compareVersions("1.2.0", "1.10.0")).toBe(-1);
     expect(script.compareVersions("2.0.0", "1.99.99")).toBe(1);
