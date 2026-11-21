@@ -1,6 +1,6 @@
 {
   "name": "@gs1-label-studio/cli",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "gs1ls: GS1 Label Studio's checks, labels and print files from the command line and a local HTTP API",
