@@ -28,6 +28,7 @@ export const AREAS = [
   ["The work saved on one's own computer and opened again", ["work", "opened", "lastwork"]],
   ["The command line and the local API (gs1ls)", ["labelDesign", "cli", "epc-bulk", "serve", "lang"]],
   ["The interface's languages: English, Brazilian Portuguese, Spanish, French, German, Italian", ["i18n", "translate"]],
+  ["Releases: the last release at the site's root, develop under /develop/", ["release", "channel", "channels"]],
   ["The documents", ["docs"]],
   ["The editor in the browser (Playwright, desktop, phone and tablet)", ["editor", "layouts", "tour", "routes", "studios", "check-result", "check-camera", "check-scan", "check-matrix", "check-history", "check-report", "check-share", "check-estimate", "rfid-studio"]],
 ];

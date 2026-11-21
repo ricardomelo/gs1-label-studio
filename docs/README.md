@@ -5,7 +5,8 @@ by who reads them. Every feature is listed in [features.md](features.md), each w
 list of tests is the [inventory of features](test-inventory.md)
 ([ADR 0005](adr/0005-documentation-and-feature-inventory.md)).
 
-The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
+The published studio: <https://ricardomelo.github.io/gs1-label-studio/> (the last release); the next version, still
+being tested: <https://ricardomelo.github.io/gs1-label-studio/develop/>.
 
 ## People who make barcodes and labels
 
@@ -37,7 +38,8 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 | [Conformance](conformance.md) | each standard section by section — GS1 General Specifications, the Syntax Engine and GS1 Digital Link, the ISO/IEC symbologies, EPC and NFC, digital signatures, ZPL, TSPL, EPL2 and DPL — with what is done, what is not, and the evidence |
 | [Third-party software, data and licences](third-party.md) | what the studio is made of besides its own code, each licence, and why nothing restricts commercial use |
 | [History](history.md) | how the project grew, session by session, with the decisions on the way |
-| [Changelog](../CHANGELOG.md) | every change |
+| [Changelog](../CHANGELOG.md) | every change, release by release |
+| [Release process](release-process.md) | the two branches and the two sites (main at the root, develop under `/develop/`), making a release step by step, a fix that cannot wait, `gs1ls`'s archive |
 | [Indicators](metrics/README.md) | development and management indicators from the first day; performance targets |
 | [CLAUDE.md](../CLAUDE.md) | the working rules for the repository |
 
@@ -54,6 +56,7 @@ The published studio: <https://ricardomelo.github.io/gs1-label-studio/>.
 | [ADR 0007](adr/0007-check-studio.md) | a studio that checks what it is given: its scope and what stays out, one reading record whatever the way in, the symbol's bytes and identifier rather than text, what the decoder cannot read measured, the logic in the core and no server |
 | [ADR 0008](adr/0008-rfid-studio.md) | a studio of its own for RFID: what exists, three options from the ideation round and the one taken, the tag's memory and printing in the core, ZPL's RFID commands only as far as a test proves, nothing pretending to touch a UHF tag |
 | [ADR 0009](adr/0009-command-line-and-local-api.md) | a command line, `gs1ls`, and a local HTTP API from the same core: three options and the one taken, the commands as thin layers over the core, the API on 127.0.0.1 with no authentication, every output read back |
+| [ADR 0010](adr/0010-releases-and-two-sites.md) | releases: main, the last release, at the site's root and develop, the work in progress, under `/develop/`; develop's storage and service worker kept apart; versions and the CHANGELOG cut by a script; a tag's GitHub release with `gs1ls`'s archive; the first release, 1.0.0 |
 
 The documentation is written in British English only.
 

@@ -8,8 +8,17 @@ draws is read back by ZXing, every tag decoded back.
 
 ## 1. Running it
 
-Until the first release publishes it (backlog 0.4), `gs1ls` runs from a clone of the repository, with Node 22 or later
-and pnpm:
+Each release ([releases](https://github.com/ricardomelo/gs1-label-studio/releases)) carries `gs1ls` as an archive,
+installed with Node 22 or later:
+
+```text
+npm install -g https://github.com/ricardomelo/gs1-label-studio/releases/download/v1.0.0/gs1-label-studio-cli-1.0.0.tgz
+gs1ls --version
+```
+
+`gs1ls --version` says the release and the commit it was built from (`gs1ls 1.0.0 (<commit>)`). It is not on npm by
+name yet ([ADR 0010](adr/0010-releases-and-two-sites.md)). The work in progress runs from a clone of the repository,
+with pnpm:
 
 ```text
 git clone https://github.com/ricardomelo/gs1-label-studio.git

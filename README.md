@@ -50,10 +50,13 @@ source.
 - **Private, offline, anywhere.** Everything runs in the page: no server, no account, no upload. After the first visit
   it works without a connection, and installs as an application.
 
-> **Status (13 November 2026):** in development before its first release, published at
-> <https://ricardomelo.github.io/gs1-label-studio/> since 31 October 2026. One code (phase 1), in bulk (phase 2) and
-> the labels (phase 4: the GS1 Logistic Label, the designer, the saved work) are done; of the printers (phase 3), ZPL,
-> TSPL, EPL2, DPL, PPLA and PPLB are done, and direct printing and tests on physical printers are still to come. The [backlog](#backlog) says what is done and what comes next.
+> **Status (21 November 2026):** release 1.0.0, published at <https://ricardomelo.github.io/gs1-label-studio/>; the
+> next version, still being tested, at <https://ricardomelo.github.io/gs1-label-studio/develop/>
+> ([releases](https://github.com/ricardomelo/gs1-label-studio/releases), [release process](docs/release-process.md)).
+> One code (phase 1), in bulk (phase 2), the labels (phase 4: the GS1 Logistic Label, the designer, the saved work),
+> the Check Studio, the RFID Studio and `gs1ls` are done; of the printers (phase 3), ZPL, TSPL, EPL2, DPL, PPLA and
+> PPLB are done, and direct printing and tests on physical printers are still to come. The [backlog](#backlog) says
+> what is done and what comes next.
 
 > **Community software.** GS1 Label Studio is maintained by its community, not by GS1 or any GS1 Member Organisation;
 > GS1 is a registered trademark of GS1 AISBL. It is provided "as is", without warranties or conditions of any kind
@@ -213,7 +216,7 @@ who print them, and people who build on the studio. The index by reader: [docs/R
 | [Developer guide](docs/developer-guide.md) | developers | architecture, every module, the tests, how to extend |
 | [The core's API reference](docs/core-api.md) | integrators | every name `@gs1-label-studio/core` exports |
 | [Third-party licences](docs/third-party.md) | anyone reusing it | what the studio is made of, and why nothing restricts commercial use |
-| [Inventory of features](docs/test-inventory.md) · [History](docs/history.md) · [Changelog](CHANGELOG.md) | maintainers | every test by area; how the project grew; every change |
+| [Inventory of features](docs/test-inventory.md) · [History](docs/history.md) · [Changelog](CHANGELOG.md) · [Release process](docs/release-process.md) | maintainers | every test by area; how the project grew; every change; how a release is made |
 
 ## Development
 
@@ -238,13 +241,13 @@ says more.
 | `apps/web` | the web application (React + Vite); `src/locales/` its languages, `test/` their test |
 | `docs/adr` | architecture decision records |
 | `docs/metrics` | development and management indicators, from day one |
-| `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `syntax-engine.mjs` makes the dictionary and the engine's messages from a Syntax Engine release (0.6); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
-| `.github/workflows` | `ci.yml` (checks, Labelary and the browser tests), `pages.yml` (publication), `docs.yml` (the documents' test), `syntax-engine.yml` (a new Syntax Engine release, every Monday) |
+| `scripts` | project tools: `metrics.mjs`, `inventory.mjs` and `api-reference.mjs` (ADR 0005); `syntax-engine.mjs` makes the dictionary and the engine's messages from a Syntax Engine release (0.6); `release.mjs` writes a release's version and cuts the CHANGELOG (0.4); `resolver-reference/golden.py` writes the resolver's answers as test fixtures (ADR 0004) |
+| `.github/workflows` | `ci.yml` (checks, Labelary and the browser tests), `pages.yml` (publication of main at the root and develop under `/develop/`), `release.yml` (a tag's GitHub release), `docs.yml` (the documents' test), `syntax-engine.yml` (a new Syntax Engine release, every Monday) |
 
 ## Backlog
 
-**Where it stands** (13 November 2026). Phases 0, 1 and 2 are done, but for 0.4 (the release process, set up at the
-first release) and composite components (1.3, later). Phase 4 is done — the GS1 Logistic Label, the designer, the
+**Where it stands** (21 November 2026). Release 1.0.0. Phases 0, 1 and 2 are done, but for composite components (1.3,
+later); 0.4, the release process, came with the first release. Phase 4 is done — the GS1 Logistic Label, the designer, the
 saved work —, product and healthcare templates left out at the owner's word (3 November). Phase 3 has ZPL, TSPL, EPL2
 and DPL, each checked through an emulator, and Argox's PPLA and PPLB (13 November) as DPL and EPL2; still to come are direct
 printing (3.8) and tests on physical printers (3.9); phase 5 only if needed. Phase 6, the owner's review of 11 November
@@ -269,7 +272,11 @@ Engine's releases (0.6, 8 November), then the crop marks 1.5 had left for later,
 - 0.3 Walking skeleton: core encoding through bwip-js, read back by ZXing; printer dot grid; SVG; ZPL graphic — *done*
 - 0.4 Release process, as in the resolver's project (the owner, 29 October 2026): `main` holds the last stable
   version, published at the site's root; `develop` holds the work in progress, published for the owner's tests under
-  `/develop/`. Set up at the first release: until then there is no stable version, and `main` is where work lands
+  `/develop/`. Set up at the first release: until then there is no stable version, and `main` is where work lands —
+  *done 21 November ([ADR 0010](docs/adr/0010-releases-and-two-sites.md), [release process](docs/release-process.md)):
+  a, both sites built into one publication, develop naming itself and keeping its storage and service worker apart; b,
+  `scripts/release.mjs` (the version in the four package.json files, the CHANGELOG cut), `release.yml` (the tag's
+  GitHub release with its notes and `gs1ls`'s archive); c, the documents and the first release, 1.0.0*
 - 0.5 Documentation by reader, as in the resolver's project (the owner, 31 October 2026): user and printing guides,
   features each naming the tests that prove it, an inventory drawn from the tests, the core's API reference, a
   developer guide, conformance and licences, kept in step by a test (ADR 0005) — *done 31 October*

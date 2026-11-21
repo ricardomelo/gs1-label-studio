@@ -59,6 +59,13 @@ a printer or to prepress: the [printing guide](printing-guide.md). The words use
 The studio speaks English, Brazilian Portuguese, Spanish, French, German and Italian (section 2); this guide is in
 English.
 
+**Versions.** <https://ricardomelo.github.io/gs1-label-studio/> is the last release: the header shows its number and
+day (such as `1.0.0 · 2026-11-21`), and About links it to its notes. The next version, still being tested, is at
+<https://ricardomelo.github.io/gs1-label-studio/develop/>: its header says `develop` and the commit, its tab and its
+installed app are named *GS1 Label Studio (develop)*, and what it keeps on the device (language, printers, the Check
+Studio's history) is kept apart from the release's; to take a label across, save it as a file and open it there
+(section 8).
+
 ## 2. The screen at a glance
 
 ### The start page: the studios
@@ -1110,8 +1117,10 @@ showing to someone new to the tool.
 ## 19. From the command line (gs1ls)
 
 For a system or a script that makes labels without a browser, `gs1ls` does what the studios do, on the same machine
-([ADR 0009](adr/0009-command-line-and-local-api.md)). From a clone of the repository, after `pnpm install` and
-`pnpm build`, it is `node packages/cli/dist/gs1ls.mjs` (Node 22 or later).
+([ADR 0009](adr/0009-command-line-and-local-api.md)). Each release carries it as an archive, installed with
+`npm install -g` and the archive's address (Node 22 or later; the [integrators' guide](integrators-guide.md) gives the
+command); from a clone of the repository, after `pnpm install` and `pnpm build`, it is
+`node packages/cli/dist/gs1ls.mjs`.
 
 - `gs1ls check "<data>"` checks an element string, a GS1 Digital Link URI or a scanner's text as the Check Studio
   does: the verdict, then each finding with its code, how to fix it and its details (such as the check digit that

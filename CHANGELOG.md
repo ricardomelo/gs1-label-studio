@@ -411,4 +411,23 @@
 - Argox's PPLA and PPLB (backlog 3.4, 3.5; 13 November): written with the DPL and EPL2 commands Argox's programmer's
   manual gives alike, checked in Labelize as those languages; PPLA's QR code and PPLB's Data Matrix and QR code refused;
   generic profiles at 203 and 300 dpi.
-- Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience).
+- The owner's review of 11 November (phase 6): the version in the header and new versions found by themselves (6.1);
+  the installed app's name (6.2); the layouts by device after a usability study (6.3); a tour of the studio (6.4);
+  labels by segment (6.5); a barcode on a label of one's own with the symbol's own options (6.6); EPC+ and EPC++
+  (6.7); the Delete key on a label of one's own (6.9); an assistant for first-time users (6.10, ADR 0006); the human
+  readable text's format chosen (6.11); more pictograms (6.13).
+- A family of studios (7.1, ADR 0007): a start page with the Label Studio, the Barcode Studio, the RFID Studio and the
+  Check Studio. The Check Studio checks what it is given — a scanner's text, a picture, the camera, a file — with
+  findings in plain words, groups and a history kept on the device, reports (PDF, CSV, JSON), sharing, and size
+  estimates from a picture; its logic in the core.
+- The RFID Studio (6.12, ADR 0008): a key's EPC, the tag's memory word by word (StoredCRC, StoredPC, the EPC bank) and
+  ZPL for an RFID printer (`^RS`, `^RFW`), for one tag or many from a spreadsheet.
+- `gs1ls` (5.1, ADR 0009): the command line and a local HTTP API (`gs1ls serve`, with its OpenAPI document) from the
+  same core — `check`, `label`, `epc`, `bulk` — in six languages with `--lang`; the integrators' guide.
+- Releases (0.4, ADR 0010): `main` holds the last release, published at the site's root, and `develop` the work in
+  progress, under `/develop/`; develop names itself (header, title, installed app) and keeps its storage, caches and
+  service worker apart; the header shows the release and its day, About links it to its notes; `scripts/release.mjs`
+  writes a release's version and cuts this CHANGELOG; a tag `vX.Y.Z` makes the GitHub release with `gs1ls`'s archive,
+  installed with `npm install -g`; `gs1ls --version` says the release and the commit.
+- Decisions: ADR 0001 (browser-first architecture), ADR 0002 (printer output), ADR 0003 (scope and user experience),
+  ADR 0004 to ADR 0010.
