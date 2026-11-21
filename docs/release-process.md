@@ -14,6 +14,11 @@ How GS1 Label Studio is released ([ADR 0010](adr/0010-releases-and-two-sites.md)
 - Develop names itself in the header (`develop · <commit>`), in the page's title and as an installed app
   (*GS1LS develop*), and keeps what it keeps on the device apart from the stable site.
 - Tags `vX.Y.Z` are releases; they are never moved or deleted once published.
+- **Once, in the repository's settings** (the owner): the `github-pages` environment lets only `main` deploy, so a push
+  to `develop` builds but its deployment is refused ("Branch develop is not allowed to deploy to github-pages"), and
+  the develop site only changes when `main`'s workflow runs. Settings → Environments → `github-pages` → Deployment
+  branches and tags → Add deployment branch or tag rule → `develop`. Until then, the develop site can be refreshed
+  from the Actions tab: *Publish to GitHub Pages* → Run workflow on `main` (it builds both branches).
 
 ## Making a release
 
