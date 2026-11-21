@@ -10,17 +10,19 @@ import { defineConfig } from "vite";
 const FONT = new URL("../core/assets/fonts/LiberationSans-Regular.ttf", import.meta.url);
 const EXTERNAL = ["gs1encoder"];
 
-// The version: the commit it was built from, as the page's header shows it
+// The version: the release (the root package.json's, written by scripts/release.mjs: backlog 0.4, ADR 0010) and the
+// commit it was built from, as the page's About shows them
 const commit = (() => {
   try {
     return execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
   } catch {
-    return "dev";
+    return "";
   }
 })();
+const release = (JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string }).version;
 
 export default defineConfig({
-  define: { __VERSION__: JSON.stringify(commit) },
+  define: { __VERSION__: JSON.stringify(commit ? `${release} (${commit})` : release) },
   build: {
     ssr: "src/main.ts",
     outDir: "dist",

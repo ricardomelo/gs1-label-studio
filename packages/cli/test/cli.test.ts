@@ -129,7 +129,9 @@ describe("the bundle Node runs", () => {
     const png = gs1ls("label", DATA, "--format", "png", "-o", "-");
     expect([png.status, png.stderr.toString()]).toEqual([0, ""]);
     expect(await read(new Uint8Array(png.stdout))).toEqual(["]E0 9506000134376", `]Q1 ${URI}`]);
-    expect(gs1ls("--version").stdout.toString()).toMatch(/^gs1ls \S+\n$/);
+    // The release, as the root package.json carries it, and the commit (backlog 0.4)
+    const release = (JSON.parse(readFileSync(new URL("../../../package.json", import.meta.url), "utf8")) as { version: string }).version;
+    expect(gs1ls("--version").stdout.toString()).toMatch(new RegExp(`^gs1ls ${release.replaceAll(".", "\\.")} \\([0-9a-f]{7,}\\)\n$`));
     expect(gs1ls("--help").stdout.toString()).toContain("gs1ls check <data> [--json]");
     const bad = gs1ls("check", "(01)09506000134377");
     expect([bad.status, bad.stdout.toString().split("\n")[0]]).toEqual([1, "Does not follow the GS1 rules."]);

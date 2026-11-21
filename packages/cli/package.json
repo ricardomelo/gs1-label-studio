@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "gs1ls: GS1 Label Studio's checks, labels and print files from the command line and a local HTTP API",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "gs1ls": "dist/gs1ls.mjs"
   },
