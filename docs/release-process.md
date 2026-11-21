@@ -72,6 +72,10 @@ saved work file that no longer opens, a `gs1ls` option removed) the first (2.0.0
    1.1.0 (`node scripts/release.mjs --check 1.1.0`), builds and packs `gs1ls`, and makes the GitHub release
    *GS1 Label Studio 1.1.0* with the CHANGELOG's section and `gs1-label-studio-cli-1.1.0.tgz` attached.
 
+   Where a tag cannot be pushed (a cloud session's git proxy refuses tags), the same release is made from the
+   Actions tab instead: **Release** → **Run workflow**, branch `main`, version `1.1.0`. The workflow makes the tag on
+   `main`'s last commit, with the same checks.
+
 6. **Check** the release page (<https://github.com/ricardomelo/gs1-label-studio/releases>) and the stable site: its
    header shows `1.1.0 · <date>`, and About links the version to the release.
 

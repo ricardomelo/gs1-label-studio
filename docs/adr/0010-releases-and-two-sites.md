@@ -78,7 +78,9 @@ The recommended options are taken, under the owner's rule (open to change).
 7. **A release** (`docs/release-process.md`): when the owner says so, on `develop`: `node scripts/release.mjs X.Y.Z`,
    commit, push, CI green; `main` fast-forwarded to `develop`; the tag `vX.Y.Z` pushed on that commit. The tag starts
    `release.yml`: it checks that the tag is on `main` and the files at its version, builds and packs `gs1ls`, and makes
-   the GitHub release with the CHANGELOG's section as its notes and the archive attached. A fix that cannot wait for
+   the GitHub release with the CHANGELOG's section as its notes and the archive attached. Where a tag cannot be pushed
+   (a cloud session's git proxy refuses tags: found at the first release), `release.yml` is started from the Actions
+   tab on `main` with the version, and makes the tag itself. A fix that cannot wait for
    `develop`'s work starts a branch `hotfix/X.Y.Z` from the release's tag, is released from it in the same way, and is
    merged into `develop` afterwards.
 8. **What follows `develop`**: CI and the documents' test run on both branches; the Syntax Engine workflow starts its
