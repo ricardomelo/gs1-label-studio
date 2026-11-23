@@ -945,6 +945,82 @@ now. 6.10 (the assistant, 13 November) before 6.4 and 6.5, which follow from it.
   when the whole estimate is outside the table, labelled estimates and never a grade*
 
 
+**Phase 8 — the owner's review of 23 November 2026** (twenty-eight points, assessed and grouped here on the same day;
+work resumes on 27 November). Suggested order: the two suspected bugs (8.3, 8.8), the quick wins (8.1, 8.10, 8.11,
+8.2), the options' audit (8.4), the printed-symbol checks the owner's hardware allows (8.5), then the camera (8.9) and
+RFID (8.14, 8.15, 8.13); 8.6, 8.7, 8.12 and 8.16 after them. Each screen change starts with mock-ups.
+
+- 8.1 Getting back (S): a button back to the start page, and a pair of back and forward buttons. An installed app (on
+  a computer or a phone) has no browser buttons, so a person can be stuck on a page and close the app to get out. The
+  studios' places are already in the address after `#` (`#/label`, `#/check?…`), so the buttons are the browser's
+  history; on a phone, Android's back gesture already works, an iPhone's installed app has none.
+- 8.2 Each studio starts where its people start (S to M): the Label Studio opens directly on a label of one's own,
+  that choice first and on top, and no longer offers "one barcode only"; the Barcode Studio no longer offers to make a
+  label (that is the Label Studio's); the RFID Studio starts with a GTIN and a serial number (8.15); the Barcode Studio
+  stays as it is. Mock-ups first.
+- 8.3 The symbols recommended in the Label Studio (M; a suspected bug first): with a label for medicines or medical
+  devices, step 2 recommends GS1 DataMatrix and lists GS1-128 as accepted; choosing GS1-128 there changes nothing on the
+  label (in the Barcode Studio it does). First find whether the label's template ignores step 2's choice (a bug), then
+  decide how a label says that other symbols are accepted (GS1-128, GS1 DataBar…) without radio buttons that look like a
+  choice: options in an assessment with mock-ups (for instance the accepted symbols as text with a link to change the
+  label's barcode in the designer, where its symbol is chosen).
+- 8.4 Every symbol option on a label of one's own, and an audit of options (M): each barcode on a label of one's own
+  gets all the options the Barcode Studio has for that symbol (6.6 brought part of them). The owner feels that options
+  were lost when the screens were reworked (6.3, 7.1): the audit lists every option of the editor at a commit before
+  6.3 (31 October to 13 November) beside today's, each one found, moved or gone, with the reason; anything lost by
+  mistake comes back.
+- 8.5 Checking printed symbols with the owner's printers and verifier (M): an Epson inkjet printer and a Microscan
+  LVS-9580. Not print quality (reflectance, contrast), but structure: a test sheet (PDF at real size, from the studio and
+  `gs1ls`) with each symbol at known X-dimensions, and for each the values the verifier should report — X-dimension and
+  module width, symbol and quiet zone sizes, bar height, number of modules, data and symbology identifier, and for 2D
+  symbols grid and axial non-uniformity, fixed pattern damage and print growth — with step-by-step choreographies
+  (printer settings with no scaling, how to read each verifier report) and a sheet for the results, in the printing
+  guide and the test plan.
+- 8.6 The Check Studio's Share as a PDF report (S): 7.1 l's Share already hands the PDF to a phone's share sheet where
+  the browser has one; the point is that the report should be what Share gives everywhere — downloaded on a computer,
+  the share sheet on a phone (e-mail, WhatsApp, Google Drive, OneDrive…). Check what the owner's device showed first.
+- 8.7 Several codes of one item, easier to find (S to M): the Check Studio already checks the codes of one item
+  together (7.1 i: an EAN-13 on the back and the QR code on the front, an EAN-13 and a GS1 DataMatrix, a DataMatrix and
+  an RFID tag), with a fault when their GTINs or serial numbers differ, and a picture can hold up to 16 codes. That the
+  owner did not find it says it is too hidden: an *Add another code* offered after each reading. Still to do: a
+  GS1 Logistic Label's GS1-128 lines read one after another and consolidated into one set of element strings.
+- 8.8 The reading's source (S; a suspected bug): a code read by the camera on a computer shows *pasted or typed* as its
+  source in the Expert view. The source should say camera, picture, tag, scanner or typed text as it came in; find where
+  the camera's reading loses it.
+- 8.9 A faster and more tolerant camera reader (M to L): today each frame goes whole to ZXing (zxing-wasm,
+  `tryHarder`, up to 4 symbols). Measured first on a set of hard pictures (blurred, small, curved, low contrast), then:
+  the browser's own BarcodeDetector where it exists (Android's Chrome: fast and tolerant) to find and read a code, with
+  ZXing kept for the symbology identifier and bytes the GS1 checks need; a crop around the code found; several scales;
+  the camera at a higher resolution with continuous focus and the torch.
+- 8.10 *RFID* instead of *Tag* (S): the Check Studio's way in named *Tag* reads as a paper label; *RFID* (and NFC, which
+  it also reads) with an icon of an RFID tag.
+- 8.11 Verified by GS1 (S): a button that opens Verified by GS1 with the GTIN already in the address, as the resolver's
+  item page does (its address to be taken from the resolver's code). A link out, not a check (ADR 0007).
+- 8.12 Pictures in the history and the report (M; changes ADR 0007, which keeps no pictures): the picture of each code
+  checked kept with its reading, and extra pictures of the item added by hand; in the history, the PDF report and the
+  exports. To decide: their size on the device (compressed, a limit, deleted with the reading) and that a picture may
+  show more than the code.
+- 8.13 The RFID Studio by kind of tag (L; an assessment amending ADR 0008): UHF and NFC apart, each with its own
+  information and requirements. UHF (Gen2): the banks a person writes — EPC, user memory, and the reserved bank's kill
+  and access passwords with locking — and each bank's size from the chip chosen (common chips: 96 or 128 bits of EPC,
+  some up to 496, user memory from none to several kilobits). Why 496 bits today: the StoredPC gives the EPC's length in
+  5 bits, so 31 words (496 bits; 464 with an XPC) is the most Gen2 allows, not a real chip's size: the drawing should
+  follow the chip. NFC: an NDEF message on a Type 2 or Type 5 tag (NTAG213, 215, 216…), its memory and drawing by chip;
+  what an NFC tag carries is the GS1 Digital Link URI, not an EPC bank.
+- 8.14 The EPC's scheme chosen (M): today the studio takes SGTIN-96 when the serial fits (digits, up to 2^38) and
+  SGTIN-198 otherwise, and likewise for the other keys (SSCC-96, SGLN-96 or -195, GRAI-96 or -170, GIAI-96 or -202…);
+  a person may want SGTIN-198, or EPC+ and EPC++ by name. The scheme becomes a choice, a scheme that cannot hold the
+  data refused with the reason. And the RFID Studio's step 1 offers only keys that have an EPC scheme, and only the
+  attributes an EPC can carry (+AIDC data, EPC+).
+- 8.15 The EPC shown in blocks (M): as in the owner's course and the screenshot of 23 November — header, filter,
+  partition, company prefix, item reference and serial number, each with its bits and value, and the EPC's digits
+  coloured by block. Inputs: the owner's RFID courses and the GS1 US diagram in Drive (`references`; copyrighted,
+  never in the repository), to be read for how they lay the data out. The RFID Studio starts with a GTIN and a serial
+  number.
+- 8.16 A GS1 Digital Link URI as non-HRI text (S to M): General Specifications 4.14, rule 3: the URI may be printed
+  near its symbol as text that is not human readable interpretation; an option of the label's text (6.11), with its
+  size and place.
+
 ## Licence
 
 [Apache License 2.0](LICENSE). Uses [bwip-js](https://github.com/metafloor/bwip-js) (MIT), GS1's
